@@ -1,5 +1,5 @@
--- Enable PostGIS for geolocation queries
-create extension if not exists "postgis";
+-- Enable uuid generation
+create extension if not exists "uuid-ossp";
 
 -- ============================================================
 -- USERS (customer profiles)
