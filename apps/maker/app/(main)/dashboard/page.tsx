@@ -1,11 +1,30 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { StatusBadge } from '@doornext/ui/badge'
+import { toast } from '@/components/ui/toast'
 import type { Order, FoodMaker, OrderStatus } from '@doornext/shared/types'
 import { Power } from 'lucide-react'
+
+function playOrderAlert() {
+  try {
+    const ctx = new AudioContext()
+    const times = [0, 0.15, 0.3]
+    times.forEach((t) => {
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      osc.frequency.value = 880
+      gain.gain.setValueAtTime(0.4, ctx.currentTime + t)
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.12)
+      osc.start(ctx.currentTime + t)
+      osc.stop(ctx.currentTime + t + 0.12)
+    })
+  } catch {}
+}
 
 type OrderWithItems = Order & {
   order_items: Array<{ quantity: number; menu_item: { name: string } | null }>
@@ -18,6 +37,7 @@ export default function DashboardPage() {
   const [maker, setMaker] = useState<FoodMaker | null>(null)
   const [orders, setOrders] = useState<OrderWithItems[]>([])
   const [loading, setLoading] = useState(true)
+  const prevPendingCount = useRef(0)
 
   const loadData = useCallback(async () => {
     const supabase = createClient()
@@ -46,6 +66,16 @@ export default function DashboardPage() {
   }, [router])
 
   useEffect(() => { loadData() }, [loadData])
+
+  // Alert when pending order count increases
+  useEffect(() => {
+    const pendingNow = orders.filter((o) => o.status === 'pending').length
+    if (!loading && pendingNow > prevPendingCount.current) {
+      playOrderAlert()
+      toast.info(`🍽️ New order received!`)
+    }
+    prevPendingCount.current = pendingNow
+  }, [orders, loading])
 
   // Realtime subscription for new orders
   useEffect(() => {

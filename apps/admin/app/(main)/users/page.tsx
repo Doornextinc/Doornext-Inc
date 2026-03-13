@@ -1,64 +1,130 @@
-import { createAdminClient } from '@/lib/supabase/server'
+'use client'
 
-export default async function UsersPage() {
-  const supabase = createAdminClient()
-  const { data: users, count } = await supabase
-    .from('users')
-    .select('id, full_name, email, phone, role, created_at', { count: 'exact' })
-    .order('created_at', { ascending: false })
-    .limit(100)
+import { useEffect, useState, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
+
+interface AdminUser {
+  id: string
+  full_name: string
+  email: string | null
+  phone: string | null
+  role: string
+  created_at: string
+}
+
+const ROLE_COLORS: Record<string, string> = {
+  customer: 'bg-gray-100 text-gray-600',
+  maker: 'bg-orange-100 text-orange-700',
+  driver: 'bg-blue-100 text-blue-700',
+  admin: 'bg-red-100 text-red-700',
+}
+
+const ALL_ROLES = ['customer', 'maker', 'driver', 'admin']
+
+export default function UsersPage() {
+  const searchParams = useSearchParams()
+  const [users, setUsers] = useState<AdminUser[]>([])
+  const [loading, setLoading] = useState(true)
+  const [updating, setUpdating] = useState<string | null>(null)
+  const [search, setSearch] = useState(searchParams.get('search') ?? '')
+
+  const loadUsers = useCallback(async () => {
+    setLoading(true)
+    const res = await fetch(`/api/admin/users?search=${encodeURIComponent(search)}`)
+    if (res.ok) {
+      const data = await res.json()
+      setUsers(data.users ?? [])
+    }
+    setLoading(false)
+  }, [search])
+
+  useEffect(() => { loadUsers() }, [loadUsers])
+
+  const changeRole = async (userId: string, newRole: string) => {
+    if (!confirm(`Change this user's role to "${newRole}"?`)) return
+    setUpdating(userId)
+    await fetch('/api/admin/users', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, role: newRole }),
+    })
+    await loadUsers()
+    setUpdating(null)
+  }
 
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-black text-gray-900">Users</h1>
-        <span className="text-sm text-gray-400">{count ?? 0} total</span>
+        <span className="text-sm text-gray-400">{users.length} shown</span>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-gray-50 bg-gray-50/50">
-              <th className="text-left px-5 py-3 text-xs font-bold text-gray-400 uppercase">Name</th>
-              <th className="text-left px-5 py-3 text-xs font-bold text-gray-400 uppercase">Email</th>
-              <th className="text-left px-5 py-3 text-xs font-bold text-gray-400 uppercase">Role</th>
-              <th className="text-left px-5 py-3 text-xs font-bold text-gray-400 uppercase">Phone</th>
-              <th className="text-right px-5 py-3 text-xs font-bold text-gray-400 uppercase">Joined</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-50">
-            {(users ?? []).map((user) => (
-              <tr key={user.id} className="hover:bg-gray-50/50">
-                <td className="px-5 py-3 font-medium text-gray-900">{user.full_name}</td>
-                <td className="px-5 py-3 text-gray-500">{user.email ?? '—'}</td>
-                <td className="px-5 py-3">
-                  <RoleBadge role={user.role} />
-                </td>
-                <td className="px-5 py-3 text-gray-500">{user.phone ?? '—'}</td>
-                <td className="px-5 py-3 text-right text-xs text-gray-400">
-                  {new Date(user.created_at).toLocaleDateString('en-US', {
-                    month: 'short', day: 'numeric', year: 'numeric',
-                  })}
-                </td>
+      <input
+        type="search"
+        placeholder="Search by name or email…"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="w-full max-w-sm mb-5 px-4 py-2 rounded-xl border border-gray-200 text-sm outline-none focus:border-gray-400 transition-colors"
+      />
+
+      {loading ? (
+        <div className="space-y-2">
+          {[1,2,3,4,5].map((i) => <div key={i} className="h-12 bg-gray-100 rounded-xl animate-pulse" />)}
+        </div>
+      ) : (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-50 bg-gray-50/50">
+                <th className="text-left px-5 py-3 text-xs font-bold text-gray-400 uppercase">Name</th>
+                <th className="text-left px-5 py-3 text-xs font-bold text-gray-400 uppercase">Email</th>
+                <th className="text-left px-5 py-3 text-xs font-bold text-gray-400 uppercase">Role</th>
+                <th className="text-left px-5 py-3 text-xs font-bold text-gray-400 uppercase">Phone</th>
+                <th className="text-right px-5 py-3 text-xs font-bold text-gray-400 uppercase">Joined</th>
+                <th className="px-5 py-3" />
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {users.map((user) => (
+                <tr key={user.id} className="hover:bg-gray-50/50">
+                  <td className="px-5 py-3 font-medium text-gray-900">{user.full_name}</td>
+                  <td className="px-5 py-3 text-gray-500">{user.email ?? '—'}</td>
+                  <td className="px-5 py-3">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${ROLE_COLORS[user.role] ?? 'bg-gray-100 text-gray-600'}`}>
+                      {user.role}
+                    </span>
+                  </td>
+                  <td className="px-5 py-3 text-gray-500">{user.phone ?? '—'}</td>
+                  <td className="px-5 py-3 text-right text-xs text-gray-400">
+                    {new Date(user.created_at).toLocaleDateString('en-US', {
+                      month: 'short', day: 'numeric', year: 'numeric',
+                    })}
+                  </td>
+                  <td className="px-5 py-3 text-right">
+                    <select
+                      value={user.role}
+                      disabled={updating === user.id}
+                      onChange={(e) => changeRole(user.id, e.target.value)}
+                      className="text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white text-gray-700 focus:outline-none focus:border-gray-400 disabled:opacity-50 cursor-pointer"
+                    >
+                      {ALL_ROLES.map((r) => (
+                        <option key={r} value={r}>{r}</option>
+                      ))}
+                    </select>
+                  </td>
+                </tr>
+              ))}
+              {users.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-5 py-12 text-center text-sm text-gray-400">
+                    No users found
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
-  )
-}
-
-function RoleBadge({ role }: { role: string }) {
-  const colors: Record<string, string> = {
-    customer: 'bg-gray-100 text-gray-600',
-    maker: 'bg-orange-100 text-orange-700',
-    driver: 'bg-blue-100 text-blue-700',
-    admin: 'bg-red-100 text-red-700',
-  }
-  return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${colors[role] ?? 'bg-gray-100 text-gray-600'}`}>
-      {role}
-    </span>
   )
 }

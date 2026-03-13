@@ -102,9 +102,17 @@ export default async function OrdersPage({ searchParams }: PageProps) {
                     })}
                   </td>
                   <td className="px-5 py-3 text-right">
-                    {order.stripe_payment_intent_id && order.status !== 'cancelled' && (
-                      <RefundButton orderId={order.id} />
-                    )}
+                    <div className="flex items-center justify-end gap-2">
+                      <Link
+                        href={`/orders/${order.id}`}
+                        className="text-xs text-blue-500 hover:text-blue-700 font-semibold px-2 py-1 rounded hover:bg-blue-50 transition-colors"
+                      >
+                        View
+                      </Link>
+                      {order.stripe_payment_intent_id && order.status !== 'cancelled' && (
+                        <RefundButton orderId={order.id} />
+                      )}
+                    </div>
                   </td>
                 </tr>
               )
