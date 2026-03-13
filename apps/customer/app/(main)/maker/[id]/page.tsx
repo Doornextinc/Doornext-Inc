@@ -3,7 +3,6 @@
 import { useMemo, useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Star, Clock, MapPin, MessageCircle, ChevronLeft, ShoppingCart } from 'lucide-react'
-import { getMakerEmoji } from '@/lib/mock-data'
 import { MenuItemCard } from '@/components/maker/menu-item-card'
 import { DietaryBadge } from '@/components/ui/badge'
 import { MenuItemSkeleton } from '@/components/ui/skeleton'
@@ -64,8 +63,6 @@ export default function MakerProfilePage() {
     )
   }
 
-  const emoji = getMakerEmoji(id)
-
   return (
     <div className="flex flex-col min-h-full bg-white">
       {/* Hero Banner */}
@@ -75,7 +72,7 @@ export default function MakerProfilePage() {
           <img src={maker.banner_url} alt={maker.display_name} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <span className="text-8xl">{emoji}</span>
+            <span className="text-8xl">🍽️</span>
           </div>
         )}
         <button

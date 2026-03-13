@@ -6,7 +6,6 @@ import { MakerCard } from '@/components/home/maker-card'
 import { CuisineFilter } from '@/components/home/cuisine-filter'
 import { MakerCardSkeleton } from '@/components/ui/skeleton'
 import { createClient } from '@/lib/supabase/client'
-import { MOCK_MAKERS } from '@/lib/mock-data'
 import type { FoodMaker, Address } from '@/types'
 import { MapPin, Navigation, X, Check } from 'lucide-react'
 import { haversineDistance } from '@/lib/utils'
@@ -56,9 +55,7 @@ export default function HomePage() {
           .select('*')
           .order('avg_rating', { ascending: false })
 
-        if (error || !data || data.length === 0) {
-          setMakers(MOCK_MAKERS)
-        } else {
+        if (!error && data && data.length > 0) {
           const withDistance = data.map((m) => ({
             ...m,
             distance_km: parseFloat(
@@ -66,9 +63,11 @@ export default function HomePage() {
             ),
           }))
           setMakers(withDistance)
+        } else {
+          setMakers([])
         }
       } catch {
-        setMakers(MOCK_MAKERS)
+        setMakers([])
       } finally {
         setLoading(false)
       }
