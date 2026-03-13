@@ -1,12 +1,16 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { createClient } from '@/lib/supabase/client'
 import { useDriverStore } from '@/store/driver-store'
 import { AppHeader } from '@/components/layout/app-header'
-import { ChevronRight, Star, Package, Zap, Clock, TrendingUp, Navigation, MapPin } from 'lucide-react'
+import { ChevronRight, Star, Package, TrendingUp, Zap } from 'lucide-react'
+
+// Load map client-side only (Leaflet requires window)
+const LiveMap = dynamic(() => import('@/components/live-map').then(m => m.LiveMap), { ssr: false })
 
 type HomeData = {
   profile: { full_name: string; avg_rating: number; total_deliveries: number; is_active: boolean; kyc_status: string; avatar_url: string | null }
@@ -23,12 +27,34 @@ function greeting() {
   return 'evening'
 }
 
+const DEFAULT_LAT = 40.7128
+const DEFAULT_LNG = -74.006
+
 export default function HomePage() {
   const router = useRouter()
   const { isOnline, setOnline, setActiveOrder } = useDriverStore()
   const [data, setData] = useState<HomeData | null>(null)
   const [loading, setLoading] = useState(true)
   const [toggling, setToggling] = useState(false)
+  const [lat, setLat] = useState(DEFAULT_LAT)
+  const [lng, setLng] = useState(DEFAULT_LNG)
+  const watchIdRef = useRef<number | null>(null)
+
+  // Live location tracking
+  useEffect(() => {
+    if (typeof navigator === 'undefined') return
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      (pos) => {
+        setLat(pos.coords.latitude)
+        setLng(pos.coords.longitude)
+      },
+      () => {},
+      { enableHighAccuracy: true, maximumAge: 10000 }
+    )
+    return () => {
+      if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current)
+    }
+  }, [])
 
   const load = useCallback(async () => {
     const supabase = createClient()
@@ -78,70 +104,75 @@ export default function HomePage() {
     setToggling(false)
   }
 
-  if (loading) {
-    return (
-      <div className="flex flex-col min-h-full">
-        <div className="h-44 bg-[#141414] animate-pulse" />
-        <div className="p-4 space-y-3">
-          {[1, 2, 3].map(i => <div key={i} className="h-24 bg-[#141414] rounded-2xl animate-pulse" />)}
-        </div>
-      </div>
-    )
-  }
-
   const firstName = data?.profile.full_name?.split(' ')[0] ?? 'Driver'
-  const initials = (data?.profile.full_name ?? 'D')[0].toUpperCase()
 
   return (
-    <div className="flex flex-col min-h-full pb-8">
-      <AppHeader greeting={{ time: greeting(), name: firstName }} />
+    /* Full-screen stack: map behind, header + bottom-sheet on top */
+    <div className="relative flex flex-col overflow-hidden" style={{ height: 'calc(100dvh - 64px)' }}>
 
-      {/* Online / Offline hero */}
+      {/* ── Live map (fills everything) ── */}
+      <LiveMap lat={lat} lng={lng} isOnline={isOnline} />
+
+      {/* ── Floating header ── */}
+      <div className="relative z-10">
+        <AppHeader greeting={loading ? undefined : { time: greeting(), name: firstName }} />
+      </div>
+
+      {/* ── Bottom sheet ── */}
       {!isOnline ? (
-        <div className="mx-4 mb-5">
-          <div className="bg-gradient-to-br from-[#141414] to-[#0A0A0A] rounded-3xl border border-white/5 p-6 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-[#1A1A1A] flex items-center justify-center mx-auto mb-4">
-              <span className="text-3xl">🛵</span>
+        /* OFFLINE — "Ready to Next?" + big GO button */
+        <div className="absolute bottom-0 left-0 right-0 z-10 px-5 pb-8 pt-6 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/95 to-transparent">
+          <div className="flex flex-col items-center gap-5">
+            <div className="text-center">
+              <h2 className="text-2xl font-black text-white leading-tight">Ready to Next?</h2>
+              <p className="text-zinc-400 text-sm mt-1">Tap GO to start accepting orders</p>
             </div>
-            <h2 className="text-xl font-black text-white mb-1">Ready to dash?</h2>
-            <p className="text-zinc-400 text-sm mb-5">Go online to start receiving delivery offers</p>
+
+            {/* Uber-style round GO button */}
             <button
               onClick={toggleOnline}
               disabled={toggling}
-              className="w-full bg-[#FF6B35] text-white font-black text-base py-4 rounded-2xl shadow-lg shadow-[#FF6B35]/30 active:scale-[0.98] transition-all disabled:opacity-60"
+              className="relative w-28 h-28 rounded-full flex items-center justify-center active:scale-95 transition-transform duration-150 disabled:opacity-60"
+              style={{
+                background: 'linear-gradient(145deg, #1a1a1a, #111)',
+                boxShadow: '0 0 0 4px #222, 0 0 0 6px #333, 0 12px 40px rgba(0,0,0,0.7)',
+              }}
             >
-              {toggling ? 'Going Online…' : 'Go Online'}
+              {/* outer ring */}
+              <span className="absolute inset-0 rounded-full border-2 border-white/10" />
+              <span className="text-white font-black text-2xl tracking-wider">
+                {toggling ? '…' : 'GO'}
+              </span>
             </button>
+
+            {/* Earnings pill */}
+            {!loading && (
+              <div className="flex items-center gap-4 bg-[#141414]/80 border border-white/8 rounded-2xl px-5 py-3 backdrop-blur-sm">
+                <div className="text-center">
+                  <p className="font-black text-white text-lg">${(data?.todayEarnings ?? 0).toFixed(2)}</p>
+                  <p className="text-[10px] text-zinc-500">Today</p>
+                </div>
+                <div className="w-px h-8 bg-white/10" />
+                <div className="text-center">
+                  <p className="font-black text-white text-lg">{data?.todayDeliveries ?? 0}</p>
+                  <p className="text-[10px] text-zinc-500">Trips</p>
+                </div>
+                <div className="w-px h-8 bg-white/10" />
+                <div className="text-center">
+                  <p className="font-black text-white text-lg">{data?.profile?.avg_rating?.toFixed(1) ?? '—'}</p>
+                  <p className="text-[10px] text-zinc-500">Rating</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       ) : (
-        <div className="mx-4 mb-5 space-y-3">
-          {/* Online toggle pill */}
-          <div className="flex justify-center">
-            <button
-              onClick={toggleOnline}
-              disabled={toggling}
-              className="relative flex items-center gap-3 px-6 py-3 rounded-full bg-[#111] border border-white/8 shadow-[0_0_24px_rgba(74,222,128,0.15)] active:scale-[0.97] transition-all duration-200 disabled:opacity-60 group"
-            >
-              {/* glow ring */}
-              <span className="absolute inset-0 rounded-full ring-1 ring-green-400/30 group-hover:ring-green-400/50 transition-all duration-300" />
-              {/* pulse dot */}
-              <span className="relative flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-60" />
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-400" />
-              </span>
-              <span className="font-black text-sm tracking-wide text-white">
-                {toggling ? 'Going Offline…' : 'Drive'}
-              </span>
-              <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest">
-                {toggling ? '' : 'Go offline'}
-              </span>
-            </button>
-          </div>
+        /* ONLINE — status bar + active order + go offline */
+        <div className="absolute bottom-0 left-0 right-0 z-10 px-4 pb-8 pt-4 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/95 to-transparent space-y-3">
 
           {/* Active order banner */}
           {data?.activeOrder && (
-            <Link href="/active" className="block bg-[#FF6B35]/10 border border-[#FF6B35]/25 rounded-2xl p-4">
+            <Link href="/active" className="block bg-[#FF6B35]/10 border border-[#FF6B35]/25 rounded-2xl p-4 backdrop-blur-sm">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-[10px] font-bold text-[#FF6B35] uppercase tracking-wide mb-1">Active Delivery</p>
@@ -155,133 +186,42 @@ export default function HomePage() {
               </div>
             </Link>
           )}
-        </div>
-      )}
 
-      {/* Earnings hero */}
-      <div className="mx-4 mb-4">
-        <div className="bg-gradient-to-br from-[#141414] to-[#0A0A0A] rounded-2xl border border-white/5 p-5">
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <p className="text-xs text-zinc-400 font-bold uppercase tracking-wide mb-1">Today's Earnings</p>
-              <p className="text-4xl font-black text-white">${(data?.todayEarnings ?? 0).toFixed(2)}</p>
-              <p className="text-xs text-zinc-500 mt-1">
-                This week: <span className="text-zinc-300 font-semibold">${(data?.weekEarnings ?? 0).toFixed(2)}</span>
-              </p>
+          {/* Online status row + Go Offline */}
+          <div className="flex items-center justify-between bg-[#111]/80 border border-white/8 rounded-2xl px-4 py-3 backdrop-blur-sm">
+            <div className="flex items-center gap-2.5">
+              <span className="relative flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-60" />
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-400" />
+              </span>
+              <span className="font-black text-green-400 text-sm">Online · Accepting orders</span>
             </div>
-            <Link href="/earnings" className="text-xs text-[#FF6B35] font-bold flex items-center gap-1">
-              Details <ChevronRight size={12} />
-            </Link>
+            <button
+              onClick={toggleOnline}
+              disabled={toggling}
+              className="text-xs font-bold text-zinc-400 hover:text-white transition-colors disabled:opacity-50 bg-white/5 rounded-xl px-3 py-1.5"
+            >
+              {toggling ? '…' : 'Go offline'}
+            </button>
           </div>
-          <div className="grid grid-cols-3 gap-3 pt-4 border-t border-white/5">
-            <div className="text-center">
-              <p className="font-black text-white text-lg">{data?.todayDeliveries ?? 0}</p>
+
+          {/* Quick stats */}
+          <div className="grid grid-cols-3 gap-2">
+            <div className="bg-[#111]/70 border border-white/8 rounded-xl px-3 py-2.5 text-center backdrop-blur-sm">
+              <p className="font-black text-white text-base">${(data?.todayEarnings ?? 0).toFixed(2)}</p>
               <p className="text-[10px] text-zinc-500 mt-0.5">Today</p>
             </div>
-            <div className="text-center border-x border-white/5">
-              <p className="font-black text-white text-lg">{data?.profile.avg_rating?.toFixed(1) ?? '—'}</p>
+            <div className="bg-[#111]/70 border border-white/8 rounded-xl px-3 py-2.5 text-center backdrop-blur-sm">
+              <p className="font-black text-white text-base">{data?.todayDeliveries ?? 0}</p>
+              <p className="text-[10px] text-zinc-500 mt-0.5">Trips</p>
+            </div>
+            <Link href="/earnings" className="bg-[#111]/70 border border-white/8 rounded-xl px-3 py-2.5 text-center backdrop-blur-sm">
+              <p className="font-black text-white text-base">{data?.profile?.avg_rating?.toFixed(1) ?? '—'}</p>
               <p className="text-[10px] text-zinc-500 mt-0.5">Rating</p>
-            </div>
-            <div className="text-center">
-              <p className="font-black text-white text-lg">{data?.profile.total_deliveries ?? 0}</p>
-              <p className="text-[10px] text-zinc-500 mt-0.5">All time</p>
-            </div>
+            </Link>
           </div>
         </div>
-      </div>
-
-      {/* Daily challenge */}
-      <div className="mx-4 mb-4">
-        <div className="bg-[#141414] rounded-2xl border border-white/5 p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-[#FF6B35]/10 flex items-center justify-center">
-                <Zap size={14} className="text-[#FF6B35]" />
-              </div>
-              <p className="font-bold text-white text-sm">Daily Challenge</p>
-            </div>
-            <span className="text-xs font-black text-[#FF6B35]">+$5.00</span>
-          </div>
-          <p className="text-sm text-zinc-300 mb-3">Complete 5 deliveries today</p>
-          <div className="flex items-center gap-3">
-            <div className="flex-1 h-2 bg-[#1A1A1A] rounded-full overflow-hidden">
-              <div
-                className="h-full bg-[#FF6B35] rounded-full"
-                style={{ width: `${Math.min(((data?.todayDeliveries ?? 0) / 5) * 100, 100)}%` }}
-              />
-            </div>
-            <span className="text-xs font-bold text-zinc-400 flex-shrink-0">{Math.min(data?.todayDeliveries ?? 0, 5)}/5</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Quick actions */}
-      <div className="mx-4 mb-4 grid grid-cols-2 gap-3">
-        <Link href="/available" className="bg-[#141414] rounded-2xl border border-white/5 p-4 flex items-center gap-3 active:scale-[0.98] transition-all">
-          <div className="w-10 h-10 rounded-xl bg-[#FF6B35]/10 flex items-center justify-center flex-shrink-0">
-            <Navigation size={18} className="text-[#FF6B35]" />
-          </div>
-          <div>
-            <p className="font-bold text-white text-sm">Find Pickups</p>
-            <p className="text-xs text-zinc-500">Browse orders</p>
-          </div>
-        </Link>
-        <Link href="/history" className="bg-[#141414] rounded-2xl border border-white/5 p-4 flex items-center gap-3 active:scale-[0.98] transition-all">
-          <div className="w-10 h-10 rounded-xl bg-[#1A1A1A] flex items-center justify-center flex-shrink-0">
-            <Clock size={18} className="text-zinc-400" />
-          </div>
-          <div>
-            <p className="font-bold text-white text-sm">History</p>
-            <p className="text-xs text-zinc-500">Past deliveries</p>
-          </div>
-        </Link>
-      </div>
-
-      {/* Performance stats */}
-      <div className="mx-4">
-        <p className="text-xs text-zinc-500 font-bold uppercase tracking-widest mb-3 px-0.5">Performance</p>
-        <div className="bg-[#141414] rounded-2xl border border-white/5 divide-y divide-white/5">
-          <div className="flex items-center justify-between px-4 py-3.5">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-[#FF6B35]/10 flex items-center justify-center">
-                <Star size={15} className="text-[#FF6B35]" />
-              </div>
-              <p className="text-sm font-semibold text-white">Customer Rating</p>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="font-black text-white">{data?.profile.avg_rating?.toFixed(1) ?? '—'}</span>
-              <span className="text-zinc-600 text-xs">/ 5.0</span>
-            </div>
-          </div>
-          <div className="flex items-center justify-between px-4 py-3.5">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-[#FF6B35]/10 flex items-center justify-center">
-                <Package size={15} className="text-[#FF6B35]" />
-              </div>
-              <p className="text-sm font-semibold text-white">Total Deliveries</p>
-            </div>
-            <span className="font-black text-white">{data?.profile.total_deliveries ?? 0}</span>
-          </div>
-          <div className="flex items-center justify-between px-4 py-3.5">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-[#FF6B35]/10 flex items-center justify-center">
-                <TrendingUp size={15} className="text-[#FF6B35]" />
-              </div>
-              <p className="text-sm font-semibold text-white">This Week</p>
-            </div>
-            <span className="font-black text-white">${(data?.weekEarnings ?? 0).toFixed(2)}</span>
-          </div>
-          <Link href="/available" className="flex items-center justify-between px-4 py-3.5">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-[#1A1A1A] flex items-center justify-center">
-                <MapPin size={15} className="text-zinc-400" />
-              </div>
-              <p className="text-sm font-semibold text-white">Available Orders</p>
-            </div>
-            <ChevronRight size={16} className="text-zinc-600" />
-          </Link>
-        </div>
-      </div>
+      )}
     </div>
   )
 }
