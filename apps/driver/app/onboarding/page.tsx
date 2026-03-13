@@ -219,16 +219,16 @@ export default function OnboardingPage() {
     setStep('submitting')
 
     try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Not authenticated')
-
       const uploadFile = async (file: File, name: string): Promise<string> => {
-        const path = `${user.id}/${name}-${Date.now()}.jpg`
-        const { error } = await supabase.storage
-          .from('driver-documents')
-          .upload(path, file, { cacheControl: '3600', upsert: true })
-        if (error) throw new Error(`Upload failed: ${error.message}`)
+        const fd = new FormData()
+        fd.append('file', file)
+        fd.append('name', name)
+        const res = await fetch('/api/driver/upload-doc', { method: 'POST', body: fd })
+        if (!res.ok) {
+          const { error } = await res.json()
+          throw new Error(`Upload failed: ${error}`)
+        }
+        const { path } = await res.json()
         return path
       }
 
