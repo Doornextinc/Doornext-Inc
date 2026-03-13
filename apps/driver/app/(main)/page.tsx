@@ -134,8 +134,8 @@ export default function HomePage() {
               }}
             >
               <span className="absolute inset-0 rounded-full border border-white/10" />
-              <span className="text-white font-black text-3xl tracking-widest">
-                {toggling ? '…' : 'GO'}
+              <span className="text-white font-black text-3xl tracking-wide">
+                {toggling ? '…' : 'Go'}
               </span>
             </button>
           </div>
@@ -219,9 +219,14 @@ export default function HomePage() {
               }}
             >
               <span className="absolute inset-0 rounded-full border border-white/8" />
-              <span className="text-zinc-300 font-black text-xl tracking-widest">
-                {toggling ? '…' : 'OFF'}
-              </span>
+              {toggling ? (
+                <span className="text-zinc-300 font-black text-xl">…</span>
+              ) : (
+                <span className="flex flex-col items-center leading-none">
+                  <span className="text-white font-black text-lg tracking-widest">Go</span>
+                  <span className="text-white font-black text-lg tracking-widest">Off</span>
+                </span>
+              )}
             </button>
           </div>
         </div>
