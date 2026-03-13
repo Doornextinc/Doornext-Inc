@@ -16,7 +16,7 @@ export function BottomNav() {
   const pathname = usePathname()
 
   return (
-    <nav aria-label="Main navigation" className="fixed bottom-0 left-0 right-0 z-50 max-w-[430px] mx-auto bg-white border-t border-[#EBEBEB]">
+    <nav aria-label="Main navigation" className="fixed bottom-0 left-0 right-0 z-50 max-w-[430px] mx-auto bg-white border-t border-gray-100">
       <div className="flex items-center justify-around h-[60px]">
         {navItems.map(({ href, icon: Icon, label }) => {
           const isActive = pathname === href || pathname.startsWith(href + '/')
@@ -30,9 +30,9 @@ export function BottomNav() {
               <Icon
                 size={22}
                 strokeWidth={isActive ? 2.8 : 1.8}
-                className={isActive ? 'text-[#111]' : 'text-[#BABABA]'}
+                className={isActive ? 'text-[#FF6B35]' : 'text-gray-300'}
               />
-              <span className={`text-[11px] ${isActive ? 'font-black text-[#111]' : 'font-medium text-[#BABABA]'}`}>
+              <span className={`text-[11px] ${isActive ? 'font-black text-[#FF6B35]' : 'font-medium text-gray-300'}`}>
                 {label}
               </span>
             </Link>
