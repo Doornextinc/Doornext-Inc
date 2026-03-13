@@ -116,15 +116,26 @@ export default function HomePage() {
         </div>
       ) : (
         <div className="mx-4 mb-5 space-y-3">
-          {/* Online status bar */}
-          <div className="flex items-center justify-between bg-green-500/10 border border-green-500/20 rounded-2xl px-4 py-3">
-            <div className="flex items-center gap-2.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse" />
-              <span className="font-bold text-green-400 text-sm">You're online</span>
-              <span className="text-green-400/50 text-xs">· Accepting orders</span>
-            </div>
-            <button onClick={toggleOnline} disabled={toggling} className="text-xs font-bold text-zinc-400 hover:text-white transition-colors disabled:opacity-50">
-              {toggling ? '…' : 'Go Offline'}
+          {/* Online toggle pill */}
+          <div className="flex justify-center">
+            <button
+              onClick={toggleOnline}
+              disabled={toggling}
+              className="relative flex items-center gap-3 px-6 py-3 rounded-full bg-[#111] border border-white/8 shadow-[0_0_24px_rgba(74,222,128,0.15)] active:scale-[0.97] transition-all duration-200 disabled:opacity-60 group"
+            >
+              {/* glow ring */}
+              <span className="absolute inset-0 rounded-full ring-1 ring-green-400/30 group-hover:ring-green-400/50 transition-all duration-300" />
+              {/* pulse dot */}
+              <span className="relative flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-60" />
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-400" />
+              </span>
+              <span className="font-black text-sm tracking-wide text-white">
+                {toggling ? 'Going Offline…' : 'Drive'}
+              </span>
+              <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest">
+                {toggling ? '' : 'Go offline'}
+              </span>
             </button>
           </div>
 
