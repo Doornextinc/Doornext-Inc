@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from 'react'
 import type { MenuItem } from '@doornext/shared/types'
 import { X, Loader2, Camera, Trash2 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 
 const DIETARY_OPTIONS = ['vegan', 'vegetarian', 'halal', 'gluten-free', 'dairy_free', 'spicy']
 
@@ -67,32 +66,22 @@ export function MenuItemModal({ item, onClose, onSave }: Props) {
     if (!file) return
 
     // Show local preview immediately
-    const objectUrl = URL.createObjectURL(file)
-    setPhotoPreview(objectUrl)
+    setPhotoPreview(URL.createObjectURL(file))
     setUploading(true)
     setError(null)
 
     try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Not authenticated')
+      const formData = new FormData()
+      formData.append('file', file)
 
-      const ext = file.name.split('.').pop() ?? 'jpg'
-      const path = `${user.id}/${Date.now()}.${ext}`
+      const res = await fetch('/api/maker/upload/menu-photo', { method: 'POST', body: formData })
+      const data = await res.json()
 
-      const { error: uploadError } = await supabase.storage
-        .from('menu-items')
-        .upload(path, file, { upsert: true })
+      if (!res.ok) throw new Error(data.error ?? 'Upload failed')
 
-      if (uploadError) throw uploadError
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('menu-items')
-        .getPublicUrl(path)
-
-      setPhotoUrl(publicUrl)
+      setPhotoUrl(data.url)
     } catch (err) {
-      setError('Photo upload failed. Please try again.')
+      setError(err instanceof Error ? err.message : 'Photo upload failed. Please try again.')
       setPhotoPreview(photoUrl) // revert preview to last good URL
     } finally {
       setUploading(false)

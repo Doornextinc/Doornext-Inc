@@ -59,33 +59,18 @@ export default function SettingsPage() {
     setUploadingAvatar(true)
 
     try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Not authenticated')
+      const formData = new FormData()
+      formData.append('file', file)
 
-      const ext = file.name.split('.').pop() ?? 'jpg'
-      const path = `${user.id}/kitchen-avatar.${ext}`
+      const res = await fetch('/api/maker/upload/avatar', { method: 'POST', body: formData })
+      const data = await res.json()
 
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(path, file, { upsert: true })
+      if (!res.ok) throw new Error(data.error ?? 'Upload failed')
 
-      if (uploadError) throw uploadError
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(path)
-
-      // Persist immediately
-      await supabase
-        .from('food_makers')
-        .update({ avatar_url: publicUrl })
-        .eq('user_id', user.id)
-
-      setAvatarUrl(publicUrl)
+      setAvatarUrl(data.url)
       flash('ok', 'Profile photo updated')
-    } catch {
-      flash('err', 'Photo upload failed. Please try again.')
+    } catch (err) {
+      flash('err', err instanceof Error ? err.message : 'Photo upload failed. Please try again.')
       setAvatarPreview(avatarUrl)
     } finally {
       setUploadingAvatar(false)
