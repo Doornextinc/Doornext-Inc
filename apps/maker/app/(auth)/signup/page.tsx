@@ -8,7 +8,7 @@ import { Loader2, ChevronLeft, MapPin } from 'lucide-react'
 
 const CUISINE_OPTIONS = [
   'American', 'Mexican', 'Italian', 'Chinese', 'Indian',
-  'Thai', 'Japanese', 'Mediterranean', 'Soul Food', 'BBQ',
+  'Thai', 'Japanese', 'African', 'Soul Food', 'BBQ',
   'Vegan', 'Bakery', 'Desserts', 'Caribbean', 'Other',
 ]
 

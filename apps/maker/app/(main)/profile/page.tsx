@@ -21,10 +21,10 @@ export default function ProfilePage() {
       if (!user) { router.push('/login'); return }
       setEmail(user.email ?? null)
 
-      const [makerRes, ordersRes] = await Promise.all([
-        supabase.from('food_makers').select('*').eq('user_id', user.id).single(),
-        supabase.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'delivered'),
-      ])
+      const makerRes = await supabase.from('food_makers').select('*').eq('user_id', user.id).single()
+      const ordersRes = makerRes.data
+        ? await supabase.from('orders').select('id', { count: 'exact', head: true }).eq('maker_id', makerRes.data.id).eq('status', 'delivered')
+        : { count: 0 }
 
       if (makerRes.data) setMaker(makerRes.data)
       setTotalDelivered(ordersRes.count ?? 0)

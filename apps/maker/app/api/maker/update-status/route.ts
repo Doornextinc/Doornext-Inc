@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
   // Verify the status is a valid forward transition
   const { data: order } = await supabase
     .from('orders')
-    .select('status, maker_id')
+    .select('status, maker_id, customer_id')
     .eq('id', orderId)
     .single()
 
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
   }
 
   await admin.from('notifications').insert({
-    user_id: order.maker_id, // will be fixed: should be customer_id
+    user_id: order.customer_id,
     type: `order_${status}`,
     title: notifTitle[status] ?? 'Order update',
     body: `Your order #${orderId.slice(-6).toUpperCase()} status: ${status}`,

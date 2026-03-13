@@ -45,22 +45,18 @@ export default function DashboardPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/login'); return }
 
-    const [makerRes, ordersRes] = await Promise.all([
-      supabase.from('food_makers').select('*').eq('user_id', user.id).single(),
-      supabase
-        .from('orders')
-        .select('*, order_items(quantity, menu_item:menu_items(name))')
-        .order('created_at', { ascending: false })
-        .limit(50),
-    ])
+    const makerRes = await supabase.from('food_makers').select('*').eq('user_id', user.id).single()
 
     if (makerRes.data) {
       setMaker(makerRes.data)
-      const myOrders = (ordersRes.data ?? []).filter(
-        (o) => o.maker_id === makerRes.data.id &&
-          ACTIVE_STATUSES.includes(o.status as OrderStatus)
-      )
-      setOrders(myOrders as OrderWithItems[])
+      const ordersRes = await supabase
+        .from('orders')
+        .select('*, order_items(quantity, menu_item:menu_items(name))')
+        .eq('maker_id', makerRes.data.id)
+        .in('status', ACTIVE_STATUSES)
+        .order('created_at', { ascending: false })
+        .limit(50)
+      setOrders((ordersRes.data ?? []) as OrderWithItems[])
     }
     setLoading(false)
   }, [router])
