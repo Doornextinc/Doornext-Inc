@@ -82,15 +82,15 @@ export default function MenuPage() {
   }, {})
 
   return (
-    <div className="flex flex-col min-h-full bg-[#F5F4F2]">
-      <header className="sticky top-0 z-40 bg-white border-b border-[#EBEBEB] flex items-center justify-between px-4 h-[60px]">
+    <div className="flex flex-col min-h-full bg-gray-50">
+      <header className="sticky top-0 z-40 bg-white border-b border-gray-100 flex items-center justify-between px-4 h-[60px]">
         <div>
-          <h1 className="text-[18px] font-black text-[#111]">Menu</h1>
-          {!loading && <p className="text-xs text-[#999]">{items.length} items</p>}
+          <h1 className="text-[18px] font-black text-gray-900">Menu</h1>
+          {!loading && <p className="text-xs text-gray-400">{items.length} items</p>}
         </div>
         <button
           onClick={openAdd}
-          className="flex items-center gap-1.5 bg-[#111] text-white px-4 py-2 rounded-xl text-sm font-bold active:bg-[#333] transition-colors"
+          className="flex items-center gap-1.5 bg-[#FF6B35] hover:bg-[#E55A24] text-white px-4 py-2 rounded-xl text-sm font-bold active:opacity-90 transition-colors shadow-sm shadow-[#FF6B35]/30"
         >
           <Plus size={15} strokeWidth={2.5} />
           Add Item
@@ -103,12 +103,15 @@ export default function MenuPage() {
         </div>
       ) : items.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-28 text-center px-6">
-          <div className="w-20 h-20 rounded-3xl bg-white border border-[#EBEBEB] flex items-center justify-center mb-5">
+          <div className="w-20 h-20 rounded-3xl bg-orange-50 border border-orange-100 flex items-center justify-center mb-5">
             <span className="text-4xl">🍽️</span>
           </div>
-          <h3 className="text-xl font-black text-[#222]">Menu is empty</h3>
-          <p className="text-[#AAA] text-sm mt-1.5 mb-6">Add your first dish to get started</p>
-          <button onClick={openAdd} className="bg-[#111] text-white px-6 py-3 rounded-2xl font-bold text-sm">
+          <h3 className="text-xl font-black text-gray-900">Menu is empty</h3>
+          <p className="text-gray-400 text-sm mt-1.5 mb-6">Add your first dish to get started</p>
+          <button
+            onClick={openAdd}
+            className="bg-[#FF6B35] hover:bg-[#E55A24] text-white px-6 py-3 rounded-2xl font-bold text-sm shadow-md shadow-[#FF6B35]/30 transition-colors"
+          >
             Add First Item
           </button>
         </div>
@@ -116,18 +119,18 @@ export default function MenuPage() {
         <div className="p-4 space-y-5">
           {Object.entries(byCategory).map(([category, categoryItems]) => (
             <section key={category}>
-              <p className="text-[11px] font-black text-[#AAA] uppercase tracking-widest px-1 mb-2">
+              <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1 mb-2">
                 {category} · {categoryItems.length}
               </p>
-              <div className="bg-white rounded-2xl border border-[#EBEBEB] divide-y divide-[#F5F4F2] overflow-hidden">
+              <div className="bg-white rounded-2xl border border-gray-100 divide-y divide-gray-50 overflow-hidden">
                 {categoryItems.map((item) => (
                   <div key={item.id} className="flex items-center gap-3 px-4 py-3.5">
-                    {/* Availability toggle — pill style */}
+                    {/* Availability toggle */}
                     <button
                       onClick={() => toggleAvailability(item)}
                       disabled={toggling === item.id}
                       className={`relative w-10 h-6 rounded-full transition-colors flex-shrink-0 disabled:opacity-50 ${
-                        item.is_available ? 'bg-[#111]' : 'bg-[#DADADA]'
+                        item.is_available ? 'bg-[#FF6B35]' : 'bg-gray-200'
                       }`}
                     >
                       <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all ${
@@ -137,22 +140,22 @@ export default function MenuPage() {
 
                     {/* Info */}
                     <div className="flex-1 min-w-0">
-                      <p className={`font-bold text-sm leading-tight ${!item.is_available ? 'text-[#CCC]' : 'text-[#111]'}`}>
+                      <p className={`font-bold text-sm leading-tight ${!item.is_available ? 'text-gray-300' : 'text-gray-900'}`}>
                         {item.name}
                       </p>
                       <div className="flex items-center gap-2 mt-0.5">
-                        <span className={`text-sm font-black ${item.is_available ? 'text-[#111]' : 'text-[#CCC]'}`}>
+                        <span className={`text-sm font-black ${item.is_available ? 'text-[#FF6B35]' : 'text-gray-300'}`}>
                           ${item.price.toFixed(2)}
                         </span>
                         {item.prep_time_mins > 0 && (
-                          <span className="text-xs text-[#BBB]">· {item.prep_time_mins} min</span>
+                          <span className="text-xs text-gray-300">· {item.prep_time_mins} min</span>
                         )}
                         {item.daily_limit !== null && (
                           <span className="text-xs text-amber-500">· Limit {item.daily_limit}</span>
                         )}
                       </div>
                       {item.description && (
-                        <p className="text-xs text-[#BBB] truncate mt-0.5">{item.description}</p>
+                        <p className="text-xs text-gray-300 truncate mt-0.5">{item.description}</p>
                       )}
                     </div>
 
@@ -160,9 +163,9 @@ export default function MenuPage() {
                     <div className="flex items-center gap-1.5 flex-shrink-0">
                       <button
                         onClick={() => openEdit(item)}
-                        className="w-8 h-8 rounded-xl bg-[#F5F4F2] flex items-center justify-center active:bg-[#EBEBEB]"
+                        className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center active:bg-gray-100"
                       >
-                        <Pencil size={13} className="text-[#666]" />
+                        <Pencil size={13} className="text-gray-500" />
                       </button>
                       <button
                         onClick={() => handleDelete(item)}

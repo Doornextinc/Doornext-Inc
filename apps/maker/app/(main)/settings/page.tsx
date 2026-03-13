@@ -60,7 +60,7 @@ export default function SettingsPage() {
   }
 
   const handleChangePassword = async () => {
-    if (password.new !== password.confirm) { flash('err', 'Passwords don\'t match'); return }
+    if (password.new !== password.confirm) { flash('err', "Passwords don't match"); return }
     if (password.new.length < 6) { flash('err', 'Password must be at least 6 characters'); return }
     setChangingPassword(true)
     const supabase = createClient()
@@ -78,9 +78,9 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col min-h-full bg-[#F5F4F2]">
-        <div className="bg-white px-4 h-[60px] flex items-center border-b border-[#EBEBEB]">
-          <div className="h-5 bg-[#EBEBEB] rounded w-20 animate-pulse" />
+      <div className="flex flex-col min-h-full bg-gray-50">
+        <div className="bg-white px-4 h-[60px] flex items-center border-b border-gray-100">
+          <div className="h-5 bg-gray-100 rounded w-20 animate-pulse" />
         </div>
         <div className="p-4 space-y-3">
           {[1, 2, 3].map(i => <div key={i} className="h-32 bg-white rounded-2xl animate-pulse" />)}
@@ -89,19 +89,22 @@ export default function SettingsPage() {
     )
   }
 
+  const inputClass = "w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-3 text-sm text-gray-900 focus:outline-none focus:border-[#FF6B35] transition-colors"
+
   return (
-    <div className="flex flex-col min-h-full bg-[#F5F4F2]">
-      <header className="sticky top-0 z-40 bg-white border-b border-[#EBEBEB] px-4 h-[60px] flex items-center gap-3">
-        <button onClick={() => router.back()} className="w-9 h-9 rounded-xl bg-[#F5F4F2] flex items-center justify-center flex-shrink-0">
-          <ChevronLeft size={18} className="text-[#555]" />
+    <div className="flex flex-col min-h-full bg-gray-50">
+      <header className="sticky top-0 z-40 bg-white border-b border-gray-100 px-4 h-[60px] flex items-center gap-3">
+        <button onClick={() => router.back()} className="w-9 h-9 rounded-xl bg-gray-50 flex items-center justify-center flex-shrink-0">
+          <ChevronLeft size={18} className="text-gray-500" />
         </button>
-        <h1 className="text-[18px] font-black text-[#111]">Settings</h1>
+        <h1 className="text-[18px] font-black text-gray-900">Settings</h1>
       </header>
 
-      {/* Flash message */}
       {msg && (
         <div className={`mx-4 mt-4 px-4 py-3 rounded-2xl text-sm font-semibold ${
-          msg.type === 'ok' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-red-50 text-red-600 border border-red-100'
+          msg.type === 'ok'
+            ? 'bg-orange-50 text-[#FF6B35] border border-orange-100'
+            : 'bg-red-50 text-red-600 border border-red-100'
         }`}>
           {msg.text}
         </div>
@@ -111,42 +114,42 @@ export default function SettingsPage() {
 
         {/* Kitchen Profile */}
         <section>
-          <p className="text-[11px] font-black text-[#AAA] uppercase tracking-widest px-1 mb-2 flex items-center gap-2">
+          <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1 mb-2 flex items-center gap-2">
             <User size={11} /> Kitchen Profile
           </p>
-          <div className="bg-white rounded-2xl border border-[#EBEBEB] p-4 space-y-3">
+          <div className="bg-white rounded-2xl border border-gray-100 p-4 space-y-3">
             <div>
-              <label className="block text-xs font-bold text-[#666] mb-1.5 uppercase tracking-wide">Kitchen Name</label>
+              <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Kitchen Name</label>
               <input
                 type="text"
                 value={profile.display_name}
                 onChange={e => setProfile(p => ({ ...p, display_name: e.target.value }))}
-                className="w-full bg-[#F8F7F5] border border-[#E8E8E8] rounded-xl px-3.5 py-3 text-sm text-[#111] focus:outline-none focus:border-[#111] transition-colors"
+                className={inputClass}
                 placeholder="Jane's Kitchen"
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-[#666] mb-1.5 uppercase tracking-wide">Bio</label>
+              <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Bio</label>
               <textarea
                 value={profile.bio}
                 onChange={e => setProfile(p => ({ ...p, bio: e.target.value }))}
                 rows={3}
-                className="w-full bg-[#F8F7F5] border border-[#E8E8E8] rounded-xl px-3.5 py-3 text-sm text-[#111] focus:outline-none focus:border-[#111] transition-colors resize-none"
+                className={`${inputClass} resize-none`}
                 placeholder="Tell customers about your kitchen…"
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-[#666] mb-1.5 uppercase tracking-wide">Email</label>
+              <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Email</label>
               <input
                 disabled
                 value={email}
-                className="w-full bg-[#F0F0F0] border border-[#E8E8E8] rounded-xl px-3.5 py-3 text-sm text-[#AAA]"
+                className="w-full bg-gray-100 border border-gray-100 rounded-xl px-3.5 py-3 text-sm text-gray-400"
               />
             </div>
             <button
               onClick={handleSaveProfile}
               disabled={saving}
-              className="w-full bg-[#111] text-white rounded-xl py-3 font-bold text-sm disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full bg-[#FF6B35] hover:bg-[#E55A24] text-white rounded-xl py-3 font-bold text-sm disabled:opacity-50 flex items-center justify-center gap-2 transition-colors shadow-sm shadow-[#FF6B35]/30"
             >
               {saving && <Loader2 size={14} className="animate-spin" />}
               Save Changes
@@ -156,22 +159,22 @@ export default function SettingsPage() {
 
         {/* Notifications */}
         <section>
-          <p className="text-[11px] font-black text-[#AAA] uppercase tracking-widest px-1 mb-2 flex items-center gap-2">
+          <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1 mb-2 flex items-center gap-2">
             <Bell size={11} /> Notifications
           </p>
-          <div className="bg-white rounded-2xl border border-[#EBEBEB] divide-y divide-[#F5F4F2]">
+          <div className="bg-white rounded-2xl border border-gray-100 divide-y divide-gray-50">
             {[
               { key: 'newOrders' as const, label: 'New order alerts', desc: 'Notify when a new order arrives' },
               { key: 'soundEnabled' as const, label: 'Sound alerts', desc: 'Play a sound for new orders' },
             ].map(({ key, label, desc }) => (
               <div key={key} className="flex items-center justify-between px-4 py-3.5">
                 <div>
-                  <p className="text-sm font-semibold text-[#111]">{label}</p>
-                  <p className="text-xs text-[#AAA] mt-0.5">{desc}</p>
+                  <p className="text-sm font-semibold text-gray-900">{label}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{desc}</p>
                 </div>
                 <button
                   onClick={() => setNotifications(n => ({ ...n, [key]: !n[key] }))}
-                  className={`relative w-11 h-6 rounded-full transition-colors ${notifications[key] ? 'bg-[#111]' : 'bg-[#DADADA]'}`}
+                  className={`relative w-11 h-6 rounded-full transition-colors ${notifications[key] ? 'bg-[#FF6B35]' : 'bg-gray-200'}`}
                 >
                   <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all ${notifications[key] ? 'left-6' : 'left-1'}`} />
                 </button>
@@ -182,34 +185,34 @@ export default function SettingsPage() {
 
         {/* Security */}
         <section>
-          <p className="text-[11px] font-black text-[#AAA] uppercase tracking-widest px-1 mb-2 flex items-center gap-2">
+          <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1 mb-2 flex items-center gap-2">
             <Lock size={11} /> Security
           </p>
-          <div className="bg-white rounded-2xl border border-[#EBEBEB] p-4 space-y-3">
+          <div className="bg-white rounded-2xl border border-gray-100 p-4 space-y-3">
             <div>
-              <label className="block text-xs font-bold text-[#666] mb-1.5 uppercase tracking-wide">New Password</label>
+              <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">New Password</label>
               <input
                 type="password"
                 value={password.new}
                 onChange={e => setPassword(p => ({ ...p, new: e.target.value }))}
-                className="w-full bg-[#F8F7F5] border border-[#E8E8E8] rounded-xl px-3.5 py-3 text-sm text-[#111] focus:outline-none focus:border-[#111] transition-colors"
+                className={inputClass}
                 placeholder="••••••••"
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-[#666] mb-1.5 uppercase tracking-wide">Confirm Password</label>
+              <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Confirm Password</label>
               <input
                 type="password"
                 value={password.confirm}
                 onChange={e => setPassword(p => ({ ...p, confirm: e.target.value }))}
-                className="w-full bg-[#F8F7F5] border border-[#E8E8E8] rounded-xl px-3.5 py-3 text-sm text-[#111] focus:outline-none focus:border-[#111] transition-colors"
+                className={inputClass}
                 placeholder="••••••••"
               />
             </div>
             <button
               onClick={handleChangePassword}
               disabled={changingPassword || !password.new}
-              className="w-full bg-[#111] text-white rounded-xl py-3 font-bold text-sm disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full bg-[#FF6B35] hover:bg-[#E55A24] text-white rounded-xl py-3 font-bold text-sm disabled:opacity-50 flex items-center justify-center gap-2 transition-colors shadow-sm shadow-[#FF6B35]/30"
             >
               {changingPassword && <Loader2 size={14} className="animate-spin" />}
               Change Password
@@ -217,17 +220,17 @@ export default function SettingsPage() {
           </div>
         </section>
 
-        {/* Danger zone */}
+        {/* Account */}
         <section>
-          <p className="text-[11px] font-black text-[#AAA] uppercase tracking-widest px-1 mb-2 flex items-center gap-2">
+          <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1 mb-2 flex items-center gap-2">
             <Shield size={11} /> Account
           </p>
-          <div className="bg-white rounded-2xl border border-[#EBEBEB] divide-y divide-[#F5F4F2]">
+          <div className="bg-white rounded-2xl border border-gray-100 divide-y divide-gray-50">
             <button onClick={handleSignOut} className="w-full flex items-center gap-3 px-4 py-3.5 text-left">
-              <div className="w-8 h-8 rounded-xl bg-[#F5F4F2] flex items-center justify-center">
-                <Shield size={14} className="text-[#666]" />
+              <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center">
+                <Shield size={14} className="text-gray-500" />
               </div>
-              <span className="text-sm font-semibold text-[#111] flex-1">Sign Out</span>
+              <span className="text-sm font-semibold text-gray-900 flex-1">Sign Out</span>
             </button>
             <button
               onClick={() => alert('Contact support@doornext.com to delete your account.')}
@@ -244,7 +247,7 @@ export default function SettingsPage() {
       </div>
 
       <div className="py-8 text-center">
-        <p className="text-xs text-[#DDD]">Doornext Maker v1.0.0</p>
+        <p className="text-xs text-gray-200">Doornext Maker v1.0.0</p>
       </div>
     </div>
   )

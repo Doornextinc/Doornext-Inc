@@ -43,16 +43,16 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F4F2] flex flex-col items-center justify-center px-5">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-white flex flex-col items-center justify-center px-5">
       <div className="w-full max-w-sm">
 
         {/* Logo */}
         <div className="text-center mb-10">
-          <div className="w-14 h-14 rounded-2xl bg-[#111] flex items-center justify-center mx-auto mb-5">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#FF6B35] to-[#FF8C5A] flex items-center justify-center mx-auto mb-5 shadow-lg shadow-[#FF6B35]/25">
             <span className="text-white font-black text-xl">D</span>
           </div>
-          <h1 className="text-2xl font-black text-[#111]">Welcome back</h1>
-          <p className="text-[#999] text-sm mt-1">Sign in to your kitchen dashboard</p>
+          <h1 className="text-2xl font-black text-gray-900">Welcome back</h1>
+          <p className="text-gray-400 text-sm mt-1">Sign in to your kitchen dashboard</p>
         </div>
 
         {error && (
@@ -63,40 +63,40 @@ export default function LoginPage() {
 
         <form onSubmit={handleLogin} className="space-y-3">
           <div>
-            <label className="block text-xs font-bold text-[#666] mb-1.5 uppercase tracking-wide">Email</label>
+            <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full bg-white border border-[#E8E8E8] rounded-xl px-4 py-3.5 text-[15px] text-[#111] focus:outline-none focus:border-[#111] transition-colors"
+              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 text-[15px] text-gray-900 focus:outline-none focus:border-[#FF6B35] transition-colors"
               placeholder="you@example.com"
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-[#666] mb-1.5 uppercase tracking-wide">Password</label>
+            <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Password</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full bg-white border border-[#E8E8E8] rounded-xl px-4 py-3.5 text-[15px] text-[#111] focus:outline-none focus:border-[#111] transition-colors"
+              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 text-[15px] text-gray-900 focus:outline-none focus:border-[#FF6B35] transition-colors"
               placeholder="••••••••"
             />
           </div>
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#111] text-white rounded-xl py-4 font-black text-[15px] disabled:opacity-50 active:bg-[#333] transition-colors mt-1 flex items-center justify-center gap-2"
+            className="w-full bg-[#FF6B35] hover:bg-[#E55A24] text-white rounded-xl py-4 font-black text-[15px] disabled:opacity-50 active:opacity-90 transition-colors mt-1 flex items-center justify-center gap-2 shadow-lg shadow-[#FF6B35]/25"
           >
             {loading && <Loader2 size={16} className="animate-spin" />}
             {loading ? 'Signing in…' : 'Sign In'}
           </button>
         </form>
 
-        <p className="text-center text-[#AAA] text-sm mt-6">
+        <p className="text-center text-gray-400 text-sm mt-6">
           New maker?{' '}
-          <Link href="/signup" className="text-[#111] font-bold">
+          <Link href="/signup" className="text-[#FF6B35] font-bold hover:underline">
             Apply to sell
           </Link>
         </p>
