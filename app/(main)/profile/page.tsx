@@ -1,26 +1,19 @@
 'use client'
 
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-  User,
-  MapPin,
-  CreditCard,
-  Bell,
-  HelpCircle,
-  LogOut,
-  ChevronRight,
-  Heart,
-  Star,
-  Settings,
+  User, MapPin, CreditCard, Bell, HelpCircle, LogOut, ChevronRight, Heart, Star, Settings,
 } from 'lucide-react'
 import { TopBar } from '@/components/layout/top-bar'
+import { createClient } from '@/lib/supabase/client'
 
-const MOCK_USER = {
-  name: 'Alex Johnson',
-  email: 'alex@example.com',
-  joined: 'March 2026',
-  ordersCount: 24,
-  favoritesCount: 8,
+interface UserProfile {
+  id: string
+  full_name: string
+  email: string | null
+  avatar_url: string | null
+  created_at: string
 }
 
 interface ProfileItemProps {
@@ -41,9 +34,7 @@ function ProfileItem({ icon, label, value, onClick, danger }: ProfileItemProps) 
         <div className={danger ? 'text-red-500' : 'text-gray-600'}>{icon}</div>
       </div>
       <div className="flex-1 text-left">
-        <p className={`text-sm font-semibold ${danger ? 'text-red-500' : 'text-gray-800'}`}>
-          {label}
-        </p>
+        <p className={`text-sm font-semibold ${danger ? 'text-red-500' : 'text-gray-800'}`}>{label}</p>
         {value && <p className="text-xs text-gray-400">{value}</p>}
       </div>
       <ChevronRight size={16} className="text-gray-300" />
@@ -53,6 +44,73 @@ function ProfileItem({ icon, label, value, onClick, danger }: ProfileItemProps) 
 
 export default function ProfilePage() {
   const router = useRouter()
+  const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [stats, setStats] = useState({ orders: 0, favorites: 0, reviews: 0 })
+  const [loading, setLoading] = useState(true)
+
+  const loadProfile = useCallback(async () => {
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { router.push('/login'); return }
+
+      const [profileRes, ordersRes, favRes, reviewsRes] = await Promise.all([
+        supabase.from('users').select('*').eq('id', user.id).single(),
+        supabase.from('orders').select('id', { count: 'exact', head: true }).eq('customer_id', user.id),
+        supabase.from('favorites').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
+        supabase.from('reviews').select('id', { count: 'exact', head: true }).eq('customer_id', user.id),
+      ])
+
+      if (profileRes.data) {
+        setProfile({
+          id: user.id,
+          full_name: profileRes.data.full_name || user.email?.split('@')[0] || 'Customer',
+          email: profileRes.data.email || user.email,
+          avatar_url: profileRes.data.avatar_url,
+          created_at: profileRes.data.created_at,
+        })
+      }
+
+      setStats({
+        orders: ordersRes.count ?? 0,
+        favorites: favRes.count ?? 0,
+        reviews: reviewsRes.count ?? 0,
+      })
+    } catch (e) {
+      console.error('Failed to load profile:', e)
+    } finally {
+      setLoading(false)
+    }
+  }, [router])
+
+  useEffect(() => { loadProfile() }, [loadProfile])
+
+  const handleSignOut = async () => {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/login')
+  }
+
+  const memberSince = profile?.created_at
+    ? new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+    : ''
+
+  if (loading) {
+    return (
+      <div className="flex flex-col min-h-full bg-[#f8f8f8]">
+        <TopBar title="Profile" showCart={false} showNotifications={false} />
+        <div className="bg-white px-4 py-6 mb-3 animate-pulse">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-2xl bg-gray-200" />
+            <div className="space-y-2">
+              <div className="h-5 bg-gray-200 rounded w-32" />
+              <div className="h-4 bg-gray-200 rounded w-40" />
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col min-h-full bg-[#f8f8f8]">
@@ -62,23 +120,28 @@ export default function ProfilePage() {
       <div className="bg-white px-4 py-6 mb-3">
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#FF6B35] to-[#FF8C5A] flex items-center justify-center">
-            <span className="text-white text-2xl font-black">
-              {MOCK_USER.name[0]}
-            </span>
+            {profile?.avatar_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={profile.avatar_url} alt="" className="w-full h-full object-cover rounded-2xl" />
+            ) : (
+              <span className="text-white text-2xl font-black">
+                {(profile?.full_name?.[0] ?? 'U').toUpperCase()}
+              </span>
+            )}
           </div>
           <div>
-            <h2 className="text-xl font-black text-gray-900">{MOCK_USER.name}</h2>
-            <p className="text-sm text-gray-400">{MOCK_USER.email}</p>
-            <p className="text-xs text-gray-300 mt-0.5">Member since {MOCK_USER.joined}</p>
+            <h2 className="text-xl font-black text-gray-900">{profile?.full_name}</h2>
+            <p className="text-sm text-gray-400">{profile?.email}</p>
+            {memberSince && <p className="text-xs text-gray-300 mt-0.5">Member since {memberSince}</p>}
           </div>
         </div>
 
         {/* Stats */}
         <div className="flex gap-4 mt-5">
           {[
-            { label: 'Orders', value: MOCK_USER.ordersCount, icon: '📦' },
-            { label: 'Favorites', value: MOCK_USER.favoritesCount, icon: '❤️' },
-            { label: 'Reviews', value: 12, icon: '⭐' },
+            { label: 'Orders', value: stats.orders, icon: '📦' },
+            { label: 'Favorites', value: stats.favorites, icon: '❤️' },
+            { label: 'Reviews', value: stats.reviews, icon: '⭐' },
           ].map(({ label, value, icon }) => (
             <div key={label} className="flex-1 bg-gray-50 rounded-xl p-3 text-center">
               <span className="text-xl">{icon}</span>
@@ -89,51 +152,34 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Menu sections */}
+      {/* Account Section */}
       <div className="bg-white mb-3 divide-y divide-gray-50">
         <div className="px-4 py-3">
           <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Account</p>
         </div>
-        <ProfileItem
-          icon={<User size={18} />}
-          label="Personal Info"
-          value={MOCK_USER.name}
-        />
-        <ProfileItem
-          icon={<MapPin size={18} />}
-          label="Saved Addresses"
-          value="2 addresses"
-        />
-        <ProfileItem
-          icon={<CreditCard size={18} />}
-          label="Payment Methods"
-          value="Visa ••••4242"
-        />
+        <ProfileItem icon={<User size={18} />} label="Personal Info" value={profile?.full_name} />
+        <ProfileItem icon={<MapPin size={18} />} label="Saved Addresses" />
+        <ProfileItem icon={<CreditCard size={18} />} label="Payment Methods" />
       </div>
 
+      {/* Preferences Section */}
       <div className="bg-white mb-3 divide-y divide-gray-50">
         <div className="px-4 py-3">
           <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Preferences</p>
         </div>
-        <ProfileItem icon={<Heart size={18} />} label="Favorite Makers" value="8 saved" />
-        <ProfileItem icon={<Star size={18} />} label="My Reviews" value="12 reviews" />
+        <ProfileItem icon={<Heart size={18} />} label="Favorite Makers" value={`${stats.favorites} saved`} />
+        <ProfileItem icon={<Star size={18} />} label="My Reviews" value={`${stats.reviews} reviews`} />
         <ProfileItem icon={<Bell size={18} />} label="Notifications" />
-        <ProfileItem icon={<Settings size={18} />} label="App Settings" />
+        <ProfileItem icon={<Settings size={18} />} label="App Settings" onClick={() => router.push('/profile/settings')} />
       </div>
 
+      {/* Support Section */}
       <div className="bg-white mb-3 divide-y divide-gray-50">
         <div className="px-4 py-3">
           <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Support</p>
         </div>
         <ProfileItem icon={<HelpCircle size={18} />} label="Help & Support" />
-        <ProfileItem
-          icon={<LogOut size={18} />}
-          label="Sign Out"
-          danger
-          onClick={() => {
-            // Handle sign out
-          }}
-        />
+        <ProfileItem icon={<LogOut size={18} />} label="Sign Out" danger onClick={handleSignOut} />
       </div>
 
       <div className="px-4 py-6 text-center">

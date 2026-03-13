@@ -1,43 +1,80 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { Search, X } from 'lucide-react'
-import { MOCK_MAKERS, MOCK_MENU_ITEMS } from '@/lib/mock-data'
+import { createClient } from '@/lib/supabase/client'
 import { MakerCard } from '@/components/home/maker-card'
+import type { FoodMaker, MenuItem } from '@/types'
+
+const USER_LAT = 40.6782
+const USER_LNG = -73.9442
+
+function haversine(lat1: number, lng1: number, lat2: number, lng2: number) {
+  const R = 6371
+  const dLat = ((lat2 - lat1) * Math.PI) / 180
+  const dLng = ((lng2 - lng1) * Math.PI) / 180
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+interface DishResult {
+  item: MenuItem
+  maker: FoodMaker
+}
 
 export default function SearchPage() {
+  const router = useRouter()
   const [query, setQuery] = useState('')
+  const [makers, setMakers] = useState<FoodMaker[]>([])
+  const [dishes, setDishes] = useState<DishResult[]>([])
+  const [loading, setLoading] = useState(false)
 
-  const results = useMemo(() => {
-    if (!query.trim()) return { makers: [], items: [] }
-    const q = query.toLowerCase()
+  const doSearch = useCallback(async (q: string) => {
+    if (!q.trim()) { setMakers([]); setDishes([]); return }
+    setLoading(true)
+    try {
+      const supabase = createClient()
+      const term = `%${q.trim()}%`
 
-    const makers = MOCK_MAKERS.filter(
-      (m) =>
-        m.display_name.toLowerCase().includes(q) ||
-        m.cuisine_tags.some((t) => t.toLowerCase().includes(q)) ||
-        m.bio?.toLowerCase().includes(q)
-    )
+      const [makersRes, itemsRes] = await Promise.all([
+        supabase
+          .from('food_makers')
+          .select('*')
+          .or(`display_name.ilike.${term},bio.ilike.${term},cuisine_tags.cs.{${q.trim()}}`)
+          .limit(10),
+        supabase
+          .from('menu_items')
+          .select('*, food_maker:food_makers(*)')
+          .or(`name.ilike.${term},description.ilike.${term}`)
+          .eq('is_available', true)
+          .limit(20),
+      ])
 
-    const items: Array<{ item: typeof MOCK_MENU_ITEMS['1'][0]; maker: typeof MOCK_MAKERS[0] }> = []
-    for (const [makerId, menuItems] of Object.entries(MOCK_MENU_ITEMS)) {
-      const maker = MOCK_MAKERS.find((m) => m.id === makerId)
-      if (!maker) continue
-      for (const item of menuItems) {
-        if (
-          item.name.toLowerCase().includes(q) ||
-          item.description?.toLowerCase().includes(q) ||
-          item.dietary_tags.some((t) => t.toLowerCase().includes(q))
-        ) {
-          items.push({ item, maker })
-        }
-      }
+      const makersWithDist = (makersRes.data ?? []).map((m) => ({
+        ...m,
+        distance_km: parseFloat(haversine(USER_LAT, USER_LNG, m.lat, m.lng).toFixed(1)),
+      }))
+      setMakers(makersWithDist as FoodMaker[])
+
+      const dishResults: DishResult[] = (itemsRes.data ?? []).map((row) => ({
+        item: { ...row, food_maker: undefined } as MenuItem,
+        maker: row.food_maker as FoodMaker,
+      })).filter((r) => r.maker)
+      setDishes(dishResults)
+    } catch (e) {
+      console.error('Search failed:', e)
+    } finally {
+      setLoading(false)
     }
+  }, [])
 
-    return { makers, items }
-  }, [query])
+  useEffect(() => {
+    const timer = setTimeout(() => { doSearch(query) }, 300)
+    return () => clearTimeout(timer)
+  }, [query, doSearch])
 
-  const hasResults = results.makers.length > 0 || results.items.length > 0
+  const hasResults = makers.length > 0 || dishes.length > 0
 
   return (
     <div className="flex flex-col min-h-full bg-[#f8f8f8]">
@@ -45,10 +82,7 @@ export default function SearchPage() {
       <div className="bg-white px-4 pt-4 pb-3 sticky top-0 z-10 border-b border-gray-100">
         <h1 className="text-xl font-black text-gray-900 mb-3">Search</h1>
         <div className="relative">
-          <Search
-            size={18}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-          />
+          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             value={query}
@@ -58,10 +92,7 @@ export default function SearchPage() {
             autoFocus
           />
           {query && (
-            <button
-              onClick={() => setQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
-            >
+            <button onClick={() => setQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
               <X size={16} />
             </button>
           )}
@@ -76,7 +107,13 @@ export default function SearchPage() {
           </div>
         )}
 
-        {query.trim() && !hasResults && (
+        {loading && (
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => <div key={i} className="h-24 bg-white rounded-xl animate-pulse" />)}
+          </div>
+        )}
+
+        {!loading && query.trim() && !hasResults && (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <span className="text-5xl mb-4">😔</span>
             <h3 className="text-lg font-bold text-gray-700">No results</h3>
@@ -84,29 +121,24 @@ export default function SearchPage() {
           </div>
         )}
 
-        {results.makers.length > 0 && (
+        {!loading && makers.length > 0 && (
           <section className="mb-6">
-            <h2 className="font-bold text-gray-700 text-sm mb-3">
-              Food Makers ({results.makers.length})
-            </h2>
+            <h2 className="font-bold text-gray-700 text-sm mb-3">Food Makers ({makers.length})</h2>
             <div className="space-y-4">
-              {results.makers.map((maker) => (
-                <MakerCard key={maker.id} maker={maker} />
-              ))}
+              {makers.map((maker) => <MakerCard key={maker.id} maker={maker} />)}
             </div>
           </section>
         )}
 
-        {results.items.length > 0 && (
+        {!loading && dishes.length > 0 && (
           <section>
-            <h2 className="font-bold text-gray-700 text-sm mb-3">
-              Dishes ({results.items.length})
-            </h2>
+            <h2 className="font-bold text-gray-700 text-sm mb-3">Dishes ({dishes.length})</h2>
             <div className="space-y-3">
-              {results.items.map(({ item, maker }) => (
-                <div
+              {dishes.map(({ item, maker }) => (
+                <button
                   key={item.id}
-                  className="bg-white rounded-xl p-3 flex gap-3 shadow-sm border border-gray-100"
+                  onClick={() => router.push(`/maker/${maker.id}`)}
+                  className="w-full bg-white rounded-xl p-3 flex gap-3 shadow-sm border border-gray-100 text-left active:bg-gray-50 transition-colors"
                 >
                   <div className="w-14 h-14 rounded-xl bg-orange-50 flex items-center justify-center text-2xl flex-shrink-0">
                     🍽️
@@ -114,11 +146,12 @@ export default function SearchPage() {
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-gray-900 text-sm">{item.name}</p>
                     <p className="text-xs text-gray-400 truncate">{maker.display_name}</p>
-                    <p className="text-sm font-bold text-[#FF6B35] mt-1">
-                      ${item.price.toFixed(2)}
-                    </p>
+                    {item.description && (
+                      <p className="text-xs text-gray-400 truncate mt-0.5">{item.description}</p>
+                    )}
+                    <p className="text-sm font-bold text-[#FF6B35] mt-1">${item.price.toFixed(2)}</p>
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           </section>

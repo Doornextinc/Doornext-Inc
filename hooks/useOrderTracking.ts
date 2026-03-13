@@ -3,76 +3,62 @@
 import { useEffect, useState } from 'react'
 import type { OrderStatus, NexterLocation } from '@/types'
 
-interface OrderUpdate {
-  status: OrderStatus
-  updated_at: string
-}
-
-export function useOrderTracking(orderId: string) {
-  const [status, setStatus] = useState<OrderStatus>('confirmed')
+export function useOrderTracking(orderId: string, nexterId?: string | null) {
+  const [status, setStatus] = useState<OrderStatus | null>(null)
   const [nexterLocation, setNexterLocation] = useState<NexterLocation | null>(null)
 
   useEffect(() => {
     if (!orderId) return
-
-    const isSupabaseConfigured =
+    const isConfigured =
       process.env.NEXT_PUBLIC_SUPABASE_URL &&
       !process.env.NEXT_PUBLIC_SUPABASE_URL.includes('placeholder')
+    if (!isConfigured) return
 
-    if (!isSupabaseConfigured) return
-
-    let supabaseClient: ReturnType<typeof import('@/lib/supabase/client').createClient> | null = null
-
+    let cleanup: (() => void) | null = null
     const setup = async () => {
       const { createClient } = await import('@/lib/supabase/client')
-      supabaseClient = createClient()
-
-      // Subscribe to order status changes
-      const orderChannel = supabaseClient
-        .channel(`order:${orderId}`)
+      const supabase = createClient()
+      const orderChannel = supabase
+        .channel(`order-status:${orderId}`)
         .on(
           'postgres_changes',
-          {
-            event: 'UPDATE',
-            schema: 'public',
-            table: 'orders',
-            filter: `id=eq.${orderId}`,
-          },
+          { event: 'UPDATE', schema: 'public', table: 'orders', filter: `id=eq.${orderId}` },
           (payload) => {
-            const update = payload.new as OrderUpdate
-            setStatus(update.status)
+            const updated = payload.new as { status: OrderStatus }
+            setStatus(updated.status)
           }
         )
         .subscribe()
-
-      // Subscribe to nexter location
-      const locationChannel = supabaseClient
-        .channel(`nexter_location:${orderId}`)
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'nexter_locations',
-            filter: `order_id=eq.${orderId}`,
-          },
-          (payload) => {
-            setNexterLocation(payload.new as NexterLocation)
-          }
-        )
-        .subscribe()
-
-      return () => {
-        supabaseClient?.removeChannel(orderChannel)
-        supabaseClient?.removeChannel(locationChannel)
-      }
+      cleanup = () => { supabase.removeChannel(orderChannel) }
     }
-
-    const cleanup = setup()
-    return () => {
-      cleanup.then((fn) => fn?.())
-    }
+    setup().catch(console.error)
+    return () => { cleanup?.() }
   }, [orderId])
+
+  useEffect(() => {
+    if (!nexterId) return
+    const isConfigured =
+      process.env.NEXT_PUBLIC_SUPABASE_URL &&
+      !process.env.NEXT_PUBLIC_SUPABASE_URL.includes('placeholder')
+    if (!isConfigured) return
+
+    let cleanup: (() => void) | null = null
+    const setup = async () => {
+      const { createClient } = await import('@/lib/supabase/client')
+      const supabase = createClient()
+      const channel = supabase
+        .channel(`nexter-loc:${nexterId}`)
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'nexter_locations', filter: `nexter_id=eq.${nexterId}` },
+          (payload) => { setNexterLocation(payload.new as NexterLocation) }
+        )
+        .subscribe()
+      cleanup = () => { supabase.removeChannel(channel) }
+    }
+    setup().catch(console.error)
+    return () => { cleanup?.() }
+  }, [nexterId])
 
   return { status, nexterLocation }
 }

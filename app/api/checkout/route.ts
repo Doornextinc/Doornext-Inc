@@ -1,39 +1,120 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 const PLATFORM_FEE_PCT = 0.05
+const DELIVERY_FEE = 3.99
 
 export async function POST(req: NextRequest) {
   try {
+    // Get authenticated user
+    const cookieStore = await cookies()
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll: () => cookieStore.getAll(),
+          setAll: (cs) => cs.forEach(({ name, value, options }) => {
+            try { cookieStore.set(name, value, options) } catch {}
+          }),
+        },
+      }
+    )
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const body = await req.json()
-    const { items, delivery_fee, tip_amount } = body
+    const { items, maker_id, delivery_address, tip_amount } = body
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ error: 'No items provided' }, { status: 400 })
     }
+    if (!maker_id) {
+      return NextResponse.json({ error: 'maker_id required' }, { status: 400 })
+    }
 
-    // Calculate server-side total (prevents price tampering)
+    // Server-side total calculation (prevents price tampering)
     const subtotal = items.reduce(
       (sum: number, item: { price: number; quantity: number }) =>
         sum + item.price * item.quantity,
       0
     )
     const platformFee = subtotal * PLATFORM_FEE_PCT
-    const total = subtotal + (delivery_fee ?? 3.99) + (tip_amount ?? 0) + platformFee
+    const tip = tip_amount ?? 0
+    const total = subtotal + DELIVERY_FEE + tip + platformFee
 
+    // Create Stripe PaymentIntent
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(total * 100),
       currency: 'usd',
       automatic_payment_methods: { enabled: true },
       metadata: {
+        customer_id: user.id,
+        maker_id,
         item_count: items.length,
-        subtotal_cents: Math.round(subtotal * 100),
+      },
+    })
+
+    // Create order in Supabase using service role (bypass RLS for server-side insert)
+    const serviceSupabase = createServiceClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
+    const { data: order, error: orderError } = await serviceSupabase
+      .from('orders')
+      .insert({
+        customer_id: user.id,
+        maker_id,
+        status: 'pending',
+        subtotal: Math.round(subtotal * 100) / 100,
+        delivery_fee: DELIVERY_FEE,
+        tip_amount: Math.round(tip * 100) / 100,
+        platform_fee: Math.round(platformFee * 100) / 100,
+        total: Math.round(total * 100) / 100,
+        delivery_address: delivery_address ?? { street: 'N/A', city: 'N/A', state: 'NY', zip: '00000' },
+        stripe_payment_intent_id: paymentIntent.id,
+      })
+      .select('id')
+      .single()
+
+    if (orderError || !order) {
+      console.error('Order creation error:', orderError)
+      // Cancel the payment intent to avoid charging without an order
+      await stripe.paymentIntents.cancel(paymentIntent.id)
+      return NextResponse.json({ error: 'Failed to create order' }, { status: 500 })
+    }
+
+    // Create order items
+    const orderItems = items.map((item: { id: string; price: number; quantity: number; notes?: string }) => ({
+      order_id: order.id,
+      menu_item_id: item.id,
+      quantity: item.quantity,
+      unit_price: item.price,
+      customization_notes: item.notes ?? null,
+    }))
+
+    await serviceSupabase.from('order_items').insert(orderItems)
+
+    // Update PaymentIntent metadata with orderId for webhook lookup
+    await stripe.paymentIntents.update(paymentIntent.id, {
+      metadata: {
+        customer_id: user.id,
+        maker_id,
+        order_id: order.id,
+        item_count: items.length,
       },
     })
 
     return NextResponse.json({
       clientSecret: paymentIntent.client_secret,
+      orderId: order.id,
       total: Math.round(total * 100),
       subtotal: Math.round(subtotal * 100),
       platform_fee: Math.round(platformFee * 100),

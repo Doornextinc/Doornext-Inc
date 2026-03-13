@@ -9,8 +9,8 @@ import { createClient } from '@/lib/supabase/client'
 import { MOCK_MAKERS } from '@/lib/mock-data'
 import type { FoodMaker } from '@/types'
 
-const USER_LAT = 40.6782
-const USER_LNG = -73.9442
+const FALLBACK_LAT = 40.6782
+const FALLBACK_LNG = -73.9442
 
 function haversine(lat1: number, lng1: number, lat2: number, lng2: number) {
   const R = 6371
@@ -28,6 +28,29 @@ export default function HomePage() {
   const [selectedCuisine, setSelectedCuisine] = useState('All')
   const [makers, setMakers] = useState<FoodMaker[]>([])
   const [loading, setLoading] = useState(true)
+  const [location, setLocation] = useState<{ lat: number; lng: number; label: string }>({
+    lat: FALLBACK_LAT,
+    lng: FALLBACK_LNG,
+    label: 'Brooklyn, NY',
+  })
+
+  // Get real browser location
+  useEffect(() => {
+    if (!navigator.geolocation) return
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocation({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          label: 'Your Location',
+        })
+      },
+      () => {
+        // Permission denied or error — keep fallback
+      },
+      { timeout: 5000, maximumAge: 300000 }
+    )
+  }, [])
 
   useEffect(() => {
     async function loadMakers() {
@@ -44,7 +67,7 @@ export default function HomePage() {
           const withDistance = data.map((m) => ({
             ...m,
             distance_km: parseFloat(
-              haversine(USER_LAT, USER_LNG, m.lat, m.lng).toFixed(1)
+              haversine(location.lat, location.lng, m.lat, m.lng).toFixed(1)
             ),
           }))
           setMakers(withDistance)
@@ -56,14 +79,12 @@ export default function HomePage() {
       }
     }
     loadMakers()
-  }, [])
+  }, [location.lat, location.lng])
 
   const filteredMakers = useMemo(() => {
     if (selectedCuisine === 'All') return makers
     return makers.filter((m) =>
-      m.cuisine_tags.some(
-        (t) => t.toLowerCase() === selectedCuisine.toLowerCase()
-      )
+      m.cuisine_tags.some((t) => t.toLowerCase() === selectedCuisine.toLowerCase())
     )
   }, [selectedCuisine, makers])
 
@@ -72,7 +93,7 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col min-h-full bg-[#f8f8f8]">
-      <TopBar location="Brooklyn, NY" />
+      <TopBar location={location.label} />
 
       <div className="bg-white px-4 pt-4 pb-2">
         <h2 className="text-2xl font-black text-gray-900">
@@ -97,14 +118,10 @@ export default function HomePage() {
               <section>
                 <h3 className="font-bold text-gray-900 text-base mb-3">
                   Open Now{' '}
-                  <span className="text-[#FF6B35] text-sm font-semibold">
-                    {openMakers.length}
-                  </span>
+                  <span className="text-[#FF6B35] text-sm font-semibold">{openMakers.length}</span>
                 </h3>
                 <div className="grid grid-cols-1 gap-4">
-                  {openMakers.map((maker) => (
-                    <MakerCard key={maker.id} maker={maker} />
-                  ))}
+                  {openMakers.map((maker) => <MakerCard key={maker.id} maker={maker} />)}
                 </div>
               </section>
             )}
@@ -113,9 +130,7 @@ export default function HomePage() {
               <section>
                 <h3 className="font-bold text-gray-400 text-base mb-3">Currently Closed</h3>
                 <div className="grid grid-cols-1 gap-4 opacity-60">
-                  {closedMakers.map((maker) => (
-                    <MakerCard key={maker.id} maker={maker} />
-                  ))}
+                  {closedMakers.map((maker) => <MakerCard key={maker.id} maker={maker} />)}
                 </div>
               </section>
             )}
