@@ -5,22 +5,22 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { StatusBadge } from '@doornext/ui/badge'
 import type { Order, OrderStatus } from '@doornext/shared/types'
+import { ChevronRight } from 'lucide-react'
 
 type OrderRow = Pick<Order, 'id' | 'status' | 'total' | 'created_at'> & {
   order_items: Array<{ quantity: number; menu_item: { name: string } | null }>
 }
 
 const FILTER_TABS: Array<{ label: string; statuses: OrderStatus[] | null }> = [
-  { label: 'Active', statuses: ['pending', 'confirmed', 'preparing', 'ready'] },
-  { label: 'Done', statuses: ['delivered'] },
-  { label: 'Cancelled', statuses: ['cancelled'] },
-  { label: 'All', statuses: null },
+  { label: 'Active',     statuses: ['pending', 'confirmed', 'preparing', 'ready'] },
+  { label: 'Done',       statuses: ['delivered'] },
+  { label: 'Cancelled',  statuses: ['cancelled'] },
+  { label: 'All',        statuses: null },
 ]
 
 export default function OrdersPage() {
   const router = useRouter()
   const [orders, setOrders] = useState<OrderRow[]>([])
-  const [makerId, setMakerId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState(0)
   const [loading, setLoading] = useState(true)
 
@@ -33,8 +33,6 @@ export default function OrdersPage() {
       const { data: maker } = await supabase
         .from('food_makers').select('id').eq('user_id', user.id).single()
       if (!maker) return
-
-      setMakerId(maker.id)
 
       const { data } = await supabase
         .from('orders')
@@ -55,40 +53,54 @@ export default function OrdersPage() {
     : orders
 
   return (
-    <div className="flex flex-col min-h-full bg-[#f8f8f8]">
-      <header className="sticky top-0 z-40 bg-white border-b border-gray-100">
-        <div className="flex items-center px-4 h-14">
-          <h1 className="text-lg font-bold text-gray-900">Orders</h1>
+    <div className="flex flex-col min-h-full bg-[#F5F4F2]">
+      <header className="sticky top-0 z-40 bg-white border-b border-[#EBEBEB]">
+        <div className="flex items-center px-4 h-[60px]">
+          <h1 className="text-[18px] font-black text-[#111]">Orders</h1>
+          {!loading && (
+            <span className="ml-2 text-sm font-semibold text-[#999]">({orders.length})</span>
+          )}
         </div>
         {/* Filter tabs */}
-        <div className="flex gap-1 px-4 pb-3">
-          {FILTER_TABS.map((tab, i) => (
-            <button
-              key={tab.label}
-              onClick={() => setActiveTab(i)}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                activeTab === i
-                  ? 'bg-[#FF6B35] text-white'
-                  : 'bg-gray-100 text-gray-500'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+        <div className="flex gap-2 px-4 pb-3">
+          {FILTER_TABS.map((tab, i) => {
+            const count = tab.statuses
+              ? orders.filter(o => tab.statuses!.includes(o.status as OrderStatus)).length
+              : orders.length
+            return (
+              <button
+                key={tab.label}
+                onClick={() => setActiveTab(i)}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-colors ${
+                  activeTab === i ? 'bg-[#111] text-white' : 'bg-[#F0F0F0] text-[#888]'
+                }`}
+              >
+                {tab.label}
+                {count > 0 && (
+                  <span className={`ml-1.5 text-[10px] ${activeTab === i ? 'opacity-70' : 'text-[#AAA]'}`}>
+                    {count}
+                  </span>
+                )}
+              </button>
+            )
+          })}
         </div>
       </header>
 
       {loading ? (
-        <div className="p-4 space-y-3">
-          {[1, 2, 3, 4].map((i) => <div key={i} className="h-24 bg-white rounded-2xl animate-pulse" />)}
+        <div className="p-4 space-y-2">
+          {[1, 2, 3, 4].map((i) => <div key={i} className="h-20 bg-white rounded-2xl animate-pulse" />)}
         </div>
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 text-center">
-          <span className="text-5xl mb-3">📋</span>
-          <p className="text-gray-500 font-medium">No orders in this category</p>
+          <div className="w-16 h-16 rounded-2xl bg-white border border-[#EBEBEB] flex items-center justify-center mb-4">
+            <span className="text-3xl">📋</span>
+          </div>
+          <p className="font-black text-[#333] text-lg">No orders here</p>
+          <p className="text-[#AAA] text-sm mt-1">Nothing in this category yet</p>
         </div>
       ) : (
-        <div className="p-4 space-y-3">
+        <div className="p-4 space-y-2">
           {filtered.map((order) => {
             const summary = order.order_items
               .map((oi) => `${oi.quantity}× ${oi.menu_item?.name ?? 'Item'}`)
@@ -97,21 +109,24 @@ export default function OrdersPage() {
               <button
                 key={order.id}
                 onClick={() => router.push(`/orders/${order.id}`)}
-                className="w-full bg-white rounded-2xl p-4 text-left shadow-sm border border-gray-100 active:bg-gray-50 transition-colors"
+                className="w-full bg-white rounded-2xl px-4 py-3.5 text-left border border-[#EBEBEB] active:bg-[#FAFAFA] transition-colors flex items-center gap-3"
               >
-                <div className="flex items-center justify-between mb-1.5">
-                  <p className="font-bold text-gray-900 text-sm">#{order.id.slice(-6).toUpperCase()}</p>
-                  <StatusBadge status={order.status} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="font-black text-[#111] text-sm">#{order.id.slice(-6).toUpperCase()}</p>
+                    <StatusBadge status={order.status} />
+                  </div>
+                  <p className="text-xs text-[#888] truncate mb-2">{summary}</p>
+                  <div className="flex items-center justify-between">
+                    <span className="font-black text-[#111] text-base">${order.total.toFixed(2)}</span>
+                    <span className="text-xs text-[#BBB]">
+                      {new Date(order.created_at).toLocaleDateString('en-US', {
+                        month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+                      })}
+                    </span>
+                  </div>
                 </div>
-                <p className="text-xs text-gray-400 truncate mb-2">{summary}</p>
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-gray-900">${order.total.toFixed(2)}</span>
-                  <span className="text-xs text-gray-400">
-                    {new Date(order.created_at).toLocaleDateString('en-US', {
-                      month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
-                    })}
-                  </span>
-                </div>
+                <ChevronRight size={16} className="text-[#CCC] flex-shrink-0" />
               </button>
             )
           })}

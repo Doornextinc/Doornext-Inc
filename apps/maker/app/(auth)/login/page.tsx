@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ChevronLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { Loader2 } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -22,20 +22,15 @@ export default function LoginPage() {
     const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
 
     if (authError) {
-      setError(authError.message)
+      setError('Incorrect email or password.')
       setLoading(false)
       return
     }
 
-    // Verify maker role
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
       const { data: profile } = await supabase
-        .from('users')
-        .select('role')
-        .eq('id', user.id)
-        .single()
-
+        .from('users').select('role').eq('id', user.id).single()
       if (profile?.role !== 'maker') {
         await supabase.auth.signOut()
         setError('This account is not registered as a food maker.')
@@ -44,65 +39,64 @@ export default function LoginPage() {
       }
     }
 
-    router.push('/')
+    router.push('/dashboard')
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6">
+    <div className="min-h-screen bg-[#F5F4F2] flex flex-col items-center justify-center px-5">
       <div className="w-full max-w-sm">
-        <Link href="/welcome" className="inline-flex items-center gap-1.5 text-gray-400 hover:text-gray-700 text-sm mb-8 transition-colors">
-          <ChevronLeft size={16} />
-          Back
-        </Link>
-        <div className="mb-8">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#FF6B35] to-[#FF8C5A] flex items-center justify-center mb-4">
-            <span className="text-white font-black text-lg">D</span>
+
+        {/* Logo */}
+        <div className="text-center mb-10">
+          <div className="w-14 h-14 rounded-2xl bg-[#111] flex items-center justify-center mx-auto mb-5">
+            <span className="text-white font-black text-xl">D</span>
           </div>
-          <h1 className="text-2xl font-black text-gray-900">Welcome back</h1>
-          <p className="text-gray-500 text-sm mt-1">Sign in to your kitchen dashboard</p>
+          <h1 className="text-2xl font-black text-[#111]">Welcome back</h1>
+          <p className="text-[#999] text-sm mt-1">Sign in to your kitchen dashboard</p>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600 text-center">
+          <div className="mb-5 px-4 py-3.5 bg-red-50 border border-red-100 rounded-2xl text-sm text-red-600 font-medium text-center">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form onSubmit={handleLogin} className="space-y-3">
           <div>
-            <label className="text-sm font-medium text-gray-700 block mb-1.5">Email</label>
+            <label className="block text-xs font-bold text-[#666] mb-1.5 uppercase tracking-wide">Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-base focus:border-[#FF6B35] focus:ring-2 focus:ring-[#FF6B35]/20 focus:bg-white transition-all"
+              className="w-full bg-white border border-[#E8E8E8] rounded-xl px-4 py-3.5 text-[15px] text-[#111] focus:outline-none focus:border-[#111] transition-colors"
               placeholder="you@example.com"
             />
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-700 block mb-1.5">Password</label>
+            <label className="block text-xs font-bold text-[#666] mb-1.5 uppercase tracking-wide">Password</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-base focus:border-[#FF6B35] focus:ring-2 focus:ring-[#FF6B35]/20 focus:bg-white transition-all"
+              className="w-full bg-white border border-[#E8E8E8] rounded-xl px-4 py-3.5 text-[15px] text-[#111] focus:outline-none focus:border-[#111] transition-colors"
               placeholder="••••••••"
             />
           </div>
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#FF6B35] text-white rounded-xl py-4 font-bold text-base disabled:opacity-60 active:bg-[#E55A24] transition-colors mt-2"
+            className="w-full bg-[#111] text-white rounded-xl py-4 font-black text-[15px] disabled:opacity-50 active:bg-[#333] transition-colors mt-1 flex items-center justify-center gap-2"
           >
+            {loading && <Loader2 size={16} className="animate-spin" />}
             {loading ? 'Signing in…' : 'Sign In'}
           </button>
         </form>
 
-        <p className="text-center text-gray-400 text-sm mt-6">
+        <p className="text-center text-[#AAA] text-sm mt-6">
           New maker?{' '}
-          <Link href="/signup" className="text-[#FF6B35] font-semibold hover:underline">
+          <Link href="/signup" className="text-[#111] font-bold">
             Apply to sell
           </Link>
         </p>

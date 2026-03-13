@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ChevronLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { Loader2, ChevronLeft, MapPin } from 'lucide-react'
 
 const CUISINE_OPTIONS = [
   'American', 'Mexican', 'Italian', 'Chinese', 'Indian',
@@ -57,7 +57,7 @@ export default function MakerSignupPage() {
     try {
       location = await getLocation()
     } catch {
-      setError('Location access is required to register your kitchen so customers nearby can find you. Please allow location access and try again.')
+      setError('Location access is required so customers nearby can find your kitchen. Please allow location and try again.')
       setLoading(false)
       return
     }
@@ -75,30 +75,30 @@ export default function MakerSignupPage() {
       return
     }
 
-    // Sign in client-side
     const supabase = createClient()
     await supabase.auth.signInWithPassword({ email: form.email, password: form.password })
     router.push('/dashboard')
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md">
-        <Link href="/welcome" className="inline-flex items-center gap-1.5 text-gray-400 hover:text-gray-700 text-sm mb-8 transition-colors">
+    <div className="min-h-screen bg-[#F5F4F2] flex flex-col items-center justify-center px-5 py-12">
+      <div className="w-full max-w-sm">
+
+        <Link href="/welcome" className="inline-flex items-center gap-1.5 text-[#AAA] text-sm mb-8 font-medium">
           <ChevronLeft size={16} />
           Back
         </Link>
 
         <div className="mb-8">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#FF6B35] to-[#FF8C5A] flex items-center justify-center mb-4">
-            <span className="text-white font-black text-lg">D</span>
+          <div className="w-14 h-14 rounded-2xl bg-[#111] flex items-center justify-center mb-5">
+            <span className="text-white font-black text-xl">D</span>
           </div>
-          <h1 className="text-2xl font-black text-gray-900">Set up your kitchen</h1>
-          <p className="text-gray-500 text-sm mt-1">Start selling your food on Doornext</p>
+          <h1 className="text-2xl font-black text-[#111]">Set up your kitchen</h1>
+          <p className="text-[#999] text-sm mt-1">Start selling your food on Doornext</p>
         </div>
 
         {error && (
-          <div className="mb-5 p-4 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600">
+          <div className="mb-5 px-4 py-3.5 bg-red-50 border border-red-100 rounded-2xl text-sm text-red-600 font-medium">
             {error}
           </div>
         )}
@@ -106,56 +106,56 @@ export default function MakerSignupPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Your Name</label>
+              <label className="block text-xs font-bold text-[#666] mb-1.5 uppercase tracking-wide">Your Name</label>
               <input
                 type="text"
                 required
                 value={form.fullName}
                 onChange={(e) => set('fullName', e.target.value)}
                 placeholder="Jane Smith"
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-[#FF6B35] focus:ring-2 focus:ring-[#FF6B35]/20 transition-all"
+                className="w-full bg-white border border-[#E8E8E8] rounded-xl px-3.5 py-3 text-sm text-[#111] focus:outline-none focus:border-[#111] transition-colors"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Kitchen Name</label>
+              <label className="block text-xs font-bold text-[#666] mb-1.5 uppercase tracking-wide">Kitchen Name</label>
               <input
                 type="text"
                 required
                 value={form.displayName}
                 onChange={(e) => set('displayName', e.target.value)}
                 placeholder="Jane's Kitchen"
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-[#FF6B35] focus:ring-2 focus:ring-[#FF6B35]/20 transition-all"
+                className="w-full bg-white border border-[#E8E8E8] rounded-xl px-3.5 py-3 text-sm text-[#111] focus:outline-none focus:border-[#111] transition-colors"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+            <label className="block text-xs font-bold text-[#666] mb-1.5 uppercase tracking-wide">Email</label>
             <input
               type="email"
               required
               value={form.email}
               onChange={(e) => set('email', e.target.value)}
               placeholder="jane@example.com"
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-[#FF6B35] focus:ring-2 focus:ring-[#FF6B35]/20 transition-all"
+              className="w-full bg-white border border-[#E8E8E8] rounded-xl px-3.5 py-3 text-sm text-[#111] focus:outline-none focus:border-[#111] transition-colors"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+            <label className="block text-xs font-bold text-[#666] mb-1.5 uppercase tracking-wide">Password</label>
             <input
               type="password"
               required
               value={form.password}
               onChange={(e) => set('password', e.target.value)}
               placeholder="At least 6 characters"
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-[#FF6B35] focus:ring-2 focus:ring-[#FF6B35]/20 transition-all"
+              className="w-full bg-white border border-[#E8E8E8] rounded-xl px-3.5 py-3 text-sm text-[#111] focus:outline-none focus:border-[#111] transition-colors"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Cuisine Types <span className="text-gray-400 font-normal">(pick up to 5)</span>
+            <label className="block text-xs font-bold text-[#666] mb-2 uppercase tracking-wide">
+              Cuisine Types <span className="text-[#CCC] normal-case font-normal">(up to 5)</span>
             </label>
             <div className="flex flex-wrap gap-2">
               {CUISINE_OPTIONS.map((tag) => (
@@ -163,10 +163,10 @@ export default function MakerSignupPage() {
                   key={tag}
                   type="button"
                   onClick={() => toggleCuisine(tag)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+                  className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${
                     form.cuisineTags.includes(tag)
-                      ? 'bg-[#FF6B35] border-[#FF6B35] text-white'
-                      : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
+                      ? 'bg-[#111] border-[#111] text-white'
+                      : 'bg-white border-[#E8E8E8] text-[#666]'
                   }`}
                 >
                   {tag}
@@ -175,22 +175,24 @@ export default function MakerSignupPage() {
             </div>
           </div>
 
-          <p className="text-xs text-gray-400 text-center pt-1">
-            📍 We'll request your location to show your kitchen to nearby customers.
-          </p>
+          <div className="flex items-center gap-2 text-xs text-[#AAA] pt-1">
+            <MapPin size={12} />
+            <span>We'll request your location so customers nearby can find you.</span>
+          </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#FF6B35] hover:bg-[#E55A24] text-white rounded-xl py-4 font-bold text-base disabled:opacity-60 transition-colors mt-2 shadow-lg shadow-[#FF6B35]/20"
+            className="w-full bg-[#111] text-white rounded-xl py-4 font-black text-[15px] disabled:opacity-50 active:bg-[#333] transition-colors flex items-center justify-center gap-2"
           >
+            {loading && <Loader2 size={16} className="animate-spin" />}
             {loading ? 'Setting up kitchen…' : 'Create Kitchen Account'}
           </button>
         </form>
 
-        <p className="text-center text-gray-400 text-sm mt-6">
+        <p className="text-center text-[#AAA] text-sm mt-6">
           Already have an account?{' '}
-          <Link href="/login" className="text-[#FF6B35] font-semibold hover:underline">
+          <Link href="/login" className="text-[#111] font-bold">
             Sign in
           </Link>
         </p>

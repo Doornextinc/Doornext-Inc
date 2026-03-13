@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { StatusBadge } from '@doornext/ui/badge'
 import { toast } from '@/components/ui/toast'
 import type { Order, FoodMaker, OrderStatus } from '@doornext/shared/types'
-import { Power } from 'lucide-react'
+import { Power, ChevronRight } from 'lucide-react'
 
 function playOrderAlert() {
   try {
@@ -37,6 +37,7 @@ export default function DashboardPage() {
   const [maker, setMaker] = useState<FoodMaker | null>(null)
   const [orders, setOrders] = useState<OrderWithItems[]>([])
   const [loading, setLoading] = useState(true)
+  const [toggling, setToggling] = useState(false)
   const prevPendingCount = useRef(0)
 
   const loadData = useCallback(async () => {
@@ -50,12 +51,11 @@ export default function DashboardPage() {
         .from('orders')
         .select('*, order_items(quantity, menu_item:menu_items(name))')
         .order('created_at', { ascending: false })
-        .limit(30),
+        .limit(50),
     ])
 
     if (makerRes.data) {
       setMaker(makerRes.data)
-      // Filter orders for this maker
       const myOrders = (ordersRes.data ?? []).filter(
         (o) => o.maker_id === makerRes.data.id &&
           ACTIVE_STATUSES.includes(o.status as OrderStatus)
@@ -67,39 +67,29 @@ export default function DashboardPage() {
 
   useEffect(() => { loadData() }, [loadData])
 
-  // Alert when pending order count increases
   useEffect(() => {
     const pendingNow = orders.filter((o) => o.status === 'pending').length
     if (!loading && pendingNow > prevPendingCount.current) {
       playOrderAlert()
-      toast.info(`🍽️ New order received!`)
+      toast.info('New order received!')
     }
     prevPendingCount.current = pendingNow
   }, [orders, loading])
 
-  // Realtime subscription for new orders
   useEffect(() => {
     if (!maker) return
     const supabase = createClient()
     const channel = supabase
       .channel('maker-orders')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'orders', filter: `maker_id=eq.${maker.id}` },
-        () => loadData()
-      )
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'orders', filter: `maker_id=eq.${maker.id}` },
-        () => loadData()
-      )
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders', filter: `maker_id=eq.${maker.id}` }, () => loadData())
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `maker_id=eq.${maker.id}` }, () => loadData())
       .subscribe()
-
     return () => { supabase.removeChannel(channel) }
   }, [maker, loadData])
 
   const toggleOpen = async () => {
-    if (!maker) return
+    if (!maker || toggling) return
+    setToggling(true)
     const supabase = createClient()
     const { data } = await supabase
       .from('food_makers')
@@ -108,96 +98,133 @@ export default function DashboardPage() {
       .select()
       .single()
     if (data) setMaker(data)
+    setToggling(false)
   }
 
   if (loading) {
     return (
-      <div className="flex flex-col min-h-full bg-[#f8f8f8]">
-        <div className="bg-white px-4 py-4 flex items-center justify-between border-b border-gray-100">
-          <div className="h-6 bg-gray-200 rounded w-32 animate-pulse" />
-          <div className="h-9 bg-gray-200 rounded-xl w-24 animate-pulse" />
+      <div className="flex flex-col min-h-full bg-[#F5F4F2]">
+        <div className="bg-white px-4 h-[60px] flex items-center justify-between border-b border-[#EBEBEB]">
+          <div className="h-5 bg-[#EBEBEB] rounded-lg w-36 animate-pulse" />
+          <div className="h-9 bg-[#EBEBEB] rounded-xl w-24 animate-pulse" />
         </div>
         <div className="p-4 space-y-3">
-          {[1, 2, 3].map((i) => <div key={i} className="h-28 bg-white rounded-2xl animate-pulse" />)}
+          {[1, 2, 3].map((i) => <div key={i} className="h-24 bg-white rounded-2xl animate-pulse" />)}
         </div>
       </div>
     )
   }
 
   const pending = orders.filter((o) => o.status === 'pending')
-  const active = orders.filter((o) => ['confirmed', 'preparing'].includes(o.status))
+  const preparing = orders.filter((o) => ['confirmed', 'preparing'].includes(o.status))
   const ready = orders.filter((o) => o.status === 'ready')
+  const todayRevenue = orders.reduce((s, o) => s + (o.total ?? 0), 0)
 
   return (
-    <div className="flex flex-col min-h-full bg-[#f8f8f8]">
+    <div className="flex flex-col min-h-full bg-[#F5F4F2]">
       {/* Header */}
-      <div className="bg-white px-4 py-4 flex items-center justify-between border-b border-gray-100 sticky top-0 z-40">
-        <div>
-          <h1 className="text-lg font-black text-gray-900">{maker?.display_name}</h1>
-          <p className="text-xs text-gray-400">
-            {orders.length} active order{orders.length !== 1 ? 's' : ''}
-          </p>
+      <header className="sticky top-0 z-40 bg-white border-b border-[#EBEBEB]">
+        <div className="flex items-center justify-between px-4 h-[60px]">
+          <div>
+            <h1 className="text-[18px] font-black text-[#111] leading-tight">{maker?.display_name}</h1>
+            <p className="text-xs text-[#999]">{orders.length} active order{orders.length !== 1 ? 's' : ''}</p>
+          </div>
+          <button
+            onClick={toggleOpen}
+            disabled={toggling}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all active:scale-95 disabled:opacity-60 ${
+              maker?.is_open
+                ? 'bg-[#111] text-white'
+                : 'bg-[#F0F0F0] text-[#666]'
+            }`}
+          >
+            <Power size={14} strokeWidth={2.5} />
+            {maker?.is_open ? 'Open' : 'Closed'}
+          </button>
         </div>
-        <button
-          onClick={toggleOpen}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-colors ${
-            maker?.is_open
-              ? 'bg-green-500 text-white'
-              : 'bg-gray-200 text-gray-600'
-          }`}
-        >
-          <Power size={15} />
-          {maker?.is_open ? 'Open' : 'Closed'}
-        </button>
-      </div>
+
+        {/* Today stats strip */}
+        {!loading && orders.length > 0 && (
+          <div className="flex border-t border-[#F0F0F0] divide-x divide-[#F0F0F0]">
+            <div className="flex-1 px-4 py-2 text-center">
+              <p className="font-black text-[#111] text-base leading-none">{orders.length}</p>
+              <p className="text-[10px] text-[#999] mt-0.5">Active</p>
+            </div>
+            <div className="flex-1 px-4 py-2 text-center">
+              <p className="font-black text-[#111] text-base leading-none">{pending.length}</p>
+              <p className="text-[10px] text-[#999] mt-0.5">Pending</p>
+            </div>
+            <div className="flex-1 px-4 py-2 text-center">
+              <p className="font-black text-[#111] text-base leading-none">${todayRevenue.toFixed(0)}</p>
+              <p className="text-[10px] text-[#999] mt-0.5">Revenue</p>
+            </div>
+          </div>
+        )}
+      </header>
 
       <div className="p-4 space-y-5">
-        {/* New Orders */}
+        {/* New Orders — highest priority */}
         {pending.length > 0 && (
           <section>
-            <h2 className="font-bold text-red-500 text-sm mb-3 flex items-center gap-2">
-              <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-              New Orders ({pending.length})
-            </h2>
-            <div className="space-y-3">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+              <h2 className="text-[11px] font-black text-red-500 uppercase tracking-widest">
+                New Orders ({pending.length})
+              </h2>
+            </div>
+            <div className="space-y-2">
               {pending.map((order) => (
-                <OrderCard key={order.id} order={order} onClick={() => router.push(`/orders/${order.id}`)} />
+                <OrderCard key={order.id} order={order} accent="red" onClick={() => router.push(`/orders/${order.id}`)} />
               ))}
             </div>
           </section>
         )}
 
-        {/* In Progress */}
-        {active.length > 0 && (
+        {/* Preparing */}
+        {preparing.length > 0 && (
           <section>
-            <h2 className="font-bold text-orange-500 text-sm mb-3">Preparing ({active.length})</h2>
-            <div className="space-y-3">
-              {active.map((order) => (
-                <OrderCard key={order.id} order={order} onClick={() => router.push(`/orders/${order.id}`)} />
+            <h2 className="text-[11px] font-black text-amber-500 uppercase tracking-widest mb-3">
+              Preparing ({preparing.length})
+            </h2>
+            <div className="space-y-2">
+              {preparing.map((order) => (
+                <OrderCard key={order.id} order={order} accent="amber" onClick={() => router.push(`/orders/${order.id}`)} />
               ))}
             </div>
           </section>
         )}
 
-        {/* Ready */}
+        {/* Ready for pickup */}
         {ready.length > 0 && (
           <section>
-            <h2 className="font-bold text-purple-500 text-sm mb-3">Ready for Pickup ({ready.length})</h2>
-            <div className="space-y-3">
+            <h2 className="text-[11px] font-black text-emerald-500 uppercase tracking-widest mb-3">
+              Ready for Pickup ({ready.length})
+            </h2>
+            <div className="space-y-2">
               {ready.map((order) => (
-                <OrderCard key={order.id} order={order} onClick={() => router.push(`/orders/${order.id}`)} />
+                <OrderCard key={order.id} order={order} accent="green" onClick={() => router.push(`/orders/${order.id}`)} />
               ))}
             </div>
           </section>
         )}
 
         {orders.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-24 text-center">
-            <span className="text-6xl mb-4">🍽️</span>
-            <h3 className="text-xl font-bold text-gray-700">No active orders</h3>
-            <p className="text-gray-400 text-sm mt-1">
-              {maker?.is_open ? 'Waiting for new orders…' : 'You are currently closed'}
+          <div className="flex flex-col items-center justify-center py-28 text-center">
+            <div className="w-20 h-20 rounded-3xl bg-white border border-[#EBEBEB] flex items-center justify-center mb-5 shadow-sm">
+              <span className="text-4xl">🍽️</span>
+            </div>
+            <h3 className="text-xl font-black text-[#222]">No active orders</h3>
+            <p className="text-[#999] text-sm mt-1.5">
+              {maker?.is_open ? 'Waiting for new orders…' : 'Kitchen is closed'}
             </p>
+            {!maker?.is_open && (
+              <button
+                onClick={toggleOpen}
+                className="mt-5 bg-[#111] text-white rounded-xl px-6 py-3 font-bold text-sm"
+              >
+                Open Kitchen
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -205,27 +232,37 @@ export default function DashboardPage() {
   )
 }
 
-function OrderCard({ order, onClick }: { order: OrderWithItems; onClick: () => void }) {
+function OrderCard({ order, accent, onClick }: {
+  order: OrderWithItems
+  accent: 'red' | 'amber' | 'green'
+  onClick: () => void
+}) {
   const itemsSummary = order.order_items
-    .map((oi) => `${oi.quantity}x ${oi.menu_item?.name ?? 'Item'}`)
+    .map((oi) => `${oi.quantity}× ${oi.menu_item?.name ?? 'Item'}`)
     .join(', ')
+
+  const leftBorderColor = accent === 'red' ? '#EF4444' : accent === 'amber' ? '#F59E0B' : '#10B981'
 
   return (
     <button
       onClick={onClick}
-      className="w-full bg-white rounded-2xl p-4 text-left shadow-sm border border-gray-100 active:bg-gray-50 transition-colors"
+      className="w-full bg-white rounded-2xl p-4 text-left border border-[#EBEBEB] active:bg-[#FAFAFA] transition-colors flex items-center gap-3"
+      style={{ borderLeft: `3px solid ${leftBorderColor}` }}
     >
-      <div className="flex items-center justify-between mb-2">
-        <p className="font-bold text-gray-900 text-sm">Order #{order.id.slice(-6).toUpperCase()}</p>
-        <StatusBadge status={order.status} />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between mb-1">
+          <p className="font-black text-[#111] text-sm">#{order.id.slice(-6).toUpperCase()}</p>
+          <span className="text-xs text-[#999]">
+            {new Date(order.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+          </span>
+        </div>
+        <p className="text-xs text-[#888] truncate mb-2">{itemsSummary}</p>
+        <div className="flex items-center justify-between">
+          <span className="font-black text-[#111] text-base">${order.total.toFixed(2)}</span>
+          <StatusBadge status={order.status} />
+        </div>
       </div>
-      <p className="text-xs text-gray-500 truncate mb-2">{itemsSummary}</p>
-      <div className="flex items-center justify-between">
-        <span className="font-bold text-gray-900">${order.total.toFixed(2)}</span>
-        <span className="text-xs text-gray-400">
-          {new Date(order.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
-        </span>
-      </div>
+      <ChevronRight size={16} className="text-[#CCC] flex-shrink-0" />
     </button>
   )
 }
