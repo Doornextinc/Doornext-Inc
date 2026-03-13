@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useDriverStore } from '@/store/driver-store'
 import { haversineDistance, formatDistance, formatPriceDollars } from '@doornext/shared/utils'
 import type { Order } from '@doornext/shared/types'
-import { MapPin, Clock, ChevronRight, Wifi, WifiOff } from 'lucide-react'
+import { MapPin, Clock, ChevronRight } from 'lucide-react'
 import { AppHeader } from '@/components/layout/app-header'
 
 type DeliveryAddress = { street?: string; city?: string; state?: string; zip?: string; label?: string }
@@ -88,26 +88,42 @@ export default function AvailablePickupsPage() {
         <p className="text-xs text-zinc-500">
           {isOnline ? `${orders.length} available near you` : 'Go online to see orders'}
         </p>
+        {/* Live-tracking icon button */}
         <button
           onClick={() => setOnline(!isOnline)}
-          className={`flex items-center gap-2 pl-3 pr-4 py-1.5 rounded-full font-bold text-xs transition-all ${
-            isOnline
-              ? 'bg-green-500/15 text-green-400 border border-green-500/30'
-              : 'bg-[#141414] text-zinc-500 border border-white/5'
-          }`}
+          className="relative flex items-center justify-center w-10 h-10 rounded-full transition-all active:scale-90"
+          title={isOnline ? 'Go Offline' : 'Go Online'}
         >
-          {isOnline
-            ? <><span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" /><Wifi size={12} /> Online</>
-            : <><WifiOff size={12} /> Offline</>
-          }
+          {/* outer glow ring — only when online */}
+          {isOnline && (
+            <span className="absolute inset-0 rounded-full animate-ping bg-green-400 opacity-20" />
+          )}
+          {/* mid ring */}
+          <span className={`absolute inset-0 rounded-full border-2 transition-colors duration-300 ${
+            isOnline ? 'border-green-400/50' : 'border-white/10'
+          }`} />
+          {/* inner filled circle */}
+          <span className={`w-5 h-5 rounded-full transition-all duration-300 shadow-lg ${
+            isOnline
+              ? 'bg-green-400 shadow-green-400/60'
+              : 'bg-zinc-600'
+          }`}>
+            {/* center dot */}
+            <span className={`block w-2 h-2 rounded-full mx-auto mt-1.5 transition-colors duration-300 ${
+              isOnline ? 'bg-green-900' : 'bg-zinc-800'
+            }`} />
+          </span>
         </button>
       </div>
 
       {/* Offline state */}
       {!isOnline ? (
         <div className="flex flex-col items-center justify-center flex-1 py-24 text-center px-6">
-          <div className="w-20 h-20 rounded-full bg-[#141414] flex items-center justify-center mb-5 border border-white/5">
-            <WifiOff size={32} className="text-zinc-500" />
+          <div className="relative w-20 h-20 flex items-center justify-center mb-5">
+            <span className="absolute inset-0 rounded-full border-2 border-white/10" />
+            <span className="w-10 h-10 rounded-full bg-zinc-700 flex items-center justify-center">
+              <span className="w-4 h-4 rounded-full bg-zinc-500" />
+            </span>
           </div>
           <h2 className="text-xl font-bold text-white mb-2">You're offline</h2>
           <p className="text-zinc-500 text-sm mb-6 max-w-xs">
