@@ -391,7 +391,7 @@ export default function OnboardingPage() {
             {[
               { icon: '📋', title: 'Personal Information', desc: 'Name, date of birth, SSN last 4, address' },
               { icon: '🪪', title: 'Government ID', desc: "Driver's license or passport" },
-              { icon: '🤳', title: 'Selfie Match', desc: 'Quick photo to confirm it's you' },
+              { icon: '🤳', title: 'Selfie Match', desc: "Quick photo to confirm it's you" },
             ].map((item, i) => (
               <div key={i} className="flex items-start gap-3 bg-slate-800/60 rounded-2xl p-4 border border-slate-700/40">
                 <span className="text-2xl mt-0.5">{item.icon}</span>
