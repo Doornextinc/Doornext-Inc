@@ -21,24 +21,33 @@ export default function LoginPage() {
     setError('')
     setLoading(true)
 
-    const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
 
-    if (error) {
-      setError(error.message)
+      if (error) {
+        setError(error.message)
+      } else {
+        router.push('/')
+        router.refresh()
+      }
+    } catch {
+      setError('Authentication is not configured. Please check your Supabase environment variables.')
+    } finally {
       setLoading(false)
-    } else {
-      router.push('/')
-      router.refresh()
     }
   }
 
   const handleGoogleLogin = async () => {
-    const supabase = createClient()
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
-    })
+    try {
+      const supabase = createClient()
+      await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: `${window.location.origin}/auth/callback` },
+      })
+    } catch {
+      setError('Authentication is not configured. Please check your Supabase environment variables.')
+    }
   }
 
   return (
