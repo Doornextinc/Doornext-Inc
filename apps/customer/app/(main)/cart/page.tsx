@@ -77,8 +77,13 @@ export default function CartPage() {
               key={item.id}
               className="flex gap-3 px-4 py-4 border-b border-gray-50"
             >
-              <div className="w-14 h-14 rounded-xl bg-orange-50 flex items-center justify-center text-2xl flex-shrink-0">
-                🍽️
+              <div className="w-14 h-14 rounded-xl bg-orange-50 flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden">
+                {item.photo_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={item.photo_url} alt={item.name} className="w-full h-full object-cover" />
+                ) : (
+                  '🍽️'
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-gray-900 text-sm">{item.name}</p>

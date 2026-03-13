@@ -52,6 +52,9 @@ export default function OrderTrackingPage() {
   const loadOrder = useCallback(async () => {
     try {
       const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { router.push('/login'); return }
+
       const { data, error } = await supabase
         .from('orders')
         .select(`
@@ -61,11 +64,20 @@ export default function OrderTrackingPage() {
           nexter:users!orders_nexter_id_fkey(full_name, avatar_url)
         `)
         .eq('id', id)
+        .eq('customer_id', user.id)
         .single()
 
       if (!error && data) {
+        // Check if review already submitted to avoid showing modal again
+        const { count } = await supabase
+          .from('reviews')
+          .select('id', { count: 'exact', head: true })
+          .eq('order_id', id)
+          .eq('customer_id', user.id)
+        const alreadyReviewed = (count ?? 0) > 0
+        setReviewSubmitted(alreadyReviewed)
         setOrder(data as FullOrder)
-        if (data.status === 'delivered') {
+        if (data.status === 'delivered' && !alreadyReviewed) {
           setTimeout(() => setShowReview(true), 1000)
         }
       }
@@ -74,7 +86,7 @@ export default function OrderTrackingPage() {
     } finally {
       setLoading(false)
     }
-  }, [id])
+  }, [id, router])
 
   useEffect(() => {
     loadOrder()
@@ -95,13 +107,13 @@ export default function OrderTrackingPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      await supabase.from('reviews').insert({
+      await supabase.from('reviews').upsert({
         order_id: order.id,
         customer_id: user.id,
         maker_id: order.maker_id,
         rating,
         body: reviewText.trim() || null,
-      })
+      }, { onConflict: 'order_id,customer_id' })
 
       setReviewSubmitted(true)
       setShowReview(false)

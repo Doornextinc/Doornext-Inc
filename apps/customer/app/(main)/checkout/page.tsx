@@ -11,12 +11,10 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { formatPriceDollars } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
+import { DELIVERY_FEE, PLATFORM_FEE_PCT } from '@/lib/constants'
 import type { Address } from '@/types'
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
-
-const DELIVERY_FEE = 3.99
-const PLATFORM_FEE_PCT = 0.05
 
 const TIP_OPTIONS = [
   { label: 'No tip', value: 0 },

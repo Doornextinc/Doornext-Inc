@@ -3,7 +3,7 @@
 import { useMemo, useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Star, Clock, MapPin, MessageCircle, ChevronLeft, ShoppingCart } from 'lucide-react'
-import { MOCK_MAKERS, MOCK_MENU_ITEMS, getMakerEmoji } from '@/lib/mock-data'
+import { getMakerEmoji } from '@/lib/mock-data'
 import { MenuItemCard } from '@/components/maker/menu-item-card'
 import { DietaryBadge } from '@/components/ui/badge'
 import { MenuItemSkeleton } from '@/components/ui/skeleton'
@@ -36,16 +36,9 @@ export default function MakerProfilePage() {
         if (makerRes.data) {
           setMaker(makerRes.data)
           setMenuItems(menuRes.data ?? [])
-        } else {
-          // Fall back to mock data (UUIDs won't match, so check by index)
-          const mockMaker = MOCK_MAKERS.find((m) => m.id === id)
-          setMaker(mockMaker ?? null)
-          setMenuItems(mockMaker ? (MOCK_MENU_ITEMS[id] ?? []) : [])
         }
-      } catch {
-        const mockMaker = MOCK_MAKERS.find((m) => m.id === id)
-        setMaker(mockMaker ?? null)
-        setMenuItems(mockMaker ? (MOCK_MENU_ITEMS[id] ?? []) : [])
+      } catch (e) {
+        console.error('Failed to load maker:', e)
       } finally {
         setLoading(false)
       }

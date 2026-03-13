@@ -82,6 +82,33 @@ export default function OrdersPage() {
     loadOrders()
   }, [loadOrders])
 
+  // Realtime subscription: refresh when any active order status changes
+  useEffect(() => {
+    const supabase = createClient()
+    let userId: string | null = null
+
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return
+      userId = user.id
+
+      const channel = supabase
+        .channel('customer-orders-realtime')
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'orders',
+            filter: `customer_id=eq.${userId}`,
+          },
+          () => { loadOrders() }
+        )
+        .subscribe()
+
+      return () => { supabase.removeChannel(channel) }
+    })
+  }, [loadOrders])
+
   const handleReorder = (order: OrderWithMaker) => {
     setReorderConfirmId(null)
     clearCart()

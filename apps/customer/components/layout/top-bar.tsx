@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { MapPin, Bell, ChevronDown, ShoppingCart } from 'lucide-react'
 import { useCartStore } from '@/store/cart'
+import { createClient } from '@/lib/supabase/client'
 
 interface TopBarProps {
   location?: string
@@ -21,9 +22,24 @@ export function TopBar({
   onLocationClick,
 }: TopBarProps) {
   const [mounted, setMounted] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
   useEffect(() => setMounted(true), [])
   const rawTotal = useCartStore((s) => s.items.reduce((sum, i) => sum + i.quantity, 0))
   const totalItems = mounted ? rawTotal : 0
+
+  useEffect(() => {
+    if (!showNotifications) return
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return
+      supabase
+        .from('notifications')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('is_read', false)
+        .then(({ count }) => setUnreadCount(count ?? 0))
+    })
+  }, [showNotifications])
 
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-gray-100">
@@ -55,7 +71,9 @@ export function TopBar({
               className="relative w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center"
             >
               <Bell size={18} className="text-gray-600" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#FF6B35] rounded-full" />
+              {unreadCount > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#FF6B35] rounded-full" />
+              )}
             </Link>
           )}
           {showCart && totalItems > 0 && (
