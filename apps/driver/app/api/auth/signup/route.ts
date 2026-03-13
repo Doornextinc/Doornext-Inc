@@ -8,7 +8,7 @@ const adminClient = createClient(
 )
 
 export async function POST(req: NextRequest) {
-  const { fullName, email, password, vehicleType } = await req.json()
+  const { fullName, email, password, phone, vehicleType } = await req.json()
 
   if (!fullName || !email || !password) {
     return NextResponse.json({ error: 'All fields are required' }, { status: 400 })
@@ -34,9 +34,17 @@ export async function POST(req: NextRequest) {
     { onConflict: 'id' }
   )
 
-  // Create driver profile
+  // Create driver profile (kyc_status defaults to 'not_submitted' via migration)
   await adminClient.from('driver_profiles').upsert(
-    { id: userId, full_name: fullName, vehicle_type: vehicleType ?? 'car', is_active: true, total_deliveries: 0, avg_rating: 0 },
+    {
+      id: userId,
+      full_name: fullName,
+      phone: phone ?? null,
+      vehicle_type: vehicleType ?? 'car',
+      is_active: false,
+      total_deliveries: 0,
+      avg_rating: 0,
+    },
     { onConflict: 'id' }
   )
 

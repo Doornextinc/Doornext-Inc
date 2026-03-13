@@ -28,21 +28,44 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
   const pathname = request.nextUrl.pathname
-  const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/signup') || pathname.startsWith('/welcome')
 
-  if (!user && !isAuthRoute && !pathname.startsWith('/api')) {
+  const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/signup') || pathname.startsWith('/welcome')
+  const isOnboarding = pathname.startsWith('/onboarding')
+  const isApi = pathname.startsWith('/api')
+
+  // Unauthenticated: send to welcome (except auth/api routes)
+  if (!user && !isAuthRoute && !isApi) {
     return NextResponse.redirect(new URL('/welcome', request.url))
   }
 
-  if (user && !isAuthRoute && !pathname.startsWith('/api')) {
+  if (user && !isAuthRoute && !isApi) {
+    // Verify driver role
     const { data: profile } = await supabase
-      .from('users').select('role').eq('id', user.id).single()
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
     if (profile?.role !== 'driver') {
       await supabase.auth.signOut()
       return NextResponse.redirect(new URL('/login?error=not_driver', request.url))
     }
+
+    // Enforce KYC: unapproved drivers can only access /onboarding
+    if (!isOnboarding) {
+      const { data: driverProfile } = await supabase
+        .from('driver_profiles')
+        .select('kyc_status')
+        .eq('id', user.id)
+        .single()
+
+      if (driverProfile?.kyc_status !== 'approved') {
+        return NextResponse.redirect(new URL('/onboarding', request.url))
+      }
+    }
   }
 
+  // Authenticated users hitting auth pages → go to app
   if (user && isAuthRoute) {
     return NextResponse.redirect(new URL('/', request.url))
   }

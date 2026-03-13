@@ -17,7 +17,9 @@ export default function DriverSignupPage() {
   const [form, setForm] = useState({
     fullName: '',
     email: '',
+    phone: '',
     password: '',
+    confirmPassword: '',
     vehicleType: 'car',
   })
   const [loading, setLoading] = useState(false)
@@ -28,17 +30,22 @@ export default function DriverSignupPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (form.password.length < 6) {
-      setError('Password must be at least 6 characters.')
-      return
-    }
+    if (form.password.length < 6) { setError('Password must be at least 6 characters.'); return }
+    if (form.password !== form.confirmPassword) { setError('Passwords do not match.'); return }
+    if (form.phone.length < 10) { setError('Please enter a valid phone number.'); return }
     setLoading(true)
     setError(null)
 
     const res = await fetch('/api/auth/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
+      body: JSON.stringify({
+        fullName: form.fullName,
+        email: form.email,
+        phone: form.phone,
+        password: form.password,
+        vehicleType: form.vehicleType,
+      }),
     })
     const data = await res.json()
 
@@ -48,7 +55,6 @@ export default function DriverSignupPage() {
       return
     }
 
-    // Sign in client-side to establish session cookies
     const supabase = createClient()
     const { error: signInError } = await supabase.auth.signInWithPassword({
       email: form.email,
@@ -60,13 +66,16 @@ export default function DriverSignupPage() {
       return
     }
 
-    router.push('/available')
+    router.push('/onboarding')
   }
 
   return (
     <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
-        <Link href="/welcome" className="inline-flex items-center gap-1.5 text-slate-400 hover:text-white text-sm mb-8 transition-colors">
+        <Link
+          href="/welcome"
+          className="inline-flex items-center gap-1.5 text-slate-400 hover:text-white text-sm mb-8 transition-colors"
+        >
           <ChevronLeft size={16} />
           Back
         </Link>
@@ -76,7 +85,7 @@ export default function DriverSignupPage() {
             <span className="text-2xl">🛵</span>
           </div>
           <h1 className="text-2xl font-black text-white">Create driver account</h1>
-          <p className="text-slate-400 text-sm mt-1">Start delivering with Doornext today</p>
+          <p className="text-slate-400 text-sm mt-1">You'll verify your identity in the next step</p>
         </div>
 
         {error && (
@@ -86,16 +95,29 @@ export default function DriverSignupPage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">Full Name</label>
-            <input
-              type="text"
-              required
-              value={form.fullName}
-              onChange={(e) => set('fullName', e.target.value)}
-              placeholder="Jane Smith"
-              className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder:text-slate-500 focus:border-[#FF6B35] focus:ring-2 focus:ring-[#FF6B35]/20 transition-all"
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1.5">Full Name</label>
+              <input
+                type="text"
+                required
+                value={form.fullName}
+                onChange={(e) => set('fullName', e.target.value)}
+                placeholder="Jane Smith"
+                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder:text-slate-500 focus:border-[#FF6B35] focus:ring-2 focus:ring-[#FF6B35]/20 transition-all outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1.5">Phone</label>
+              <input
+                type="tel"
+                required
+                value={form.phone}
+                onChange={(e) => set('phone', e.target.value)}
+                placeholder="+1 555-0100"
+                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder:text-slate-500 focus:border-[#FF6B35] focus:ring-2 focus:ring-[#FF6B35]/20 transition-all outline-none"
+              />
+            </div>
           </div>
 
           <div>
@@ -106,20 +128,33 @@ export default function DriverSignupPage() {
               value={form.email}
               onChange={(e) => set('email', e.target.value)}
               placeholder="jane@example.com"
-              className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder:text-slate-500 focus:border-[#FF6B35] focus:ring-2 focus:ring-[#FF6B35]/20 transition-all"
+              className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder:text-slate-500 focus:border-[#FF6B35] focus:ring-2 focus:ring-[#FF6B35]/20 transition-all outline-none"
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">Password</label>
-            <input
-              type="password"
-              required
-              value={form.password}
-              onChange={(e) => set('password', e.target.value)}
-              placeholder="At least 6 characters"
-              className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder:text-slate-500 focus:border-[#FF6B35] focus:ring-2 focus:ring-[#FF6B35]/20 transition-all"
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1.5">Password</label>
+              <input
+                type="password"
+                required
+                value={form.password}
+                onChange={(e) => set('password', e.target.value)}
+                placeholder="Min 6 characters"
+                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder:text-slate-500 focus:border-[#FF6B35] focus:ring-2 focus:ring-[#FF6B35]/20 transition-all outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1.5">Confirm</label>
+              <input
+                type="password"
+                required
+                value={form.confirmPassword}
+                onChange={(e) => set('confirmPassword', e.target.value)}
+                placeholder="Repeat password"
+                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder:text-slate-500 focus:border-[#FF6B35] focus:ring-2 focus:ring-[#FF6B35]/20 transition-all outline-none"
+              />
+            </div>
           </div>
 
           <div>
@@ -147,7 +182,7 @@ export default function DriverSignupPage() {
             disabled={loading}
             className="w-full bg-[#FF6B35] hover:bg-[#E55A24] text-white rounded-xl py-4 font-bold text-base disabled:opacity-60 transition-colors mt-2 shadow-lg shadow-[#FF6B35]/20"
           >
-            {loading ? 'Creating account…' : 'Create Account'}
+            {loading ? 'Creating account…' : 'Create Account & Continue'}
           </button>
         </form>
 
