@@ -19,8 +19,8 @@ export function BottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 max-w-[430px] mx-auto">
-      <div className="h-px bg-slate-700/60" />
-      <div className="bg-slate-900/95 backdrop-blur-sm flex items-center justify-around h-[68px] pb-safe">
+      <div className="h-px bg-white/5" />
+      <div className="bg-[#080808]/98 backdrop-blur-sm flex items-center justify-around h-[68px] pb-safe">
         {navItems.map(({ href, icon: Icon, label, exact }) => {
           const isActive = exact ? pathname === href : pathname.startsWith(href)
           const showBadge = href === '/active' && !!activeOrderId

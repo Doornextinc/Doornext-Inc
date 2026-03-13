@@ -18,7 +18,7 @@ const VEHICLE_LABELS: Record<string, { emoji: string; label: string }> = {
 }
 
 const KYC_CONFIG: Record<string, { label: string; color: string; icon: React.ElementType; bg: string }> = {
-  not_submitted: { label: 'Not Submitted', color: 'text-slate-400', icon: AlertCircle, bg: 'bg-slate-700' },
+  not_submitted: { label: 'Not Submitted', color: 'text-zinc-400', icon: AlertCircle, bg: 'bg-[#1A1A1A]' },
   pending_review: { label: 'Under Review', color: 'text-yellow-400', icon: Clock, bg: 'bg-yellow-500/10' },
   approved: { label: 'Verified', color: 'text-green-400', icon: CheckCircle, bg: 'bg-green-500/10' },
   rejected: { label: 'Rejected', color: 'text-red-400', icon: AlertCircle, bg: 'bg-red-500/10' },
@@ -77,10 +77,10 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div className="flex flex-col min-h-full">
-        <div className="h-48 bg-slate-800 animate-pulse" />
+        <div className="h-48 bg-[#141414] animate-pulse" />
         <div className="p-4 space-y-3">
-          <div className="h-24 bg-slate-800 rounded-2xl animate-pulse" />
-          <div className="h-40 bg-slate-800 rounded-2xl animate-pulse" />
+          <div className="h-24 bg-[#141414] rounded-2xl animate-pulse" />
+          <div className="h-40 bg-[#141414] rounded-2xl animate-pulse" />
         </div>
       </div>
     )
@@ -97,7 +97,7 @@ export default function ProfilePage() {
       <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
 
       {/* Hero header */}
-      <div className="relative bg-gradient-to-b from-slate-700 to-slate-900 px-5 pt-12 pb-6">
+      <div className="relative bg-gradient-to-b from-[#1A1A1A] to-[#0A0A0A] px-5 pt-12 pb-6">
         <div className="flex items-end gap-4">
           {/* Avatar with edit button */}
           <div className="relative">
@@ -117,20 +117,20 @@ export default function ProfilePage() {
             <button
               onClick={() => avatarInputRef.current?.click()}
               disabled={uploadingAvatar}
-              className="absolute -bottom-1 -right-1 w-7 h-7 bg-[#FF6B35] rounded-full border-2 border-slate-900 flex items-center justify-center shadow-lg"
+              className="absolute -bottom-1 -right-1 w-7 h-7 bg-[#FF6B35] rounded-full border-2 border-[#080808] flex items-center justify-center shadow-lg"
             >
               <Camera size={12} className="text-white" />
             </button>
             {profile?.is_active && (
-              <div className="absolute -top-1 -left-1 w-4 h-4 bg-green-500 rounded-full border-2 border-slate-900" />
+              <div className="absolute -top-1 -left-1 w-4 h-4 bg-green-500 rounded-full border-2 border-[#080808]" />
             )}
           </div>
 
           <div className="flex-1 pb-1">
             <h1 className="text-xl font-black text-white leading-tight">{profile?.full_name ?? 'Driver'}</h1>
-            <p className="text-xs text-slate-400 mt-0.5">{email}</p>
+            <p className="text-xs text-zinc-400 mt-0.5">{email}</p>
             {vehicle && (
-              <span className="inline-flex items-center gap-1 mt-1.5 text-[11px] text-slate-400 bg-slate-700/60 rounded-full px-2.5 py-0.5">
+              <span className="inline-flex items-center gap-1 mt-1.5 text-[11px] text-zinc-400 bg-[#1E1E1E] rounded-full px-2.5 py-0.5">
                 {vehicle.emoji} {vehicle.label}
               </span>
             )}
@@ -139,28 +139,28 @@ export default function ProfilePage() {
       </div>
 
       {/* Stats */}
-      <div className="mx-4 -mt-2 bg-slate-800 rounded-2xl border border-slate-700/40 p-4 grid grid-cols-3 gap-4 shadow-lg">
+      <div className="mx-4 -mt-2 bg-[#141414] rounded-2xl border border-white/5 p-4 grid grid-cols-3 gap-4 shadow-lg">
         <div className="text-center">
           <div className="flex items-center justify-center gap-1 mb-1"><Package size={13} className="text-[#FF6B35]" /></div>
           <p className="font-black text-white text-xl">{profile?.total_deliveries ?? 0}</p>
-          <p className="text-[10px] text-slate-500">Deliveries</p>
+          <p className="text-[10px] text-zinc-500">Deliveries</p>
         </div>
-        <div className="text-center border-x border-slate-700/50">
+        <div className="text-center border-x border-white/5">
           <div className="flex items-center justify-center gap-1 mb-1"><Star size={13} className="text-yellow-400" /></div>
           <p className="font-black text-white text-xl">{profile?.avg_rating?.toFixed(1) ?? '—'}</p>
-          <p className="text-[10px] text-slate-500">Rating</p>
+          <p className="text-[10px] text-zinc-500">Rating</p>
         </div>
         <div className="text-center">
           <div className="flex items-center justify-center gap-1 mb-1"><TrendingUp size={13} className="text-green-400" /></div>
           <p className="font-black text-white text-xl">{totalEarnings !== null ? `$${totalEarnings.toFixed(0)}` : '—'}</p>
-          <p className="text-[10px] text-slate-500">Earned</p>
+          <p className="text-[10px] text-zinc-500">Earned</p>
         </div>
       </div>
 
       {/* KYC status */}
       <div className="mx-4 mt-5">
-        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-2 px-1">Verification</p>
-        <div className={`${kyc.bg} rounded-2xl border border-slate-700/40 p-4`}>
+        <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-2 px-1">Verification</p>
+        <div className={`${kyc.bg} rounded-2xl border border-white/5 p-4`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <KycIcon size={20} className={kyc.color} />
@@ -180,15 +180,15 @@ export default function ProfilePage() {
 
       {/* Account menu */}
       <div className="mx-4 mt-5 space-y-4">
-        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest px-1">Account</p>
-        <div className="bg-slate-800 rounded-2xl border border-slate-700/40 divide-y divide-slate-700/30">
+        <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest px-1">Account</p>
+        <div className="bg-[#141414] rounded-2xl border border-white/5 divide-y divide-white/5">
           <div className="flex items-center gap-3 px-4 py-3.5">
             <div className="w-8 h-8 rounded-xl bg-[#FF6B35]/10 flex items-center justify-center flex-shrink-0">
               <span className="text-sm">{vehicle?.emoji ?? '🚗'}</span>
             </div>
             <div className="flex-1">
               <p className="text-sm font-semibold text-white">Vehicle</p>
-              <p className="text-xs text-slate-400">{vehicle?.label ?? 'Not set'}</p>
+              <p className="text-xs text-zinc-400">{vehicle?.label ?? 'Not set'}</p>
             </div>
           </div>
           <div className="flex items-center gap-3 px-4 py-3.5">
@@ -197,7 +197,7 @@ export default function ProfilePage() {
             </div>
             <div className="flex-1">
               <p className="text-sm font-semibold text-white">Email</p>
-              <p className="text-xs text-slate-400">{email}</p>
+              <p className="text-xs text-zinc-400">{email}</p>
             </div>
           </div>
           {profile?.phone && (
@@ -207,37 +207,37 @@ export default function ProfilePage() {
               </div>
               <div className="flex-1">
                 <p className="text-sm font-semibold text-white">Phone</p>
-                <p className="text-xs text-slate-400">{profile.phone}</p>
+                <p className="text-xs text-zinc-400">{profile.phone}</p>
               </div>
             </div>
           )}
         </div>
 
-        <div className="bg-slate-800 rounded-2xl border border-slate-700/40 divide-y divide-slate-700/30">
+        <div className="bg-[#141414] rounded-2xl border border-white/5 divide-y divide-white/5">
           <button onClick={() => router.push('/earnings')} className="w-full flex items-center gap-3 px-4 py-3.5">
             <div className="w-8 h-8 rounded-xl bg-green-500/10 flex items-center justify-center flex-shrink-0">
               <TrendingUp size={16} className="text-green-400" />
             </div>
             <span className="text-sm font-semibold text-white flex-1 text-left">Earnings & Payouts</span>
-            <ChevronRight size={16} className="text-slate-600" />
+            <ChevronRight size={16} className="text-zinc-600" />
           </button>
           <button onClick={() => router.push('/history')} className="w-full flex items-center gap-3 px-4 py-3.5">
             <div className="w-8 h-8 rounded-xl bg-blue-500/10 flex items-center justify-center flex-shrink-0">
               <Package size={16} className="text-blue-400" />
             </div>
             <span className="text-sm font-semibold text-white flex-1 text-left">Delivery History</span>
-            <ChevronRight size={16} className="text-slate-600" />
+            <ChevronRight size={16} className="text-zinc-600" />
           </button>
           <button onClick={() => router.push('/onboarding')} className="w-full flex items-center gap-3 px-4 py-3.5">
             <div className="w-8 h-8 rounded-xl bg-[#FF6B35]/10 flex items-center justify-center flex-shrink-0">
               <Shield size={16} className="text-[#FF6B35]" />
             </div>
             <span className="text-sm font-semibold text-white flex-1 text-left">KYC & Documents</span>
-            <ChevronRight size={16} className="text-slate-600" />
+            <ChevronRight size={16} className="text-zinc-600" />
           </button>
         </div>
 
-        <div className="bg-slate-800 rounded-2xl border border-slate-700/40">
+        <div className="bg-[#141414] rounded-2xl border border-white/5">
           <button onClick={handleSignOut} className="w-full flex items-center gap-3 px-4 py-4">
             <div className="w-8 h-8 rounded-xl bg-red-500/10 flex items-center justify-center flex-shrink-0">
               <LogOut size={16} className="text-red-400" />
@@ -248,7 +248,7 @@ export default function ProfilePage() {
       </div>
 
       <div className="py-8 text-center">
-        <p className="text-[11px] text-slate-700">Doornext Driver v1.0.0</p>
+        <p className="text-[11px] text-zinc-800">Nexter Driver v1.0.0</p>
       </div>
     </div>
   )

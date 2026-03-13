@@ -72,7 +72,7 @@ export function Sidebar() {
             <span className="text-white text-sm font-black">D</span>
           </div>
           <div>
-            <span className="font-black text-gray-900 text-sm">Doornext</span>
+            <span className="font-black text-gray-900 text-sm">Nexter</span>
             <p className="text-[10px] text-gray-400 -mt-0.5">Admin Hub</p>
           </div>
         </div>

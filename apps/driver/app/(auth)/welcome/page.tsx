@@ -45,7 +45,7 @@ export default function DriverWelcomePage() {
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#FF8C5A] flex items-center justify-center">
               <span className="text-white text-xl">🛵</span>
             </div>
-            <span className="text-white font-black text-xl tracking-tight">Doornext</span>
+            <span className="text-white font-black text-xl tracking-tight">Nexter</span>
           </div>
 
           <h1 className="text-4xl lg:text-5xl font-black text-white leading-tight mb-4">
@@ -53,7 +53,7 @@ export default function DriverWelcomePage() {
             <span className="text-[#FF6B35]">your terms.</span>
           </h1>
           <p className="text-slate-400 text-lg mb-10">
-            Join Doornext drivers and earn by delivering homemade meals from local chefs to customers nearby.
+            Join Nexter drivers and earn by delivering homemade meals from local chefs to customers nearby.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3">
@@ -92,7 +92,7 @@ export default function DriverWelcomePage() {
         </div>
 
         <p className="text-xs text-slate-600 mt-10">
-          By continuing you agree to Doornext's Terms of Service and Privacy Policy.
+          By continuing you agree to Nexter's Terms of Service and Privacy Policy.
         </p>
       </div>
     </div>

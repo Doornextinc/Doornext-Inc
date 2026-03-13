@@ -78,19 +78,19 @@ export default function HistoryPage() {
 
   return (
     <div className="flex flex-col min-h-full">
-      <header className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-sm px-4 h-14 flex items-center gap-3 border-b border-slate-700/40">
-        <Link href="/" className="text-slate-400 hover:text-white"><ChevronLeft size={20} /></Link>
+      <header className="sticky top-0 z-40 bg-[#080808]/98 backdrop-blur-sm px-4 h-14 flex items-center gap-3 border-b border-white/5">
+        <Link href="/" className="text-zinc-400 hover:text-white"><ChevronLeft size={20} /></Link>
         <h1 className="text-lg font-black text-white">Delivery History</h1>
       </header>
 
       {/* Period filter */}
       <div className="px-4 py-3">
-        <div className="flex gap-1 bg-slate-800 rounded-xl p-1">
+        <div className="flex gap-1 bg-[#141414] rounded-xl p-1">
           {(Object.keys(PERIOD_LABELS) as Period[]).map(p => (
             <button
               key={p}
               onClick={() => setPeriod(p)}
-              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${period === p ? 'bg-[#FF6B35] text-white' : 'text-slate-500 hover:text-slate-300'}`}
+              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${period === p ? 'bg-[#FF6B35] text-white' : 'text-zinc-500 hover:text-slate-300'}`}
             >
               {PERIOD_LABELS[p]}
             </button>
@@ -100,40 +100,40 @@ export default function HistoryPage() {
 
       {loading ? (
         <div className="p-4 space-y-3">
-          {[1, 2, 3, 4].map(i => <div key={i} className="h-20 bg-slate-800 rounded-2xl animate-pulse" />)}
+          {[1, 2, 3, 4].map(i => <div key={i} className="h-20 bg-[#141414] rounded-2xl animate-pulse" />)}
         </div>
       ) : (
         <div className="flex-1 p-4 space-y-5">
           {/* Summary */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-slate-800 rounded-2xl border border-slate-700/40 p-4 text-center">
+            <div className="bg-[#141414] rounded-2xl border border-white/5 p-4 text-center">
               <p className="text-2xl font-black text-[#FF6B35]">${totalEarnings.toFixed(2)}</p>
-              <p className="text-xs text-slate-500 mt-1">Total Earned</p>
+              <p className="text-xs text-zinc-500 mt-1">Total Earned</p>
             </div>
-            <div className="bg-slate-800 rounded-2xl border border-slate-700/40 p-4 text-center">
+            <div className="bg-[#141414] rounded-2xl border border-white/5 p-4 text-center">
               <p className="text-2xl font-black text-white">{filtered.length}</p>
-              <p className="text-xs text-slate-500 mt-1">Deliveries</p>
+              <p className="text-xs text-zinc-500 mt-1">Deliveries</p>
             </div>
           </div>
 
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="w-16 h-16 rounded-full bg-slate-800 border border-slate-700/50 flex items-center justify-center mb-4">
-                <Package size={28} className="text-slate-600" />
+              <div className="w-16 h-16 rounded-full bg-[#141414] border border-white/5 flex items-center justify-center mb-4">
+                <Package size={28} className="text-zinc-600" />
               </div>
-              <p className="text-slate-400 font-semibold">No deliveries yet</p>
-              <p className="text-slate-600 text-sm mt-1">Your completed deliveries will appear here</p>
+              <p className="text-zinc-400 font-semibold">No deliveries yet</p>
+              <p className="text-zinc-600 text-sm mt-1">Your completed deliveries will appear here</p>
             </div>
           ) : (
             Object.entries(groups).map(([date, items]) => (
               <section key={date}>
                 <div className="flex items-center justify-between mb-2">
-                  <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wide">{date}</h2>
-                  <span className="text-xs font-semibold text-slate-500">
+                  <h2 className="text-xs font-bold text-zinc-500 uppercase tracking-wide">{date}</h2>
+                  <span className="text-xs font-semibold text-zinc-500">
                     ${items.reduce((s, d) => s + d.delivery_fee, 0).toFixed(2)}
                   </span>
                 </div>
-                <div className="bg-slate-800 rounded-2xl overflow-hidden border border-slate-700/40 divide-y divide-slate-700/40">
+                <div className="bg-[#141414] rounded-2xl overflow-hidden border border-white/5 divide-y divide-white/5">
                   {items.map(d => {
                     const addr = d.delivery_address
                     return (
@@ -147,12 +147,12 @@ export default function HistoryPage() {
                           </p>
                           <div className="flex items-center gap-1.5 mt-0.5">
                             {addr?.city ? (
-                              <span className="flex items-center gap-1 text-[11px] text-slate-500">
+                              <span className="flex items-center gap-1 text-[11px] text-zinc-500">
                                 <MapPin size={9} /> {addr.city}
                               </span>
                             ) : null}
-                            <span className="text-slate-700 text-[11px]">·</span>
-                            <span className="flex items-center gap-1 text-[11px] text-slate-500">
+                            <span className="text-zinc-700 text-[11px]">·</span>
+                            <span className="flex items-center gap-1 text-[11px] text-zinc-500">
                               <Clock size={9} />
                               {new Date(d.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
                             </span>
@@ -160,9 +160,9 @@ export default function HistoryPage() {
                         </div>
                         <div className="text-right flex-shrink-0">
                           <p className="font-black text-[#FF6B35] text-sm">+${d.delivery_fee.toFixed(2)}</p>
-                          <p className="text-[11px] text-slate-600 mt-0.5">#{d.id.slice(-6).toUpperCase()}</p>
+                          <p className="text-[11px] text-zinc-600 mt-0.5">#{d.id.slice(-6).toUpperCase()}</p>
                         </div>
-                        <ChevronRight size={14} className="text-slate-700 flex-shrink-0" />
+                        <ChevronRight size={14} className="text-zinc-700 flex-shrink-0" />
                       </div>
                     )
                   })}

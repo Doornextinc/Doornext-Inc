@@ -149,9 +149,9 @@ export default function ActiveDeliveryPage() {
   return (
     <div className="flex flex-col min-h-full pb-[140px]">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-sm px-4 h-14 flex items-center justify-between border-b border-slate-700/40">
+      <header className="sticky top-0 z-40 bg-[#080808]/98 backdrop-blur-sm px-4 h-14 flex items-center justify-between border-b border-white/5">
         <h1 className="text-lg font-black text-white">Active Delivery</h1>
-        <div className="flex items-center gap-2 bg-slate-800 rounded-full px-3 py-1.5">
+        <div className="flex items-center gap-2 bg-[#1A1A1A] rounded-full px-3 py-1.5">
           <div className="w-1.5 h-1.5 rounded-full bg-[#FF6B35] animate-pulse" />
           <span className="font-mono text-sm font-bold text-white">{formatElapsed(elapsed)}</span>
         </div>
@@ -165,12 +165,12 @@ export default function ActiveDeliveryPage() {
             return (
               <div key={step.status} className="flex-1 flex flex-col items-center">
                 <div className="flex items-center w-full">
-                  {i > 0 && <div className={`flex-1 h-0.5 rounded-full transition-colors ${done || active ? 'bg-[#FF6B35]' : 'bg-slate-700'}`} />}
-                  <div className={`relative w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all ${done ? 'bg-[#FF6B35]' : active ? 'bg-[#FF6B35] ring-4 ring-[#FF6B35]/25' : 'bg-slate-700'}`}>
+                  {i > 0 && <div className={`flex-1 h-0.5 rounded-full transition-colors ${done || active ? 'bg-[#FF6B35]' : 'bg-[#1A1A1A]'}`} />}
+                  <div className={`relative w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all ${done ? 'bg-[#FF6B35]' : active ? 'bg-[#FF6B35] ring-4 ring-[#FF6B35]/25' : 'bg-[#1A1A1A]'}`}>
                     {done ? <CheckCircle size={14} className="text-white" /> : <span className={`text-xs font-black ${upcoming ? 'text-slate-500' : 'text-white'}`}>{i + 1}</span>}
                     {active && <span className="absolute inset-0 rounded-full animate-ping bg-[#FF6B35]/30" />}
                   </div>
-                  {i < STEPS.length - 1 && <div className={`flex-1 h-0.5 rounded-full transition-colors ${done ? 'bg-[#FF6B35]' : 'bg-slate-700'}`} />}
+                  {i < STEPS.length - 1 && <div className={`flex-1 h-0.5 rounded-full transition-colors ${done ? 'bg-[#FF6B35]' : 'bg-[#1A1A1A]'}`} />}
                 </div>
                 <div className="mt-2 text-center">
                   <p className={`text-[11px] font-bold ${active ? 'text-[#FF6B35]' : done ? 'text-slate-400' : 'text-slate-600'}`}>{step.label}</p>
@@ -183,7 +183,7 @@ export default function ActiveDeliveryPage() {
       </div>
 
       {/* Route card */}
-      <div className="mx-4 mb-3 bg-slate-800 rounded-2xl border border-slate-700/40 overflow-hidden">
+      <div className="mx-4 mb-3 bg-[#141414] rounded-2xl border border-white/5 overflow-hidden">
         <div className="p-4">
           <div className="flex items-start gap-3 pb-3">
             <div className="flex flex-col items-center flex-shrink-0 mt-0.5">
@@ -214,7 +214,7 @@ export default function ActiveDeliveryPage() {
           <a
             href={`https://maps.google.com/?q=${encodeURIComponent(`${addr.street}, ${addr.city}, ${addr.state}`)}`}
             target="_blank" rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 bg-slate-700/60 hover:bg-slate-700 border-t border-slate-700/40 py-3 text-sm font-semibold text-white transition-colors"
+            className="flex items-center justify-center gap-2 bg-[#1E1E1E] hover:bg-[#1A1A1A] border-t border-white/5 py-3 text-sm font-semibold text-white transition-colors"
           >
             <Navigation size={14} className="text-[#FF6B35]" /> Open in Maps
           </a>
@@ -223,7 +223,7 @@ export default function ActiveDeliveryPage() {
 
       {/* Items checklist — expandable */}
       {order.order_items.length > 0 && (
-        <div className="mx-4 mb-3 bg-slate-800 rounded-2xl border border-slate-700/40 overflow-hidden">
+        <div className="mx-4 mb-3 bg-[#141414] rounded-2xl border border-white/5 overflow-hidden">
           <button
             onClick={() => setShowItems(!showItems)}
             className="w-full flex items-center justify-between px-4 py-3.5"
@@ -231,14 +231,14 @@ export default function ActiveDeliveryPage() {
             <div className="flex items-center gap-2">
               <Package size={15} className="text-[#FF6B35]" />
               <span className="text-sm font-bold text-white">Order Items</span>
-              <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${checkedItems.size === order.order_items.length ? 'bg-green-500/20 text-green-400' : 'bg-slate-700 text-slate-400'}`}>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${checkedItems.size === order.order_items.length ? 'bg-green-500/20 text-green-400' : 'bg-[#1A1A1A] text-slate-400'}`}>
                 {checkedItems.size}/{order.order_items.length}
               </span>
             </div>
             {showItems ? <ChevronUp size={16} className="text-slate-500" /> : <ChevronDown size={16} className="text-slate-500" />}
           </button>
           {showItems && (
-            <div className="border-t border-slate-700/40 divide-y divide-slate-700/30">
+            <div className="border-t border-white/5 divide-y divide-slate-700/30">
               {order.order_items.map((item, i) => (
                 <button
                   key={i}

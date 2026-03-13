@@ -49,7 +49,7 @@ export default function AdminLoginPage() {
           <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#FF6B35] to-[#FF8C5A] flex items-center justify-center">
             <span className="text-white font-black text-sm">D</span>
           </div>
-          <span className="text-white font-black text-lg">Doornext Admin</span>
+          <span className="text-white font-black text-lg">Nexter Admin</span>
         </div>
 
         <div>
@@ -74,7 +74,7 @@ export default function AdminLoginPage() {
           </div>
         </div>
 
-        <p className="text-gray-600 text-xs">© {new Date().getFullYear()} Doornext. Operator access only.</p>
+        <p className="text-gray-600 text-xs">© {new Date().getFullYear()} Nexter. Operator access only.</p>
       </div>
 
       {/* Right — login form */}
@@ -85,7 +85,7 @@ export default function AdminLoginPage() {
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#FF6B35] to-[#FF8C5A] flex items-center justify-center">
               <span className="text-white font-black text-xs">D</span>
             </div>
-            <span className="text-gray-900 font-black">Doornext Admin</span>
+            <span className="text-gray-900 font-black">Nexter Admin</span>
           </div>
 
           <h2 className="text-2xl font-black text-gray-900 mb-1">Sign in</h2>
