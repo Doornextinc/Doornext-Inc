@@ -11,7 +11,7 @@ interface Review {
   rating: number
   body: string | null
   created_at: string
-  food_makers: { name: string } | null
+  food_maker: { display_name: string } | null
 }
 
 export default function ReviewsPage() {
@@ -27,7 +27,7 @@ export default function ReviewsPage() {
 
       const { data } = await supabase
         .from('reviews')
-        .select('id, rating, body, created_at, food_makers(name)')
+        .select('id, rating, body, created_at, food_maker:food_makers(display_name)')
         .eq('customer_id', user.id)
         .order('created_at', { ascending: false })
 
@@ -56,13 +56,13 @@ export default function ReviewsPage() {
           {reviews.map((review) => (
             <div key={review.id} className="bg-white rounded-2xl px-4 py-4">
               <div className="flex items-center justify-between mb-2">
-                <p className="font-bold text-gray-900">{review.food_makers?.name ?? 'Unknown Maker'}</p>
+                <p className="font-bold text-gray-900">{review.food_maker?.display_name ?? 'Unknown Maker'}</p>
                 <div className="flex">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Star
                       key={i}
                       size={14}
-                      className={i < review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'}
+                      className={i < review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'}
                     />
                   ))}
                 </div>

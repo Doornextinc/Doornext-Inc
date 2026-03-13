@@ -1,7 +1,33 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { BackBar } from '@/components/layout/top-bar'
+
+const STORAGE_KEY = 'doornext-settings'
+
+interface Settings {
+  pushOrders: boolean
+  pushMessages: boolean
+  pushPromos: boolean
+  soundEnabled: boolean
+}
+
+const DEFAULTS: Settings = {
+  pushOrders: true,
+  pushMessages: true,
+  pushPromos: false,
+  soundEnabled: true,
+}
+
+function loadSettings(): Settings {
+  if (typeof window === 'undefined') return DEFAULTS
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    return raw ? { ...DEFAULTS, ...JSON.parse(raw) } : DEFAULTS
+  } catch {
+    return DEFAULTS
+  }
+}
 
 interface ToggleProps {
   label: string
@@ -30,10 +56,21 @@ function SettingToggle({ label, description, value, onChange }: ToggleProps) {
 }
 
 export default function SettingsPage() {
-  const [pushOrders, setPushOrders] = useState(true)
-  const [pushMessages, setPushMessages] = useState(true)
-  const [pushPromos, setPushPromos] = useState(false)
-  const [soundEnabled, setSoundEnabled] = useState(true)
+  const [settings, setSettings] = useState<Settings>(DEFAULTS)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setSettings(loadSettings())
+    setMounted(true)
+  }, [])
+
+  const update = (key: keyof Settings) => (value: boolean) => {
+    const next = { ...settings, [key]: value }
+    setSettings(next)
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+  }
+
+  if (!mounted) return null
 
   return (
     <div className="flex flex-col min-h-full bg-[#f8f8f8]">
@@ -47,20 +84,20 @@ export default function SettingsPage() {
           <SettingToggle
             label="Order Updates"
             description="Get notified when your order status changes"
-            value={pushOrders}
-            onChange={setPushOrders}
+            value={settings.pushOrders}
+            onChange={update('pushOrders')}
           />
           <SettingToggle
             label="New Messages"
             description="Get notified when a maker messages you"
-            value={pushMessages}
-            onChange={setPushMessages}
+            value={settings.pushMessages}
+            onChange={update('pushMessages')}
           />
           <SettingToggle
             label="Promotions"
             description="Deals, discounts, and new makers near you"
-            value={pushPromos}
-            onChange={setPushPromos}
+            value={settings.pushPromos}
+            onChange={update('pushPromos')}
           />
         </div>
 
@@ -71,8 +108,8 @@ export default function SettingsPage() {
           <SettingToggle
             label="Sound Effects"
             description="Play sounds for order updates and messages"
-            value={soundEnabled}
-            onChange={setSoundEnabled}
+            value={settings.soundEnabled}
+            onChange={update('soundEnabled')}
           />
         </div>
 

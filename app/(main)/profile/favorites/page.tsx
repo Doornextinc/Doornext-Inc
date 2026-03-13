@@ -9,7 +9,7 @@ import { createClient } from '@/lib/supabase/client'
 
 interface MakerInfo {
   id: string
-  name: string
+  display_name: string
   cuisine_tags: string[]
   avg_rating: number
   total_reviews: number
@@ -19,7 +19,7 @@ interface MakerInfo {
 interface FavoriteMaker {
   id: string
   maker_id: string
-  food_makers: MakerInfo | MakerInfo[] | null
+  food_maker: MakerInfo | null
 }
 
 export default function FavoritesPage() {
@@ -35,7 +35,7 @@ export default function FavoritesPage() {
 
       const { data } = await supabase
         .from('favorites')
-        .select('id, maker_id, food_makers(id, name, cuisine_tags, avg_rating, total_reviews, is_open)')
+        .select('id, maker_id, food_maker:food_makers(id, display_name, cuisine_tags, avg_rating, total_reviews, is_open)')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
 
@@ -70,17 +70,17 @@ export default function FavoritesPage() {
       ) : (
         <div className="p-4 space-y-3">
           {favorites.map((fav) => {
-            const maker = Array.isArray(fav.food_makers) ? fav.food_makers[0] : fav.food_makers
+            const maker = fav.food_maker
             if (!maker) return null
             return (
               <div key={fav.id} className="bg-white rounded-2xl px-4 py-4 flex items-center gap-3">
                 <Link href={`/maker/${maker.id}`} className="flex-1">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#FF8C5A] flex items-center justify-center text-white text-xl font-black">
-                      {maker.name[0]}
+                      {maker.display_name[0]}
                     </div>
                     <div>
-                      <p className="font-bold text-gray-900">{maker.name}</p>
+                      <p className="font-bold text-gray-900">{maker.display_name}</p>
                       <p className="text-xs text-gray-400">{maker.cuisine_tags.slice(0, 2).join(' · ')}</p>
                       <div className="flex items-center gap-1 mt-0.5">
                         <span className="text-xs text-yellow-500">★</span>

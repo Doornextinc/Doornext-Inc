@@ -85,11 +85,11 @@ export default function ProfilePage() {
 
   useEffect(() => { loadProfile() }, [loadProfile])
 
-  // Refresh profile when user navigates back (e.g. after updating avatar/name)
+  // Refresh profile when user navigates back to the tab (works on mobile PWA too)
   useEffect(() => {
-    const onFocus = () => loadProfile()
-    window.addEventListener('focus', onFocus)
-    return () => window.removeEventListener('focus', onFocus)
+    const onVisible = () => { if (document.visibilityState === 'visible') loadProfile() }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
   }, [loadProfile])
 
   const handleSignOut = async () => {
