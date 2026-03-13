@@ -29,16 +29,21 @@ export function TopBar({
 
   useEffect(() => {
     if (!showNotifications) return
-    const supabase = createClient()
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) return
-      supabase
-        .from('notifications')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-        .eq('is_read', false)
-        .then(({ count }) => setUnreadCount(count ?? 0))
-    })
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) return
+    try {
+      const supabase = createClient()
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (!user) return
+        supabase
+          .from('notifications')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('is_read', false)
+          .then(({ count }) => setUnreadCount(count ?? 0))
+      })
+    } catch {
+      // Supabase not configured — skip notification count
+    }
   }, [showNotifications])
 
   return (
