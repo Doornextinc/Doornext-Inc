@@ -138,6 +138,20 @@ export default function MenuPage() {
                       }`} />
                     </button>
 
+                    {/* Photo thumbnail */}
+                    {item.photo_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={item.photo_url}
+                        alt={item.name}
+                        className={`w-12 h-12 rounded-xl object-cover flex-shrink-0 ${!item.is_available ? 'opacity-40' : ''}`}
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-xl bg-gray-100 flex-shrink-0 flex items-center justify-center">
+                        <span className="text-xl">🍽️</span>
+                      </div>
+                    )}
+
                     {/* Info */}
                     <div className="flex-1 min-w-0">
                       <p className={`font-bold text-sm leading-tight ${!item.is_available ? 'text-gray-300' : 'text-gray-900'}`}>

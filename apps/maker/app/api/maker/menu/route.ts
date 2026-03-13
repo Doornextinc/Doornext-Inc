@@ -41,6 +41,7 @@ export async function POST(req: NextRequest) {
       name: name.trim(),
       description: description?.trim() || null,
       price: parseFloat(price),
+      photo_url: body.photo_url ?? null,
       category: category?.trim() || null,
       dietary_tags: dietary_tags ?? [],
       is_available: is_available ?? true,
@@ -79,6 +80,7 @@ export async function PATCH(req: NextRequest) {
   if (fields.name !== undefined) update.name = fields.name.trim()
   if (fields.description !== undefined) update.description = fields.description?.trim() || null
   if (fields.price !== undefined) update.price = parseFloat(fields.price)
+  if (fields.photo_url !== undefined) update.photo_url = fields.photo_url ?? null
   if (fields.category !== undefined) update.category = fields.category?.trim() || null
   if (fields.dietary_tags !== undefined) update.dietary_tags = fields.dietary_tags
   if (fields.is_available !== undefined) update.is_available = fields.is_available

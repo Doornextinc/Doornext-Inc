@@ -1,16 +1,19 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { ChevronLeft, Loader2, Lock, User, Bell, Shield, Trash2 } from 'lucide-react'
+import { ChevronLeft, Loader2, Lock, User, Bell, Shield, Trash2, Camera } from 'lucide-react'
 
 export default function SettingsPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [changingPassword, setChangingPassword] = useState(false)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [profile, setProfile] = useState({ display_name: '', bio: '' })
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   const [password, setPassword] = useState({ new: '', confirm: '' })
   const [notifications, setNotifications] = useState({
     newOrders: true,
@@ -18,6 +21,7 @@ export default function SettingsPage() {
   })
   const [email, setEmail] = useState('')
   const [msg, setMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
+  const avatarInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     async function load() {
@@ -28,11 +32,15 @@ export default function SettingsPage() {
 
       const { data: maker } = await supabase
         .from('food_makers')
-        .select('display_name, bio')
+        .select('display_name, bio, avatar_url')
         .eq('user_id', user.id)
         .single()
 
-      if (maker) setProfile({ display_name: maker.display_name ?? '', bio: maker.bio ?? '' })
+      if (maker) {
+        setProfile({ display_name: maker.display_name ?? '', bio: maker.bio ?? '' })
+        setAvatarUrl(maker.avatar_url ?? null)
+        setAvatarPreview(maker.avatar_url ?? null)
+      }
       setLoading(false)
     }
     load()
@@ -41,6 +49,47 @@ export default function SettingsPage() {
   const flash = (type: 'ok' | 'err', text: string) => {
     setMsg({ type, text })
     setTimeout(() => setMsg(null), 3000)
+  }
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setAvatarPreview(URL.createObjectURL(file))
+    setUploadingAvatar(true)
+
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Not authenticated')
+
+      const ext = file.name.split('.').pop() ?? 'jpg'
+      const path = `${user.id}/kitchen-avatar.${ext}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(path, file, { upsert: true })
+
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(path)
+
+      // Persist immediately
+      await supabase
+        .from('food_makers')
+        .update({ avatar_url: publicUrl })
+        .eq('user_id', user.id)
+
+      setAvatarUrl(publicUrl)
+      flash('ok', 'Profile photo updated')
+    } catch {
+      flash('err', 'Photo upload failed. Please try again.')
+      setAvatarPreview(avatarUrl)
+    } finally {
+      setUploadingAvatar(false)
+    }
   }
 
   const handleSaveProfile = async () => {
@@ -90,6 +139,7 @@ export default function SettingsPage() {
   }
 
   const inputClass = "w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-3 text-sm text-gray-900 focus:outline-none focus:border-[#FF6B35] transition-colors"
+  const initials = (profile.display_name?.[0] ?? 'M').toUpperCase()
 
   return (
     <div className="flex flex-col min-h-full bg-gray-50">
@@ -117,7 +167,54 @@ export default function SettingsPage() {
           <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1 mb-2 flex items-center gap-2">
             <User size={11} /> Kitchen Profile
           </p>
-          <div className="bg-white rounded-2xl border border-gray-100 p-4 space-y-3">
+          <div className="bg-white rounded-2xl border border-gray-100 p-4 space-y-4">
+
+            {/* Avatar upload */}
+            <div className="flex items-center gap-4">
+              <div className="relative flex-shrink-0">
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={handleAvatarChange}
+                />
+                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#FF6B35] to-[#FF8C5A] overflow-hidden shadow-md shadow-[#FF6B35]/25 flex items-center justify-center">
+                  {avatarPreview ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={avatarPreview} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-white text-2xl font-black">{initials}</span>
+                  )}
+                  {uploadingAvatar && (
+                    <div className="absolute inset-0 bg-black/40 rounded-2xl flex items-center justify-center">
+                      <Loader2 size={20} className="text-white animate-spin" />
+                    </div>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => avatarInputRef.current?.click()}
+                  disabled={uploadingAvatar}
+                  className="absolute -bottom-1.5 -right-1.5 w-7 h-7 bg-[#FF6B35] rounded-full flex items-center justify-center shadow-md disabled:opacity-50"
+                >
+                  <Camera size={13} className="text-white" />
+                </button>
+              </div>
+              <div>
+                <p className="font-bold text-gray-900 text-sm">{profile.display_name || 'Your Kitchen'}</p>
+                <button
+                  type="button"
+                  onClick={() => avatarInputRef.current?.click()}
+                  disabled={uploadingAvatar}
+                  className="text-xs text-[#FF6B35] font-semibold mt-0.5 disabled:opacity-50"
+                >
+                  {uploadingAvatar ? 'Uploading…' : 'Change photo'}
+                </button>
+                <p className="text-[11px] text-gray-400 mt-0.5">JPEG, PNG, WebP · Max 5 MB</p>
+              </div>
+            </div>
+
             <div>
               <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Kitchen Name</label>
               <input
