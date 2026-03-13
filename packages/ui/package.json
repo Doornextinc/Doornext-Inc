@@ -1,0 +1,22 @@
+{
+  "name": "@doornext/ui",
+  "version": "0.1.0",
+  "private": true,
+  "exports": {
+    "./button": "./src/button.tsx",
+    "./input": "./src/input.tsx",
+    "./badge": "./src/badge.tsx",
+    "./skeleton": "./src/skeleton.tsx",
+    "./star-rating": "./src/star-rating.tsx"
+  },
+  "dependencies": {
+    "@doornext/shared": "workspace:*",
+    "lucide-react": "^0.469.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.0"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  }
+}

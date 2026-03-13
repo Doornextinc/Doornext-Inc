@@ -1,0 +1,21 @@
+{
+  "name": "@doornext/shared",
+  "version": "0.1.0",
+  "private": true,
+  "exports": {
+    "./types": "./src/types/index.ts",
+    "./constants": "./src/lib/constants.ts",
+    "./utils": "./src/lib/utils.ts",
+    "./supabase/client": "./src/lib/supabase/client.ts",
+    "./supabase/server": "./src/lib/supabase/server.ts"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.9.0",
+    "@supabase/supabase-js": "^2.99.1",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^3.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.0"
+  }
+}
