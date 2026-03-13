@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
       id: userId,
       full_name: fullName,
       phone: phone ?? null,
-      vehicle_type: vehicleType ?? 'car',
+      vehicle_type: ['car', 'motorbike', 'bicycle', 'foot'].includes(vehicleType) ? vehicleType : 'car',
       is_active: false,
       total_deliveries: 0,
       avg_rating: 0,

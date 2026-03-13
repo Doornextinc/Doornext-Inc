@@ -10,8 +10,8 @@ export async function GET() {
     .select(`
       id, user_id,
       kyc_full_name, kyc_date_of_birth, kyc_ssn_last4, kyc_address,
-      id_type, front_path, back_path, selfie_path,
-      submitted_at, reviewed_at, review_notes
+      id_type, front_path, back_path, selfie_path, insurance_path,
+      bg_check_consent, submitted_at, reviewed_at, review_notes
     `)
     .order('submitted_at', { ascending: false })
 
@@ -33,7 +33,7 @@ export async function GET() {
   // Generate signed URLs for private storage paths
   const withUrls = await Promise.all(
     docs.map(async (doc) => {
-      const [frontUrl, backUrl, selfieUrl] = await Promise.all([
+      const [frontUrl, backUrl, selfieUrl, insuranceUrl] = await Promise.all([
         doc.front_path
           ? supabase.storage.from('driver-documents').createSignedUrl(doc.front_path, 3600)
           : Promise.resolve({ data: null }),
@@ -42,6 +42,9 @@ export async function GET() {
           : Promise.resolve({ data: null }),
         doc.selfie_path
           ? supabase.storage.from('driver-documents').createSignedUrl(doc.selfie_path, 3600)
+          : Promise.resolve({ data: null }),
+        doc.insurance_path
+          ? supabase.storage.from('driver-documents').createSignedUrl(doc.insurance_path, 3600)
           : Promise.resolve({ data: null }),
       ])
 
@@ -58,6 +61,8 @@ export async function GET() {
         front_url: frontUrl.data?.signedUrl ?? null,
         back_url: backUrl.data?.signedUrl ?? null,
         selfie_url: selfieUrl.data?.signedUrl ?? null,
+        insurance_url: insuranceUrl.data?.signedUrl ?? null,
+        bg_check_consent: doc.bg_check_consent,
         submitted_at: doc.submitted_at,
         reviewed_at: doc.reviewed_at,
         review_notes: doc.review_notes,

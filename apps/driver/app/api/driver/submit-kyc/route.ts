@@ -15,14 +15,18 @@ export async function POST(req: NextRequest) {
 
   const {
     fullName, dateOfBirth, ssnLast4, address,
-    idType, frontPath, backPath, selfiePath,
+    idType, frontPath, backPath, insurancePath, selfiePath,
+    bgCheckConsent,
   } = await req.json()
 
   if (!fullName || !dateOfBirth || !ssnLast4 || !address || !idType || !frontPath || !selfiePath) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
   }
 
-  // Upsert driver_documents
+  if (!bgCheckConsent) {
+    return NextResponse.json({ error: 'Background check consent is required' }, { status: 400 })
+  }
+
   const { error: docError } = await adminClient
     .from('driver_documents')
     .upsert(
@@ -35,25 +39,23 @@ export async function POST(req: NextRequest) {
         id_type: idType,
         front_path: frontPath,
         back_path: backPath ?? null,
+        insurance_path: insurancePath ?? null,
         selfie_path: selfiePath,
+        bg_check_consent: true,
+        bg_check_consented_at: new Date().toISOString(),
         submitted_at: new Date().toISOString(),
       },
       { onConflict: 'user_id' }
     )
 
-  if (docError) {
-    return NextResponse.json({ error: docError.message }, { status: 500 })
-  }
+  if (docError) return NextResponse.json({ error: docError.message }, { status: 500 })
 
-  // Update driver kyc_status to pending_review
   const { error: profileError } = await adminClient
     .from('driver_profiles')
     .update({ kyc_status: 'pending_review' })
     .eq('id', user.id)
 
-  if (profileError) {
-    return NextResponse.json({ error: profileError.message }, { status: 500 })
-  }
+  if (profileError) return NextResponse.json({ error: profileError.message }, { status: 500 })
 
   return NextResponse.json({ ok: true })
 }

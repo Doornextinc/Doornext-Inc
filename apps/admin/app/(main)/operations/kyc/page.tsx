@@ -13,6 +13,8 @@ interface KYCDocument {
   front_url: string | null
   back_url: string | null
   selfie_url: string | null
+  insurance_url: string | null
+  bg_check_consent: boolean
   submitted_at: string
   reviewed_at: string | null
   review_notes: string | null
@@ -162,11 +164,18 @@ export default function KYCReviewPage() {
                   ))}
                 </div>
 
+                {/* Background check status */}
+                <div className={`flex items-center gap-2 px-3 py-2 rounded-xl mb-5 text-xs font-semibold ${selected.bg_check_consent ? 'bg-green-500/10 text-green-400' : 'bg-slate-700/50 text-slate-500'}`}>
+                  <span>{selected.bg_check_consent ? '✓' : '○'}</span>
+                  Background check consent {selected.bg_check_consent ? 'obtained' : 'not provided'}
+                </div>
+
                 {/* Document images */}
-                <div className="grid grid-cols-3 gap-3 mb-5">
+                <div className={`grid gap-3 mb-5 ${selected.insurance_url ? 'grid-cols-2' : 'grid-cols-3'}`}>
                   {[
                     { label: 'ID Front', url: selected.front_url },
                     { label: 'ID Back', url: selected.back_url },
+                    ...(selected.insurance_url ? [{ label: 'Insurance', url: selected.insurance_url }] : []),
                     { label: 'Selfie', url: selected.selfie_url },
                   ].map(({ label, url }) => (
                     <div

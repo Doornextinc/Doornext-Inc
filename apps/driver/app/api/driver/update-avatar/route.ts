@@ -1,0 +1,44 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdmin } from '@supabase/supabase-js'
+
+const admin = createAdmin(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  { auth: { autoRefreshToken: false, persistSession: false } }
+)
+
+export async function POST(req: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const formData = await req.formData()
+  const file = formData.get('file') as File | null
+  if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 })
+
+  const path = `${user.id}/avatar-${Date.now()}.jpg`
+  const { error: uploadError } = await admin.storage
+    .from('driver-documents')
+    .upload(path, file, { cacheControl: '3600', upsert: true })
+
+  if (uploadError) return NextResponse.json({ error: uploadError.message }, { status: 500 })
+
+  // Generate a long-lived signed URL (1 year)
+  const { data: signed, error: signError } = await admin.storage
+    .from('driver-documents')
+    .createSignedUrl(path, 365 * 24 * 3600)
+
+  if (signError || !signed?.signedUrl) {
+    return NextResponse.json({ error: 'Failed to generate signed URL' }, { status: 500 })
+  }
+
+  const { error: updateError } = await admin
+    .from('driver_profiles')
+    .update({ avatar_url: signed.signedUrl })
+    .eq('id', user.id)
+
+  if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 })
+
+  return NextResponse.json({ avatarUrl: signed.signedUrl })
+}
