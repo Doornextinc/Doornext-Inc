@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import Stripe from 'stripe'
 
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 const PLATFORM_FEE_PCT = 0.05
 
 export async function POST(req: NextRequest) {
@@ -20,17 +22,18 @@ export async function POST(req: NextRequest) {
     const platformFee = subtotal * PLATFORM_FEE_PCT
     const total = subtotal + (delivery_fee ?? 3.99) + (tip_amount ?? 0) + platformFee
 
-    // In production: create Stripe PaymentIntent here
-    // const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
-    // const paymentIntent = await stripe.paymentIntents.create({
-    //   amount: Math.round(total * 100),
-    //   currency: 'usd',
-    //   automatic_payment_methods: { enabled: true },
-    // })
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: Math.round(total * 100),
+      currency: 'usd',
+      automatic_payment_methods: { enabled: true },
+      metadata: {
+        item_count: items.length,
+        subtotal_cents: Math.round(subtotal * 100),
+      },
+    })
 
-    // For demo: return mock client secret
     return NextResponse.json({
-      clientSecret: 'pi_demo_secret_' + Math.random().toString(36).slice(2),
+      clientSecret: paymentIntent.client_secret,
       total: Math.round(total * 100),
       subtotal: Math.round(subtotal * 100),
       platform_fee: Math.round(platformFee * 100),
