@@ -162,76 +162,69 @@ export default function HomePage() {
         </div>
 
       ) : (
-        /* ── ONLINE state ── */
-        <>
-          {/* "Accepting orders" badge — floats in the map center */}
-          <div className="absolute inset-x-0 z-10 flex justify-center" style={{ top: '50%', transform: 'translateY(-50%)' }}>
-            <div className="flex items-center gap-2.5 bg-[#0A0A0A]/80 border border-green-500/25 rounded-full px-5 py-2.5 backdrop-blur-md shadow-xl">
+        /* ── ONLINE bottom sheet ── */
+        <div
+          className="absolute bottom-0 left-0 right-0 z-10 px-4 pb-8 pt-6 space-y-3"
+          style={{ background: 'linear-gradient(to top, #0A0A0A 68%, rgba(10,10,10,0.6) 85%, transparent)' }}
+        >
+          {/* Active order banner */}
+          {data?.activeOrder && (
+            <Link href="/active" className="block bg-[#D4622B]/10 border border-[#D4622B]/20 rounded-2xl px-4 py-4 backdrop-blur-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-black text-[#D4622B] uppercase tracking-wider mb-1">Active Delivery</p>
+                  <p className="font-black text-white text-base">{(data.activeOrder as any).food_maker?.display_name ?? 'Order'}</p>
+                  <p className="text-sm text-zinc-400 mt-0.5 capitalize">{data.activeOrder.status.replace(/_/g, ' ')}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#D4622B] animate-pulse" />
+                  <ChevronRight size={18} className="text-[#D4622B]" />
+                </div>
+              </div>
+            </Link>
+          )}
+
+          {/* Stats row */}
+          <div className="grid grid-cols-3 gap-2.5">
+            <div className="bg-[#131313]/95 border border-white/8 rounded-2xl px-3 py-4 text-center backdrop-blur-sm">
+              <p className="font-black text-white text-xl leading-none">${(data?.todayEarnings ?? 0).toFixed(2)}</p>
+              <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Today</p>
+            </div>
+            <div className="bg-[#131313]/95 border border-white/8 rounded-2xl px-3 py-4 text-center backdrop-blur-sm">
+              <p className="font-black text-white text-xl leading-none">{data?.todayDeliveries ?? 0}</p>
+              <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Trips</p>
+            </div>
+            <Link href="/earnings" className="bg-[#131313]/95 border border-white/8 rounded-2xl px-3 py-4 text-center backdrop-blur-sm">
+              <p className="font-black text-white text-xl leading-none">{data?.profile?.avg_rating?.toFixed(1) ?? '—'}</p>
+              <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Rating</p>
+            </Link>
+          </div>
+
+          {/* Accepting orders label + Go Off button */}
+          <div className="flex flex-col items-center gap-3 pt-1">
+            <div className="flex items-center gap-2">
               <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-60" />
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-400" />
               </span>
               <span className="font-black text-green-400 text-sm tracking-wide">Accepting orders</span>
             </div>
+            <button
+              onClick={toggleOnline}
+              disabled={toggling}
+              className="relative w-24 h-24 rounded-full flex items-center justify-center active:scale-95 transition-all duration-150 disabled:opacity-60"
+              style={{
+                background: 'linear-gradient(145deg, #1e1e1e, #141414)',
+                boxShadow: '0 0 0 4px #1c1c1c, 0 0 0 7px #222, 0 12px 32px rgba(0,0,0,0.8)',
+              }}
+            >
+              <span className="absolute inset-0 rounded-full border border-white/8" />
+              <span className="text-zinc-300 font-black text-xl tracking-widest">
+                {toggling ? '…' : 'OFF'}
+              </span>
+            </button>
           </div>
-
-          {/* Bottom sheet */}
-          <div
-            className="absolute bottom-0 left-0 right-0 z-10 px-4 pb-8 pt-6 space-y-3"
-            style={{ background: 'linear-gradient(to top, #0A0A0A 68%, rgba(10,10,10,0.6) 85%, transparent)' }}
-          >
-            {/* Active order banner */}
-            {data?.activeOrder && (
-              <Link href="/active" className="block bg-[#D4622B]/10 border border-[#D4622B]/20 rounded-2xl px-4 py-4 backdrop-blur-sm">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-black text-[#D4622B] uppercase tracking-wider mb-1">Active Delivery</p>
-                    <p className="font-black text-white text-base">{(data.activeOrder as any).food_maker?.display_name ?? 'Order'}</p>
-                    <p className="text-sm text-zinc-400 mt-0.5 capitalize">{data.activeOrder.status.replace(/_/g, ' ')}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full bg-[#D4622B] animate-pulse" />
-                    <ChevronRight size={18} className="text-[#D4622B]" />
-                  </div>
-                </div>
-              </Link>
-            )}
-
-            {/* Stats row */}
-            <div className="grid grid-cols-3 gap-2.5">
-              <div className="bg-[#131313]/95 border border-white/8 rounded-2xl px-3 py-4 text-center backdrop-blur-sm">
-                <p className="font-black text-white text-xl leading-none">${(data?.todayEarnings ?? 0).toFixed(2)}</p>
-                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Today</p>
-              </div>
-              <div className="bg-[#131313]/95 border border-white/8 rounded-2xl px-3 py-4 text-center backdrop-blur-sm">
-                <p className="font-black text-white text-xl leading-none">{data?.todayDeliveries ?? 0}</p>
-                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Trips</p>
-              </div>
-              <Link href="/earnings" className="bg-[#131313]/95 border border-white/8 rounded-2xl px-3 py-4 text-center backdrop-blur-sm">
-                <p className="font-black text-white text-xl leading-none">{data?.profile?.avg_rating?.toFixed(1) ?? '—'}</p>
-                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Rating</p>
-              </Link>
-            </div>
-
-            {/* Go Offline — round, same style as GO but smaller */}
-            <div className="flex justify-center pt-1">
-              <button
-                onClick={toggleOnline}
-                disabled={toggling}
-                className="relative w-24 h-24 rounded-full flex items-center justify-center active:scale-95 transition-all duration-150 disabled:opacity-60"
-                style={{
-                  background: 'linear-gradient(145deg, #1e1e1e, #141414)',
-                  boxShadow: '0 0 0 4px #1c1c1c, 0 0 0 7px #222, 0 12px 32px rgba(0,0,0,0.8)',
-                }}
-              >
-                <span className="absolute inset-0 rounded-full border border-white/8" />
-                <span className="text-zinc-300 font-black text-xl tracking-widest">
-                  {toggling ? '…' : 'OFF'}
-                </span>
-              </button>
-            </div>
-          </div>
-        </>
+        </div>
       )}
     </div>
   )
