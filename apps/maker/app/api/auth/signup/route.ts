@@ -8,10 +8,13 @@ const adminClient = createClient(
 )
 
 export async function POST(req: NextRequest) {
-  const { fullName, email, password, displayName, cuisineTags } = await req.json()
+  const { fullName, email, password, displayName, cuisineTags, lat, lng } = await req.json()
 
   if (!fullName || !email || !password || !displayName) {
     return NextResponse.json({ error: 'All fields are required' }, { status: 400 })
+  }
+  if (lat == null || lng == null) {
+    return NextResponse.json({ error: 'Kitchen location is required.' }, { status: 400 })
   }
 
   // Create auth user (pre-confirmed)
@@ -34,11 +37,13 @@ export async function POST(req: NextRequest) {
     { onConflict: 'id' }
   )
 
-  // Create food_maker record
+  // Create food_maker record with kitchen location
   const { error: makerError } = await adminClient.from('food_makers').insert({
     user_id: userId,
     display_name: displayName,
     cuisine_tags: cuisineTags ?? [],
+    lat,
+    lng,
     is_open: false,
     avg_rating: 0,
     total_reviews: 0,

@@ -36,6 +36,16 @@ export default function MakerSignupPage() {
     }))
   }
 
+  const getLocation = (): Promise<{ lat: number; lng: number }> =>
+    new Promise((resolve, reject) => {
+      if (!navigator.geolocation) { reject(new Error('no_geolocation')); return }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        () => reject(new Error('denied')),
+        { timeout: 10000 }
+      )
+    })
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (form.password.length < 6) { setError('Password must be at least 6 characters.'); return }
@@ -43,10 +53,19 @@ export default function MakerSignupPage() {
     setLoading(true)
     setError(null)
 
+    let location: { lat: number; lng: number }
+    try {
+      location = await getLocation()
+    } catch {
+      setError('Location access is required to register your kitchen so customers nearby can find you. Please allow location access and try again.')
+      setLoading(false)
+      return
+    }
+
     const res = await fetch('/api/auth/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ ...form, lat: location.lat, lng: location.lng }),
     })
     const data = await res.json()
 
@@ -155,6 +174,10 @@ export default function MakerSignupPage() {
               ))}
             </div>
           </div>
+
+          <p className="text-xs text-gray-400 text-center pt-1">
+            📍 We'll request your location to show your kitchen to nearby customers.
+          </p>
 
           <button
             type="submit"
