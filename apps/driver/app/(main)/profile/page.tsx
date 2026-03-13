@@ -17,11 +17,11 @@ const VEHICLE_LABELS: Record<string, { emoji: string; label: string }> = {
   foot:      { emoji: '🚶', label: 'On Foot' },
 }
 
-const KYC_CONFIG: Record<string, { label: string; color: string; icon: React.ElementType; bg: string }> = {
-  not_submitted: { label: 'Not Submitted', color: 'text-zinc-400', icon: AlertCircle, bg: 'bg-[#1A1A1A]' },
-  pending_review: { label: 'Under Review', color: 'text-[#FF6B35]', icon: Clock, bg: 'bg-[#FF6B35]/10' },
-  approved: { label: 'Verified', color: 'text-green-400', icon: CheckCircle, bg: 'bg-green-500/10' },
-  rejected: { label: 'Rejected', color: 'text-red-400', icon: AlertCircle, bg: 'bg-red-500/10' },
+const KYC_CONFIG: Record<string, { label: string; color: string; icon: React.ElementType }> = {
+  not_submitted: { label: 'Not Submitted', color: 'text-zinc-400', icon: AlertCircle },
+  pending_review: { label: 'Under Review',  color: 'text-zinc-300', icon: Clock },
+  approved:       { label: 'Verified',      color: 'text-green-400', icon: CheckCircle },
+  rejected:       { label: 'Rejected',      color: 'text-red-400',   icon: AlertCircle },
 }
 
 export default function ProfilePage() {
@@ -97,11 +97,11 @@ export default function ProfilePage() {
       <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
 
       {/* Hero header */}
-      <div className="relative bg-gradient-to-b from-[#1A1A1A] to-[#0A0A0A] px-5 pt-12 pb-6">
+      <div className="relative bg-gradient-to-b from-[#181818] to-[#0A0A0A] px-5 pt-12 pb-6">
         <div className="flex items-end gap-4">
-          {/* Avatar with edit button */}
+          {/* Avatar */}
           <div className="relative">
-            <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gradient-to-br from-[#FF6B35] to-[#FF8C5A] flex items-center justify-center shadow-xl shadow-[#FF6B35]/20">
+            <div className="w-20 h-20 rounded-2xl overflow-hidden bg-[#242424] border border-white/8 flex items-center justify-center shadow-lg">
               {profile?.avatar_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
@@ -117,9 +117,9 @@ export default function ProfilePage() {
             <button
               onClick={() => avatarInputRef.current?.click()}
               disabled={uploadingAvatar}
-              className="absolute -bottom-1 -right-1 w-7 h-7 bg-[#FF6B35] rounded-full border-2 border-[#080808] flex items-center justify-center shadow-lg"
+              className="absolute -bottom-1 -right-1 w-7 h-7 bg-[#2A2A2A] border border-white/10 rounded-full flex items-center justify-center shadow-lg"
             >
-              <Camera size={12} className="text-white" />
+              <Camera size={12} className="text-zinc-300" />
             </button>
             {profile?.is_active && (
               <div className="absolute -top-1 -left-1 w-4 h-4 bg-green-500 rounded-full border-2 border-[#080808]" />
@@ -128,9 +128,9 @@ export default function ProfilePage() {
 
           <div className="flex-1 pb-1">
             <h1 className="text-xl font-black text-white leading-tight">{profile?.full_name ?? 'Driver'}</h1>
-            <p className="text-xs text-zinc-400 mt-0.5">{email}</p>
+            <p className="text-xs text-zinc-500 mt-0.5">{email}</p>
             {vehicle && (
-              <span className="inline-flex items-center gap-1 mt-1.5 text-[11px] text-zinc-400 bg-[#1E1E1E] rounded-full px-2.5 py-0.5">
+              <span className="inline-flex items-center gap-1 mt-1.5 text-[11px] text-zinc-400 bg-[#1E1E1E] border border-white/5 rounded-full px-2.5 py-0.5">
                 {vehicle.emoji} {vehicle.label}
               </span>
             )}
@@ -141,36 +141,38 @@ export default function ProfilePage() {
       {/* Stats */}
       <div className="mx-4 -mt-2 bg-[#141414] rounded-2xl border border-white/5 p-4 grid grid-cols-3 gap-4 shadow-lg">
         <div className="text-center">
-          <div className="flex items-center justify-center gap-1 mb-1"><Package size={13} className="text-[#FF6B35]" /></div>
+          <div className="flex items-center justify-center mb-1.5"><Package size={14} className="text-zinc-500" /></div>
           <p className="font-black text-white text-xl">{profile?.total_deliveries ?? 0}</p>
-          <p className="text-[10px] text-zinc-500">Deliveries</p>
+          <p className="text-xs text-zinc-500">Deliveries</p>
         </div>
         <div className="text-center border-x border-white/5">
-          <div className="flex items-center justify-center gap-1 mb-1"><Star size={13} className="text-[#FF6B35]" /></div>
+          <div className="flex items-center justify-center mb-1.5"><Star size={14} className="text-zinc-500" /></div>
           <p className="font-black text-white text-xl">{profile?.avg_rating?.toFixed(1) ?? '—'}</p>
-          <p className="text-[10px] text-zinc-500">Rating</p>
+          <p className="text-xs text-zinc-500">Rating</p>
         </div>
         <div className="text-center">
-          <div className="flex items-center justify-center gap-1 mb-1"><TrendingUp size={13} className="text-green-400" /></div>
+          <div className="flex items-center justify-center mb-1.5"><TrendingUp size={14} className="text-zinc-500" /></div>
           <p className="font-black text-white text-xl">{totalEarnings !== null ? `$${totalEarnings.toFixed(0)}` : '—'}</p>
-          <p className="text-[10px] text-zinc-500">Earned</p>
+          <p className="text-xs text-zinc-500">Earned</p>
         </div>
       </div>
 
       {/* KYC status */}
       <div className="mx-4 mt-5">
-        <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-2 px-1">Verification</p>
-        <div className={`${kyc.bg} rounded-2xl border border-white/5 p-4`}>
+        <p className="text-xs text-zinc-600 font-bold uppercase tracking-widest mb-2 px-1">Verification</p>
+        <div className="bg-[#141414] rounded-2xl border border-white/5 p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <KycIcon size={20} className={kyc.color} />
+              <div className="w-8 h-8 rounded-xl bg-[#1E1E1E] flex items-center justify-center flex-shrink-0">
+                <KycIcon size={16} className={kyc.color} />
+              </div>
               <div>
                 <p className="font-bold text-white text-sm">Identity Verification</p>
                 <p className={`text-xs mt-0.5 ${kyc.color}`}>{kyc.label}</p>
               </div>
             </div>
             {(profile?.kyc_status === 'not_submitted' || profile?.kyc_status === 'rejected') && (
-              <button onClick={() => router.push('/onboarding')} className="flex items-center gap-1 text-xs font-bold text-[#FF6B35]">
+              <button onClick={() => router.push('/onboarding')} className="flex items-center gap-1 text-xs font-bold text-white">
                 {profile.kyc_status === 'rejected' ? 'Resubmit' : 'Start'} <ChevronRight size={12} />
               </button>
             )}
@@ -180,34 +182,35 @@ export default function ProfilePage() {
 
       {/* Account menu */}
       <div className="mx-4 mt-5 space-y-4">
-        <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest px-1">Account</p>
+        <p className="text-xs text-zinc-600 font-bold uppercase tracking-widest px-1">Account</p>
+
         <div className="bg-[#141414] rounded-2xl border border-white/5 divide-y divide-white/5">
           <div className="flex items-center gap-3 px-4 py-3.5">
-            <div className="w-8 h-8 rounded-xl bg-[#FF6B35]/10 flex items-center justify-center flex-shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-[#1E1E1E] flex items-center justify-center flex-shrink-0">
               <span className="text-sm">{vehicle?.emoji ?? '🚗'}</span>
             </div>
             <div className="flex-1">
               <p className="text-sm font-semibold text-white">Vehicle</p>
-              <p className="text-xs text-zinc-400">{vehicle?.label ?? 'Not set'}</p>
+              <p className="text-xs text-zinc-500">{vehicle?.label ?? 'Not set'}</p>
             </div>
           </div>
           <div className="flex items-center gap-3 px-4 py-3.5">
-            <div className="w-8 h-8 rounded-xl bg-[#1A1A1A] flex items-center justify-center flex-shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-[#1E1E1E] flex items-center justify-center flex-shrink-0">
               <span className="text-sm">✉️</span>
             </div>
             <div className="flex-1">
               <p className="text-sm font-semibold text-white">Email</p>
-              <p className="text-xs text-zinc-400">{email}</p>
+              <p className="text-xs text-zinc-500">{email}</p>
             </div>
           </div>
           {profile?.phone && (
             <div className="flex items-center gap-3 px-4 py-3.5">
-              <div className="w-8 h-8 rounded-xl bg-green-500/10 flex items-center justify-center flex-shrink-0">
+              <div className="w-8 h-8 rounded-xl bg-[#1E1E1E] flex items-center justify-center flex-shrink-0">
                 <span className="text-sm">📱</span>
               </div>
               <div className="flex-1">
                 <p className="text-sm font-semibold text-white">Phone</p>
-                <p className="text-xs text-zinc-400">{profile.phone}</p>
+                <p className="text-xs text-zinc-500">{profile.phone}</p>
               </div>
             </div>
           )}
@@ -215,22 +218,22 @@ export default function ProfilePage() {
 
         <div className="bg-[#141414] rounded-2xl border border-white/5 divide-y divide-white/5">
           <button onClick={() => router.push('/earnings')} className="w-full flex items-center gap-3 px-4 py-3.5">
-            <div className="w-8 h-8 rounded-xl bg-green-500/10 flex items-center justify-center flex-shrink-0">
-              <TrendingUp size={16} className="text-green-400" />
+            <div className="w-8 h-8 rounded-xl bg-[#1E1E1E] flex items-center justify-center flex-shrink-0">
+              <TrendingUp size={16} className="text-zinc-400" />
             </div>
             <span className="text-sm font-semibold text-white flex-1 text-left">Earnings & Payouts</span>
             <ChevronRight size={16} className="text-zinc-600" />
           </button>
           <button onClick={() => router.push('/history')} className="w-full flex items-center gap-3 px-4 py-3.5">
-            <div className="w-8 h-8 rounded-xl bg-[#1A1A1A] flex items-center justify-center flex-shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-[#1E1E1E] flex items-center justify-center flex-shrink-0">
               <Package size={16} className="text-zinc-400" />
             </div>
             <span className="text-sm font-semibold text-white flex-1 text-left">Delivery History</span>
             <ChevronRight size={16} className="text-zinc-600" />
           </button>
           <button onClick={() => router.push('/onboarding')} className="w-full flex items-center gap-3 px-4 py-3.5">
-            <div className="w-8 h-8 rounded-xl bg-[#FF6B35]/10 flex items-center justify-center flex-shrink-0">
-              <Shield size={16} className="text-[#FF6B35]" />
+            <div className="w-8 h-8 rounded-xl bg-[#1E1E1E] flex items-center justify-center flex-shrink-0">
+              <Shield size={16} className="text-zinc-400" />
             </div>
             <span className="text-sm font-semibold text-white flex-1 text-left">KYC & Documents</span>
             <ChevronRight size={16} className="text-zinc-600" />
@@ -239,10 +242,10 @@ export default function ProfilePage() {
 
         <div className="bg-[#141414] rounded-2xl border border-white/5">
           <button onClick={handleSignOut} className="w-full flex items-center gap-3 px-4 py-4">
-            <div className="w-8 h-8 rounded-xl bg-red-500/10 flex items-center justify-center flex-shrink-0">
-              <LogOut size={16} className="text-red-400" />
+            <div className="w-8 h-8 rounded-xl bg-[#1E1E1E] flex items-center justify-center flex-shrink-0">
+              <LogOut size={16} className="text-zinc-400" />
             </div>
-            <span className="text-sm font-bold text-red-400">Sign Out</span>
+            <span className="text-sm font-bold text-white">Sign Out</span>
           </button>
         </div>
       </div>

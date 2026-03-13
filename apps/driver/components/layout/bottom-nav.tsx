@@ -19,7 +19,7 @@ export function BottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 max-w-[430px] mx-auto">
-      <div className="h-px bg-white/5" />
+      <div className="h-px bg-white/6" />
       <div className="bg-[#080808]/98 backdrop-blur-sm flex items-center justify-around h-[68px] pb-safe">
         {navItems.map(({ href, icon: Icon, label, exact }) => {
           const isActive = exact ? pathname === href : pathname.startsWith(href)
@@ -32,20 +32,17 @@ export function BottomNav() {
               aria-current={isActive ? 'page' : undefined}
               className="flex-1 flex flex-col items-center justify-center gap-1 py-2 relative"
             >
-              {isActive && (
-                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-[#FF6B35] rounded-full" />
-              )}
-              <div className={`relative p-1.5 rounded-xl transition-colors ${isActive ? 'bg-[#FF6B35]/12' : ''}`}>
+              <div className="relative">
                 <Icon
-                  size={20}
-                  strokeWidth={isActive ? 2.5 : 1.8}
-                  className={isActive ? 'text-[#FF6B35]' : 'text-slate-500'}
+                  size={22}
+                  strokeWidth={isActive ? 2.8 : 1.8}
+                  className={isActive ? 'text-white' : 'text-zinc-600'}
                 />
                 {showBadge && (
-                  <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-green-400 rounded-full border-2 border-slate-900" />
+                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-green-400 rounded-full border-2 border-[#080808]" />
                 )}
               </div>
-              <span className={`text-[10px] font-semibold tracking-wide ${isActive ? 'text-[#FF6B35]' : 'text-slate-500'}`}>
+              <span className={`text-[11px] tracking-wide ${isActive ? 'font-black text-white' : 'font-semibold text-zinc-600'}`}>
                 {label}
               </span>
             </Link>
