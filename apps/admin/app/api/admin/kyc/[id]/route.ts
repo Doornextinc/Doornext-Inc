@@ -13,28 +13,26 @@ export async function POST(
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
   }
 
-  const docStatus = action === 'approve' ? 'approved' : 'rejected'
   const kycStatus = action === 'approve' ? 'approved' : 'rejected'
 
-  // Update the document record
+  // Update document with review notes (no status column on driver_documents)
   const { data: doc, error: docError } = await supabase
     .from('driver_documents')
     .update({
-      status: docStatus,
       review_notes: notes ?? null,
       reviewed_at: new Date().toISOString(),
     })
     .eq('id', id)
-    .select('driver_id')
+    .select('user_id')
     .single()
 
   if (docError) return NextResponse.json({ error: docError.message }, { status: 500 })
 
-  // Update driver profile KYC status
+  // Update driver profile KYC status via user_id
   const { error: profileError } = await supabase
     .from('driver_profiles')
     .update({ kyc_status: kycStatus })
-    .eq('id', doc.driver_id)
+    .eq('id', doc.user_id)
 
   if (profileError) return NextResponse.json({ error: profileError.message }, { status: 500 })
 

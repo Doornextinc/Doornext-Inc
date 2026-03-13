@@ -4,22 +4,26 @@ import { useEffect, useState, useCallback } from 'react'
 
 interface KYCDocument {
   id: string
-  driver_id: string
-  status: string
-  review_notes: string | null
+  user_id: string
+  kyc_full_name: string | null
+  kyc_date_of_birth: string | null
+  kyc_ssn_last4: string | null
+  kyc_address: string | null
+  id_type: string | null
+  front_url: string | null
+  back_url: string | null
+  selfie_url: string | null
   submitted_at: string
   reviewed_at: string | null
-  first_name: string
-  last_name: string
-  date_of_birth: string | null
-  phone: string | null
-  address: string | null
-  id_type: string | null
-  id_number: string | null
-  id_front_url: string | null
-  id_back_url: string | null
-  selfie_url: string | null
-  driver_profiles: { full_name: string; vehicle_type: string | null; kyc_status: string | null } | null
+  review_notes: string | null
+  kyc_status: string
+  driver_profile: {
+    id: string
+    full_name: string
+    vehicle_type: string | null
+    kyc_status: string | null
+    phone: string | null
+  } | null
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -63,7 +67,7 @@ export default function KYCReviewPage() {
     load()
   }
 
-  const filtered = docs.filter((d) => filter === 'all' || d.status === filter)
+  const filtered = docs.filter((d) => filter === 'all' || d.kyc_status === filter)
 
   return (
     <div className="p-8">
@@ -72,6 +76,7 @@ export default function KYCReviewPage() {
           <h1 className="text-2xl font-black text-gray-900">KYC Review</h1>
           <p className="text-gray-400 text-sm mt-1">Driver identity verification submissions</p>
         </div>
+        <span className="text-sm text-gray-400">{docs.length} total submissions</span>
       </div>
 
       <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-5 w-fit">
@@ -94,7 +99,7 @@ export default function KYCReviewPage() {
         </div>
       ) : (
         <div className="grid grid-cols-3 gap-6">
-          {/* List */}
+          {/* Submission list */}
           <div className="space-y-2">
             {filtered.map((doc) => (
               <button
@@ -107,16 +112,18 @@ export default function KYCReviewPage() {
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="font-semibold text-gray-900 text-sm">
-                      {doc.first_name} {doc.last_name}
+                      {doc.kyc_full_name ?? doc.driver_profile?.full_name ?? 'Unknown'}
                     </p>
-                    <p className="text-xs text-gray-400">{doc.driver_profiles?.full_name}</p>
+                    <p className="text-xs text-gray-400">{doc.driver_profile?.vehicle_type ?? '—'}</p>
                   </div>
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${STATUS_COLORS[doc.status]}`}>
-                    {doc.status.replace(/_/g, ' ')}
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${STATUS_COLORS[doc.kyc_status]}`}>
+                    {doc.kyc_status.replace(/_/g, ' ')}
                   </span>
                 </div>
                 <p className="text-xs text-gray-400 mt-1">
-                  {new Date(doc.submitted_at).toLocaleDateString()}
+                  {new Date(doc.submitted_at).toLocaleDateString('en-US', {
+                    month: 'short', day: 'numeric', year: 'numeric',
+                  })}
                 </p>
               </button>
             ))}
@@ -125,27 +132,28 @@ export default function KYCReviewPage() {
             )}
           </div>
 
-          {/* Detail */}
+          {/* Detail panel */}
           {selected ? (
             <div className="col-span-2 space-y-4">
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-bold text-gray-900">
-                    {selected.first_name} {selected.last_name}
-                  </h2>
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${STATUS_COLORS[selected.status]}`}>
-                    {selected.status.replace(/_/g, ' ')}
+                  <div>
+                    <h2 className="font-bold text-gray-900">{selected.kyc_full_name ?? '—'}</h2>
+                    <p className="text-xs text-gray-400">{selected.driver_profile?.full_name}</p>
+                  </div>
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${STATUS_COLORS[selected.kyc_status]}`}>
+                    {selected.kyc_status.replace(/_/g, ' ')}
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 text-sm mb-4">
+                <div className="grid grid-cols-2 gap-3 text-sm mb-5">
                   {[
-                    { label: 'Date of Birth', value: selected.date_of_birth ?? '—' },
-                    { label: 'Phone', value: selected.phone ?? '—' },
-                    { label: 'Address', value: selected.address ?? '—' },
-                    { label: 'ID Type', value: selected.id_type ?? '—' },
-                    { label: 'ID Number', value: selected.id_number ?? '—' },
-                    { label: 'Vehicle', value: selected.driver_profiles?.vehicle_type ?? '—' },
+                    { label: 'Date of Birth', value: selected.kyc_date_of_birth ?? '—' },
+                    { label: 'SSN Last 4', value: selected.kyc_ssn_last4 ? `••••${selected.kyc_ssn_last4}` : '—' },
+                    { label: 'Address', value: selected.kyc_address ?? '—' },
+                    { label: 'ID Type', value: selected.id_type?.replace(/_/g, ' ') ?? '—' },
+                    { label: 'Phone', value: selected.driver_profile?.phone ?? '—' },
+                    { label: 'Vehicle', value: selected.driver_profile?.vehicle_type ?? '—' },
                   ].map(({ label, value }) => (
                     <div key={label}>
                       <p className="text-xs text-gray-400">{label}</p>
@@ -155,27 +163,30 @@ export default function KYCReviewPage() {
                 </div>
 
                 {/* Document images */}
-                <div className="grid grid-cols-3 gap-3 mb-4">
+                <div className="grid grid-cols-3 gap-3 mb-5">
                   {[
-                    { label: 'ID Front', url: selected.id_front_url },
-                    { label: 'ID Back', url: selected.id_back_url },
+                    { label: 'ID Front', url: selected.front_url },
+                    { label: 'ID Back', url: selected.back_url },
                     { label: 'Selfie', url: selected.selfie_url },
                   ].map(({ label, url }) => (
-                    <div key={label} className="rounded-xl overflow-hidden border border-gray-100 bg-gray-50 aspect-video flex items-center justify-center">
+                    <div
+                      key={label}
+                      className="rounded-xl overflow-hidden border border-gray-100 bg-gray-50 aspect-video flex items-center justify-center"
+                    >
                       {url ? (
-                        <a href={url} target="_blank" rel="noopener noreferrer">
+                        <a href={url} target="_blank" rel="noopener noreferrer" className="w-full h-full block">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={url} alt={label} className="w-full h-full object-cover" />
                         </a>
                       ) : (
-                        <p className="text-xs text-gray-400">{label} — not uploaded</p>
+                        <p className="text-xs text-gray-400 p-2 text-center">{label}<br/>not uploaded</p>
                       )}
                     </div>
                   ))}
                 </div>
 
-                {/* Review notes */}
-                {selected.status === 'pending_review' && (
+                {/* Actions — only when pending */}
+                {selected.kyc_status === 'pending_review' && (
                   <>
                     <textarea
                       value={notes}
@@ -208,6 +219,12 @@ export default function KYCReviewPage() {
                     <p className="text-xs font-semibold text-gray-500 mb-1">Review Notes</p>
                     <p className="text-sm text-gray-700">{selected.review_notes}</p>
                   </div>
+                )}
+
+                {selected.reviewed_at && (
+                  <p className="text-xs text-gray-400 mt-2">
+                    Reviewed {new Date(selected.reviewed_at).toLocaleString()}
+                  </p>
                 )}
               </div>
             </div>

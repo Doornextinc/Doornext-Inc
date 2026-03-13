@@ -28,9 +28,9 @@ export async function POST(req: NextRequest) {
 
   const userId = authData.user.id
 
-  // Upsert public.users with driver role
+  // Upsert public.users with driver role — pending until KYC approved by admin
   await adminClient.from('users').upsert(
-    { id: userId, email, full_name: fullName, role: 'driver' },
+    { id: userId, email, full_name: fullName, role: 'driver', account_status: 'pending' },
     { onConflict: 'id' }
   )
 

@@ -4,6 +4,15 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 
+interface LinkedOrder {
+  id: string
+  status: string
+  total: number
+  created_at: string
+  food_maker: { display_name: string } | null
+  order_items: { quantity: number; unit_price: number; menu_items: { name: string } | null }[]
+}
+
 interface Ticket {
   id: string
   subject: string
@@ -11,7 +20,9 @@ interface Ticket {
   status: string
   priority: string
   created_at: string
+  order_id: string | null
   users: { full_name: string; email: string } | null
+  order: LinkedOrder | null
 }
 
 interface Message {
@@ -26,6 +37,17 @@ interface Message {
 const STATUS_OPTIONS = ['open', 'in_progress', 'resolved', 'closed']
 const PRIORITY_OPTIONS = ['low', 'normal', 'high', 'urgent']
 
+const ORDER_STATUS_COLORS: Record<string, string> = {
+  pending: 'bg-yellow-100 text-yellow-700',
+  confirmed: 'bg-blue-100 text-blue-700',
+  preparing: 'bg-orange-100 text-orange-700',
+  ready: 'bg-purple-100 text-purple-700',
+  picked_up: 'bg-indigo-100 text-indigo-700',
+  on_the_way: 'bg-cyan-100 text-cyan-700',
+  delivered: 'bg-green-100 text-green-700',
+  cancelled: 'bg-red-100 text-red-700',
+}
+
 export default function SupportTicketPage() {
   const { id } = useParams<{ id: string }>()
   const [ticket, setTicket] = useState<Ticket | null>(null)
@@ -34,6 +56,10 @@ export default function SupportTicketPage() {
   const [reply, setReply] = useState('')
   const [isInternal, setIsInternal] = useState(false)
   const [sending, setSending] = useState(false)
+  const [orderSearch, setOrderSearch] = useState('')
+  const [searchResults, setSearchResults] = useState<LinkedOrder[]>([])
+  const [searching, setSearching] = useState(false)
+  const [linkingOrder, setLinkingOrder] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   const load = useCallback(async () => {
@@ -68,6 +94,39 @@ export default function SupportTicketPage() {
     })
     setReply('')
     setSending(false)
+    load()
+  }
+
+  const searchOrders = async () => {
+    if (!orderSearch.trim()) return
+    setSearching(true)
+    const res = await fetch(`/api/admin/orders?search=${encodeURIComponent(orderSearch)}`)
+    if (res.ok) {
+      const data = await res.json()
+      setSearchResults((data.orders ?? []).slice(0, 5))
+    }
+    setSearching(false)
+  }
+
+  const linkOrder = async (orderId: string) => {
+    setLinkingOrder(true)
+    await fetch(`/api/admin/support/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ order_id: orderId }),
+    })
+    setSearchResults([])
+    setOrderSearch('')
+    setLinkingOrder(false)
+    load()
+  }
+
+  const unlinkOrder = async () => {
+    await fetch(`/api/admin/support/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ order_id: null }),
+    })
     load()
   }
 
@@ -153,8 +212,9 @@ export default function SupportTicketPage() {
           </div>
         </div>
 
-        {/* Ticket info sidebar */}
+        {/* Sidebar */}
         <div className="space-y-4">
+          {/* Ticket controls */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <h3 className="font-bold text-gray-900 mb-4 text-sm">Ticket Details</h3>
             <div className="space-y-3">
@@ -188,10 +248,120 @@ export default function SupportTicketPage() {
             </div>
           </div>
 
+          {/* Customer */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <h3 className="font-bold text-gray-900 mb-3 text-sm">Customer</h3>
             <p className="font-medium text-gray-900">{ticket.users?.full_name ?? '—'}</p>
             <p className="text-xs text-gray-400">{ticket.users?.email ?? '—'}</p>
+          </div>
+
+          {/* Linked Order */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-bold text-gray-900 text-sm">Linked Order</h3>
+              {ticket.order && (
+                <button
+                  onClick={unlinkOrder}
+                  className="text-xs text-red-400 hover:text-red-600"
+                >
+                  Unlink
+                </button>
+              )}
+            </div>
+
+            {ticket.order ? (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <Link
+                    href={`/operations/orders/${ticket.order.id}`}
+                    className="font-mono text-xs font-bold text-[#FF6B35] hover:underline"
+                  >
+                    #{ticket.order.id.slice(-8).toUpperCase()}
+                  </Link>
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${
+                    ORDER_STATUS_COLORS[ticket.order.status] ?? 'bg-gray-100 text-gray-600'
+                  }`}>
+                    {ticket.order.status.replace(/_/g, ' ')}
+                  </span>
+                </div>
+                <p className="text-sm font-medium text-gray-900 mb-1">
+                  {ticket.order.food_maker?.display_name ?? '—'}
+                </p>
+                <p className="text-xs text-gray-400 mb-2">
+                  {new Date(ticket.order.created_at).toLocaleDateString('en-US', {
+                    month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+                  })}
+                </p>
+                {/* Order items summary */}
+                <div className="space-y-1 border-t border-gray-50 pt-2 mt-2">
+                  {ticket.order.order_items.slice(0, 4).map((item, i) => (
+                    <div key={i} className="flex items-center justify-between text-xs">
+                      <span className="text-gray-600 truncate">{item.quantity}× {item.menu_items?.name}</span>
+                      <span className="text-gray-500 ml-2 shrink-0">
+                        ${(item.quantity * item.unit_price).toFixed(2)}
+                      </span>
+                    </div>
+                  ))}
+                  {ticket.order.order_items.length > 4 && (
+                    <p className="text-xs text-gray-400">+{ticket.order.order_items.length - 4} more items</p>
+                  )}
+                </div>
+                <div className="border-t border-gray-50 pt-2 mt-2 flex justify-between">
+                  <span className="text-xs text-gray-400">Total</span>
+                  <span className="text-sm font-bold text-gray-900">${ticket.order.total.toFixed(2)}</span>
+                </div>
+                <Link
+                  href={`/operations/orders/${ticket.order.id}`}
+                  className="mt-3 block text-center text-xs font-semibold text-[#FF6B35] border border-orange-100 rounded-lg py-1.5 hover:bg-orange-50 transition-colors"
+                >
+                  View Full Order →
+                </Link>
+              </div>
+            ) : (
+              /* Order search / link */
+              <div>
+                <p className="text-xs text-gray-400 mb-3">No order linked to this ticket.</p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={orderSearch}
+                    onChange={(e) => setOrderSearch(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && searchOrders()}
+                    placeholder="Search order ID…"
+                    className="flex-1 px-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:border-gray-400"
+                  />
+                  <button
+                    onClick={searchOrders}
+                    disabled={searching || !orderSearch.trim()}
+                    className="px-3 py-1.5 text-xs font-semibold bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 transition-colors"
+                  >
+                    {searching ? '…' : 'Search'}
+                  </button>
+                </div>
+                {searchResults.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    {searchResults.map((order) => (
+                      <button
+                        key={order.id}
+                        onClick={() => linkOrder(order.id)}
+                        disabled={linkingOrder}
+                        className="w-full text-left p-2 rounded-lg border border-gray-100 hover:border-[#FF6B35] hover:bg-orange-50/50 transition-colors disabled:opacity-50"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-mono text-xs font-bold text-gray-700">
+                            #{order.id.slice(-8).toUpperCase()}
+                          </span>
+                          <span className="text-xs font-bold text-gray-900">${order.total.toFixed(2)}</span>
+                        </div>
+                        <p className="text-xs text-gray-400">
+                          {order.food_maker?.display_name} · {order.status.replace(/_/g, ' ')}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
