@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { ChevronLeft, Package, MapPin, Clock, ChevronRight } from 'lucide-react'
+import { Package, MapPin, Clock, ChevronRight } from 'lucide-react'
+import { AppHeader } from '@/components/layout/app-header'
 
 type Delivery = {
   id: string
@@ -78,10 +79,7 @@ export default function HistoryPage() {
 
   return (
     <div className="flex flex-col min-h-full">
-      <header className="sticky top-0 z-40 bg-[#080808]/98 backdrop-blur-sm px-4 h-14 flex items-center gap-3 border-b border-white/5">
-        <Link href="/" className="text-zinc-400 hover:text-white"><ChevronLeft size={20} /></Link>
-        <h1 className="text-lg font-black text-white">Delivery History</h1>
-      </header>
+      <AppHeader title="Delivery History" showBack backHref="/" />
 
       {/* Period filter */}
       <div className="px-4 py-3">

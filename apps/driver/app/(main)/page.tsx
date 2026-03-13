@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useDriverStore } from '@/store/driver-store'
-import { Bell, ChevronRight, Star, Package, Zap, Clock, TrendingUp, Navigation, MapPin } from 'lucide-react'
+import { AppHeader } from '@/components/layout/app-header'
+import { ChevronRight, Star, Package, Zap, Clock, TrendingUp, Navigation, MapPin } from 'lucide-react'
 
 type HomeData = {
   profile: { full_name: string; avg_rating: number; total_deliveries: number; is_active: boolean; kyc_status: string; avatar_url: string | null }
@@ -93,31 +94,7 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col min-h-full pb-8">
-      {/* Header */}
-      <header className="px-5 pt-12 pb-5">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-zinc-400 text-sm">Good {greeting()},</p>
-            <h1 className="text-2xl font-black text-white tracking-tight">{firstName} 👋</h1>
-          </div>
-          <div className="flex items-center gap-3">
-            <button className="relative w-10 h-10 rounded-2xl bg-[#141414] border border-white/5 flex items-center justify-center">
-              <Bell size={18} className="text-zinc-400" />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-[#FF6B35] rounded-full" />
-            </button>
-            <Link href="/profile">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#FF6B35] to-[#FF8C5A] flex items-center justify-center overflow-hidden">
-                {data?.profile.avatar_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={data.profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-white font-black text-sm">{initials}</span>
-                )}
-              </div>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <AppHeader greeting={{ time: greeting(), name: firstName }} />
 
       {/* Online / Offline hero */}
       {!isOnline ? (
@@ -207,18 +184,18 @@ export default function HomePage() {
         <div className="bg-[#141414] rounded-2xl border border-white/5 p-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-yellow-500/15 flex items-center justify-center">
-                <Zap size={14} className="text-yellow-400" />
+              <div className="w-7 h-7 rounded-lg bg-[#FF6B35]/10 flex items-center justify-center">
+                <Zap size={14} className="text-[#FF6B35]" />
               </div>
               <p className="font-bold text-white text-sm">Daily Challenge</p>
             </div>
-            <span className="text-xs font-black text-yellow-400">+$5.00</span>
+            <span className="text-xs font-black text-[#FF6B35]">+$5.00</span>
           </div>
           <p className="text-sm text-zinc-300 mb-3">Complete 5 deliveries today</p>
           <div className="flex items-center gap-3">
             <div className="flex-1 h-2 bg-[#1A1A1A] rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-yellow-500 to-yellow-400 rounded-full"
+                className="h-full bg-[#FF6B35] rounded-full"
                 style={{ width: `${Math.min(((data?.todayDeliveries ?? 0) / 5) * 100, 100)}%` }}
               />
             </div>
@@ -239,8 +216,8 @@ export default function HomePage() {
           </div>
         </Link>
         <Link href="/history" className="bg-[#141414] rounded-2xl border border-white/5 p-4 flex items-center gap-3 active:scale-[0.98] transition-all">
-          <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-            <Clock size={18} className="text-blue-400" />
+          <div className="w-10 h-10 rounded-xl bg-[#1A1A1A] flex items-center justify-center flex-shrink-0">
+            <Clock size={18} className="text-zinc-400" />
           </div>
           <div>
             <p className="font-bold text-white text-sm">History</p>
@@ -255,8 +232,8 @@ export default function HomePage() {
         <div className="bg-[#141414] rounded-2xl border border-white/5 divide-y divide-white/5">
           <div className="flex items-center justify-between px-4 py-3.5">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-yellow-500/10 flex items-center justify-center">
-                <Star size={15} className="text-yellow-400" />
+              <div className="w-8 h-8 rounded-xl bg-[#FF6B35]/10 flex items-center justify-center">
+                <Star size={15} className="text-[#FF6B35]" />
               </div>
               <p className="text-sm font-semibold text-white">Customer Rating</p>
             </div>
@@ -276,8 +253,8 @@ export default function HomePage() {
           </div>
           <div className="flex items-center justify-between px-4 py-3.5">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-green-500/10 flex items-center justify-center">
-                <TrendingUp size={15} className="text-green-400" />
+              <div className="w-8 h-8 rounded-xl bg-[#FF6B35]/10 flex items-center justify-center">
+                <TrendingUp size={15} className="text-[#FF6B35]" />
               </div>
               <p className="text-sm font-semibold text-white">This Week</p>
             </div>
@@ -285,8 +262,8 @@ export default function HomePage() {
           </div>
           <Link href="/available" className="flex items-center justify-between px-4 py-3.5">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-blue-500/10 flex items-center justify-center">
-                <MapPin size={15} className="text-blue-400" />
+              <div className="w-8 h-8 rounded-xl bg-[#1A1A1A] flex items-center justify-center">
+                <MapPin size={15} className="text-zinc-400" />
               </div>
               <p className="text-sm font-semibold text-white">Available Orders</p>
             </div>

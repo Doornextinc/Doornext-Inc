@@ -19,7 +19,7 @@ const VEHICLE_LABELS: Record<string, { emoji: string; label: string }> = {
 
 const KYC_CONFIG: Record<string, { label: string; color: string; icon: React.ElementType; bg: string }> = {
   not_submitted: { label: 'Not Submitted', color: 'text-zinc-400', icon: AlertCircle, bg: 'bg-[#1A1A1A]' },
-  pending_review: { label: 'Under Review', color: 'text-yellow-400', icon: Clock, bg: 'bg-yellow-500/10' },
+  pending_review: { label: 'Under Review', color: 'text-[#FF6B35]', icon: Clock, bg: 'bg-[#FF6B35]/10' },
   approved: { label: 'Verified', color: 'text-green-400', icon: CheckCircle, bg: 'bg-green-500/10' },
   rejected: { label: 'Rejected', color: 'text-red-400', icon: AlertCircle, bg: 'bg-red-500/10' },
 }
@@ -146,7 +146,7 @@ export default function ProfilePage() {
           <p className="text-[10px] text-zinc-500">Deliveries</p>
         </div>
         <div className="text-center border-x border-white/5">
-          <div className="flex items-center justify-center gap-1 mb-1"><Star size={13} className="text-yellow-400" /></div>
+          <div className="flex items-center justify-center gap-1 mb-1"><Star size={13} className="text-[#FF6B35]" /></div>
           <p className="font-black text-white text-xl">{profile?.avg_rating?.toFixed(1) ?? '—'}</p>
           <p className="text-[10px] text-zinc-500">Rating</p>
         </div>
@@ -192,7 +192,7 @@ export default function ProfilePage() {
             </div>
           </div>
           <div className="flex items-center gap-3 px-4 py-3.5">
-            <div className="w-8 h-8 rounded-xl bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-[#1A1A1A] flex items-center justify-center flex-shrink-0">
               <span className="text-sm">✉️</span>
             </div>
             <div className="flex-1">
@@ -222,8 +222,8 @@ export default function ProfilePage() {
             <ChevronRight size={16} className="text-zinc-600" />
           </button>
           <button onClick={() => router.push('/history')} className="w-full flex items-center gap-3 px-4 py-3.5">
-            <div className="w-8 h-8 rounded-xl bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-              <Package size={16} className="text-blue-400" />
+            <div className="w-8 h-8 rounded-xl bg-[#1A1A1A] flex items-center justify-center flex-shrink-0">
+              <Package size={16} className="text-zinc-400" />
             </div>
             <span className="text-sm font-semibold text-white flex-1 text-left">Delivery History</span>
             <ChevronRight size={16} className="text-zinc-600" />

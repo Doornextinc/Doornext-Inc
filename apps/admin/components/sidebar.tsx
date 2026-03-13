@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, BarChart2, Users, Truck, Store,
   ShoppingBag, Headphones, ShieldCheck, Wallet,
-  Zap, Tag, Layers, Award, DollarSign,
+  Zap, Tag, Layers, Award, DollarSign, Target,
   Settings, LogOut,
 } from 'lucide-react'
 
@@ -44,6 +44,7 @@ const NAV: NavGroup[] = [
       { href: '/platform/promo-codes',        icon: Tag,         label: 'Promo Codes' },
       { href: '/platform/price-tiers',        icon: Layers,      label: 'Price Tiers' },
       { href: '/platform/driver-performance', icon: Award,       label: 'Driver Performance' },
+      { href: '/platform/missions',           icon: Target,      label: 'Driver Missions' },
       { href: '/platform/earnings',           icon: DollarSign,  label: 'Company Earnings' },
     ],
   },

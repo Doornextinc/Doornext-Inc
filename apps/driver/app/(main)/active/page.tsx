@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useDriverStore } from '@/store/driver-store'
 import type { OrderStatus } from '@doornext/shared/types'
 import { MapPin, Phone, CheckCircle, Navigation, Package, ChevronDown, ChevronUp } from 'lucide-react'
+import { AppHeader } from '@/components/layout/app-header'
 
 type OrderItem = { quantity: number; unit_price: number; menu_items: { name: string } | null }
 type ActiveOrder = {
@@ -24,7 +25,7 @@ const STEPS: Array<{ status: string; label: string; sublabel: string }> = [
 ]
 
 const NEXT_ACTION: Record<string, { next: OrderStatus; label: string; color: string }> = {
-  picked_up: { next: 'on_the_way', label: 'Start Driving', color: 'bg-blue-500 shadow-blue-500/30' },
+  picked_up: { next: 'on_the_way', label: 'Start Driving', color: 'bg-[#FF6B35] shadow-[#FF6B35]/30' },
   on_the_way: { next: 'delivered', label: 'Confirm Delivery', color: 'bg-green-500 shadow-green-500/30' },
 }
 
@@ -129,11 +130,11 @@ export default function ActiveDeliveryPage() {
   if (!order) {
     return (
       <div className="flex flex-col items-center justify-center min-h-full px-6 text-center">
-        <div className="w-20 h-20 rounded-full bg-slate-800 border border-slate-700/50 flex items-center justify-center mb-5">
-          <Package size={36} className="text-slate-600" />
+        <div className="w-20 h-20 rounded-full bg-[#141414] border border-white/5 flex items-center justify-center mb-5">
+          <Package size={36} className="text-zinc-600" />
         </div>
         <h2 className="text-xl font-bold text-white mb-2">No active delivery</h2>
-        <p className="text-slate-500 text-sm mb-6">Accept a pickup to start delivering</p>
+        <p className="text-zinc-500 text-sm mb-6">Accept a pickup to start delivering</p>
         <button onClick={() => router.push('/available')} className="bg-[#FF6B35] text-white rounded-2xl px-8 py-3.5 font-bold text-sm shadow-lg shadow-[#FF6B35]/25">
           Find Pickups
         </button>
@@ -148,14 +149,15 @@ export default function ActiveDeliveryPage() {
 
   return (
     <div className="flex flex-col min-h-full pb-[140px]">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-[#080808]/98 backdrop-blur-sm px-4 h-14 flex items-center justify-between border-b border-white/5">
-        <h1 className="text-lg font-black text-white">Active Delivery</h1>
-        <div className="flex items-center gap-2 bg-[#1A1A1A] rounded-full px-3 py-1.5">
+      <AppHeader title="Active Delivery" />
+      {/* Timer bar */}
+      <div className="flex items-center justify-between px-4 py-2 border-b border-white/5 bg-[#0A0A0A]">
+        <span className="text-xs text-zinc-600">Delivery in progress</span>
+        <div className="flex items-center gap-2 bg-[#141414] rounded-full px-3 py-1">
           <div className="w-1.5 h-1.5 rounded-full bg-[#FF6B35] animate-pulse" />
-          <span className="font-mono text-sm font-bold text-white">{formatElapsed(elapsed)}</span>
+          <span className="font-mono text-xs font-bold text-white">{formatElapsed(elapsed)}</span>
         </div>
-      </header>
+      </div>
 
       {/* Progress stepper */}
       <div className="px-5 py-5">
@@ -167,14 +169,14 @@ export default function ActiveDeliveryPage() {
                 <div className="flex items-center w-full">
                   {i > 0 && <div className={`flex-1 h-0.5 rounded-full transition-colors ${done || active ? 'bg-[#FF6B35]' : 'bg-[#1A1A1A]'}`} />}
                   <div className={`relative w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all ${done ? 'bg-[#FF6B35]' : active ? 'bg-[#FF6B35] ring-4 ring-[#FF6B35]/25' : 'bg-[#1A1A1A]'}`}>
-                    {done ? <CheckCircle size={14} className="text-white" /> : <span className={`text-xs font-black ${upcoming ? 'text-slate-500' : 'text-white'}`}>{i + 1}</span>}
+                    {done ? <CheckCircle size={14} className="text-white" /> : <span className={`text-xs font-black ${upcoming ? 'text-zinc-500' : 'text-white'}`}>{i + 1}</span>}
                     {active && <span className="absolute inset-0 rounded-full animate-ping bg-[#FF6B35]/30" />}
                   </div>
                   {i < STEPS.length - 1 && <div className={`flex-1 h-0.5 rounded-full transition-colors ${done ? 'bg-[#FF6B35]' : 'bg-[#1A1A1A]'}`} />}
                 </div>
                 <div className="mt-2 text-center">
-                  <p className={`text-[11px] font-bold ${active ? 'text-[#FF6B35]' : done ? 'text-slate-400' : 'text-slate-600'}`}>{step.label}</p>
-                  <p className={`text-[9px] mt-0.5 ${active ? 'text-[#FF6B35]/70' : 'text-slate-600'}`}>{step.sublabel}</p>
+                  <p className={`text-[11px] font-bold ${active ? 'text-[#FF6B35]' : done ? 'text-zinc-400' : 'text-zinc-600'}`}>{step.label}</p>
+                  <p className={`text-[9px] mt-0.5 ${active ? 'text-[#FF6B35]/70' : 'text-zinc-600'}`}>{step.sublabel}</p>
                 </div>
               </div>
             )
@@ -188,25 +190,25 @@ export default function ActiveDeliveryPage() {
           <div className="flex items-start gap-3 pb-3">
             <div className="flex flex-col items-center flex-shrink-0 mt-0.5">
               <div className="w-3 h-3 rounded-full bg-[#FF6B35] border-2 border-[#FF6B35]/30" />
-              <div className="w-px h-8 bg-slate-600 my-1" />
+              <div className="w-px h-8 bg-zinc-600 my-1" />
             </div>
             <div className="flex-1 pb-1">
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wide">Pickup</p>
+              <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wide">Pickup</p>
               <p className="font-black text-white text-sm mt-0.5">{order.food_maker?.display_name}</p>
-              <p className="text-xs text-slate-500">Order #{order.id.slice(-6).toUpperCase()}</p>
+              <p className="text-xs text-zinc-500">Order #{order.id.slice(-6).toUpperCase()}</p>
             </div>
           </div>
           <div className="flex items-start gap-3">
-            <div className="flex flex-col items-center flex-shrink-0"><MapPin size={13} className="text-slate-400" /></div>
+            <div className="flex flex-col items-center flex-shrink-0"><MapPin size={13} className="text-zinc-400" /></div>
             <div className="flex-1">
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wide">Deliver to</p>
+              <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wide">Deliver to</p>
               {addr ? (
                 <div className="mt-0.5">
                   <p className="font-bold text-white text-sm">{addr.street}</p>
-                  <p className="text-xs text-slate-400">{addr.city}, {addr.state} {addr.zip}</p>
-                  {addr.label && <p className="text-xs text-slate-500 mt-0.5 italic">{addr.label}</p>}
+                  <p className="text-xs text-zinc-400">{addr.city}, {addr.state} {addr.zip}</p>
+                  {addr.label && <p className="text-xs text-zinc-500 mt-0.5 italic">{addr.label}</p>}
                 </div>
-              ) : <p className="text-sm text-slate-400 mt-0.5">Address not available</p>}
+              ) : <p className="text-sm text-zinc-400 mt-0.5">Address not available</p>}
             </div>
           </div>
         </div>
@@ -231,14 +233,14 @@ export default function ActiveDeliveryPage() {
             <div className="flex items-center gap-2">
               <Package size={15} className="text-[#FF6B35]" />
               <span className="text-sm font-bold text-white">Order Items</span>
-              <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${checkedItems.size === order.order_items.length ? 'bg-green-500/20 text-green-400' : 'bg-[#1A1A1A] text-slate-400'}`}>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${checkedItems.size === order.order_items.length ? 'bg-green-500/20 text-green-400' : 'bg-[#1A1A1A] text-zinc-400'}`}>
                 {checkedItems.size}/{order.order_items.length}
               </span>
             </div>
-            {showItems ? <ChevronUp size={16} className="text-slate-500" /> : <ChevronDown size={16} className="text-slate-500" />}
+            {showItems ? <ChevronUp size={16} className="text-zinc-500" /> : <ChevronDown size={16} className="text-zinc-500" />}
           </button>
           {showItems && (
-            <div className="border-t border-white/5 divide-y divide-slate-700/30">
+            <div className="border-t border-white/5 divide-y divide-white/5">
               {order.order_items.map((item, i) => (
                 <button
                   key={i}
@@ -249,13 +251,13 @@ export default function ActiveDeliveryPage() {
                   })}
                   className="w-full flex items-center gap-3 px-4 py-3 text-left"
                 >
-                  <div className={`w-5 h-5 rounded-md border-2 flex-shrink-0 flex items-center justify-center transition-all ${checkedItems.has(i) ? 'bg-green-500 border-green-500' : 'border-slate-600'}`}>
+                  <div className={`w-5 h-5 rounded-md border-2 flex-shrink-0 flex items-center justify-center transition-all ${checkedItems.has(i) ? 'bg-green-500 border-green-500' : 'border-zinc-700'}`}>
                     {checkedItems.has(i) && <CheckCircle size={12} className="text-white" />}
                   </div>
-                  <span className={`text-sm flex-1 ${checkedItems.has(i) ? 'text-slate-500 line-through' : 'text-white'}`}>
+                  <span className={`text-sm flex-1 ${checkedItems.has(i) ? 'text-zinc-500 line-through' : 'text-white'}`}>
                     {item.quantity}× {item.menu_items?.name ?? 'Item'}
                   </span>
-                  <span className="text-xs text-slate-500">${(item.quantity * item.unit_price).toFixed(2)}</span>
+                  <span className="text-xs text-zinc-500">${(item.quantity * item.unit_price).toFixed(2)}</span>
                 </button>
               ))}
             </div>
@@ -266,8 +268,8 @@ export default function ActiveDeliveryPage() {
       {/* Customer + Earnings row */}
       <div className="mx-4 grid grid-cols-2 gap-3 mb-3">
         {order.customer && (
-          <div className="bg-slate-800 rounded-2xl p-3.5 border border-slate-700/40">
-            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wide mb-1.5">Customer</p>
+          <div className="bg-[#141414] rounded-2xl p-3.5 border border-white/5">
+            <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wide mb-1.5">Customer</p>
             <p className="font-bold text-white text-sm truncate">{order.customer.full_name}</p>
             {order.customer.phone && (
               <a href={`tel:${order.customer.phone}`} className="mt-2.5 flex items-center gap-1.5 text-green-400 text-xs font-semibold">
@@ -276,8 +278,8 @@ export default function ActiveDeliveryPage() {
             )}
           </div>
         )}
-        <div className="bg-slate-800 rounded-2xl p-3.5 border border-slate-700/40">
-          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wide mb-1.5">You earn</p>
+        <div className="bg-[#141414] rounded-2xl p-3.5 border border-white/5">
+          <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wide mb-1.5">You earn</p>
           <p className="font-black text-[#FF6B35] text-2xl leading-none">${earn.toFixed(2)}</p>
           {order.tip_amount > 0 && <p className="text-xs text-green-400 mt-1">+${order.tip_amount.toFixed(2)} tip</p>}
         </div>
@@ -285,7 +287,7 @@ export default function ActiveDeliveryPage() {
 
       {/* CTA */}
       {nextAction && (
-        <div className="fixed bottom-[68px] left-0 right-0 max-w-[430px] mx-auto px-4 pb-4 pt-3 bg-gradient-to-t from-slate-900 via-slate-900/98 to-transparent">
+        <div className="fixed bottom-[68px] left-0 right-0 max-w-[430px] mx-auto px-4 pb-4 pt-3 bg-gradient-to-t from-[#080808] via-[#080808]/98 to-transparent">
           <button
             onClick={() => handleStatusUpdate(nextAction.next)}
             disabled={updating}

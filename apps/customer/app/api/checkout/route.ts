@@ -3,7 +3,8 @@ import Stripe from 'stripe'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
-import { PLATFORM_FEE_PCT, DELIVERY_FEE } from '@/lib/constants'
+import { PLATFORM_FEE_PCT } from '@/lib/constants'
+import { calculatePricing } from '@doornext/shared/pricing'
 
 export async function POST(req: NextRequest) {
   const stripeKey = process.env.STRIPE_SECRET_KEY
@@ -32,7 +33,14 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { items, maker_id, delivery_address, tip_amount } = body
+    const {
+      items,
+      maker_id,
+      delivery_address,
+      tip_amount,
+      distance_miles,
+      is_priority,
+    } = body
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ error: 'No items provided' }, { status: 400 })
@@ -47,9 +55,49 @@ export async function POST(req: NextRequest) {
         sum + item.price * item.quantity,
       0
     )
-    const platformFee = subtotal * PLATFORM_FEE_PCT
     const tip = tip_amount ?? 0
-    const total = subtotal + DELIVERY_FEE + tip + platformFee
+
+    // Load pricing tables from DB
+    const serviceSupabase = createServiceClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
+    const [tiersRes, priorityTiersRes, smallOrderFeesRes, surgeRes, settingsRes] = await Promise.all([
+      serviceSupabase.from('delivery_distance_tiers').select('*').eq('is_active', true).order('sort_order'),
+      serviceSupabase.from('priority_delivery_tiers').select('*').eq('is_active', true).order('sort_order'),
+      serviceSupabase.from('small_order_fees').select('*').eq('is_active', true).order('sort_order'),
+      serviceSupabase.from('surge_conditions').select('*').eq('is_active', true),
+      serviceSupabase.from('settings').select('key, value').in('key', [
+        'dynamic_base_pay', 'dynamic_per_mile', 'dynamic_per_min_wait',
+        'use_dynamic_pricing', 'priority_driver_bonus', 'service_fee_pct',
+      ]),
+    ])
+
+    const settingsMap: Record<string, string> = {}
+    for (const s of settingsRes.data ?? []) settingsMap[s.key] = s.value
+
+    const pricing = calculatePricing({
+      distanceMiles:        distance_miles ?? 3,
+      subtotal,
+      tip,
+      isPriority:           is_priority ?? false,
+      tiers:                tiersRes.data ?? [],
+      priorityTiers:        priorityTiersRes.data ?? [],
+      smallOrderFees:       smallOrderFeesRes.data ?? [],
+      activeSurgeConditions: surgeRes.data ?? [],
+      formula: {
+        base_pay:              parseFloat(settingsMap.dynamic_base_pay     ?? '2.50'),
+        per_mile:              parseFloat(settingsMap.dynamic_per_mile     ?? '0.80'),
+        per_min_wait:          parseFloat(settingsMap.dynamic_per_min_wait ?? '0.30'),
+        use_dynamic:           settingsMap.use_dynamic_pricing === 'true',
+        service_fee_pct:       parseFloat(settingsMap.service_fee_pct      ?? '9'),
+        priority_driver_bonus: parseFloat(settingsMap.priority_driver_bonus ?? '2.50'),
+      },
+    })
+
+    const platformFee = subtotal * PLATFORM_FEE_PCT
+    const total = subtotal + pricing.deliveryFee + pricing.smallOrderFee + pricing.surgeFee + pricing.serviceFee + tip
 
     // Create Stripe PaymentIntent
     const paymentIntent = await stripe.paymentIntents.create({
@@ -63,23 +111,19 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    // Create order in Supabase using service role (bypass RLS for server-side insert)
-    const serviceSupabase = createServiceClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
-
     const { data: order, error: orderError } = await serviceSupabase
       .from('orders')
       .insert({
         customer_id: user.id,
         maker_id,
         status: 'pending',
-        subtotal: Math.round(subtotal * 100) / 100,
-        delivery_fee: DELIVERY_FEE,
-        tip_amount: Math.round(tip * 100) / 100,
+        subtotal:     Math.round(subtotal * 100) / 100,
+        delivery_fee: pricing.deliveryFee,
+        tip_amount:   Math.round(tip * 100) / 100,
         platform_fee: Math.round(platformFee * 100) / 100,
-        total: Math.round(total * 100) / 100,
+        driver_payout: pricing.driverBasePay,
+        maker_payout:  Math.round(subtotal * 0.8 * 100) / 100,
+        total:         Math.round(total * 100) / 100,
         delivery_address: delivery_address ?? { street: 'N/A', city: 'N/A', state: 'NY', zip: '00000' },
         stripe_payment_intent_id: paymentIntent.id,
       })
@@ -88,7 +132,6 @@ export async function POST(req: NextRequest) {
 
     if (orderError || !order) {
       console.error('Order creation error:', orderError)
-      // Cancel the payment intent to avoid charging without an order
       await stripe.paymentIntents.cancel(paymentIntent.id)
       return NextResponse.json({ error: 'Failed to create order' }, { status: 500 })
     }
@@ -120,6 +163,15 @@ export async function POST(req: NextRequest) {
       total: Math.round(total * 100),
       subtotal: Math.round(subtotal * 100),
       platform_fee: Math.round(platformFee * 100),
+      delivery_fee: pricing.deliveryFee,
+      small_order_fee: pricing.smallOrderFee,
+      surge_fee: pricing.surgeFee,
+      service_fee: pricing.serviceFee,
+      driver_payout: pricing.driverTotal,
+      pricing_breakdown: {
+        customerLines: pricing.customerLines,
+        tierLabel: pricing.tierLabel,
+      },
     })
   } catch (error) {
     console.error('Checkout error:', error)

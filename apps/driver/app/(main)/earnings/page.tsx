@@ -4,21 +4,19 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Zap, Star, Package, TrendingUp, ChevronDown, ChevronRight, Clock, DollarSign } from 'lucide-react'
+import { AppHeader } from '@/components/layout/app-header'
 
 /* ─── types ─── */
 type Delivery = { id: string; delivery_fee: number; tip_amount: number; created_at: string }
 type Period = 'today' | 'week' | 'month' | 'all'
+type Mission = {
+  id: string; icon: string; title: string; description: string | null
+  reward_amount: number; target_value: number; mission_type: string; period: string
+}
 
 const PERIOD_LABELS: Record<Period, string> = {
   today: 'Today', week: 'This Week', month: 'This Month', all: 'All Time',
 }
-
-const MISSIONS = [
-  { icon: '🎯', title: 'Complete 5 deliveries', reward: 5.00, target: 5 },
-  { icon: '⚡', title: '3 rush-hour deliveries (4–8 PM)', reward: 3.00, target: 3 },
-  { icon: '⭐', title: 'Earn 3 five-star ratings this week', reward: 2.00, target: 3 },
-  { icon: '🔥', title: 'Deliver to 3 different zip codes', reward: 4.00, target: 3 },
-]
 
 /* ─── helpers ─── */
 function getPeriodStart(p: Period): Date | null {
@@ -45,6 +43,7 @@ export default function EarningsPage() {
   const router = useRouter()
   const [deliveries, setDeliveries] = useState<Delivery[]>([])
   const [profile, setProfile] = useState<{ total_deliveries: number; avg_rating: number } | null>(null)
+  const [missions, setMissions] = useState<Mission[]>([])
   const [loading, setLoading] = useState(true)
   const [period, setPeriod] = useState<Period>('week')
   const [expandedDay, setExpandedDay] = useState<number | null>(null)
@@ -54,12 +53,14 @@ export default function EarningsPage() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
-      const [ordersRes, profileRes] = await Promise.all([
+      const [ordersRes, profileRes, missionsRes] = await Promise.all([
         supabase.from('orders').select('id, delivery_fee, tip_amount, created_at').eq('nexter_id', user.id).eq('status', 'delivered').order('created_at', { ascending: false }).limit(200),
         supabase.from('driver_profiles').select('total_deliveries, avg_rating').eq('id', user.id).single(),
+        supabase.from('driver_missions').select('id, icon, title, description, reward_amount, target_value, mission_type, period').eq('is_active', true).order('created_at'),
       ])
       setDeliveries(ordersRes.data ?? [])
       setProfile(profileRes.data)
+      setMissions(missionsRes.data ?? [])
       setLoading(false)
     }
     load()
@@ -114,10 +115,7 @@ export default function EarningsPage() {
 
   return (
     <div className="flex flex-col min-h-full bg-[#080808]">
-      {/* ── Header ── */}
-      <header className="sticky top-0 z-40 bg-[#080808]/98 backdrop-blur-sm px-4 h-14 flex items-center border-b border-white/5">
-        <h1 className="text-xl font-black text-white tracking-tight">Earnings</h1>
-      </header>
+      <AppHeader title="Earnings" />
 
       <div className="p-4 space-y-4">
         {/* ── Period selector ── */}
@@ -320,15 +318,21 @@ export default function EarningsPage() {
             </span>
           </div>
 
+          {missions.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-10 text-center bg-[#111] rounded-2xl border border-white/5">
+              <p className="text-zinc-500 font-semibold text-sm">No active missions right now</p>
+              <p className="text-zinc-700 text-xs mt-1">Check back soon for new challenges</p>
+            </div>
+          ) : (
           <div className="bg-[#111] rounded-2xl border border-white/5 overflow-hidden divide-y divide-white/5">
-            {MISSIONS.map((m, i) => {
-              // Use today's delivery count as proxy for mission progress (simplification)
-              const progress = Math.min(i === 0 ? todayCount : Math.floor(todayCount / 2), m.target)
-              const pct = (progress / m.target) * 100
-              const complete = progress >= m.target
+            {missions.map((m) => {
+              // Use today's delivery count as proxy for deliveries-type missions
+              const progress = Math.min(m.mission_type === 'deliveries' ? todayCount : 0, m.target_value)
+              const pct = (progress / m.target_value) * 100
+              const complete = progress >= m.target_value
 
               return (
-                <div key={i} className={`px-4 py-4 ${complete ? 'opacity-60' : ''}`}>
+                <div key={m.id} className={`px-4 py-4 ${complete ? 'opacity-60' : ''}`}>
                   <div className="flex items-start gap-3">
                     <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-xl flex-shrink-0 ${complete ? 'bg-green-500/10' : 'bg-[#FF6B35]/10'}`}>
                       {complete ? '✅' : m.icon}
@@ -338,8 +342,8 @@ export default function EarningsPage() {
                         <p className={`text-sm font-bold leading-tight ${complete ? 'line-through text-zinc-600' : 'text-white'}`}>
                           {m.title}
                         </p>
-                        <span className={`text-xs font-black flex-shrink-0 ${complete ? 'text-green-400' : 'text-yellow-400'}`}>
-                          +${m.reward.toFixed(2)}
+                        <span className={`text-xs font-black flex-shrink-0 ${complete ? 'text-green-400' : 'text-[#FF6B35]'}`}>
+                          +${m.reward_amount.toFixed(2)}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -350,7 +354,7 @@ export default function EarningsPage() {
                           />
                         </div>
                         <span className="text-[10px] font-bold text-zinc-600 flex-shrink-0">
-                          {progress}/{m.target}
+                          {progress}/{m.target_value}
                         </span>
                       </div>
                     </div>
@@ -359,18 +363,21 @@ export default function EarningsPage() {
               )
             })}
           </div>
+          )}
 
           {/* Missions total potential */}
+          {missions.length > 0 && (
           <div className="flex items-center gap-3 px-4 py-3 bg-[#111] rounded-2xl border border-white/5">
-            <div className="w-8 h-8 rounded-xl bg-yellow-500/10 flex items-center justify-center flex-shrink-0">
-              <Zap size={15} className="text-yellow-400" />
+            <div className="w-8 h-8 rounded-xl bg-[#FF6B35]/10 flex items-center justify-center flex-shrink-0">
+              <Zap size={15} className="text-[#FF6B35]" />
             </div>
             <div className="flex-1">
               <p className="text-sm font-bold text-white">Complete all missions</p>
-              <p className="text-xs text-zinc-600">Earn up to ${MISSIONS.reduce((s, m) => s + m.reward, 0).toFixed(2)} in bonuses today</p>
+              <p className="text-xs text-zinc-600">Earn up to ${missions.reduce((s, m) => s + m.reward_amount, 0).toFixed(2)} in bonuses today</p>
             </div>
-            <span className="font-black text-yellow-400 text-sm">${MISSIONS.reduce((s, m) => s + m.reward, 0).toFixed(2)}</span>
+            <span className="font-black text-[#FF6B35] text-sm">${missions.reduce((s, m) => s + m.reward_amount, 0).toFixed(2)}</span>
           </div>
+          )}
         </div>
 
         {/* Bottom breathing room */}
