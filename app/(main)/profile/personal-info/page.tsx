@@ -22,6 +22,7 @@ export default function PersonalInfoPage() {
   const [saving, setSaving] = useState(false)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -73,6 +74,7 @@ export default function PersonalInfoPage() {
   const handleSave = async () => {
     if (!userId) return
     setSaving(true)
+    setUploadError(null)
     try {
       let newAvatarUrl = avatarUrl
 
@@ -84,14 +86,24 @@ export default function PersonalInfoPage() {
           newAvatarUrl = url
           setAvatarUrl(url)
           setPendingFile(null)
+          setPreviewUrl(null)
+        } else {
+          setUploadError('Photo upload failed. Check your connection and try again.')
+          setSaving(false)
+          return
         }
       }
 
       const supabase = createClient()
-      await supabase
+      const { error } = await supabase
         .from('users')
         .update({ full_name: fullName, avatar_url: newAvatarUrl })
         .eq('id', userId)
+
+      if (error) {
+        setUploadError('Failed to save changes. Please try again.')
+        return
+      }
 
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
@@ -191,6 +203,10 @@ export default function PersonalInfoPage() {
           />
           <p className="text-xs text-gray-300 mt-1">Email cannot be changed here</p>
         </div>
+
+        {uploadError && (
+          <p className="text-sm text-red-500 text-center">{uploadError}</p>
+        )}
 
         <Button
           onClick={handleSave}

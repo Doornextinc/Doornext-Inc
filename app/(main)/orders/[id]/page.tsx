@@ -116,8 +116,18 @@ export default function OrderTrackingPage() {
   const currentStep = STATUS_STEPS.indexOf(currentStatus)
 
   // Build Google Static Maps URL
-  const mapUrl = order?.food_maker
-    ? `https://maps.googleapis.com/maps/api/staticmap?size=800x400&scale=2&maptype=roadmap&markers=color:0xFF6B35|label:🏠|${order.food_maker.lat},${order.food_maker.lng}${nexterLocation ? `&markers=color:blue|label:🛵|${nexterLocation.lat},${nexterLocation.lng}` : ''}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+  const mapUrl = order?.food_maker && apiKey
+    ? (() => {
+        const makerMarker = `markers=color:orange%7Clabel:M%7C${order.food_maker.lat},${order.food_maker.lng}`
+        const driverMarker = nexterLocation
+          ? `&markers=color:blue%7Clabel:D%7C${nexterLocation.lat},${nexterLocation.lng}`
+          : ''
+        const centerParam = !nexterLocation
+          ? `&center=${order.food_maker.lat},${order.food_maker.lng}&zoom=15`
+          : ''
+        return `https://maps.googleapis.com/maps/api/staticmap?size=800x400&scale=2&maptype=roadmap&${makerMarker}${driverMarker}${centerParam}&key=${apiKey}`
+      })()
     : null
 
   if (loading) {
@@ -153,7 +163,12 @@ export default function OrderTrackingPage() {
       <div className="relative w-full h-52 bg-gradient-to-br from-blue-50 to-green-50 overflow-hidden">
         {mapUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={mapUrl} alt="Delivery map" className="w-full h-full object-cover" />
+          <img
+            src={mapUrl}
+            alt="Delivery map"
+            className="w-full h-full object-cover"
+            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+          />
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <div className="relative">

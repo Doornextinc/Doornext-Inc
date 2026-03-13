@@ -10,6 +10,7 @@ interface TopBarProps {
   title?: string
   showCart?: boolean
   showNotifications?: boolean
+  onLocationClick?: () => void
 }
 
 export function TopBar({
@@ -17,6 +18,7 @@ export function TopBar({
   title,
   showCart = true,
   showNotifications = true,
+  onLocationClick,
 }: TopBarProps) {
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
@@ -29,7 +31,7 @@ export function TopBar({
         {title ? (
           <h1 className="text-lg font-bold text-gray-900">{title}</h1>
         ) : (
-          <button className="flex items-center gap-1.5 group">
+          <button className="flex items-center gap-1.5 group" onClick={onLocationClick}>
             <MapPin size={16} className="text-[#FF6B35]" />
             <div className="flex flex-col items-start">
               <span className="text-xs text-gray-400 font-medium leading-none">

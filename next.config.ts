@@ -11,6 +11,10 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: '**.supabase.in',
       },
+      {
+        protocol: 'https',
+        hostname: 'maps.googleapis.com',
+      },
     ],
   },
   // Allow Median.co to embed as WebView
