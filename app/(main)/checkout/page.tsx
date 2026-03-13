@@ -10,6 +10,7 @@ import { BackBar } from '@/components/layout/top-bar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { formatPriceDollars } from '@/lib/utils'
+import { createClient } from '@/lib/supabase/client'
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
@@ -70,6 +71,14 @@ function CheckoutForm({
     }
 
     if (paymentIntent?.status === 'succeeded') {
+      // Save the delivery address to the order now that we have it
+      if (address.trim()) {
+        const supabase = createClient()
+        await supabase
+          .from('orders')
+          .update({ delivery_address: { street: address, city: 'Brooklyn', state: 'NY', zip: '11201' } })
+          .eq('id', orderId)
+      }
       clearCart()
       router.push(`/orders/${orderId}`)
     }
@@ -227,7 +236,8 @@ export default function CheckoutPage() {
             notes: i.notes,
           })),
           maker_id: makerId,
-          delivery_address: address ? { street: address, city: 'Brooklyn', state: 'NY', zip: '11201' } : null,
+          // address captured at submit time — excluded here to prevent re-triggering on every keystroke
+          delivery_address: null,
           tip_amount: food * tipPct,
         }),
       })
@@ -248,7 +258,9 @@ export default function CheckoutPage() {
       console.error('Failed to create payment intent:', e)
       setInitError('Failed to initialize payment. Please try again.')
     }
-  }, [items, makerId, address, food, tipPct, router])
+    // Note: address intentionally excluded from deps — it is saved to the order on payment confirm
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items, makerId, food, tipPct, router])
 
   useEffect(() => {
     createIntent()

@@ -9,7 +9,7 @@ import { createClient } from '@/lib/supabase/client'
 interface Review {
   id: string
   rating: number
-  comment: string | null
+  body: string | null
   created_at: string
   food_makers: { name: string } | null
 }
@@ -27,7 +27,7 @@ export default function ReviewsPage() {
 
       const { data } = await supabase
         .from('reviews')
-        .select('id, rating, comment, created_at, food_makers(name)')
+        .select('id, rating, body, created_at, food_makers(name)')
         .eq('customer_id', user.id)
         .order('created_at', { ascending: false })
 
@@ -67,8 +67,8 @@ export default function ReviewsPage() {
                   ))}
                 </div>
               </div>
-              {review.comment && (
-                <p className="text-sm text-gray-600">{review.comment}</p>
+              {review.body && (
+                <p className="text-sm text-gray-600">{review.body}</p>
               )}
               <p className="text-xs text-gray-400 mt-2">
                 {new Date(review.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}

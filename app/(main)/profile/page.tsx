@@ -85,6 +85,13 @@ export default function ProfilePage() {
 
   useEffect(() => { loadProfile() }, [loadProfile])
 
+  // Refresh profile when user navigates back (e.g. after updating avatar/name)
+  useEffect(() => {
+    const onFocus = () => loadProfile()
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, [loadProfile])
+
   const handleSignOut = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()

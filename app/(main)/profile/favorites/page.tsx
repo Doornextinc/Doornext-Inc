@@ -7,17 +7,19 @@ import { Heart } from 'lucide-react'
 import { BackBar } from '@/components/layout/top-bar'
 import { createClient } from '@/lib/supabase/client'
 
+interface MakerInfo {
+  id: string
+  name: string
+  cuisine_tags: string[]
+  avg_rating: number
+  total_reviews: number
+  is_open: boolean
+}
+
 interface FavoriteMaker {
   id: string
   maker_id: string
-  food_makers: {
-    id: string
-    name: string
-    cuisine_tags: string[]
-    avg_rating: number
-    total_reviews: number
-    is_open: boolean
-  }
+  food_makers: MakerInfo | MakerInfo[] | null
 }
 
 export default function FavoritesPage() {
@@ -68,7 +70,8 @@ export default function FavoritesPage() {
       ) : (
         <div className="p-4 space-y-3">
           {favorites.map((fav) => {
-            const maker = fav.food_makers
+            const maker = Array.isArray(fav.food_makers) ? fav.food_makers[0] : fav.food_makers
+            if (!maker) return null
             return (
               <div key={fav.id} className="bg-white rounded-2xl px-4 py-4 flex items-center gap-3">
                 <Link href={`/maker/${maker.id}`} className="flex-1">
