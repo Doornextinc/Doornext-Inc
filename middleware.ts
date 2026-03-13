@@ -47,11 +47,12 @@ export async function middleware(request: NextRequest) {
   const isAuthRoute =
     pathname.startsWith('/login') ||
     pathname.startsWith('/signup') ||
-    pathname.startsWith('/verify')
+    pathname.startsWith('/verify') ||
+    pathname.startsWith('/welcome')
 
-  // Redirect unauthenticated users to login (except auth routes and API)
+  // Redirect unauthenticated users to welcome page (except auth routes and API)
   if (!user && !isAuthRoute && !pathname.startsWith('/api')) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    return NextResponse.redirect(new URL('/welcome', request.url))
   }
 
   // Redirect authenticated users away from auth routes

@@ -18,9 +18,11 @@ export default function MakerProfilePage() {
   const [maker, setMaker] = useState<FoodMaker | null>(null)
   const [menuItems, setMenuItems] = useState<MenuItem[]>([])
   const [loading, setLoading] = useState(true)
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
   const { subtotal, totalItems } = useCartStore()
-  const cartTotal = subtotal()
-  const cartCount = totalItems()
+  const cartTotal = mounted ? subtotal() : 0
+  const cartCount = mounted ? totalItems() : 0
 
   useEffect(() => {
     async function load() {

@@ -2,15 +2,17 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
-
-// Service role client for webhook operations (bypasses RLS)
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
 export async function POST(req: NextRequest) {
+  const stripeKey = process.env.STRIPE_SECRET_KEY
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!stripeKey || !supabaseUrl || !serviceRoleKey) {
+    return NextResponse.json({ error: 'Not configured' }, { status: 500 })
+  }
+  const stripe = new Stripe(stripeKey)
+  // Service role client for webhook operations (bypasses RLS)
+  const supabase = createClient(supabaseUrl, serviceRoleKey)
+
   const body = await req.text()
   const signature = req.headers.get('stripe-signature')
 
@@ -20,8 +22,8 @@ export async function POST(req: NextRequest) {
 
   let event: Stripe.Event
 
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
-  const isDevMode = webhookSecret === 'whsec_placeholder'
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET ?? ''
+  const isDevMode = !webhookSecret || webhookSecret === 'whsec_placeholder'
 
   try {
     if (isDevMode) {

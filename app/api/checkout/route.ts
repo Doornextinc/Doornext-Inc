@@ -4,11 +4,15 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 const PLATFORM_FEE_PCT = 0.05
 const DELIVERY_FEE = 3.99
 
 export async function POST(req: NextRequest) {
+  const stripeKey = process.env.STRIPE_SECRET_KEY
+  if (!stripeKey) {
+    return NextResponse.json({ error: 'Payment not configured' }, { status: 500 })
+  }
+  const stripe = new Stripe(stripeKey)
   try {
     // Get authenticated user
     const cookieStore = await cookies()

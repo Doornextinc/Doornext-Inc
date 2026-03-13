@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Minus, Plus, Trash2, ShoppingBag } from 'lucide-react'
 import { useCartStore } from '@/store/cart'
@@ -12,13 +13,15 @@ const PLATFORM_FEE_PCT = 0.05
 
 export default function CartPage() {
   const router = useRouter()
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
   const { items, updateQuantity, removeItem, clearCart, subtotal, makerName } =
     useCartStore()
-  const total = subtotal()
+  const total = mounted ? subtotal() : 0
   const platformFee = total * PLATFORM_FEE_PCT
   const orderTotal = total + DELIVERY_FEE + platformFee
 
-  if (items.length === 0) {
+  if (!mounted || items.length === 0) {
     return (
       <div className="flex flex-col min-h-full bg-white">
         <BackBar title="Your Cart" />
