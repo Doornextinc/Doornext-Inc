@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 import { MapPin, Bell, ChevronDown, ShoppingCart } from 'lucide-react'
 import { useCartStore } from '@/store/cart'
 
@@ -17,7 +18,10 @@ export function TopBar({
   showCart = true,
   showNotifications = true,
 }: TopBarProps) {
-  const totalItems = useCartStore((s) => s.totalItems())
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+  const rawTotal = useCartStore((s) => s.items.reduce((sum, i) => sum + i.quantity, 0))
+  const totalItems = mounted ? rawTotal : 0
 
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-gray-100">

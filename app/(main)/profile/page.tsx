@@ -157,9 +157,9 @@ export default function ProfilePage() {
         <div className="px-4 py-3">
           <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Account</p>
         </div>
-        <ProfileItem icon={<User size={18} />} label="Personal Info" value={profile?.full_name} />
-        <ProfileItem icon={<MapPin size={18} />} label="Saved Addresses" />
-        <ProfileItem icon={<CreditCard size={18} />} label="Payment Methods" />
+        <ProfileItem icon={<User size={18} />} label="Personal Info" value={profile?.full_name} onClick={() => router.push('/profile/personal-info')} />
+        <ProfileItem icon={<MapPin size={18} />} label="Saved Addresses" onClick={() => router.push('/profile/addresses')} />
+        <ProfileItem icon={<CreditCard size={18} />} label="Payment Methods" onClick={() => router.push('/profile/payment')} />
       </div>
 
       {/* Preferences Section */}
@@ -167,9 +167,9 @@ export default function ProfilePage() {
         <div className="px-4 py-3">
           <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Preferences</p>
         </div>
-        <ProfileItem icon={<Heart size={18} />} label="Favorite Makers" value={`${stats.favorites} saved`} />
-        <ProfileItem icon={<Star size={18} />} label="My Reviews" value={`${stats.reviews} reviews`} />
-        <ProfileItem icon={<Bell size={18} />} label="Notifications" />
+        <ProfileItem icon={<Heart size={18} />} label="Favorite Makers" value={`${stats.favorites} saved`} onClick={() => router.push('/profile/favorites')} />
+        <ProfileItem icon={<Star size={18} />} label="My Reviews" value={`${stats.reviews} reviews`} onClick={() => router.push('/profile/reviews')} />
+        <ProfileItem icon={<Bell size={18} />} label="Notifications" onClick={() => router.push('/notifications')} />
         <ProfileItem icon={<Settings size={18} />} label="App Settings" onClick={() => router.push('/profile/settings')} />
       </div>
 
@@ -178,7 +178,7 @@ export default function ProfilePage() {
         <div className="px-4 py-3">
           <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Support</p>
         </div>
-        <ProfileItem icon={<HelpCircle size={18} />} label="Help & Support" />
+        <ProfileItem icon={<HelpCircle size={18} />} label="Help & Support" onClick={() => router.push('/profile/help')} />
         <ProfileItem icon={<LogOut size={18} />} label="Sign Out" danger onClick={handleSignOut} />
       </div>
 
