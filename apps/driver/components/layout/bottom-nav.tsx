@@ -14,8 +14,10 @@ const navItems = [
 export function BottomNav() {
   const pathname = usePathname()
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-slate-900 border-t border-slate-700/50 max-w-[430px] mx-auto">
-      <div className="flex items-center justify-around h-16">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 max-w-[430px] mx-auto">
+      {/* Top border with orange fade on active */}
+      <div className="h-px bg-slate-700/60" />
+      <div className="bg-slate-900/95 backdrop-blur-sm flex items-center justify-around h-[68px] pb-safe">
         {navItems.map(({ href, icon: Icon, label }) => {
           const isActive = pathname.startsWith(href)
           return (
@@ -23,12 +25,21 @@ export function BottomNav() {
               key={href}
               href={href}
               aria-current={isActive ? 'page' : undefined}
-              className={`flex flex-col items-center gap-0.5 px-4 py-2 transition-colors ${
-                isActive ? 'text-[#FF6B35]' : 'text-slate-400'
-              }`}
+              className="flex-1 flex flex-col items-center justify-center gap-1 py-2 relative"
             >
-              <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
-              <span className="text-[10px] font-medium">{label}</span>
+              {isActive && (
+                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-[#FF6B35] rounded-full" />
+              )}
+              <div className={`p-1.5 rounded-xl transition-colors ${isActive ? 'bg-[#FF6B35]/12' : ''}`}>
+                <Icon
+                  size={20}
+                  strokeWidth={isActive ? 2.5 : 1.8}
+                  className={isActive ? 'text-[#FF6B35]' : 'text-slate-500'}
+                />
+              </div>
+              <span className={`text-[10px] font-semibold tracking-wide ${isActive ? 'text-[#FF6B35]' : 'text-slate-500'}`}>
+                {label}
+              </span>
             </Link>
           )
         })}

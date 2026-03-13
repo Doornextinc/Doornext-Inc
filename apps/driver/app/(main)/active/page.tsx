@@ -5,22 +5,28 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useDriverStore } from '@/store/driver-store'
 import type { Order, OrderStatus } from '@doornext/shared/types'
-import { MapPin, Phone, CheckCircle, Navigation, Package, Clock } from 'lucide-react'
+import { MapPin, Phone, CheckCircle, Navigation, Package } from 'lucide-react'
 
 type ActiveOrder = Order & {
   food_maker: { display_name: string; lat: number; lng: number } | null
   customer: { full_name: string; phone: string | null } | null
 }
 
-const STEPS: Array<{ status: OrderStatus; label: string }> = [
-  { status: 'picked_up', label: 'Picked Up' },
-  { status: 'on_the_way', label: 'On The Way' },
-  { status: 'delivered', label: 'Delivered' },
+const STEPS: Array<{ status: OrderStatus; label: string; sublabel: string }> = [
+  { status: 'picked_up', label: 'Picked Up', sublabel: 'At restaurant' },
+  { status: 'on_the_way', label: 'Driving', sublabel: 'En route' },
+  { status: 'delivered', label: 'Delivered', sublabel: 'Complete' },
 ]
 
-const NEXT_ACTION: Record<string, { next: OrderStatus; label: string }> = {
-  picked_up: { next: 'on_the_way', label: 'Start Driving' },
-  on_the_way: { next: 'delivered', label: 'Confirm Delivery' },
+const NEXT_ACTION: Record<string, { next: OrderStatus; label: string; icon: React.ElementType; color: string }> = {
+  picked_up: { next: 'on_the_way', label: 'Start Driving', icon: Navigation, color: 'bg-blue-500 shadow-blue-500/30' },
+  on_the_way: { next: 'delivered', label: 'Confirm Delivery', icon: CheckCircle, color: 'bg-green-500 shadow-green-500/30' },
+}
+
+function formatElapsed(secs: number) {
+  const m = Math.floor(secs / 60)
+  const s = secs % 60
+  return `${m}:${s.toString().padStart(2, '0')}`
 }
 
 export default function ActiveDeliveryPage() {
@@ -55,11 +61,7 @@ export default function ActiveDeliveryPage() {
 
     const { data } = await supabase
       .from('orders')
-      .select(`
-        *,
-        food_maker:food_makers(display_name, lat, lng),
-        customer:users!orders_customer_id_fkey(full_name, phone)
-      `)
+      .select(`*, food_maker:food_makers(display_name, lat, lng), customer:users!orders_customer_id_fkey(full_name, phone)`)
       .eq('nexter_id', user.id)
       .in('status', ['picked_up', 'on_the_way'])
       .order('updated_at', { ascending: false })
@@ -77,7 +79,6 @@ export default function ActiveDeliveryPage() {
 
   useEffect(() => { loadActiveOrder() }, [loadActiveOrder])
 
-  // GPS broadcast every 10s
   useEffect(() => {
     if (!order) return
     broadcastLocation()
@@ -85,7 +86,6 @@ export default function ActiveDeliveryPage() {
     return () => { if (locationIntervalRef.current) clearInterval(locationIntervalRef.current) }
   }, [order, broadcastLocation])
 
-  // Elapsed timer
   useEffect(() => {
     if (!order) return
     const start = new Date(order.updated_at).getTime()
@@ -122,7 +122,7 @@ export default function ActiveDeliveryPage() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-full">
-        <div className="w-12 h-12 border-4 border-[#FF6B35] border-t-transparent rounded-full animate-spin" />
+        <div className="w-10 h-10 border-[3px] border-[#FF6B35] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -130,12 +130,14 @@ export default function ActiveDeliveryPage() {
   if (!order) {
     return (
       <div className="flex flex-col items-center justify-center min-h-full px-6 text-center">
-        <Package size={64} className="text-slate-600 mb-4" />
-        <h2 className="text-xl font-bold text-slate-300">No active delivery</h2>
-        <p className="text-slate-500 text-sm mt-2 mb-6">Accept a pickup from the Available tab</p>
+        <div className="w-20 h-20 rounded-full bg-slate-800 border border-slate-700/50 flex items-center justify-center mb-5">
+          <Package size={36} className="text-slate-600" />
+        </div>
+        <h2 className="text-xl font-bold text-white mb-2">No active delivery</h2>
+        <p className="text-slate-500 text-sm mb-6">Accept a pickup to start delivering</p>
         <button
           onClick={() => router.push('/available')}
-          className="bg-[#FF6B35] text-white rounded-xl px-6 py-3 font-bold"
+          className="bg-[#FF6B35] text-white rounded-2xl px-8 py-3.5 font-bold text-sm shadow-lg shadow-[#FF6B35]/25"
         >
           Find Pickups
         </button>
@@ -144,132 +146,165 @@ export default function ActiveDeliveryPage() {
   }
 
   const nextAction = NEXT_ACTION[order.status]
-  const addr = typeof order.delivery_address === 'object' ? order.delivery_address : null
+  const addr = typeof order.delivery_address === 'object' ? order.delivery_address as { street?: string; city?: string; state?: string; zip?: string; label?: string } : null
   const currentStepIdx = STEPS.findIndex((s) => s.status === order.status)
 
-  const formatElapsed = (secs: number) => {
-    const m = Math.floor(secs / 60)
-    const s = secs % 60
-    return `${m}:${s.toString().padStart(2, '0')}`
-  }
-
   return (
-    <div className="flex flex-col min-h-full">
+    <div className="flex flex-col min-h-full pb-[140px]">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-slate-900 border-b border-slate-700/50 px-4 h-14 flex items-center justify-between">
+      <header className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-sm px-4 h-14 flex items-center justify-between border-b border-slate-700/40">
         <h1 className="text-lg font-black text-white">Active Delivery</h1>
-        <div className="flex items-center gap-2 text-sm text-slate-400">
-          <Clock size={14} />
-          <span className="font-mono">{formatElapsed(elapsed)}</span>
+        <div className="flex items-center gap-2 bg-slate-800 rounded-full px-3 py-1.5">
+          <div className="w-1.5 h-1.5 rounded-full bg-[#FF6B35] animate-pulse" />
+          <span className="font-mono text-sm font-bold text-white">{formatElapsed(elapsed)}</span>
         </div>
       </header>
 
-      {/* Step progress */}
-      <div className="bg-slate-800 px-5 py-4 border-b border-slate-700/50">
-        <div className="flex items-center justify-between">
+      {/* Progress stepper */}
+      <div className="px-5 py-5">
+        <div className="flex items-start">
           {STEPS.map((step, i) => {
             const done = i < currentStepIdx
             const active = i === currentStepIdx
+            const upcoming = i > currentStepIdx
             return (
-              <div key={step.status} className="flex-1 flex flex-col items-center gap-1.5">
+              <div key={step.status} className="flex-1 flex flex-col items-center">
                 <div className="flex items-center w-full">
+                  {/* Left connector */}
                   {i > 0 && (
-                    <div className={`flex-1 h-0.5 ${done || active ? 'bg-[#FF6B35]' : 'bg-slate-600'}`} />
+                    <div className={`flex-1 h-0.5 rounded-full transition-colors ${done || active ? 'bg-[#FF6B35]' : 'bg-slate-700'}`} />
                   )}
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    done ? 'bg-[#FF6B35]' : active ? 'bg-[#FF6B35] ring-4 ring-[#FF6B35]/20' : 'bg-slate-600'
+                  {/* Step dot */}
+                  <div className={`relative w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all ${
+                    done
+                      ? 'bg-[#FF6B35]'
+                      : active
+                        ? 'bg-[#FF6B35] ring-4 ring-[#FF6B35]/25'
+                        : 'bg-slate-700'
                   }`}>
                     {done
                       ? <CheckCircle size={14} className="text-white" />
-                      : <span className="text-white text-xs font-bold">{i + 1}</span>
+                      : <span className={`text-xs font-black ${upcoming ? 'text-slate-500' : 'text-white'}`}>{i + 1}</span>
                     }
+                    {active && (
+                      <span className="absolute inset-0 rounded-full animate-ping bg-[#FF6B35]/30" />
+                    )}
                   </div>
+                  {/* Right connector */}
                   {i < STEPS.length - 1 && (
-                    <div className={`flex-1 h-0.5 ${done ? 'bg-[#FF6B35]' : 'bg-slate-600'}`} />
+                    <div className={`flex-1 h-0.5 rounded-full transition-colors ${done ? 'bg-[#FF6B35]' : 'bg-slate-700'}`} />
                   )}
                 </div>
-                <span className={`text-[10px] font-medium ${active ? 'text-[#FF6B35]' : done ? 'text-slate-400' : 'text-slate-600'}`}>
-                  {step.label}
-                </span>
+                <div className="mt-2 text-center">
+                  <p className={`text-[11px] font-bold ${active ? 'text-[#FF6B35]' : done ? 'text-slate-400' : 'text-slate-600'}`}>
+                    {step.label}
+                  </p>
+                  <p className={`text-[9px] mt-0.5 ${active ? 'text-[#FF6B35]/70' : 'text-slate-600'}`}>
+                    {step.sublabel}
+                  </p>
+                </div>
               </div>
             )
           })}
         </div>
       </div>
 
-      <div className="p-4 space-y-3">
-        {/* Pickup */}
-        <div className="bg-slate-800 rounded-2xl p-4 border border-slate-700/50">
-          <p className="text-xs text-slate-400 uppercase tracking-wide font-bold mb-1.5">Pickup From</p>
-          <p className="font-bold text-white text-base">{order.food_maker?.display_name}</p>
-          <p className="text-xs text-slate-400 mt-0.5">Order #{order.id.slice(-6).toUpperCase()}</p>
-        </div>
-
-        {/* Delivery address */}
-        {addr && (
-          <div className="bg-slate-800 rounded-2xl p-4 border border-slate-700/50">
-            <p className="text-xs text-slate-400 uppercase tracking-wide font-bold mb-2">Deliver To</p>
-            <div className="flex items-start gap-3">
-              <MapPin size={16} className="text-[#FF6B35] flex-shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <p className="font-semibold text-white text-sm">{addr.street}</p>
-                <p className="text-xs text-slate-400">{addr.city}, {addr.state} {addr.zip}</p>
-                {addr.label && <p className="text-xs text-slate-500 mt-0.5">{addr.label}</p>}
-              </div>
+      {/* Route card */}
+      <div className="mx-4 mb-3 bg-slate-800 rounded-2xl border border-slate-700/40 overflow-hidden">
+        <div className="p-4">
+          {/* Pickup */}
+          <div className="flex items-start gap-3 pb-3">
+            <div className="flex flex-col items-center flex-shrink-0 mt-0.5">
+              <div className="w-3 h-3 rounded-full bg-[#FF6B35] border-2 border-[#FF6B35]/30" />
+              <div className="w-px h-8 bg-slate-600 my-1" />
             </div>
-            <a
-              href={`https://maps.google.com/?q=${encodeURIComponent(`${addr.street}, ${addr.city}, ${addr.state}`)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-3 flex items-center justify-center gap-2 bg-slate-700 hover:bg-slate-600 rounded-xl py-2.5 text-sm font-semibold text-white transition-colors"
-            >
-              <Navigation size={14} />
-              Open in Maps
-            </a>
+            <div className="flex-1 pb-1">
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wide">Pickup</p>
+              <p className="font-black text-white text-sm mt-0.5">{order.food_maker?.display_name}</p>
+              <p className="text-xs text-slate-500">Order #{order.id.slice(-6).toUpperCase()}</p>
+            </div>
           </div>
-        )}
 
-        {/* Customer */}
-        {order.customer && (
-          <div className="bg-slate-800 rounded-2xl p-4 border border-slate-700/50 flex items-center justify-between">
-            <div>
-              <p className="text-xs text-slate-400 uppercase tracking-wide font-bold mb-1">Customer</p>
-              <p className="font-semibold text-white text-sm">{order.customer.full_name}</p>
+          {/* Dropoff */}
+          <div className="flex items-start gap-3">
+            <div className="flex flex-col items-center flex-shrink-0">
+              <MapPin size={13} className="text-slate-400" />
             </div>
-            <div className="flex gap-2">
-              {order.customer.phone && (
-                <a
-                  href={`tel:${order.customer.phone}`}
-                  className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center"
-                >
-                  <Phone size={17} className="text-green-400" />
-                </a>
+            <div className="flex-1">
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wide">Deliver to</p>
+              {addr ? (
+                <div className="mt-0.5">
+                  <p className="font-bold text-white text-sm">{addr.street}</p>
+                  <p className="text-xs text-slate-400">{addr.city}, {addr.state} {addr.zip}</p>
+                  {addr.label && <p className="text-xs text-slate-500 mt-0.5 italic">{addr.label}</p>}
+                </div>
+              ) : (
+                <p className="text-sm text-slate-400 mt-0.5">Address not available</p>
               )}
             </div>
+          </div>
+        </div>
+
+        {/* Maps button */}
+        {addr && (
+          <a
+            href={`https://maps.google.com/?q=${encodeURIComponent(`${addr.street}, ${addr.city}, ${addr.state}`)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 bg-slate-700/60 hover:bg-slate-700 border-t border-slate-700/40 py-3 text-sm font-semibold text-white transition-colors"
+          >
+            <Navigation size={14} className="text-[#FF6B35]" />
+            Open in Maps
+          </a>
+        )}
+      </div>
+
+      {/* Customer + Earnings row */}
+      <div className="mx-4 grid grid-cols-2 gap-3 mb-3">
+        {/* Customer */}
+        {order.customer && (
+          <div className="bg-slate-800 rounded-2xl p-3.5 border border-slate-700/40">
+            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wide mb-1.5">Customer</p>
+            <p className="font-bold text-white text-sm truncate">{order.customer.full_name}</p>
+            {order.customer.phone && (
+              <a
+                href={`tel:${order.customer.phone}`}
+                className="mt-2.5 flex items-center gap-1.5 text-green-400 text-xs font-semibold"
+              >
+                <Phone size={12} />
+                Call
+              </a>
+            )}
           </div>
         )}
 
         {/* Earnings */}
-        <div className="bg-slate-800 rounded-2xl p-4 border border-slate-700/50 flex items-center justify-between">
-          <p className="text-sm text-slate-400">Your earnings</p>
-          <p className="font-black text-[#FF6B35] text-2xl">${order.delivery_fee.toFixed(2)}</p>
+        <div className="bg-slate-800 rounded-2xl p-3.5 border border-slate-700/40">
+          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wide mb-1.5">You earn</p>
+          <p className="font-black text-[#FF6B35] text-2xl leading-none">${order.delivery_fee.toFixed(2)}</p>
         </div>
       </div>
 
-      {/* CTA */}
-      {nextAction && (
-        <div className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto px-4 pb-8 pt-2 bg-gradient-to-t from-slate-900 via-slate-900/95 to-transparent">
-          <button
-            onClick={() => handleStatusUpdate(nextAction.next)}
-            disabled={updating}
-            className="w-full bg-[#FF6B35] text-white rounded-2xl py-4 font-bold text-base flex items-center justify-center gap-2 disabled:opacity-50 active:bg-[#E55A24] transition-colors shadow-lg shadow-[#FF6B35]/30"
-          >
-            {nextAction.next === 'on_the_way' && <Navigation size={18} />}
-            {nextAction.next === 'delivered' && <CheckCircle size={18} />}
-            {updating ? 'Updating…' : nextAction.label}
-          </button>
-        </div>
-      )}
+      {/* CTA - fixed above nav */}
+      {nextAction && (() => {
+        const ActionIcon = nextAction.icon
+        return (
+          <div className="fixed bottom-[68px] left-0 right-0 max-w-[430px] mx-auto px-4 pb-4 pt-3 bg-gradient-to-t from-slate-900 via-slate-900/98 to-transparent">
+            <button
+              onClick={() => handleStatusUpdate(nextAction.next)}
+              disabled={updating}
+              className={`w-full ${nextAction.color} text-white rounded-2xl py-4 font-black text-base flex items-center justify-center gap-2.5 disabled:opacity-50 transition-all shadow-lg active:scale-[0.98]`}
+            >
+              {updating ? (
+                <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+              ) : (
+                <ActionIcon size={20} />
+              )}
+              {updating ? 'Updating…' : nextAction.label}
+            </button>
+          </div>
+        )
+      })()}
     </div>
   )
 }
