@@ -8,7 +8,6 @@ import { StatusBadge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
 import { useCartStore } from '@/store/cart'
-import { getMakerEmoji } from '@/lib/mock-data'
 import type { Order, OrderStatus } from '@/types'
 
 interface OrderWithMaker extends Omit<Order, 'food_maker' | 'order_items'> {
@@ -172,7 +171,7 @@ export default function OrdersPage() {
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <span className="text-2xl">{getMakerEmoji(order.maker_id)}</span>
+                      <span className="text-2xl">{'🍽️'}</span>
                       <div>
                         <p className="font-bold text-gray-900 text-sm">{order.food_maker.display_name}</p>
                         <p className="text-xs text-gray-400">{formatOrderDate(order.created_at)}</p>
@@ -207,7 +206,7 @@ export default function OrdersPage() {
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <span className="text-xl">{getMakerEmoji(order.maker_id)}</span>
+                      <span className="text-xl">{'🍽️'}</span>
                       <div>
                         <p className="font-bold text-gray-900 text-sm">{order.food_maker.display_name}</p>
                         <p className="text-xs text-gray-400">{formatOrderDate(order.created_at)}</p>

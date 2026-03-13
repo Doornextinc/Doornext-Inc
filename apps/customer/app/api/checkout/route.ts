@@ -77,6 +77,26 @@ export async function POST(req: NextRequest) {
     const settingsMap: Record<string, string> = {}
     for (const s of settingsRes.data ?? []) settingsMap[s.key] = s.value
 
+    // Find or create Stripe Customer so payment methods are saved for future use
+    const { data: userProfile } = await serviceSupabase
+      .from('users')
+      .select('stripe_customer_id, email')
+      .eq('id', user.id)
+      .single()
+
+    let stripeCustomerId = userProfile?.stripe_customer_id as string | undefined
+    if (!stripeCustomerId) {
+      const customer = await stripe.customers.create({
+        email: user.email ?? userProfile?.email ?? undefined,
+        metadata: { supabase_user_id: user.id },
+      })
+      stripeCustomerId = customer.id
+      await serviceSupabase
+        .from('users')
+        .update({ stripe_customer_id: stripeCustomerId })
+        .eq('id', user.id)
+    }
+
     const pricing = calculatePricing({
       distanceMiles:        distance_miles ?? 3,
       subtotal,
@@ -99,10 +119,12 @@ export async function POST(req: NextRequest) {
     const platformFee = subtotal * PLATFORM_FEE_PCT
     const total = subtotal + pricing.deliveryFee + pricing.smallOrderFee + pricing.surgeFee + pricing.serviceFee + tip
 
-    // Create Stripe PaymentIntent
+    // Create Stripe PaymentIntent — attach customer so payment method is saved
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(total * 100),
       currency: 'usd',
+      customer: stripeCustomerId,
+      setup_future_usage: 'off_session',
       automatic_payment_methods: { enabled: true },
       metadata: {
         customer_id: user.id,

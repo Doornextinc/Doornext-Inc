@@ -39,7 +39,7 @@ export default function FavoritesPage() {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
 
-      setFavorites((data as FavoriteMaker[]) || [])
+      setFavorites((data as unknown as FavoriteMaker[]) || [])
       setLoading(false)
     }
     load()

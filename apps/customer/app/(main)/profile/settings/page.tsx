@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { BackBar } from '@/components/layout/top-bar'
+import { createClient } from '@/lib/supabase/client'
 
 const STORAGE_KEY = 'doornext-settings'
 
@@ -27,6 +28,20 @@ function loadSettings(): Settings {
   } catch {
     return DEFAULTS
   }
+}
+
+function saveLocal(s: Settings) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(s))
+}
+
+async function saveRemote(s: Settings) {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) return
+  try {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    await supabase.from('users').update({ notification_prefs: s }).eq('id', user.id)
+  } catch { /* no-op */ }
 }
 
 interface ToggleProps {
@@ -60,14 +75,32 @@ export default function SettingsPage() {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    setSettings(loadSettings())
+    // Show localStorage values immediately (instant paint)
+    const local = loadSettings()
+    setSettings(local)
     setMounted(true)
+
+    // Then fetch from Supabase and override if available
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) return
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return
+      supabase.from('users').select('notification_prefs').eq('id', user.id).single()
+        .then(({ data }) => {
+          if (data?.notification_prefs) {
+            const merged = { ...DEFAULTS, ...(data.notification_prefs as Partial<Settings>) }
+            setSettings(merged)
+            saveLocal(merged)
+          }
+        })
+    })
   }, [])
 
   const update = (key: keyof Settings) => (value: boolean) => {
     const next = { ...settings, [key]: value }
     setSettings(next)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+    saveLocal(next)
+    saveRemote(next)
   }
 
   if (!mounted) return null

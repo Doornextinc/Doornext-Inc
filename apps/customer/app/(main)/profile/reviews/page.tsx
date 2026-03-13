@@ -31,7 +31,7 @@ export default function ReviewsPage() {
         .eq('customer_id', user.id)
         .order('created_at', { ascending: false })
 
-      setReviews((data as Review[]) || [])
+      setReviews((data as unknown as Review[]) || [])
       setLoading(false)
     }
     load()
