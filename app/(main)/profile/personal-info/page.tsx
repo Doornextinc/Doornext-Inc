@@ -52,23 +52,17 @@ export default function PersonalInfoPage() {
     setPreviewUrl(URL.createObjectURL(file))
   }
 
-  const uploadAvatar = async (file: File, uid: string): Promise<string | null> => {
-    const supabase = createClient()
-    const ext = file.name.split('.').pop() || 'jpg'
-    const path = `${uid}/avatar.${ext}`
-
-    const { error } = await supabase.storage
-      .from('avatars')
-      .upload(path, file, { upsert: true, contentType: file.type })
-
-    if (error) {
-      console.error('Avatar upload error:', error)
+  const uploadAvatar = async (file: File): Promise<string | null> => {
+    const form = new FormData()
+    form.append('file', file)
+    const res = await fetch('/api/upload-avatar', { method: 'POST', body: form })
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}))
+      console.error('Avatar upload error:', body)
       return null
     }
-
-    const { data } = supabase.storage.from('avatars').getPublicUrl(path)
-    // Bust cache with timestamp
-    return `${data.publicUrl}?t=${Date.now()}`
+    const { url } = await res.json()
+    return url
   }
 
   const handleSave = async () => {
@@ -80,7 +74,7 @@ export default function PersonalInfoPage() {
 
       if (pendingFile) {
         setUploadingAvatar(true)
-        const url = await uploadAvatar(pendingFile, userId)
+        const url = await uploadAvatar(pendingFile)
         setUploadingAvatar(false)
         if (url) {
           newAvatarUrl = url
