@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import { RefundButton } from './refund-button'
 
 const STATUS_COLORS: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-700',
@@ -46,7 +47,6 @@ export default async function OrdersPage({ searchParams }: PageProps) {
         <span className="text-sm text-gray-400">{count ?? 0} total</span>
       </div>
 
-      {/* Status filter */}
       <div className="flex gap-2 mb-6 flex-wrap">
         {['all', 'pending', 'confirmed', 'preparing', 'ready', 'picked_up', 'on_the_way', 'delivered', 'cancelled'].map((s) => (
           <Link
@@ -120,7 +120,6 @@ export default async function OrdersPage({ searchParams }: PageProps) {
           </tbody>
         </table>
 
-        {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-5 py-4 border-t border-gray-100">
             <p className="text-sm text-gray-400">Page {pageNum} of {totalPages}</p>
@@ -142,22 +141,5 @@ export default async function OrdersPage({ searchParams }: PageProps) {
         )}
       </div>
     </div>
-  )
-}
-
-function RefundButton({ orderId }: { orderId: string }) {
-  return (
-    <form action="/api/admin/refund" method="POST">
-      <input type="hidden" name="orderId" value={orderId} />
-      <button
-        type="submit"
-        className="text-xs text-red-500 hover:text-red-700 font-semibold px-2 py-1 rounded hover:bg-red-50 transition-colors"
-        onClick={(e) => {
-          if (!confirm('Issue a full refund for this order?')) e.preventDefault()
-        }}
-      >
-        Refund
-      </button>
-    </form>
   )
 }
