@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { Home, Search, ShoppingBag, MessageCircle, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -16,7 +17,10 @@ const navItems = [
 
 export function BottomNav() {
   const pathname = usePathname()
-  const totalItems = useCartStore((s) => s.totalItems())
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+  const rawTotal = useCartStore((s) => s.items.reduce((sum, i) => sum + i.quantity, 0))
+  const totalItems = mounted ? rawTotal : 0
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 bottom-nav max-w-[430px] mx-auto">
