@@ -23,7 +23,7 @@ export function BottomNav() {
   const totalItems = mounted ? rawTotal : 0
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 bottom-nav max-w-[430px] mx-auto">
+    <nav aria-label="Main navigation" className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 bottom-nav max-w-[430px] mx-auto">
       <div className="flex items-center justify-around h-16">
         {navItems.map(({ href, icon: Icon, label }) => {
           const isActive =
@@ -32,6 +32,8 @@ export function BottomNav() {
             <Link
               key={href}
               href={href}
+              aria-current={isActive ? 'page' : undefined}
+              aria-label={label}
               className={cn(
                 'flex flex-col items-center gap-0.5 px-3 py-2 relative transition-colors',
                 isActive ? 'text-[#FF6B35]' : 'text-gray-400'

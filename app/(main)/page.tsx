@@ -9,21 +9,8 @@ import { createClient } from '@/lib/supabase/client'
 import { MOCK_MAKERS } from '@/lib/mock-data'
 import type { FoodMaker, Address } from '@/types'
 import { MapPin, Navigation, X, Check } from 'lucide-react'
-
-const FALLBACK_LAT = 40.6782
-const FALLBACK_LNG = -73.9442
-
-function haversine(lat1: number, lng1: number, lat2: number, lng2: number) {
-  const R = 6371
-  const dLat = ((lat2 - lat1) * Math.PI) / 180
-  const dLng = ((lng2 - lng1) * Math.PI) / 180
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLng / 2) ** 2
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-}
+import { haversineDistance } from '@/lib/utils'
+import { FALLBACK_LAT, FALLBACK_LNG, FALLBACK_LOCATION_LABEL } from '@/lib/constants'
 
 export default function HomePage() {
   const [selectedCuisine, setSelectedCuisine] = useState('All')
@@ -32,7 +19,7 @@ export default function HomePage() {
   const [location, setLocation] = useState<{ lat: number; lng: number; label: string }>({
     lat: FALLBACK_LAT,
     lng: FALLBACK_LNG,
-    label: 'Brooklyn, NY',
+    label: FALLBACK_LOCATION_LABEL,
   })
 
   // Address picker state
@@ -75,7 +62,7 @@ export default function HomePage() {
           const withDistance = data.map((m) => ({
             ...m,
             distance_km: parseFloat(
-              haversine(location.lat, location.lng, m.lat, m.lng).toFixed(1)
+              haversineDistance(location.lat, location.lng, m.lat, m.lng).toFixed(1)
             ),
           }))
           setMakers(withDistance)
@@ -105,8 +92,8 @@ export default function HomePage() {
   const handleSelectAddress = (addr: Address) => {
     setSelectedId(addr.id)
     setLocation({
-      lat: addr.lat || FALLBACK_LAT,
-      lng: addr.lng || FALLBACK_LNG,
+      lat: addr.lat ?? FALLBACK_LAT,
+      lng: addr.lng ?? FALLBACK_LNG,
       label: `${addr.street}, ${addr.city}`,
     })
     setPickerOpen(false)

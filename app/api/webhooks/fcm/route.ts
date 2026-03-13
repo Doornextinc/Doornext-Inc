@@ -5,6 +5,13 @@ import { NextRequest, NextResponse } from 'next/server'
  * to send FCM push notifications to users.
  */
 export async function POST(req: NextRequest) {
+  // Verify internal caller via shared secret
+  const authHeader = req.headers.get('authorization')
+  const internalSecret = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!internalSecret || authHeader !== `Bearer ${internalSecret}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
     const body = await req.json()
     const { userId, token, title, body: msgBody, data } = body

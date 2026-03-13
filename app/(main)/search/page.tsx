@@ -5,18 +5,9 @@ import { useRouter } from 'next/navigation'
 import { Search, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { MakerCard } from '@/components/home/maker-card'
+import { haversineDistance } from '@/lib/utils'
+import { FALLBACK_LAT, FALLBACK_LNG } from '@/lib/constants'
 import type { FoodMaker, MenuItem } from '@/types'
-
-const USER_LAT = 40.6782
-const USER_LNG = -73.9442
-
-function haversine(lat1: number, lng1: number, lat2: number, lng2: number) {
-  const R = 6371
-  const dLat = ((lat2 - lat1) * Math.PI) / 180
-  const dLng = ((lng2 - lng1) * Math.PI) / 180
-  const a = Math.sin(dLat / 2) ** 2 + Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-}
 
 interface DishResult {
   item: MenuItem
@@ -29,19 +20,23 @@ export default function SearchPage() {
   const [makers, setMakers] = useState<FoodMaker[]>([])
   const [dishes, setDishes] = useState<DishResult[]>([])
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const doSearch = useCallback(async (q: string) => {
-    if (!q.trim()) { setMakers([]); setDishes([]); return }
+    if (!q.trim()) { setMakers([]); setDishes([]); setError(null); return }
     setLoading(true)
+    setError(null)
     try {
       const supabase = createClient()
       const term = `%${q.trim()}%`
+      // cuisine_tags uses array containment; sanitize to avoid PostgREST injection via special chars
+      const safeCuisineTag = q.trim().replace(/[{}\\]/g, '')
 
       const [makersRes, itemsRes] = await Promise.all([
         supabase
           .from('food_makers')
           .select('*')
-          .or(`display_name.ilike.${term},bio.ilike.${term},cuisine_tags.cs.{${q.trim()}}`)
+          .or(`display_name.ilike.${term},bio.ilike.${term}${safeCuisineTag ? `,cuisine_tags.cs.{${safeCuisineTag}}` : ''}`)
           .limit(10),
         supabase
           .from('menu_items')
@@ -53,7 +48,7 @@ export default function SearchPage() {
 
       const makersWithDist = (makersRes.data ?? []).map((m) => ({
         ...m,
-        distance_km: parseFloat(haversine(USER_LAT, USER_LNG, m.lat, m.lng).toFixed(1)),
+        distance_km: parseFloat(haversineDistance(FALLBACK_LAT, FALLBACK_LNG, m.lat, m.lng).toFixed(1)),
       }))
       setMakers(makersWithDist as FoodMaker[])
 
@@ -64,6 +59,7 @@ export default function SearchPage() {
       setDishes(dishResults)
     } catch (e) {
       console.error('Search failed:', e)
+      setError('Search failed. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -113,7 +109,15 @@ export default function SearchPage() {
           </div>
         )}
 
-        {!loading && query.trim() && !hasResults && (
+        {!loading && error && (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <span className="text-5xl mb-4">⚠️</span>
+            <h3 className="text-lg font-bold text-gray-700">Search failed</h3>
+            <p className="text-gray-400 text-sm mt-1">{error}</p>
+          </div>
+        )}
+
+        {!loading && !error && query.trim() && !hasResults && (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <span className="text-5xl mb-4">😔</span>
             <h3 className="text-lg font-bold text-gray-700">No results</h3>

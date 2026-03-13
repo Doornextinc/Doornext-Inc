@@ -86,6 +86,7 @@ export default function MakerProfilePage() {
           </div>
         )}
         <button
+          aria-label="Go back"
           onClick={() => router.back()}
           className="absolute top-4 left-4 w-9 h-9 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-sm"
         >
@@ -107,7 +108,7 @@ export default function MakerProfilePage() {
               <img src={maker.avatar_url} alt="" className="w-full h-full object-cover rounded-2xl" />
             ) : (
               <span className="text-white text-2xl font-black">
-                {maker?.display_name[0] ?? '?'}
+                {(maker?.display_name?.[0] ?? '?').toUpperCase()}
               </span>
             )}
           </div>
@@ -158,9 +159,12 @@ export default function MakerProfilePage() {
           </div>
         )}
 
-        <button className="flex items-center gap-2 mt-3 text-sm text-[#FF6B35] font-semibold">
+        <button
+          onClick={() => router.push(`/chat?makerId=${id}`)}
+          className="flex items-center gap-2 mt-3 text-sm text-[#FF6B35] font-semibold"
+        >
           <MessageCircle size={16} />
-          Message {maker?.display_name.split("'")[0] ?? 'maker'}
+          Message {maker?.display_name?.split("'")[0] ?? 'Maker'}
         </button>
       </div>
 

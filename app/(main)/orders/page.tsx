@@ -37,10 +37,13 @@ export default function OrdersPage() {
   const router = useRouter()
   const [orders, setOrders] = useState<OrderWithMaker[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
+  const [reorderConfirmId, setReorderConfirmId] = useState<string | null>(null)
   const addItem = useCartStore((s) => s.addItem)
   const clearCart = useCartStore((s) => s.clearCart)
 
   const loadOrders = useCallback(async () => {
+    setLoadError(false)
     try {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
@@ -61,11 +64,15 @@ export default function OrdersPage() {
         .order('created_at', { ascending: false })
         .limit(50)
 
-      if (!error && data) {
+      if (error) {
+        console.error('Failed to load orders:', error)
+        setLoadError(true)
+      } else if (data) {
         setOrders(data as OrderWithMaker[])
       }
     } catch (e) {
       console.error('Failed to load orders:', e)
+      setLoadError(true)
     } finally {
       setLoading(false)
     }
@@ -76,6 +83,7 @@ export default function OrdersPage() {
   }, [loadOrders])
 
   const handleReorder = (order: OrderWithMaker) => {
+    setReorderConfirmId(null)
     clearCart()
     for (const oi of order.order_items) {
       if (oi.menu_item) {
@@ -100,6 +108,20 @@ export default function OrdersPage() {
           {[1, 2, 3].map((i) => (
             <div key={i} className="bg-white rounded-2xl p-4 h-28 animate-pulse" />
           ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <div className="flex flex-col min-h-full bg-[#f8f8f8]">
+        <TopBar title="Your Orders" showCart={false} />
+        <div className="flex flex-col items-center justify-center py-20 text-center px-6">
+          <span className="text-5xl mb-4">⚠️</span>
+          <h2 className="text-xl font-bold text-gray-700">Failed to load orders</h2>
+          <p className="text-gray-400 text-sm mt-1 mb-6">Check your connection and try again</p>
+          <Button onClick={loadOrders} size="lg">Retry</Button>
         </div>
       </div>
     )
@@ -172,13 +194,31 @@ export default function OrdersPage() {
                   <div className="flex items-center justify-between">
                     <span className="font-semibold text-gray-700 text-sm">${order.total.toFixed(2)}</span>
                     {order.status === 'delivered' && (
-                      <button
-                        onClick={() => handleReorder(order)}
-                        className="flex items-center gap-1.5 text-xs text-[#FF6B35] font-semibold bg-orange-50 px-3 py-1.5 rounded-full"
-                      >
-                        <RotateCcw size={11} />
-                        Reorder
-                      </button>
+                      reorderConfirmId === order.id ? (
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setReorderConfirmId(null)}
+                            className="text-xs text-gray-400 font-semibold px-2 py-1.5"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => handleReorder(order)}
+                            className="flex items-center gap-1.5 text-xs text-white font-semibold bg-[#FF6B35] px-3 py-1.5 rounded-full"
+                          >
+                            <RotateCcw size={11} />
+                            Confirm
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setReorderConfirmId(order.id)}
+                          className="flex items-center gap-1.5 text-xs text-[#FF6B35] font-semibold bg-orange-50 px-3 py-1.5 rounded-full"
+                        >
+                          <RotateCcw size={11} />
+                          Reorder
+                        </button>
+                      )
                     )}
                   </div>
                 </div>

@@ -22,16 +22,14 @@ export async function POST(req: NextRequest) {
 
   let event: Stripe.Event
 
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET ?? ''
-  const isDevMode = !webhookSecret || webhookSecret === 'whsec_placeholder'
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
+  if (!webhookSecret) {
+    console.error('STRIPE_WEBHOOK_SECRET is not configured — refusing webhook event')
+    return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 })
+  }
 
   try {
-    if (isDevMode) {
-      // In dev mode without a real webhook secret, parse without verification
-      event = JSON.parse(body) as Stripe.Event
-    } else {
-      event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
-    }
+    event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
   } catch (err) {
     console.error('Webhook signature verification failed:', err)
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })

@@ -7,13 +7,12 @@ import { useCartStore } from '@/store/cart'
 import { BackBar } from '@/components/layout/top-bar'
 import { Button } from '@/components/ui/button'
 import { formatPriceDollars } from '@/lib/utils'
-
-const DELIVERY_FEE = 3.99
-const PLATFORM_FEE_PCT = 0.05
+import { DELIVERY_FEE, PLATFORM_FEE_PCT } from '@/lib/constants'
 
 export default function CartPage() {
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
+  const [confirmClear, setConfirmClear] = useState(false)
   useEffect(() => setMounted(true), [])
   const { items, updateQuantity, removeItem, clearCart, subtotal, makerName } =
     useCartStore()
@@ -44,12 +43,21 @@ export default function CartPage() {
       <BackBar
         title="Your Cart"
         rightAction={
-          <button
-            onClick={clearCart}
-            className="text-xs text-red-400 font-semibold"
-          >
-            Clear
-          </button>
+          confirmClear ? (
+            <button
+              onClick={() => { clearCart(); setConfirmClear(false) }}
+              className="text-xs text-red-500 font-bold"
+            >
+              Confirm
+            </button>
+          ) : (
+            <button
+              onClick={() => setConfirmClear(true)}
+              className="text-xs text-red-400 font-semibold"
+            >
+              Clear
+            </button>
+          )
         }
       />
 

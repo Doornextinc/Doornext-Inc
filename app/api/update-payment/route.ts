@@ -3,9 +3,7 @@ import Stripe from 'stripe'
 import { createServerClient } from '@supabase/ssr'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
-
-const PLATFORM_FEE_PCT = 0.05
-const DELIVERY_FEE = 3.99
+import { PLATFORM_FEE_PCT, DELIVERY_FEE } from '@/lib/constants'
 
 export async function POST(req: NextRequest) {
   const stripeKey = process.env.STRIPE_SECRET_KEY

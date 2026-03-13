@@ -51,6 +51,7 @@ export function TopBar({
           {showNotifications && (
             <Link
               href="/notifications"
+              aria-label="Notifications"
               className="relative w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center"
             >
               <Bell size={18} className="text-gray-600" />
@@ -60,6 +61,7 @@ export function TopBar({
           {showCart && totalItems > 0 && (
             <Link
               href="/cart"
+              aria-label={`Cart, ${totalItems} item${totalItems !== 1 ? 's' : ''}`}
               className="relative w-9 h-9 rounded-full bg-[#FF6B35] flex items-center justify-center"
             >
               <ShoppingCart size={18} className="text-white" />
