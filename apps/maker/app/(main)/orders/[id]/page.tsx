@@ -3,9 +3,8 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { StatusBadge } from '@doornext/ui/badge'
 import type { Order, OrderStatus } from '@doornext/shared/types'
-import { ChevronLeft, Check, X, ChefHat, Bell } from 'lucide-react'
+import { ChevronLeft, Check, X, ChefHat, MapPin, Clock } from 'lucide-react'
 
 type OrderDetail = Order & {
   order_items: Array<{
@@ -16,10 +15,28 @@ type OrderDetail = Order & {
   }>
 }
 
-const STATUS_FLOW: Record<string, { next: OrderStatus; label: string; color: string }> = {
-  pending: { next: 'confirmed', label: 'Accept Order', color: 'bg-blue-500' },
-  confirmed: { next: 'preparing', label: 'Start Preparing', color: 'bg-orange-500' },
-  preparing: { next: 'ready', label: 'Mark as Ready', color: 'bg-purple-500' },
+const STATUS_FLOW: Record<string, { next: OrderStatus; label: string }> = {
+  pending:   { next: 'confirmed', label: 'Accept Order' },
+  confirmed: { next: 'preparing', label: 'Start Preparing' },
+  preparing: { next: 'ready',     label: 'Mark as Ready' },
+}
+
+const STATUS_LABELS: Record<string, string> = {
+  pending:   'Pending',
+  confirmed: 'Confirmed',
+  preparing: 'Preparing',
+  ready:     'Ready',
+  delivered: 'Delivered',
+  cancelled: 'Cancelled',
+}
+
+const STATUS_STYLES: Record<string, string> = {
+  pending:   'bg-amber-50 text-amber-700 border-amber-100',
+  confirmed: 'bg-blue-50 text-blue-700 border-blue-100',
+  preparing: 'bg-purple-50 text-purple-700 border-purple-100',
+  ready:     'bg-emerald-50 text-emerald-700 border-emerald-100',
+  delivered: 'bg-[#F5F4F2] text-[#666] border-[#EBEBEB]',
+  cancelled: 'bg-red-50 text-red-500 border-red-100',
 }
 
 export default function OrderDetailPage() {
@@ -59,9 +76,7 @@ export default function OrderDetailPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ orderId: order.id, status: newStatus }),
     })
-    if (res.ok) {
-      setOrder((prev) => prev ? { ...prev, status: newStatus } : prev)
-    }
+    if (res.ok) setOrder((prev) => prev ? { ...prev, status: newStatus } : prev)
     setUpdating(false)
   }
 
@@ -78,106 +93,152 @@ export default function OrderDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col min-h-full bg-[#f8f8f8]">
-        <div className="bg-white px-4 h-14 flex items-center border-b border-gray-100 animate-pulse">
-          <div className="h-5 bg-gray-200 rounded w-40" />
+      <div className="flex flex-col min-h-full bg-[#F5F4F2]">
+        <div className="bg-white px-4 h-[60px] flex items-center border-b border-[#EBEBEB] animate-pulse">
+          <div className="h-5 bg-[#EBEBEB] rounded w-40" />
+        </div>
+        <div className="p-4 space-y-3">
+          {[1, 2, 3].map(i => <div key={i} className="h-24 bg-white rounded-2xl animate-pulse" />)}
         </div>
       </div>
     )
   }
 
-  if (!order) return <div className="p-8 text-center text-gray-400">Order not found</div>
+  if (!order) {
+    return (
+      <div className="flex flex-col min-h-full bg-[#F5F4F2]">
+        <header className="sticky top-0 z-40 bg-white border-b border-[#EBEBEB] px-4 h-[60px] flex items-center gap-3">
+          <button onClick={() => router.back()} className="w-9 h-9 rounded-xl bg-[#F5F4F2] flex items-center justify-center">
+            <ChevronLeft size={18} className="text-[#555]" />
+          </button>
+          <h1 className="text-[18px] font-black text-[#111]">Order</h1>
+        </header>
+        <div className="flex-1 flex items-center justify-center text-[#AAA] text-sm">Order not found</div>
+      </div>
+    )
+  }
 
   const nextStep = STATUS_FLOW[order.status]
+  const statusStyle = STATUS_STYLES[order.status] ?? 'bg-[#F5F4F2] text-[#666] border-[#EBEBEB]'
+  const shortId = order.id.slice(-6).toUpperCase()
 
   return (
-    <div className="flex flex-col min-h-full bg-[#f8f8f8]">
+    <div className="flex flex-col min-h-full bg-[#F5F4F2]">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-white border-b border-gray-100 flex items-center justify-between px-4 h-14">
+      <header className="sticky top-0 z-40 bg-white border-b border-[#EBEBEB] px-4 h-[60px] flex items-center justify-between gap-3">
         <button
-          aria-label="Go back"
           onClick={() => router.back()}
-          className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center"
+          className="w-9 h-9 rounded-xl bg-[#F5F4F2] flex items-center justify-center flex-shrink-0"
         >
-          <ChevronLeft size={20} className="text-gray-700" />
+          <ChevronLeft size={18} className="text-[#555]" />
         </button>
-        <h1 className="font-bold text-gray-900">Order #{order.id.slice(-6).toUpperCase()}</h1>
-        <StatusBadge status={order.status} />
+        <h1 className="text-[18px] font-black text-[#111] flex-1">#{shortId}</h1>
+        <span className={`text-xs font-bold px-3 py-1.5 rounded-full border ${statusStyle}`}>
+          {STATUS_LABELS[order.status] ?? order.status}
+        </span>
       </header>
 
-      <div className="p-4 space-y-4">
-        {/* Order items */}
-        <div className="bg-white rounded-2xl overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-50 flex items-center gap-2">
-            <ChefHat size={16} className="text-[#FF6B35]" />
-            <h2 className="font-bold text-gray-900 text-sm">Items to Prepare</h2>
-          </div>
-          {order.order_items.map((oi, i) => (
-            <div key={i} className="px-4 py-4 border-b border-gray-50 last:border-0">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <p className="font-semibold text-gray-900">
-                    <span className="text-[#FF6B35] font-black">{oi.quantity}×</span>{' '}
-                    {oi.menu_item?.name ?? 'Item'}
-                  </p>
-                  {oi.customization_notes && (
-                    <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-2 py-1 mt-1 inline-block">
-                      Note: {oi.customization_notes}
-                    </p>
-                  )}
-                </div>
-                <span className="font-bold text-gray-900 text-sm">
-                  ${(oi.unit_price * oi.quantity).toFixed(2)}
-                </span>
-              </div>
-            </div>
-          ))}
+      <div className="p-4 space-y-3 pb-32">
+
+        {/* Order time */}
+        <div className="flex items-center gap-2 text-xs text-[#AAA] px-1">
+          <Clock size={12} />
+          <span>
+            {new Date(order.created_at).toLocaleString('en-US', {
+              month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+            })}
+          </span>
         </div>
+
+        {/* Items */}
+        <section>
+          <p className="text-[11px] font-black text-[#AAA] uppercase tracking-widest px-1 mb-2 flex items-center gap-2">
+            <ChefHat size={11} /> Items to Prepare
+          </p>
+          <div className="bg-white rounded-2xl border border-[#EBEBEB] divide-y divide-[#F5F4F2]">
+            {order.order_items.map((oi, i) => (
+              <div key={i} className="px-4 py-3.5">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-[#111] text-sm">
+                      <span className="font-black">{oi.quantity}×</span>{' '}
+                      {oi.menu_item?.name ?? 'Item'}
+                    </p>
+                    {oi.customization_notes && (
+                      <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-2.5 py-1 mt-1.5 inline-block">
+                        {oi.customization_notes}
+                      </p>
+                    )}
+                  </div>
+                  <span className="font-bold text-[#111] text-sm flex-shrink-0">
+                    ${(oi.unit_price * oi.quantity).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
 
         {/* Delivery address */}
-        <div className="bg-white rounded-2xl px-4 py-4">
-          <h2 className="font-bold text-gray-900 text-sm mb-2">Delivery Address</h2>
-          <p className="text-sm text-gray-600">
-            {typeof order.delivery_address === 'object'
-              ? `${order.delivery_address.street}, ${order.delivery_address.city}`
-              : 'Address on file'}
+        <section>
+          <p className="text-[11px] font-black text-[#AAA] uppercase tracking-widest px-1 mb-2 flex items-center gap-2">
+            <MapPin size={11} /> Delivery Address
           </p>
-        </div>
+          <div className="bg-white rounded-2xl border border-[#EBEBEB] px-4 py-3.5">
+            <p className="text-sm text-[#333]">
+              {typeof order.delivery_address === 'object' && order.delivery_address
+                ? `${(order.delivery_address as { street?: string }).street ?? ''}, ${(order.delivery_address as { city?: string }).city ?? ''}`
+                : 'Address on file'}
+            </p>
+          </div>
+        </section>
 
-        {/* Order summary */}
-        <div className="bg-white rounded-2xl px-4 py-4">
-          <div className="flex justify-between text-sm text-gray-600 mb-1">
-            <span>Subtotal</span>
-            <span>${order.subtotal.toFixed(2)}</span>
+        {/* Summary */}
+        <section>
+          <p className="text-[11px] font-black text-[#AAA] uppercase tracking-widest px-1 mb-2">Summary</p>
+          <div className="bg-white rounded-2xl border border-[#EBEBEB] px-4 py-4 space-y-2">
+            <div className="flex justify-between text-sm text-[#666]">
+              <span>Subtotal</span>
+              <span>${order.subtotal.toFixed(2)}</span>
+            </div>
+            {(order as { delivery_fee?: number }).delivery_fee != null && (
+              <div className="flex justify-between text-sm text-[#666]">
+                <span>Delivery fee</span>
+                <span>${((order as { delivery_fee?: number }).delivery_fee ?? 0).toFixed(2)}</span>
+              </div>
+            )}
+            <div className="flex justify-between text-sm font-black text-[#111] pt-2 border-t border-[#F5F4F2]">
+              <span>Total</span>
+              <span>${order.total.toFixed(2)}</span>
+            </div>
           </div>
-          <div className="flex justify-between text-sm font-bold text-gray-900 mt-2 pt-2 border-t border-gray-100">
-            <span>Total</span>
-            <span>${order.total.toFixed(2)}</span>
-          </div>
-        </div>
+        </section>
+
       </div>
 
-      {/* Action buttons */}
+      {/* Action bar */}
       {nextStep && (
-        <div className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto px-4 pb-6 flex gap-3">
-          {order.status === 'pending' && (
+        <div className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto px-4 pb-6 pt-3 bg-gradient-to-t from-[#F5F4F2] via-[#F5F4F2] to-transparent">
+          <div className="flex gap-3">
+            {order.status === 'pending' && (
+              <button
+                onClick={handleReject}
+                disabled={updating}
+                className="flex-1 bg-white border border-[#EBEBEB] text-red-500 rounded-xl py-4 font-bold text-sm flex items-center justify-center gap-2 active:bg-red-50 disabled:opacity-50"
+              >
+                <X size={16} />
+                Reject
+              </button>
+            )}
             <button
-              onClick={handleReject}
+              onClick={() => handleStatusUpdate(nextStep.next)}
               disabled={updating}
-              className="flex-1 bg-white border border-red-200 text-red-500 rounded-2xl py-4 font-bold flex items-center justify-center gap-2 active:bg-red-50 disabled:opacity-50"
+              className="flex-1 bg-[#111] text-white rounded-xl py-4 font-black text-sm flex items-center justify-center gap-2 disabled:opacity-50 active:bg-[#333]"
             >
-              <X size={18} />
-              Reject
+              <Check size={16} />
+              {updating ? 'Updating…' : nextStep.label}
             </button>
-          )}
-          <button
-            onClick={() => handleStatusUpdate(nextStep.next)}
-            disabled={updating}
-            className={`flex-1 ${nextStep.color} text-white rounded-2xl py-4 font-bold flex items-center justify-center gap-2 disabled:opacity-50 active:opacity-90`}
-          >
-            {order.status === 'preparing' ? <Bell size={18} /> : <Check size={18} />}
-            {updating ? 'Updating…' : nextStep.label}
-          </button>
+          </div>
         </div>
       )}
     </div>
