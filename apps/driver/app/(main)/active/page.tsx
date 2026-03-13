@@ -25,7 +25,7 @@ const STEPS: Array<{ status: string; label: string; sublabel: string }> = [
 ]
 
 const NEXT_ACTION: Record<string, { next: OrderStatus; label: string; color: string }> = {
-  picked_up: { next: 'on_the_way', label: 'Start Driving', color: 'bg-[#FF6B35] shadow-[#FF6B35]/30' },
+  picked_up: { next: 'on_the_way', label: 'Start Driving', color: 'bg-[#D4622B] shadow-[#D4622B]/30' },
   on_the_way: { next: 'delivered', label: 'Confirm Delivery', color: 'bg-green-500 shadow-green-500/30' },
 }
 
@@ -124,20 +124,30 @@ export default function ActiveDeliveryPage() {
   }
 
   if (loading) {
-    return <div className="flex flex-col items-center justify-center min-h-full"><div className="w-10 h-10 border-[3px] border-[#FF6B35] border-t-transparent rounded-full animate-spin" /></div>
+    return (
+      <div className="flex flex-col min-h-full">
+        <AppHeader title="Active Delivery" />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="w-10 h-10 border-[3px] border-[#D4622B] border-t-transparent rounded-full animate-spin" />
+        </div>
+      </div>
+    )
   }
 
   if (!order) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-full px-6 text-center">
-        <div className="w-20 h-20 rounded-full bg-[#141414] border border-white/5 flex items-center justify-center mb-5">
-          <Package size={36} className="text-zinc-600" />
+      <div className="flex flex-col min-h-full">
+        <AppHeader title="Active Delivery" />
+        <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
+          <div className="w-24 h-24 rounded-3xl bg-[#141414] border border-white/5 flex items-center justify-center mb-6">
+            <Package size={44} className="text-zinc-600" />
+          </div>
+          <h2 className="text-2xl font-black text-white mb-2">No active delivery</h2>
+          <p className="text-zinc-500 text-base mb-8">Accept a pickup to start delivering</p>
+          <button onClick={() => router.push('/available')} className="bg-[#D4622B] text-white rounded-2xl px-10 py-4 font-black text-base shadow-lg shadow-[#D4622B]/20">
+            Find Pickups
+          </button>
         </div>
-        <h2 className="text-xl font-bold text-white mb-2">No active delivery</h2>
-        <p className="text-zinc-500 text-sm mb-6">Accept a pickup to start delivering</p>
-        <button onClick={() => router.push('/available')} className="bg-[#FF6B35] text-white rounded-2xl px-8 py-3.5 font-bold text-sm shadow-lg shadow-[#FF6B35]/25">
-          Find Pickups
-        </button>
       </div>
     )
   }
@@ -154,7 +164,7 @@ export default function ActiveDeliveryPage() {
       <div className="flex items-center justify-between px-4 py-2 border-b border-white/5 bg-[#0A0A0A]">
         <span className="text-xs text-zinc-600">Delivery in progress</span>
         <div className="flex items-center gap-2 bg-[#141414] rounded-full px-3 py-1">
-          <div className="w-1.5 h-1.5 rounded-full bg-[#FF6B35] animate-pulse" />
+          <div className="w-1.5 h-1.5 rounded-full bg-[#D4622B] animate-pulse" />
           <span className="font-mono text-xs font-bold text-white">{formatElapsed(elapsed)}</span>
         </div>
       </div>
@@ -167,16 +177,16 @@ export default function ActiveDeliveryPage() {
             return (
               <div key={step.status} className="flex-1 flex flex-col items-center">
                 <div className="flex items-center w-full">
-                  {i > 0 && <div className={`flex-1 h-0.5 rounded-full transition-colors ${done || active ? 'bg-[#FF6B35]' : 'bg-[#1A1A1A]'}`} />}
-                  <div className={`relative w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all ${done ? 'bg-[#FF6B35]' : active ? 'bg-[#FF6B35] ring-4 ring-[#FF6B35]/25' : 'bg-[#1A1A1A]'}`}>
+                  {i > 0 && <div className={`flex-1 h-0.5 rounded-full transition-colors ${done || active ? 'bg-[#D4622B]' : 'bg-[#1A1A1A]'}`} />}
+                  <div className={`relative w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all ${done ? 'bg-[#D4622B]' : active ? 'bg-[#D4622B] ring-4 ring-[#D4622B]/25' : 'bg-[#1A1A1A]'}`}>
                     {done ? <CheckCircle size={14} className="text-white" /> : <span className={`text-xs font-black ${upcoming ? 'text-zinc-500' : 'text-white'}`}>{i + 1}</span>}
-                    {active && <span className="absolute inset-0 rounded-full animate-ping bg-[#FF6B35]/30" />}
+                    {active && <span className="absolute inset-0 rounded-full animate-ping bg-[#D4622B]/30" />}
                   </div>
-                  {i < STEPS.length - 1 && <div className={`flex-1 h-0.5 rounded-full transition-colors ${done ? 'bg-[#FF6B35]' : 'bg-[#1A1A1A]'}`} />}
+                  {i < STEPS.length - 1 && <div className={`flex-1 h-0.5 rounded-full transition-colors ${done ? 'bg-[#D4622B]' : 'bg-[#1A1A1A]'}`} />}
                 </div>
                 <div className="mt-2 text-center">
-                  <p className={`text-[11px] font-bold ${active ? 'text-[#FF6B35]' : done ? 'text-zinc-400' : 'text-zinc-600'}`}>{step.label}</p>
-                  <p className={`text-[9px] mt-0.5 ${active ? 'text-[#FF6B35]/70' : 'text-zinc-600'}`}>{step.sublabel}</p>
+                  <p className={`text-[11px] font-bold ${active ? 'text-[#D4622B]' : done ? 'text-zinc-400' : 'text-zinc-600'}`}>{step.label}</p>
+                  <p className={`text-[9px] mt-0.5 ${active ? 'text-[#D4622B]/70' : 'text-zinc-600'}`}>{step.sublabel}</p>
                 </div>
               </div>
             )
@@ -189,19 +199,19 @@ export default function ActiveDeliveryPage() {
         <div className="p-4">
           <div className="flex items-start gap-3 pb-3">
             <div className="flex flex-col items-center flex-shrink-0 mt-0.5">
-              <div className="w-3 h-3 rounded-full bg-[#FF6B35] border-2 border-[#FF6B35]/30" />
+              <div className="w-3 h-3 rounded-full bg-[#D4622B] border-2 border-[#FF6B35]/30" />
               <div className="w-px h-8 bg-zinc-600 my-1" />
             </div>
             <div className="flex-1 pb-1">
-              <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wide">Pickup</p>
-              <p className="font-black text-white text-sm mt-0.5">{order.food_maker?.display_name}</p>
+              <p className="text-xs text-zinc-500 font-bold uppercase tracking-wide">Pickup</p>
+              <p className="font-black text-white text-base mt-0.5">{order.food_maker?.display_name}</p>
               <p className="text-xs text-zinc-500">Order #{order.id.slice(-6).toUpperCase()}</p>
             </div>
           </div>
           <div className="flex items-start gap-3">
             <div className="flex flex-col items-center flex-shrink-0"><MapPin size={13} className="text-zinc-400" /></div>
             <div className="flex-1">
-              <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wide">Deliver to</p>
+              <p className="text-xs text-zinc-500 font-bold uppercase tracking-wide">Deliver to</p>
               {addr ? (
                 <div className="mt-0.5">
                   <p className="font-bold text-white text-sm">{addr.street}</p>
@@ -218,7 +228,7 @@ export default function ActiveDeliveryPage() {
             target="_blank" rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 bg-[#1E1E1E] hover:bg-[#1A1A1A] border-t border-white/5 py-3 text-sm font-semibold text-white transition-colors"
           >
-            <Navigation size={14} className="text-[#FF6B35]" /> Open in Maps
+            <Navigation size={14} className="text-[#D4622B]" /> Open in Maps
           </a>
         )}
       </div>
@@ -231,7 +241,7 @@ export default function ActiveDeliveryPage() {
             className="w-full flex items-center justify-between px-4 py-3.5"
           >
             <div className="flex items-center gap-2">
-              <Package size={15} className="text-[#FF6B35]" />
+              <Package size={15} className="text-[#D4622B]" />
               <span className="text-sm font-bold text-white">Order Items</span>
               <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${checkedItems.size === order.order_items.length ? 'bg-green-500/20 text-green-400' : 'bg-[#1A1A1A] text-zinc-400'}`}>
                 {checkedItems.size}/{order.order_items.length}
@@ -269,8 +279,8 @@ export default function ActiveDeliveryPage() {
       <div className="mx-4 grid grid-cols-2 gap-3 mb-3">
         {order.customer && (
           <div className="bg-[#141414] rounded-2xl p-3.5 border border-white/5">
-            <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wide mb-1.5">Customer</p>
-            <p className="font-bold text-white text-sm truncate">{order.customer.full_name}</p>
+            <p className="text-xs text-zinc-500 font-bold uppercase tracking-wide mb-1.5">Customer</p>
+            <p className="font-bold text-white text-base truncate">{order.customer.full_name}</p>
             {order.customer.phone && (
               <a href={`tel:${order.customer.phone}`} className="mt-2.5 flex items-center gap-1.5 text-green-400 text-xs font-semibold">
                 <Phone size={12} /> Call
@@ -279,9 +289,9 @@ export default function ActiveDeliveryPage() {
           </div>
         )}
         <div className="bg-[#141414] rounded-2xl p-3.5 border border-white/5">
-          <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wide mb-1.5">You earn</p>
-          <p className="font-black text-[#FF6B35] text-2xl leading-none">${earn.toFixed(2)}</p>
-          {order.tip_amount > 0 && <p className="text-xs text-green-400 mt-1">+${order.tip_amount.toFixed(2)} tip</p>}
+          <p className="text-xs text-zinc-500 font-bold uppercase tracking-wide mb-1.5">You earn</p>
+          <p className="font-black text-[#D4622B] text-3xl leading-none">${earn.toFixed(2)}</p>
+          {order.tip_amount > 0 && <p className="text-sm text-green-400 mt-1.5">+${order.tip_amount.toFixed(2)} tip</p>}
         </div>
       </div>
 

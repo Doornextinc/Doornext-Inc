@@ -7,9 +7,8 @@ import dynamic from 'next/dynamic'
 import { createClient } from '@/lib/supabase/client'
 import { useDriverStore } from '@/store/driver-store'
 import { AppHeader } from '@/components/layout/app-header'
-import { ChevronRight, Star, Package, TrendingUp, Zap } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 
-// Load map client-side only (Leaflet requires window)
 const LiveMap = dynamic(() => import('@/components/live-map').then(m => m.LiveMap), { ssr: false })
 
 type HomeData = {
@@ -40,20 +39,14 @@ export default function HomePage() {
   const [lng, setLng] = useState(DEFAULT_LNG)
   const watchIdRef = useRef<number | null>(null)
 
-  // Live location tracking
   useEffect(() => {
     if (typeof navigator === 'undefined') return
     watchIdRef.current = navigator.geolocation.watchPosition(
-      (pos) => {
-        setLat(pos.coords.latitude)
-        setLng(pos.coords.longitude)
-      },
+      (pos) => { setLat(pos.coords.latitude); setLng(pos.coords.longitude) },
       () => {},
       { enableHighAccuracy: true, maximumAge: 10000 }
     )
-    return () => {
-      if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current)
-    }
+    return () => { if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current) }
   }, [])
 
   const load = useCallback(async () => {
@@ -107,119 +100,123 @@ export default function HomePage() {
   const firstName = data?.profile.full_name?.split(' ')[0] ?? 'Driver'
 
   return (
-    /* Full-screen stack: map behind, header + bottom-sheet on top */
     <div className="relative flex flex-col overflow-hidden" style={{ height: 'calc(100dvh - 64px)' }}>
 
-      {/* ── Live map (fills everything) ── */}
+      {/* Live map — interactive (pan / zoom enabled) */}
       <LiveMap lat={lat} lng={lng} isOnline={isOnline} />
 
-      {/* ── Floating header ── */}
+      {/* Floating sticky header */}
       <div className="relative z-10">
         <AppHeader greeting={loading ? undefined : { time: greeting(), name: firstName }} />
       </div>
 
-      {/* ── Bottom sheet ── */}
+      {/* ── OFFLINE bottom sheet ── */}
       {!isOnline ? (
-        /* OFFLINE — "Ready to Next?" + big GO button */
-        <div className="absolute bottom-0 left-0 right-0 z-10 px-5 pb-8 pt-6 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/95 to-transparent">
-          <div className="flex flex-col items-center gap-5">
-            <div className="text-center">
-              <h2 className="text-2xl font-black text-white leading-tight">Ready to Next?</h2>
-              <p className="text-zinc-400 text-sm mt-1">Tap GO to start accepting orders</p>
-            </div>
+        <div
+          className="absolute bottom-0 left-0 right-0 z-10 px-5 pb-10 pt-8"
+          style={{ background: 'linear-gradient(to top, #0A0A0A 72%, rgba(10,10,10,0.6) 88%, transparent)' }}
+        >
+          {/* Heading */}
+          <div className="text-center mb-7">
+            <h2 className="text-3xl font-black text-white leading-tight tracking-tight">Ready to earn?</h2>
+            <p className="text-zinc-400 text-base mt-2">Tap GO to start accepting orders</p>
+          </div>
 
-            {/* Uber-style round GO button */}
+          {/* Round GO button */}
+          <div className="flex justify-center mb-7">
             <button
               onClick={toggleOnline}
               disabled={toggling}
-              className="relative w-28 h-28 rounded-full flex items-center justify-center active:scale-95 transition-transform duration-150 disabled:opacity-60"
+              className="relative w-32 h-32 rounded-full flex items-center justify-center active:scale-95 transition-all duration-150 disabled:opacity-60"
               style={{
-                background: 'linear-gradient(145deg, #1a1a1a, #111)',
-                boxShadow: '0 0 0 4px #222, 0 0 0 6px #333, 0 12px 40px rgba(0,0,0,0.7)',
+                background: 'linear-gradient(145deg, #1e1e1e, #141414)',
+                boxShadow: '0 0 0 5px #1c1c1c, 0 0 0 9px #222, 0 16px 48px rgba(0,0,0,0.9)',
               }}
             >
-              {/* outer ring */}
-              <span className="absolute inset-0 rounded-full border-2 border-white/10" />
-              <span className="text-white font-black text-2xl tracking-wider">
+              <span className="absolute inset-0 rounded-full border border-white/10" />
+              <span className="text-white font-black text-3xl tracking-widest">
                 {toggling ? '…' : 'GO'}
               </span>
             </button>
-
-            {/* Earnings pill */}
-            {!loading && (
-              <div className="flex items-center gap-4 bg-[#141414]/80 border border-white/8 rounded-2xl px-5 py-3 backdrop-blur-sm">
-                <div className="text-center">
-                  <p className="font-black text-white text-lg">${(data?.todayEarnings ?? 0).toFixed(2)}</p>
-                  <p className="text-[10px] text-zinc-500">Today</p>
-                </div>
-                <div className="w-px h-8 bg-white/10" />
-                <div className="text-center">
-                  <p className="font-black text-white text-lg">{data?.todayDeliveries ?? 0}</p>
-                  <p className="text-[10px] text-zinc-500">Trips</p>
-                </div>
-                <div className="w-px h-8 bg-white/10" />
-                <div className="text-center">
-                  <p className="font-black text-white text-lg">{data?.profile?.avg_rating?.toFixed(1) ?? '—'}</p>
-                  <p className="text-[10px] text-zinc-500">Rating</p>
-                </div>
-              </div>
-            )}
           </div>
-        </div>
-      ) : (
-        /* ONLINE — status bar + active order + go offline */
-        <div className="absolute bottom-0 left-0 right-0 z-10 px-4 pb-8 pt-4 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/95 to-transparent space-y-3">
 
+          {/* Stats strip */}
+          {!loading && (
+            <div className="flex items-stretch bg-[#141414]/95 border border-white/8 rounded-3xl overflow-hidden backdrop-blur-sm">
+              <div className="flex-1 py-4 text-center">
+                <p className="font-black text-white text-2xl leading-none">${(data?.todayEarnings ?? 0).toFixed(2)}</p>
+                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Today</p>
+              </div>
+              <div className="w-px bg-white/8" />
+              <div className="flex-1 py-4 text-center">
+                <p className="font-black text-white text-2xl leading-none">{data?.todayDeliveries ?? 0}</p>
+                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Trips</p>
+              </div>
+              <div className="w-px bg-white/8" />
+              <div className="flex-1 py-4 text-center">
+                <p className="font-black text-white text-2xl leading-none">{data?.profile?.avg_rating?.toFixed(1) ?? '—'}</p>
+                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Rating</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+      ) : (
+        /* ── ONLINE bottom sheet ── */
+        <div
+          className="absolute bottom-0 left-0 right-0 z-10 px-4 pb-8 pt-6 space-y-3"
+          style={{ background: 'linear-gradient(to top, #0A0A0A 68%, rgba(10,10,10,0.6) 85%, transparent)' }}
+        >
           {/* Active order banner */}
           {data?.activeOrder && (
-            <Link href="/active" className="block bg-[#FF6B35]/10 border border-[#FF6B35]/25 rounded-2xl p-4 backdrop-blur-sm">
+            <Link href="/active" className="block bg-[#D4622B]/10 border border-[#D4622B]/20 rounded-2xl px-4 py-4 backdrop-blur-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] font-bold text-[#FF6B35] uppercase tracking-wide mb-1">Active Delivery</p>
-                  <p className="font-black text-white text-sm">{(data.activeOrder as any).food_maker?.display_name ?? 'Order'}</p>
-                  <p className="text-xs text-zinc-400 mt-0.5 capitalize">{data.activeOrder.status.replace(/_/g, ' ')}</p>
+                  <p className="text-xs font-black text-[#D4622B] uppercase tracking-wider mb-1">Active Delivery</p>
+                  <p className="font-black text-white text-base">{(data.activeOrder as any).food_maker?.display_name ?? 'Order'}</p>
+                  <p className="text-sm text-zinc-400 mt-0.5 capitalize">{data.activeOrder.status.replace(/_/g, ' ')}</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-[#FF6B35] animate-pulse" />
-                  <ChevronRight size={16} className="text-[#FF6B35]" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#D4622B] animate-pulse" />
+                  <ChevronRight size={18} className="text-[#D4622B]" />
                 </div>
               </div>
             </Link>
           )}
 
-          {/* Online status row + Go Offline */}
-          <div className="flex items-center justify-between bg-[#111]/80 border border-white/8 rounded-2xl px-4 py-3 backdrop-blur-sm">
-            <div className="flex items-center gap-2.5">
-              <span className="relative flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-60" />
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-400" />
-              </span>
-              <span className="font-black text-green-400 text-sm">Online · Accepting orders</span>
-            </div>
-            <button
-              onClick={toggleOnline}
-              disabled={toggling}
-              className="text-xs font-bold text-zinc-400 hover:text-white transition-colors disabled:opacity-50 bg-white/5 rounded-xl px-3 py-1.5"
-            >
-              {toggling ? '…' : 'Go offline'}
-            </button>
+          {/* Online indicator */}
+          <div className="flex items-center gap-3 bg-[#0D190D]/95 border border-green-500/20 rounded-2xl px-4 py-4 backdrop-blur-sm">
+            <span className="relative flex h-3.5 w-3.5 flex-shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-50" />
+              <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-green-400" />
+            </span>
+            <span className="font-black text-green-400 text-base flex-1">Online · Accepting orders</span>
           </div>
 
-          {/* Quick stats */}
-          <div className="grid grid-cols-3 gap-2">
-            <div className="bg-[#111]/70 border border-white/8 rounded-xl px-3 py-2.5 text-center backdrop-blur-sm">
-              <p className="font-black text-white text-base">${(data?.todayEarnings ?? 0).toFixed(2)}</p>
-              <p className="text-[10px] text-zinc-500 mt-0.5">Today</p>
+          {/* Stats row */}
+          <div className="grid grid-cols-3 gap-2.5">
+            <div className="bg-[#131313]/95 border border-white/8 rounded-2xl px-3 py-4 text-center backdrop-blur-sm">
+              <p className="font-black text-white text-xl leading-none">${(data?.todayEarnings ?? 0).toFixed(2)}</p>
+              <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Today</p>
             </div>
-            <div className="bg-[#111]/70 border border-white/8 rounded-xl px-3 py-2.5 text-center backdrop-blur-sm">
-              <p className="font-black text-white text-base">{data?.todayDeliveries ?? 0}</p>
-              <p className="text-[10px] text-zinc-500 mt-0.5">Trips</p>
+            <div className="bg-[#131313]/95 border border-white/8 rounded-2xl px-3 py-4 text-center backdrop-blur-sm">
+              <p className="font-black text-white text-xl leading-none">{data?.todayDeliveries ?? 0}</p>
+              <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Trips</p>
             </div>
-            <Link href="/earnings" className="bg-[#111]/70 border border-white/8 rounded-xl px-3 py-2.5 text-center backdrop-blur-sm">
-              <p className="font-black text-white text-base">{data?.profile?.avg_rating?.toFixed(1) ?? '—'}</p>
-              <p className="text-[10px] text-zinc-500 mt-0.5">Rating</p>
+            <Link href="/earnings" className="bg-[#131313]/95 border border-white/8 rounded-2xl px-3 py-4 text-center backdrop-blur-sm">
+              <p className="font-black text-white text-xl leading-none">{data?.profile?.avg_rating?.toFixed(1) ?? '—'}</p>
+              <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Rating</p>
             </Link>
           </div>
+
+          {/* Go Offline — full width, clearly tappable but not alarming */}
+          <button
+            onClick={toggleOnline}
+            disabled={toggling}
+            className="w-full bg-[#181818] border border-white/10 rounded-2xl py-4 font-black text-base text-zinc-300 hover:text-white hover:border-white/20 active:scale-[0.98] transition-all disabled:opacity-50"
+          >
+            {toggling ? '…' : 'Go Offline'}
+          </button>
         </div>
       )}
     </div>

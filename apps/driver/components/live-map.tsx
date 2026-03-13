@@ -9,7 +9,7 @@ interface LiveMapProps {
 }
 
 export function LiveMap({ lat, lng }: LiveMapProps) {
-  // Rebuild the iframe src only when coords change meaningfully (2 decimal places ≈ 1 km)
+  // Rebuild iframe src only when coords change by ~1 km (2 decimal places)
   const src = useMemo(() => {
     const delta = 0.018
     const bbox = `${lng - delta},${lat - delta},${lng + delta},${lat + delta}`
@@ -23,27 +23,27 @@ export function LiveMap({ lat, lng }: LiveMapProps) {
 
   return (
     <div className="absolute inset-0 w-full h-full overflow-hidden" style={{ zIndex: 0 }}>
-      {/* CSS filter turns OSM light tiles into a dark map */}
+      {/* CSS filter: converts OSM light tiles → dark map. pointer-events enabled for pan/zoom */}
       <iframe
         src={src}
         title="Live map"
-        scrolling="no"
-        className="w-full h-full border-0 pointer-events-none"
+        className="w-full h-full border-0"
         style={{
-          filter: 'invert(93%) hue-rotate(180deg) saturate(0.7) brightness(0.85)',
-          transform: 'scale(1.05)', // hide white edges from filter
+          filter: 'invert(93%) hue-rotate(180deg) saturate(0.65) brightness(0.82)',
+          transform: 'scale(1.05)',
         }}
       />
-      {/* Driver dot overlay — centered on screen */}
+      {/* Driver position dot — centered, non-interactive overlay */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         <div className="relative">
-          <span className="absolute -inset-3 rounded-full bg-[#FF6B35]/20 animate-ping" />
+          <span className="absolute -inset-5 rounded-full bg-[#D4622B]/15 animate-ping" />
+          <span className="absolute -inset-2.5 rounded-full bg-[#D4622B]/20" />
           <div
-            className="w-10 h-10 rounded-full border-3 border-white flex items-center justify-center text-lg shadow-xl"
+            className="w-12 h-12 rounded-full flex items-center justify-center text-xl shadow-2xl"
             style={{
-              background: '#FF6B35',
+              background: '#D4622B',
               border: '3px solid white',
-              boxShadow: '0 0 0 4px rgba(255,107,53,0.35), 0 4px 16px rgba(0,0,0,0.5)',
+              boxShadow: '0 0 0 5px rgba(212,98,43,0.3), 0 6px 24px rgba(0,0,0,0.6)',
             }}
           >
             🛵

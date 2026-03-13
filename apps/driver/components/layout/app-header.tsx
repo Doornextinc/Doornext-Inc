@@ -23,59 +23,53 @@ export function AppHeader({ greeting, title, showBack, backHref }: AppHeaderProp
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.from('driver_profiles')
-      .select('avatar_url, full_name')
-      .then(async ({ data }) => {
-        if (!data) {
-          // Need user id first
-          const { data: { user } } = await supabase.auth.getUser()
-          if (!user) return
-          const { data: profile } = await supabase.from('driver_profiles').select('avatar_url, full_name').eq('id', user.id).single()
-          if (profile) {
-            setAvatarUrl(profile.avatar_url)
-            setInitials((profile.full_name ?? 'D')[0].toUpperCase())
-          }
-          return
-        }
-        const profile = Array.isArray(data) ? data[0] : data
-        if (profile) {
-          setAvatarUrl(profile.avatar_url)
-          setInitials((profile.full_name ?? 'D')[0].toUpperCase())
-        }
-      })
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return
+      const { data: profile } = await supabase
+        .from('driver_profiles')
+        .select('avatar_url, full_name')
+        .eq('id', user.id)
+        .single()
+      if (profile) {
+        setAvatarUrl(profile.avatar_url)
+        setInitials((profile.full_name ?? 'D')[0].toUpperCase())
+      }
+    })
   }, [])
 
   return (
-    <header className="sticky top-0 z-40 bg-[#080808]/98 backdrop-blur-sm border-b border-white/5">
-      <div className="flex items-center justify-between px-4 h-14">
+    <header className="sticky top-0 z-40 bg-[#0A0A0A] border-b border-white/8" style={{ boxShadow: '0 1px 0 rgba(255,255,255,0.04), 0 4px 20px rgba(0,0,0,0.4)' }}>
+      <div className="flex items-center justify-between px-4 h-[60px]">
+
         {/* Left side */}
         <div className="flex items-center gap-3">
-          {showBack ? (
+          {showBack && (
             <button
               onClick={() => backHref ? router.push(backHref) : router.back()}
-              className="w-9 h-9 rounded-xl bg-[#141414] border border-white/5 flex items-center justify-center"
+              className="w-10 h-10 rounded-2xl bg-[#161616] border border-white/8 flex items-center justify-center active:scale-95 transition-transform"
             >
-              <ChevronLeft size={18} className="text-zinc-400" />
+              <ChevronLeft size={20} className="text-zinc-300" />
             </button>
-          ) : null}
+          )}
+
           {greeting ? (
             <div>
-              <p className="text-[11px] text-zinc-500">Good {greeting.time},</p>
-              <h1 className="text-lg font-black text-white leading-tight">{greeting.name} 👋</h1>
+              <p className="text-xs text-zinc-500 leading-none mb-0.5">Good {greeting.time},</p>
+              <h1 className="text-xl font-black text-white leading-tight tracking-tight">{greeting.name} 👋</h1>
             </div>
           ) : (
-            <h1 className="text-xl font-black text-white tracking-tight">{title}</h1>
+            <h1 className="text-[22px] font-black text-white tracking-tight leading-none">{title}</h1>
           )}
         </div>
 
         {/* Right side: bell + avatar */}
         <div className="flex items-center gap-2.5">
-          <button className="relative w-9 h-9 rounded-xl bg-[#141414] border border-white/5 flex items-center justify-center">
-            <Bell size={16} className="text-zinc-400" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#FF6B35] rounded-full" />
+          <button className="relative w-10 h-10 rounded-2xl bg-[#161616] border border-white/8 flex items-center justify-center active:scale-95 transition-transform">
+            <Bell size={18} className="text-zinc-300" />
+            <span className="absolute top-2 right-2 w-2 h-2 bg-[#D4622B] rounded-full ring-2 ring-[#0A0A0A]" />
           </button>
           <Link href="/profile">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#FF8C5A] flex items-center justify-center overflow-hidden">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#D4622B] to-[#E07545] flex items-center justify-center overflow-hidden active:scale-95 transition-transform">
               {avatarUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
@@ -85,6 +79,7 @@ export function AppHeader({ greeting, title, showBack, backHref }: AppHeaderProp
             </div>
           </Link>
         </div>
+
       </div>
     </header>
   )
