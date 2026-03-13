@@ -30,10 +30,10 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
   const pathname = request.nextUrl.pathname
-  const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/welcome')
+  const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/welcome') || pathname.startsWith('/signup')
 
   if (!user && !isAuthRoute && !pathname.startsWith('/api')) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    return NextResponse.redirect(new URL('/welcome', request.url))
   }
 
   // If authenticated, verify they have maker role

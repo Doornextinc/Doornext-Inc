@@ -30,7 +30,7 @@ export async function middleware(request: NextRequest) {
   const isAuthRoute = pathname.startsWith('/login')
 
   if (!user && !isAuthRoute && !pathname.startsWith('/api')) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    return NextResponse.redirect(new URL('/login', request.url))  // admin: no public welcome
   }
 
   if (user && !isAuthRoute && !pathname.startsWith('/api')) {

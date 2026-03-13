@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { ChevronLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
@@ -48,12 +50,16 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6">
       <div className="w-full max-w-sm">
-        <div className="text-center mb-10">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#FF6B35] to-[#FF8C5A] flex items-center justify-center mx-auto mb-4">
-            <span className="text-white text-3xl font-black">D</span>
+        <Link href="/welcome" className="inline-flex items-center gap-1.5 text-gray-400 hover:text-gray-700 text-sm mb-8 transition-colors">
+          <ChevronLeft size={16} />
+          Back
+        </Link>
+        <div className="mb-8">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#FF6B35] to-[#FF8C5A] flex items-center justify-center mb-4">
+            <span className="text-white font-black text-lg">D</span>
           </div>
-          <h1 className="text-2xl font-black text-gray-900">Maker Portal</h1>
-          <p className="text-gray-500 text-sm mt-1">Sign in to manage your kitchen</p>
+          <h1 className="text-2xl font-black text-gray-900">Welcome back</h1>
+          <p className="text-gray-500 text-sm mt-1">Sign in to your kitchen dashboard</p>
         </div>
 
         {error && (
@@ -93,6 +99,13 @@ export default function LoginPage() {
             {loading ? 'Signing in…' : 'Sign In'}
           </button>
         </form>
+
+        <p className="text-center text-gray-400 text-sm mt-6">
+          New maker?{' '}
+          <Link href="/signup" className="text-[#FF6B35] font-semibold hover:underline">
+            Apply to sell
+          </Link>
+        </p>
       </div>
     </div>
   )

@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { ChevronLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
@@ -37,12 +39,16 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center px-6">
       <div className="w-full max-w-sm">
-        <div className="text-center mb-10">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#FF6B35] to-[#FF8C5A] flex items-center justify-center mx-auto mb-4">
-            <span className="text-white text-3xl">🛵</span>
+        <Link href="/welcome" className="inline-flex items-center gap-1.5 text-slate-400 hover:text-white text-sm mb-8 transition-colors">
+          <ChevronLeft size={16} />
+          Back
+        </Link>
+        <div className="mb-8">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#FF6B35] to-[#FF8C5A] flex items-center justify-center mb-4">
+            <span className="text-white text-xl">🛵</span>
           </div>
-          <h1 className="text-2xl font-black text-white">Driver App</h1>
-          <p className="text-slate-400 text-sm mt-1">Sign in to start delivering</p>
+          <h1 className="text-2xl font-black text-white">Welcome back</h1>
+          <p className="text-slate-400 text-sm mt-1">Sign in to your driver account</p>
         </div>
 
         {error && (
@@ -82,6 +88,13 @@ export default function LoginPage() {
             {loading ? 'Signing in…' : 'Sign In'}
           </button>
         </form>
+
+        <p className="text-center text-slate-500 text-sm mt-6">
+          New driver?{' '}
+          <Link href="/signup" className="text-[#FF6B35] font-semibold hover:underline">
+            Create an account
+          </Link>
+        </p>
       </div>
     </div>
   )
