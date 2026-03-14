@@ -14,9 +14,9 @@ import { createClient } from '@/lib/supabase/client'
 import { DELIVERY_FEE, PLATFORM_FEE_PCT } from '@/lib/constants'
 import type { Address } from '@/types'
 
-const stripeKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
-if (!stripeKey) throw new Error('NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY is not set')
-const stripePromise = loadStripe(stripeKey)
+const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+  ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
+  : null
 
 const TIP_OPTIONS = [
   { label: 'No tip', value: 0 },
