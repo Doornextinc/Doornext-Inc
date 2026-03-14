@@ -2,6 +2,7 @@
 
 import { useMemo, useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { Star, Clock, MapPin, MessageCircle, ChevronLeft, ShoppingCart } from 'lucide-react'
 import { MenuItemCard } from '@/components/maker/menu-item-card'
 import { DietaryBadge } from '@/components/ui/badge'
@@ -68,8 +69,7 @@ export default function MakerProfilePage() {
       {/* Hero Banner */}
       <div className="relative w-full h-56 bg-gradient-to-br from-orange-100 to-amber-50">
         {maker?.banner_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={maker.banner_url} alt={maker.display_name} className="w-full h-full object-cover" />
+          <Image src={maker.banner_url} alt={maker.display_name} fill className="object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <span className="text-8xl">🍽️</span>
@@ -92,10 +92,9 @@ export default function MakerProfilePage() {
       {/* Maker Info */}
       <div className="px-4 pt-4 pb-3 border-b border-gray-100">
         <div className="flex items-start gap-3">
-          <div className="w-16 h-16 rounded-2xl bg-[#FF6B35] flex items-center justify-center flex-shrink-0 -mt-10 border-2 border-white shadow-lg">
+          <div className="relative w-16 h-16 rounded-2xl bg-[#FF6B35] flex items-center justify-center flex-shrink-0 -mt-10 border-2 border-white shadow-lg overflow-hidden">
             {maker?.avatar_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={maker.avatar_url} alt="" className="w-full h-full object-cover rounded-2xl" />
+              <Image src={maker.avatar_url} alt={maker.display_name} fill className="object-cover rounded-2xl" />
             ) : (
               <span className="text-white text-2xl font-black">
                 {(maker?.display_name?.[0] ?? '?').toUpperCase()}

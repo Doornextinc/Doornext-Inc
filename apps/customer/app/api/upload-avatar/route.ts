@@ -23,8 +23,9 @@ export async function POST(req: NextRequest) {
   }
 
   const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
-  const allowed = ['jpg', 'jpeg', 'png', 'webp', 'gif']
-  if (!allowed.includes(ext)) {
+  const allowedExts = ['jpg', 'jpeg', 'png', 'webp', 'gif']
+  const allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+  if (!allowedExts.includes(ext) || !allowedMimes.includes(file.type)) {
     return NextResponse.json({ error: 'Invalid file type' }, { status: 400 })
   }
   if (file.size > 5 * 1024 * 1024) {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
+import * as Sentry from '@sentry/nextjs'
 
 export async function POST(req: NextRequest) {
   const stripeKey = process.env.STRIPE_SECRET_KEY
@@ -54,6 +55,7 @@ export async function POST(req: NextRequest) {
           .eq('stripe_payment_intent_id', pi.id)
 
         if (error) {
+          Sentry.captureException(new Error(`Failed to confirm order ${orderId}: ${error.message}`))
           console.error('Failed to confirm order:', error)
           return NextResponse.json({ error: 'DB update failed' }, { status: 500 })
         }
@@ -118,6 +120,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ received: true })
   } catch (error) {
+    Sentry.captureException(error)
     console.error('Webhook handler error:', error)
     return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 })
   }

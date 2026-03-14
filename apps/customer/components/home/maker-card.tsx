@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { Star, Clock, MapPin } from 'lucide-react'
 import { cn, formatDistance, formatTime } from '@/lib/utils'
 import type { FoodMaker } from '@/types'
@@ -15,11 +16,11 @@ export function MakerCard({ maker, className }: MakerCardProps) {
         {/* Banner */}
         <div className="relative w-full h-44 bg-gradient-to-br from-orange-100 to-amber-50 overflow-hidden">
           {maker.banner_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={maker.banner_url}
               alt={maker.display_name}
-              className="w-full h-full object-cover"
+              fill
+              className="object-cover"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
@@ -40,11 +41,11 @@ export function MakerCard({ maker, className }: MakerCardProps) {
           {/* Avatar */}
           <div className="absolute -bottom-5 left-3 w-12 h-12 rounded-xl border-2 border-white bg-white overflow-hidden shadow-md">
             {maker.avatar_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <Image
                 src={maker.avatar_url}
                 alt={maker.display_name}
-                className="w-full h-full object-cover"
+                fill
+                className="object-cover"
               />
             ) : (
               <div className="w-full h-full bg-[#FF6B35] flex items-center justify-center">

@@ -54,6 +54,7 @@ export default function HomePage() {
           .from('food_makers')
           .select('*')
           .order('avg_rating', { ascending: false })
+          .limit(50)
 
         if (!error && data && data.length > 0) {
           const withDistance = data.map((m) => ({

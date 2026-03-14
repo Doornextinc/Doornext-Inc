@@ -14,10 +14,9 @@ import { createClient } from '@/lib/supabase/client'
 import { DELIVERY_FEE, PLATFORM_FEE_PCT } from '@/lib/constants'
 import type { Address } from '@/types'
 
-const stripePromise = loadStripe(
-  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ||
-  'pk_test_51T4BjgR5dzdxbJ5z4rZXBaf15ktRR7HnlURVQlCY6nW0SJgSCS0R2Zg5o2u5ueMF5nyr5ZhbQezRMnV6MKEn30lb005CmRVEJT'
-)
+const stripeKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+if (!stripeKey) throw new Error('NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY is not set')
+const stripePromise = loadStripe(stripeKey)
 
 const TIP_OPTIONS = [
   { label: 'No tip', value: 0 },
@@ -77,11 +76,16 @@ function CheckoutForm({
     setTipUpdating(true)
     tipUpdateRef.current = setTimeout(async () => {
       try {
-        await fetch('/api/update-payment', {
+        const res = await fetch('/api/update-payment', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ paymentIntentId, orderId, tipPct, subtotal: food }),
         })
+        if (!res.ok) {
+          setError('Failed to update tip amount. Please try again.')
+        }
+      } catch {
+        setError('Failed to update tip amount. Please try again.')
       } finally {
         setTipUpdating(false)
       }
