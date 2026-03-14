@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { CheckCircle, Circle, Clock, MapPin, MessageCircle, Star } from 'lucide-react'
 import { BackBar } from '@/components/layout/top-bar'
 import { Button } from '@/components/ui/button'
@@ -174,12 +175,12 @@ export default function OrderTrackingPage() {
       {/* Map */}
       <div className="relative w-full h-52 bg-gradient-to-br from-blue-50 to-green-50 overflow-hidden">
         {mapUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={mapUrl}
             alt="Delivery map"
-            className="w-full h-full object-cover"
-            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+            fill
+            className="object-cover"
+            unoptimized
           />
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center">

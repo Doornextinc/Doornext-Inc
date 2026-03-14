@@ -2,9 +2,29 @@ import type { Metadata, Viewport } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Doornext — Home-Cooked Food Delivery',
+  metadataBase: new URL('https://doornext.app'),
+  title: {
+    default: 'Doornext — Home-Cooked Food Delivery',
+    template: '%s | Doornext',
+  },
   description: 'Order authentic home-cooked meals from local food makers in your neighborhood.',
+  keywords: ['home cooked food', 'food delivery', 'local makers', 'authentic meals'],
   manifest: '/manifest.json',
+  robots: { index: true, follow: true },
+  openGraph: {
+    type: 'website',
+    siteName: 'Doornext',
+    title: 'Doornext — Home-Cooked Food Delivery',
+    description: 'Order authentic home-cooked meals from local food makers in your neighborhood.',
+    url: 'https://doornext.app',
+    images: [{ url: '/icons/icon-512.png', width: 512, height: 512, alt: 'Doornext' }],
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Doornext — Home-Cooked Food Delivery',
+    description: 'Order authentic home-cooked meals from local food makers in your neighborhood.',
+    images: ['/icons/icon-512.png'],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',

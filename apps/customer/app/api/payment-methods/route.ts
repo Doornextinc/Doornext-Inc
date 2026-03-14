@@ -3,6 +3,7 @@ import Stripe from 'stripe'
 import { createServerClient } from '@supabase/ssr'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
+import * as Sentry from '@sentry/nextjs'
 
 export async function GET() {
   const stripeKey = process.env.STRIPE_SECRET_KEY
@@ -46,6 +47,7 @@ export async function GET() {
       })),
     })
   } catch (error) {
+    Sentry.captureException(error)
     console.error('Payment methods error:', error)
     return NextResponse.json({ paymentMethods: [] })
   }

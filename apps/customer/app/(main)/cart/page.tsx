@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { Minus, Plus, Trash2, ShoppingBag } from 'lucide-react'
 import { useCartStore } from '@/store/cart'
 import { BackBar } from '@/components/layout/top-bar'
@@ -77,10 +78,9 @@ export default function CartPage() {
               key={item.id}
               className="flex gap-3 px-4 py-4 border-b border-gray-50"
             >
-              <div className="w-14 h-14 rounded-xl bg-orange-50 flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden">
+              <div className="relative w-14 h-14 rounded-xl bg-orange-50 flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden">
                 {item.photo_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={item.photo_url} alt={item.name} className="w-full h-full object-cover" />
+                  <Image src={item.photo_url} alt={item.name} fill className="object-cover" />
                 ) : (
                   '🍽️'
                 )}

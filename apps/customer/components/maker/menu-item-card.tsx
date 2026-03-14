@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { Plus, Minus } from 'lucide-react'
 import { cn, formatPriceDollars } from '@/lib/utils'
 import { DietaryBadge } from '@/components/ui/badge'
@@ -62,12 +63,7 @@ export function MenuItemCard({ item, maker }: MenuItemCardProps) {
         {/* Photo / Add button */}
         <div className="relative w-20 h-20 rounded-xl bg-gradient-to-br from-orange-50 to-amber-50 flex-shrink-0 overflow-hidden">
           {item.photo_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={item.photo_url}
-              alt={item.name}
-              className="w-full h-full object-cover"
-            />
+            <Image src={item.photo_url} alt={item.name} fill className="object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-2xl">
               🍽️

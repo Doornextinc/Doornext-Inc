@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { Camera, Loader2 } from 'lucide-react'
 import { BackBar } from '@/components/layout/top-bar'
 import { Button } from '@/components/ui/button'
@@ -137,14 +138,9 @@ export default function PersonalInfoPage() {
             className="relative group"
             disabled={saving}
           >
-            <div className="w-24 h-24 rounded-3xl overflow-hidden bg-gradient-to-br from-[#FF6B35] to-[#FF8C5A] flex items-center justify-center">
+            <div className="relative w-24 h-24 rounded-3xl overflow-hidden bg-gradient-to-br from-[#FF6B35] to-[#FF8C5A] flex items-center justify-center">
               {displayAvatar ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={displayAvatar}
-                  alt="Avatar"
-                  className="w-full h-full object-cover"
-                />
+                <Image src={displayAvatar} alt="Profile photo" fill className="object-cover" />
               ) : (
                 <span className="text-white text-3xl font-black">{initials}</span>
               )}

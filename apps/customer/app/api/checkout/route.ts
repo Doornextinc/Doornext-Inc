@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { PLATFORM_FEE_PCT } from '@/lib/constants'
 import { calculatePricing } from '@doornext/shared/pricing'
+import * as Sentry from '@sentry/nextjs'
 
 export async function POST(req: NextRequest) {
   const stripeKey = process.env.STRIPE_SECRET_KEY
@@ -49,19 +50,42 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'maker_id required' }, { status: 400 })
     }
 
-    // Server-side total calculation (prevents price tampering)
-    const subtotal = items.reduce(
-      (sum: number, item: { price: number; quantity: number }) =>
-        sum + item.price * item.quantity,
-      0
-    )
-    const tip = tip_amount ?? 0
-
-    // Load pricing tables from DB
+    // Load pricing tables from DB (needed before price verification)
     const serviceSupabase = createServiceClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
+
+    // Verify item prices and availability from DB — never trust client-submitted prices
+    const itemIds = items.map((i: { id: string }) => i.id)
+    const { data: menuItems, error: menuError } = await serviceSupabase
+      .from('menu_items')
+      .select('id, price, is_available, maker_id')
+      .in('id', itemIds)
+
+    if (menuError || !menuItems) {
+      return NextResponse.json({ error: 'Failed to verify items' }, { status: 500 })
+    }
+
+    for (const item of items as { id: string; quantity: number }[]) {
+      const dbItem = menuItems.find((m) => m.id === item.id)
+      if (!dbItem) {
+        return NextResponse.json({ error: `Item not found: ${item.id}` }, { status: 400 })
+      }
+      if (!dbItem.is_available) {
+        return NextResponse.json({ error: 'One or more items are no longer available' }, { status: 400 })
+      }
+      if (dbItem.maker_id !== maker_id) {
+        return NextResponse.json({ error: 'Items must belong to the same maker' }, { status: 400 })
+      }
+    }
+
+    // Server-side total calculation using verified DB prices (prevents price tampering)
+    const subtotal = (items as { id: string; quantity: number }[]).reduce((sum, item) => {
+      const dbItem = menuItems.find((m) => m.id === item.id)!
+      return sum + dbItem.price * item.quantity
+    }, 0)
+    const tip = tip_amount ?? 0
 
     const [tiersRes, priorityTiersRes, smallOrderFeesRes, surgeRes, settingsRes] = await Promise.all([
       serviceSupabase.from('delivery_distance_tiers').select('*').eq('is_active', true).order('sort_order'),
@@ -158,12 +182,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to create order' }, { status: 500 })
     }
 
-    // Create order items
-    const orderItems = items.map((item: { id: string; price: number; quantity: number; notes?: string }) => ({
+    // Create order items using DB-verified prices
+    const orderItems = (items as { id: string; quantity: number; notes?: string }[]).map((item) => ({
       order_id: order.id,
       menu_item_id: item.id,
       quantity: item.quantity,
-      unit_price: item.price,
+      unit_price: menuItems.find((m) => m.id === item.id)!.price,
       customization_notes: item.notes ?? null,
     }))
 
@@ -196,6 +220,7 @@ export async function POST(req: NextRequest) {
       },
     })
   } catch (error) {
+    Sentry.captureException(error)
     console.error('Checkout error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }

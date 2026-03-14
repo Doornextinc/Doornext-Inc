@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { StreamChat } from 'stream-chat'
 import { createClient } from '@/lib/supabase/server'
+import * as Sentry from '@sentry/nextjs'
 
 export async function POST() {
   try {
@@ -39,6 +40,7 @@ export async function POST() {
 
     return NextResponse.json({ token, userId: user.id })
   } catch (error) {
+    Sentry.captureException(error)
     console.error('Stream token error:', error)
     return NextResponse.json({ error: 'Failed to generate token' }, { status: 500 })
   }

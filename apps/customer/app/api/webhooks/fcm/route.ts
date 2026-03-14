@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getFirebaseAdmin } from '@/lib/firebase-admin'
+import * as Sentry from '@sentry/nextjs'
 
 /**
  * Internal endpoint called by Supabase Edge Functions or backend jobs
@@ -7,7 +9,7 @@ import { NextRequest, NextResponse } from 'next/server'
 export async function POST(req: NextRequest) {
   // Verify internal caller via shared secret
   const authHeader = req.headers.get('authorization')
-  const internalSecret = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const internalSecret = process.env.INTERNAL_WEBHOOK_SECRET
   if (!internalSecret || authHeader !== `Bearer ${internalSecret}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -20,18 +22,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'token and title required' }, { status: 400 })
     }
 
-    // In production, send via Firebase Admin SDK:
-    // const admin = getFirebaseAdmin()
-    // await admin.messaging().send({
-    //   token,
-    //   notification: { title, body: msgBody },
-    //   data: data ?? {},
-    //   apns: { payload: { aps: { sound: 'default' } } },
-    //   android: { priority: 'high' },
-    // })
+    const firebaseAdmin = getFirebaseAdmin()
+    await firebaseAdmin.messaging().send({
+      token,
+      notification: { title, body: msgBody ?? undefined },
+      data: data ?? {},
+      apns: { payload: { aps: { sound: 'default' } } },
+      android: { priority: 'high' },
+    })
 
     return NextResponse.json({ success: true, userId })
   } catch (error) {
+    Sentry.captureException(error)
     console.error('FCM push error:', error)
     return NextResponse.json({ error: 'Push failed' }, { status: 500 })
   }

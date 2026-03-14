@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import {
   User, MapPin, CreditCard, Bell, HelpCircle, LogOut, ChevronRight, Heart, Star, Settings,
 } from 'lucide-react'
@@ -126,10 +127,9 @@ export default function ProfilePage() {
       {/* Profile Header */}
       <div className="bg-white px-4 py-6 mb-3">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#FF6B35] to-[#FF8C5A] flex items-center justify-center">
+          <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-[#FF6B35] to-[#FF8C5A] flex items-center justify-center overflow-hidden">
             {profile?.avatar_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={profile.avatar_url} alt="" className="w-full h-full object-cover rounded-2xl" />
+              <Image src={profile.avatar_url} alt="Profile photo" fill className="object-cover rounded-2xl" />
             ) : (
               <span className="text-white text-2xl font-black">
                 {(profile?.full_name?.[0] ?? 'U').toUpperCase()}
