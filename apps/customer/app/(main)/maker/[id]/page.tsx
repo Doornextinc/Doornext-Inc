@@ -188,7 +188,7 @@ export default function MakerProfilePage() {
 
       {/* Cart CTA */}
       {cartCount > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto px-4 pb-6 z-40">
+        <div className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto px-4 pb-nav z-40">
           <button
             onClick={() => router.push('/cart')}
             className="w-full bg-[#FF6B35] text-white rounded-2xl py-4 px-5 flex items-center justify-between shadow-lg shadow-orange-200 active:bg-[#E55A24] transition-colors"

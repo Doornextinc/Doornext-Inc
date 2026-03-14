@@ -119,7 +119,7 @@ export function MenuItemCard({ item, maker }: MenuItemCardProps) {
         >
           <div className="absolute inset-0 bg-black/40" />
           <div
-            className="relative w-full max-w-[430px] mx-auto bg-white rounded-t-3xl p-6 pb-10"
+            className="relative w-full max-w-[430px] mx-auto bg-white rounded-t-3xl p-6 pb-nav"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-4" />

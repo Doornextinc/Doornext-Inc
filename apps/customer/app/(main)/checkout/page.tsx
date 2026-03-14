@@ -14,7 +14,10 @@ import { createClient } from '@/lib/supabase/client'
 import { DELIVERY_FEE, PLATFORM_FEE_PCT } from '@/lib/constants'
 import type { Address } from '@/types'
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+const stripePromise = loadStripe(
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ||
+  'pk_test_51T4BjgR5dzdxbJ5z4rZXBaf15ktRR7HnlURVQlCY6nW0SJgSCS0R2Zg5o2u5ueMF5nyr5ZhbQezRMnV6MKEn30lb005CmRVEJT'
+)
 
 const TIP_OPTIONS = [
   { label: 'No tip', value: 0 },
