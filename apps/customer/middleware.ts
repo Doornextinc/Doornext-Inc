@@ -2,8 +2,8 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ''
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://rheymiouqkewbddqvxqp.supabase.co'
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJoZXltaW91cWtld2JkZHF2eHFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNTI1NDAsImV4cCI6MjA4ODkyODU0MH0.Y7i8OOIUy_idjTzP6QOql1nI4WOEmB7XVxA348lPQuQ'
 
   // Bypass auth when Supabase is not configured (dev / preview)
   const isConfigured =
