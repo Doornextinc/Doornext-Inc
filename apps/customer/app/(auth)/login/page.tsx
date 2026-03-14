@@ -31,8 +31,8 @@ export default function LoginPage() {
         router.push('/')
         router.refresh()
       }
-    } catch {
-      setError('Authentication is not configured. Please check your Supabase environment variables.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Authentication is not configured. Please check your Supabase environment variables.')
     } finally {
       setLoading(false)
     }
@@ -45,8 +45,8 @@ export default function LoginPage() {
         provider: 'google',
         options: { redirectTo: `${window.location.origin}/auth/callback` },
       })
-    } catch {
-      setError('Authentication is not configured. Please check your Supabase environment variables.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Authentication is not configured. Please check your Supabase environment variables.')
     }
   }
 

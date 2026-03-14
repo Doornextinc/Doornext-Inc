@@ -38,8 +38,8 @@ export default function SignupPage() {
       } else {
         router.push('/verify?email=' + encodeURIComponent(email))
       }
-    } catch {
-      setError('Authentication is not configured. Please check your Supabase environment variables.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Authentication is not configured. Please check your Supabase environment variables.')
     } finally {
       setLoading(false)
     }
@@ -52,8 +52,8 @@ export default function SignupPage() {
         provider: 'google',
         options: { redirectTo: `${window.location.origin}/auth/callback` },
       })
-    } catch {
-      setError('Authentication is not configured. Please check your Supabase environment variables.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Authentication is not configured. Please check your Supabase environment variables.')
     }
   }
 
