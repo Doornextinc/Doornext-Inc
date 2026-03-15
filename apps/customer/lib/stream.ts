@@ -24,6 +24,10 @@ export async function connectStreamUser(userId: string, name: string, image?: st
 
   // Fetch token from our API
   const res = await fetch('/api/stream/token', { method: 'POST' })
+  if (res.status === 503) {
+    // Stream not configured — chat feature unavailable
+    throw Object.assign(new Error('Stream not configured'), { code: 'STREAM_NOT_CONFIGURED' })
+  }
   if (!res.ok) throw new Error('Failed to get Stream token')
   const { token } = await res.json()
 

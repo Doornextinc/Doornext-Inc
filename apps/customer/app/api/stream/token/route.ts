@@ -12,14 +12,17 @@ export async function POST() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const apiKey = process.env.NEXT_PUBLIC_STREAM_API_KEY!
-    const secret = process.env.STREAM_API_SECRET!
+    const apiKey = process.env.NEXT_PUBLIC_STREAM_API_KEY
+    const secret = process.env.STREAM_API_SECRET
 
-    if (!secret || secret.includes('placeholder')) {
-      return NextResponse.json({ error: 'Stream not configured' }, { status: 500 })
+    const isUnconfigured = (v?: string) =>
+      !v || v.startsWith('your-') || v.includes('placeholder') || v.length < 8
+
+    if (isUnconfigured(apiKey) || isUnconfigured(secret)) {
+      return NextResponse.json({ error: 'Stream not configured' }, { status: 503 })
     }
 
-    const serverClient = StreamChat.getInstance(apiKey, secret)
+    const serverClient = StreamChat.getInstance(apiKey!, secret!)
 
     // Upsert the user in Stream so they exist
     const profile = await supabase
