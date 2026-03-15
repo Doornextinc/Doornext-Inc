@@ -21,7 +21,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Missing file or name' }, { status: 400 })
   }
 
-  const path = `${user.id}/${name}-${Date.now()}.jpg`
+  const allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
+  if (!allowedMimes.includes(file.type)) {
+    return NextResponse.json({ error: 'File must be JPEG, PNG, WebP, or PDF' }, { status: 400 })
+  }
+
+  const MAX_SIZE = 10 * 1024 * 1024 // 10 MB
+  if (file.size > MAX_SIZE) {
+    return NextResponse.json({ error: 'File must be under 10 MB' }, { status: 400 })
+  }
+
+  const ext = file.type === 'application/pdf' ? 'pdf' : file.type.split('/')[1]
+  const path = `${user.id}/${name}-${Date.now()}.${ext}`
   const { error } = await admin.storage
     .from('driver-documents')
     .upload(path, file, { cacheControl: '3600', upsert: true })
