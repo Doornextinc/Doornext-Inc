@@ -125,7 +125,6 @@ export function calculatePricing(input: PricingInput): PricingResult {
   ) ?? tiers[tiers.length - 1]
 
   let deliveryFee = r(tier?.customer_fee ?? 3.99)
-  let driverBasePay = r(tier?.driver_base_pay ?? 3.00)
   const tierLabel = tier?.label ?? 'Standard'
 
   // 2. Priority override
@@ -138,13 +137,6 @@ export function calculatePricing(input: PricingInput): PricingResult {
       deliveryFee = r(pt.customer_fee)
       driverPriorityBonus = r(pt.driver_priority_bonus)
     }
-  }
-
-  // 3. Dynamic formula overrides driver base pay only
-  if (formula.use_dynamic) {
-    driverBasePay = r(
-      formula.base_pay + distanceMiles * formula.per_mile + waitMinutes * formula.per_min_wait
-    )
   }
 
   // 4. Small order fee
@@ -167,14 +159,14 @@ export function calculatePricing(input: PricingInput): PricingResult {
   // 6. Service fee
   const serviceFee = r(subtotal * (formula.service_fee_pct / 100))
 
-  // 7. Totals
+  // 7. Totals — driver receives 100% of delivery fee + 100% of tips
   const driverTip = r(tip)
-  const driverTotal = r(driverBasePay + driverPriorityBonus + driverSurgeShare + driverTip)
+  const driverTotal = r(deliveryFee + driverPriorityBonus + driverSurgeShare + driverTip)
 
-  // Platform keeps: service fee + (delivery fee - driver base pay) + surge platform share
+  // Platform keeps: service fee + surge platform share + small order fee
+  // (delivery fee goes entirely to driver — no delivery margin for platform)
   const platformKeeps = r(
     serviceFee +
-    (deliveryFee - driverBasePay - driverPriorityBonus) +
     (surgeFee - driverSurgeShare) +
     smallOrderFee
   )
@@ -189,12 +181,7 @@ export function calculatePricing(input: PricingInput): PricingResult {
   ]
 
   const driverLines: PricingLineItem[] = [
-    {
-      label: formula.use_dynamic ? 'Dynamic base pay' : 'Base pay',
-      amount: driverBasePay,
-      note: formula.use_dynamic ? `$${formula.base_pay} + $${formula.per_mile}/mi + $${formula.per_min_wait}/min` : tierLabel,
-      party: 'driver',
-    },
+    { label: 'Delivery fee (100%)', amount: deliveryFee, note: tierLabel, party: 'driver' },
     ...(driverPriorityBonus > 0 ? [{ label: 'Priority bonus', amount: driverPriorityBonus, party: 'driver' as const }] : []),
     ...(driverSurgeShare > 0 ? [{ label: 'Surge share', amount: driverSurgeShare, party: 'driver' as const }] : []),
     ...(driverTip > 0 ? [{ label: 'Tip (100%)', amount: driverTip, party: 'driver' as const }] : []),
@@ -202,7 +189,6 @@ export function calculatePricing(input: PricingInput): PricingResult {
 
   const platformLines: PricingLineItem[] = [
     { label: 'Service fee', amount: serviceFee, party: 'platform' },
-    { label: 'Delivery margin', amount: r(deliveryFee - driverBasePay - driverPriorityBonus), note: 'Delivery fee minus driver pay', party: 'platform' },
     ...(smallOrderFee > 0 ? [{ label: 'Small order fee', amount: smallOrderFee, party: 'platform' as const }] : []),
     ...(surgeFee - driverSurgeShare > 0 ? [{ label: 'Surge platform share', amount: r(surgeFee - driverSurgeShare), party: 'platform' as const }] : []),
   ]
@@ -213,7 +199,7 @@ export function calculatePricing(input: PricingInput): PricingResult {
     surgeFee,
     serviceFee,
     tip: driverTip,
-    driverBasePay,
+    driverBasePay: deliveryFee,
     driverPriorityBonus,
     driverSurgeShare,
     driverTip,

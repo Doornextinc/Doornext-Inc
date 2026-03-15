@@ -48,7 +48,7 @@ export default function EarningsPage() {
   const [period, setPeriod] = useState<Period>('week')
   const [expandedDay, setExpandedDay] = useState<number | null>(null)
   const [showCashOut, setShowCashOut] = useState(false)
-  const [cashOutMethod, setCashOutMethod] = useState<'bank_transfer' | 'stripe' | 'cash'>('bank_transfer')
+  const [cashOutMethod, setCashOutMethod] = useState<'bank_transfer' | 'stripe'>('bank_transfer')
   const [cashOutLoading, setCashOutLoading] = useState(false)
   const [cashOutError, setCashOutError] = useState<string | null>(null)
   const [cashOutSuccess, setCashOutSuccess] = useState(false)
@@ -189,8 +189,8 @@ export default function EarningsPage() {
             ) : showCashOut ? (
               <div className="space-y-3">
                 <p className="text-xs text-zinc-500 font-semibold uppercase tracking-wider">Payout method</p>
-                <div className="grid grid-cols-3 gap-2">
-                  {([['bank_transfer', 'Bank Transfer'], ['stripe', 'Stripe'], ['cash', 'Cash']] as const).map(([val, label]) => (
+                <div className="grid grid-cols-2 gap-2">
+                  {([['bank_transfer', 'Bank Transfer'], ['stripe', 'Stripe']] as const).map(([val, label]) => (
                     <button key={val} onClick={() => setCashOutMethod(val)}
                       className={`py-2.5 rounded-xl text-xs font-bold border transition-colors ${
                         cashOutMethod === val ? 'border-[#FF7A50] bg-[#FF7A50]/10 text-[#FF7A50]' : 'border-white/10 text-zinc-500'

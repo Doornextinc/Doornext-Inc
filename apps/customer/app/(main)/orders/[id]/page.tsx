@@ -43,6 +43,10 @@ export default function OrderTrackingPage() {
   const router = useRouter()
   const [order, setOrder] = useState<FullOrder | null>(null)
   const [loading, setLoading] = useState(true)
+  const [showTip, setShowTip] = useState(false)
+  const [tipPct, setTipPct] = useState(0.15)
+  const [tipSubmitting, setTipSubmitting] = useState(false)
+  const [tipDone, setTipDone] = useState(false)
   const [showReview, setShowReview] = useState(false)
   const [rating, setRating] = useState(0)
   const [reviewText, setReviewText] = useState('')
@@ -85,8 +89,14 @@ export default function OrderTrackingPage() {
         const alreadyReviewed = (count ?? 0) > 0
         setReviewSubmitted(alreadyReviewed)
         setOrder(data as FullOrder)
-        if (data.status === 'delivered' && !alreadyReviewed) {
-          setTimeout(() => setShowReview(true), 1000)
+        const alreadyTipped = (data.tip_amount ?? 0) > 0
+        setTipDone(alreadyTipped)
+        if (data.status === 'delivered') {
+          if (!alreadyTipped) {
+            setTimeout(() => setShowTip(true), 1000)
+          } else if (!alreadyReviewed) {
+            setTimeout(() => setShowReview(true), 1000)
+          }
         }
       }
     } catch (e) {
@@ -100,12 +110,30 @@ export default function OrderTrackingPage() {
     loadOrder()
   }, [loadOrder])
 
-  // Show review modal when delivered via realtime
+  // Show tip modal when delivered via realtime
   useEffect(() => {
-    if (realtimeStatus === 'delivered' && !reviewSubmitted) {
-      setTimeout(() => setShowReview(true), 1500)
+    if (realtimeStatus === 'delivered' && !tipDone) {
+      setTimeout(() => setShowTip(true), 1500)
     }
-  }, [realtimeStatus, reviewSubmitted])
+  }, [realtimeStatus, tipDone])
+
+  const submitTip = async (amount: number) => {
+    setTipSubmitting(true)
+    try {
+      await fetch('/api/tip', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: id, tipAmount: amount }),
+      })
+    } catch (e) {
+      console.error('Tip submission failed:', e)
+    } finally {
+      setTipSubmitting(false)
+      setTipDone(true)
+      setShowTip(false)
+      if (!reviewSubmitted) setTimeout(() => setShowReview(true), 500)
+    }
+  }
 
   const submitReview = async () => {
     if (!order || rating === 0) return
@@ -325,9 +353,11 @@ export default function OrderTrackingPage() {
             <div className="flex justify-between">
               <span>Delivery</span><span>${order.delivery_fee.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between">
-              <span>Service fee</span><span>${order.platform_fee.toFixed(2)}</span>
-            </div>
+            {(order.service_fee ?? 0) > 0 && (
+              <div className="flex justify-between">
+                <span>Service fee</span><span>${(order.service_fee as number).toFixed(2)}</span>
+              </div>
+            )}
             {order.tip_amount > 0 && (
               <div className="flex justify-between">
                 <span>Tip</span><span>${order.tip_amount.toFixed(2)}</span>
@@ -341,6 +371,42 @@ export default function OrderTrackingPage() {
           </div>
         </div>
       </div>
+
+      {/* Tip Modal */}
+      {showTip && !tipDone && order && (
+        <div className="fixed inset-0 z-50 flex items-end">
+          <div className="absolute inset-0 bg-black/40" />
+          <div className="relative w-full max-w-[430px] mx-auto bg-white rounded-t-3xl p-6 pb-10">
+            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-6" />
+            <div className="text-center mb-5">
+              <span className="text-4xl">🛵</span>
+              <h2 className="text-xl font-black text-gray-900 mt-3">Tip Your Nexter</h2>
+              <p className="text-gray-500 text-sm mt-1">100% goes directly to your driver</p>
+            </div>
+            <div className="grid grid-cols-4 gap-2 mb-5">
+              {[{ label: 'No tip', value: 0 }, { label: '10%', value: 0.1 }, { label: '15%', value: 0.15 }, { label: '20%', value: 0.2 }].map(({ label, value }) => (
+                <button
+                  key={label}
+                  onClick={() => setTipPct(value)}
+                  className={`py-3 rounded-xl text-sm font-semibold border transition-colors ${
+                    tipPct === value ? 'bg-[#FF6B35] text-white border-[#FF6B35]' : 'bg-gray-50 text-gray-600 border-gray-200'
+                  }`}
+                >
+                  {label}
+                  {value > 0 && <div className="text-xs opacity-70 mt-0.5">${(order.subtotal * value).toFixed(2)}</div>}
+                </button>
+              ))}
+            </div>
+            <Button
+              fullWidth size="lg"
+              loading={tipSubmitting}
+              onClick={() => submitTip(Math.round(order.subtotal * tipPct * 100) / 100)}
+            >
+              {tipPct === 0 ? 'Skip tip' : `Tip $${(order.subtotal * tipPct).toFixed(2)}`}
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Review Modal */}
       {showReview && !reviewSubmitted && (

@@ -18,16 +18,9 @@ const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
   ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
   : null
 
-const TIP_OPTIONS = [
-  { label: 'No tip', value: 0 },
-  { label: '10%', value: 0.1 },
-  { label: '15%', value: 0.15 },
-  { label: '20%', value: 0.2 },
-]
-
 type PaymentMethod = 'card' | 'cash'
 
-/* ── shared address / tip / summary UI ── */
+/* ── shared address UI ── */
 function AddressSection({
   address, setAddress, selectedAddress, setSelectedAddress,
   savedAddresses, showAddressInput, setShowAddressInput, onAddressSaved,
@@ -155,9 +148,9 @@ function AddressSection({
   )
 }
 
-function OrderSummary({ makerName, items, food, deliveryFee, tip, total, platformFee }: {
+function OrderSummary({ makerName, items, food, deliveryFee, total, platformFee }: {
   makerName: string; items: ReturnType<typeof useCartStore>['items']
-  food: number; deliveryFee: number; tip: number; total: number; platformFee: number
+  food: number; deliveryFee: number; total: number; platformFee: number
 }) {
   return (
     <div className="bg-white px-4 py-4">
@@ -176,25 +169,24 @@ function OrderSummary({ makerName, items, food, deliveryFee, tip, total, platfor
         <div className="flex justify-between text-gray-500"><span>Subtotal</span><span>{formatPriceDollars(food)}</span></div>
         <div className="flex justify-between text-gray-500"><span>Delivery</span><span>{formatPriceDollars(deliveryFee)}</span></div>
         <div className="flex justify-between text-gray-500"><span>Service fee</span><span>{formatPriceDollars(platformFee)}</span></div>
-        {tip > 0 && <div className="flex justify-between text-gray-500"><span>Tip</span><span>{formatPriceDollars(tip)}</span></div>}
         <div className="h-px bg-gray-100 my-1" />
         <div className="flex justify-between font-bold text-gray-900 text-base"><span>Total</span><span>{formatPriceDollars(total)}</span></div>
       </div>
+      <p className="text-xs text-gray-400 mt-2">You can tip your driver after delivery</p>
     </div>
   )
 }
 
 /* ── Card checkout form (Stripe) ── */
 function CardCheckoutForm({
-  orderId, paymentIntentId, total, address, setAddress,
+  orderId, total, address, setAddress,
   selectedAddress, setSelectedAddress, savedAddresses, onAddressSaved,
-  tipPct, setTipPct, food, deliveryFee,
+  food, deliveryFee,
 }: {
-  orderId: string; paymentIntentId: string; total: number
+  orderId: string; total: number
   address: string; setAddress: (v: string) => void
   selectedAddress: Address | null; setSelectedAddress: (a: Address | null) => void
   savedAddresses: Address[]; onAddressSaved: (addr: Address) => void
-  tipPct: number; setTipPct: (v: number) => void
   food: number; deliveryFee: number
 }) {
   const stripe = useStripe()
@@ -203,38 +195,14 @@ function CardCheckoutForm({
   const { makerName, items, clearCart } = useCartStore()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [tipUpdating, setTipUpdating] = useState(false)
   const [showAddressInput, setShowAddressInput] = useState(savedAddresses.length === 0)
-  const tipUpdateRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const prevTipPct = useRef(tipPct)
 
   const platformFee = food * PLATFORM_FEE_PCT
-  const tip = food * tipPct
-
-  useEffect(() => {
-    if (tipPct === prevTipPct.current) return
-    prevTipPct.current = tipPct
-    if (!paymentIntentId || !orderId) return
-    if (tipUpdateRef.current) clearTimeout(tipUpdateRef.current)
-    setTipUpdating(true)
-    tipUpdateRef.current = setTimeout(async () => {
-      try {
-        const res = await fetch('/api/update-payment', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ paymentIntentId, orderId, tipPct, subtotal: food }),
-        })
-        if (!res.ok) setError('Failed to update tip amount. Please try again.')
-      } catch {
-        setError('Failed to update tip amount. Please try again.')
-      } finally { setTipUpdating(false) }
-    }, 600)
-  }, [tipPct, paymentIntentId, orderId, food])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!stripe || !elements) return
     if (!address.trim()) { setError('Please enter your delivery address'); return }
-    if (tipUpdating) { setError('Please wait — tip amount is still updating.'); return }
     setLoading(true); setError(null)
 
     const { error: stripeError, paymentIntent } = await stripe.confirmPayment({
@@ -278,25 +246,6 @@ function CardCheckoutForm({
           </div>
         </div>
         <div className="bg-white px-4 py-4">
-          <div className="flex items-center justify-between mb-1">
-            <h3 className="font-bold text-gray-900">Tip for your Nexter</h3>
-            {tipUpdating && <span className="text-xs text-[#FF6B35] animate-pulse">Updating...</span>}
-          </div>
-          <p className="text-xs text-gray-400 mb-3">100% goes to your delivery driver</p>
-          <div className="flex gap-2">
-            {TIP_OPTIONS.map(({ label, value }) => (
-              <button type="button" key={label} onClick={() => setTipPct(value)}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition-colors ${
-                  tipPct === value ? 'bg-[#FF6B35] text-white border-[#FF6B35]' : 'bg-gray-50 text-gray-600 border-gray-200'
-                }`}
-              >
-                {label}
-                {value > 0 && <div className="text-xs opacity-70 mt-0.5">{formatPriceDollars(food * value)}</div>}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="bg-white px-4 py-4">
           <div className="flex items-center gap-2 mb-3">
             <CreditCard size={18} className="text-[#FF6B35]" />
             <h3 className="font-bold text-gray-900">Payment</h3>
@@ -309,11 +258,11 @@ function CardCheckoutForm({
         </div>
         <OrderSummary
           makerName={makerName} items={items} food={food}
-          deliveryFee={deliveryFee} tip={tip} total={total} platformFee={platformFee}
+          deliveryFee={deliveryFee} total={total} platformFee={platformFee}
         />
       </div>
       <div className="bg-white border-t border-gray-100 px-4 py-4 pb-nav">
-        <Button type="submit" fullWidth size="lg" loading={loading} disabled={!stripe || tipUpdating}>
+        <Button type="submit" fullWidth size="lg" loading={loading} disabled={!stripe}>
           Place Order · {formatPriceDollars(total)}
         </Button>
       </div>
@@ -407,7 +356,7 @@ function CashCheckoutForm({
         </div>
         <OrderSummary
           makerName={makerName} items={items} food={food}
-          deliveryFee={deliveryFee} tip={0} total={total} platformFee={platformFee}
+          deliveryFee={deliveryFee} total={total} platformFee={platformFee}
         />
       </div>
       <div className="bg-white border-t border-gray-100 px-4 py-4 pb-nav">
@@ -426,18 +375,14 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card')
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [orderId, setOrderId] = useState<string | null>(null)
-  const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null)
   const [address, setAddress] = useState('')
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null)
   const [savedAddresses, setSavedAddresses] = useState<Address[]>([])
-  const [tipPct, setTipPct] = useState(0.15)
   const [initError, setInitError] = useState<string | null>(null)
 
   const food = subtotal()
   const platformFee = food * PLATFORM_FEE_PCT
-  const tip = food * tipPct
-  const cardTotal = food + DELIVERY_FEE + platformFee + tip
-  const cashTotal = food + DELIVERY_FEE + platformFee
+  const total = food + DELIVERY_FEE + platformFee
 
   // Load saved addresses
   useEffect(() => {
@@ -472,7 +417,6 @@ export default function CheckoutPage() {
           items: items.map((i) => ({ id: i.menu_item.id, price: i.menu_item.price, quantity: i.quantity, notes: i.notes })),
           maker_id: makerId,
           delivery_address: null,
-          tip_amount: food * 0.15,
         }),
       })
       if (res.status === 401) { router.push('/login'); return }
@@ -480,12 +424,11 @@ export default function CheckoutPage() {
       if (data.error) { setInitError(data.error); return }
       setClientSecret(data.clientSecret)
       setOrderId(data.orderId)
-      if (data.clientSecret) setPaymentIntentId(data.clientSecret.split('_secret_')[0])
     } catch {
       setInitError('Failed to initialize payment. Please try again.')
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items, makerId, food, router, paymentMethod])
+  }, [items, makerId, router, paymentMethod])
 
   useEffect(() => {
     if (paymentMethod === 'card' && !clientSecret) createCardIntent()
@@ -540,7 +483,7 @@ export default function CheckoutPage() {
           selectedAddress={selectedAddress} setSelectedAddress={setSelectedAddress}
           savedAddresses={savedAddresses}
           onAddressSaved={(addr) => setSavedAddresses((prev) => [...prev, addr])}
-          food={food} total={cashTotal} deliveryFee={DELIVERY_FEE}
+          food={food} total={total} deliveryFee={DELIVERY_FEE}
           makerId={makerId ?? ''}
           onSuccess={(id) => router.push(`/orders/${id}`)}
         />
@@ -551,7 +494,7 @@ export default function CheckoutPage() {
           <p className="text-gray-400 text-sm">{initError}</p>
           <Button onClick={createCardIntent}>Try Again</Button>
         </div>
-      ) : clientSecret && orderId && paymentIntentId ? (
+      ) : clientSecret && orderId ? (
         <Elements
           stripe={stripePromise}
           options={{
@@ -560,12 +503,11 @@ export default function CheckoutPage() {
           }}
         >
           <CardCheckoutForm
-            orderId={orderId} paymentIntentId={paymentIntentId}
-            total={cardTotal} address={address} setAddress={setAddress}
+            orderId={orderId}
+            total={total} address={address} setAddress={setAddress}
             selectedAddress={selectedAddress} setSelectedAddress={setSelectedAddress}
             savedAddresses={savedAddresses}
             onAddressSaved={(addr) => setSavedAddresses((prev) => [...prev, addr])}
-            tipPct={tipPct} setTipPct={setTipPct}
             food={food} deliveryFee={DELIVERY_FEE}
           />
         </Elements>

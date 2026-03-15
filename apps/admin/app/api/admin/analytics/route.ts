@@ -24,7 +24,7 @@ export async function GET(request: Request) {
       .gte('created_at', sinceISO),
     supabase
       .from('orders')
-      .select('total, platform_fee, driver_payout, maker_payout, discount_amt, created_at')
+      .select('total, platform_fee, service_fee, driver_payout, maker_payout, discount_amt, created_at')
       .gte('created_at', sinceISO)
       .eq('status', 'delivered'),
     supabase
@@ -49,6 +49,7 @@ export async function GET(request: Request) {
   const delivered = revenueRows.data ?? []
   const gmv = delivered.reduce((s, o) => s + (o.total ?? 0), 0)
   const platformFees = delivered.reduce((s, o) => s + (o.platform_fee ?? 0), 0)
+  const serviceFees = delivered.reduce((s, o) => s + (o.service_fee ?? 0), 0)
   const driverPayouts = delivered.reduce((s, o) => s + (o.driver_payout ?? 0), 0)
   const makerPayouts = delivered.reduce((s, o) => s + (o.maker_payout ?? 0), 0)
   const discounts = delivered.reduce((s, o) => s + (o.discount_amt ?? 0), 0)
@@ -88,10 +89,11 @@ export async function GET(request: Request) {
     summary: {
       gmv: parseFloat(gmv.toFixed(2)),
       platformFees: parseFloat(platformFees.toFixed(2)),
+      serviceFees: parseFloat(serviceFees.toFixed(2)),
+      netRevenue: parseFloat((platformFees + serviceFees).toFixed(2)),
       driverPayouts: parseFloat(driverPayouts.toFixed(2)),
       makerPayouts: parseFloat(makerPayouts.toFixed(2)),
       discounts: parseFloat(discounts.toFixed(2)),
-      netRevenue: parseFloat((gmv - driverPayouts - makerPayouts - discounts).toFixed(2)),
       totalOrders,
       deliveredCount,
       cancelledCount,
