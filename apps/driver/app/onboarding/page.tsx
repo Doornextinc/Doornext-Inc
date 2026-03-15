@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { loadGoogleMapsScript, parsePlace } from '@/lib/google-maps'
 import {
   ChevronLeft, ChevronRight, Shield, ShieldCheck, FileCheck,
   Fingerprint, CheckCircle, AlertCircle, Loader2, RefreshCw,
@@ -76,6 +77,7 @@ export default function OnboardingPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const insuranceInputRef = useRef<HTMLInputElement>(null)
+  const addressInputRef = useRef<HTMLInputElement>(null)
 
   const needsInsurance = NEEDS_INSURANCE(vehicleType)
 
@@ -111,6 +113,35 @@ export default function OnboardingPage() {
   }, [router])
 
   useEffect(() => () => { streamRef.current?.getTracks().forEach(t => t.stop()) }, [])
+
+  // Attach Google Places autocomplete when on the personal-info step
+  useEffect(() => {
+    if (step !== 'personal-info') return
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+    if (!apiKey) return
+    let ac: google.maps.places.Autocomplete | null = null
+    const timer = setTimeout(() => {
+      if (!addressInputRef.current) return
+      loadGoogleMapsScript(apiKey).then(() => {
+        if (!addressInputRef.current) return
+        ac = new window.google.maps.places.Autocomplete(addressInputRef.current, {
+          types: ['address'],
+          fields: ['address_components', 'formatted_address'],
+        })
+        ac.addListener('place_changed', () => {
+          const place = ac!.getPlace()
+          const parsed = parsePlace(place)
+          if (!parsed) return
+          const formatted = place.formatted_address ?? `${parsed.street}, ${parsed.city}, ${parsed.state} ${parsed.zip}`
+          setPersonalInfo(p => ({ ...p, address: formatted }))
+        })
+      })
+    }, 100)
+    return () => {
+      clearTimeout(timer)
+      if (ac) window.google?.maps?.event?.clearInstanceListeners(ac)
+    }
+  }, [step])
 
   const stopCamera = useCallback(() => {
     streamRef.current?.getTracks().forEach(t => t.stop())
@@ -385,7 +416,7 @@ export default function OnboardingPage() {
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Residential Address <span className="text-red-400">*</span></label>
-              <input type="text" value={personalInfo.address} onChange={e => setPersonalInfo(p => ({ ...p, address: e.target.value }))} placeholder="123 Main St, City, State, ZIP" className={inputClass()} />
+              <input ref={addressInputRef} type="text" value={personalInfo.address} onChange={e => setPersonalInfo(p => ({ ...p, address: e.target.value }))} placeholder="Start typing your address…" autoComplete="off" className={inputClass()} />
               <p className="text-[10px] text-slate-600 mt-1.5">Must match the address on your ID document</p>
             </div>
           </div>
