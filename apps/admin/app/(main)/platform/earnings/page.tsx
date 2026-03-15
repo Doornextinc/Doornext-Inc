@@ -5,10 +5,11 @@ import { useEffect, useState } from 'react'
 interface EarningsSummary {
   gmv: number
   platformFees: number
+  serviceFees: number
+  netRevenue: number
   driverPayouts: number
   makerPayouts: number
   discounts: number
-  netRevenue: number
   totalOrders: number
 }
 
@@ -99,14 +100,14 @@ export default function EarningsPage() {
           <div className="grid grid-cols-4 gap-4 mb-8">
             {[
               { label: 'Gross Merchandise Value', value: `$${summary.gmv.toLocaleString('en', { minimumFractionDigits: 2 })}`, accent: false },
-              { label: 'Platform Net Revenue', value: `$${summary.platformFees.toFixed(2)}`, accent: true },
+              { label: 'Platform Net Revenue', value: `$${summary.netRevenue.toFixed(2)}`, accent: true },
               { label: 'Driver Payouts', value: `$${summary.driverPayouts.toFixed(2)}`, accent: false },
               { label: 'Seller Payouts', value: `$${summary.makerPayouts.toFixed(2)}`, accent: false },
               { label: 'Discount Costs', value: `$${summary.discounts.toFixed(2)}`, accent: false },
               { label: 'Total Orders', value: summary.totalOrders.toLocaleString(), accent: false },
               {
                 label: 'Take Rate',
-                value: `${summary.gmv ? ((summary.platformFees / summary.gmv) * 100).toFixed(1) : 0}%`,
+                value: `${summary.gmv ? ((summary.netRevenue / summary.gmv) * 100).toFixed(1) : 0}%`,
                 accent: false,
               },
               {
@@ -134,7 +135,8 @@ export default function EarningsPage() {
               <div className="space-y-3">
                 {[
                   { label: 'GMV (Total Sales)', value: summary.gmv, color: 'bg-gray-200' },
-                  { label: 'Platform Fees', value: summary.platformFees, color: 'bg-[#FF6B35]' },
+                  { label: 'Commission (15%)', value: summary.platformFees, color: 'bg-[#FF6B35]' },
+                  { label: 'Service Fees', value: summary.serviceFees, color: 'bg-orange-300' },
                   { label: 'Driver Payouts', value: summary.driverPayouts, color: 'bg-blue-400' },
                   { label: 'Seller Payouts', value: summary.makerPayouts, color: 'bg-purple-400' },
                   { label: 'Discounts', value: summary.discounts, color: 'bg-green-400' },
