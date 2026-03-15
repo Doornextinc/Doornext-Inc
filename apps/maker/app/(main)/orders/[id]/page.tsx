@@ -139,7 +139,8 @@ export default function OrderDetailPage() {
         </span>
       </header>
 
-      <div className="p-4 space-y-4 pb-32">
+      {/* Extra bottom padding: nav (4rem) + action bar (~5rem) + safe area */}
+      <div className="p-4 space-y-4" style={{ paddingBottom: 'calc(9rem + env(safe-area-inset-bottom))' }}>
 
         {/* Order time + payment method */}
         <div className="flex items-center justify-between">
@@ -223,9 +224,12 @@ export default function OrderDetailPage() {
 
       </div>
 
-      {/* Action bar */}
+      {/* Action bar — sits above the bottom nav */}
       {nextStep && (
-        <div className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto px-4 pb-6 flex gap-3">
+        <div
+          className="fixed left-0 right-0 max-w-[430px] mx-auto px-4 pb-4 flex gap-3"
+          style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom))' }}
+        >
           {order.status === 'pending' && (
             <button
               onClick={handleReject}
