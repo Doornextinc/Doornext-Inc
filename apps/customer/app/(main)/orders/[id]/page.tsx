@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import Image from 'next/image'
 import { CheckCircle, Circle, Clock, MapPin, MessageCircle, Star } from 'lucide-react'
 import { BackBar } from '@/components/layout/top-bar'
 import { Button } from '@/components/ui/button'
@@ -130,19 +129,10 @@ export default function OrderTrackingPage() {
 
   const currentStep = STATUS_STEPS.indexOf(currentStatus)
 
-  // Build Google Static Maps URL
-  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
-  const mapUrl = order?.food_maker && apiKey
-    ? (() => {
-        const makerMarker = `markers=color:orange%7Clabel:M%7C${order.food_maker.lat},${order.food_maker.lng}`
-        const driverMarker = nexterLocation
-          ? `&markers=color:blue%7Clabel:D%7C${nexterLocation.lat},${nexterLocation.lng}`
-          : ''
-        const centerParam = !nexterLocation
-          ? `&center=${order.food_maker.lat},${order.food_maker.lng}&zoom=15`
-          : ''
-        return `https://maps.googleapis.com/maps/api/staticmap?size=800x400&scale=2&maptype=roadmap&${makerMarker}${driverMarker}${centerParam}&key=${apiKey}`
-      })()
+  // Use driver location when available, otherwise show kitchen location
+  const mapFocus = nexterLocation ?? (order?.food_maker ?? null)
+  const osmEmbedUrl = mapFocus
+    ? `https://www.openstreetmap.org/export/embed.html?bbox=${mapFocus.lng - 0.015},${mapFocus.lat - 0.015},${mapFocus.lng + 0.015},${mapFocus.lat + 0.015}&layer=mapnik&marker=${mapFocus.lat},${mapFocus.lng}`
     : null
 
   if (loading) {
@@ -176,13 +166,13 @@ export default function OrderTrackingPage() {
 
       {/* Map */}
       <div className="relative w-full h-52 bg-gradient-to-br from-blue-50 to-green-50 overflow-hidden">
-        {mapUrl ? (
-          <Image
-            src={mapUrl}
-            alt="Delivery map"
-            fill
-            className="object-cover"
-            unoptimized
+        {osmEmbedUrl ? (
+          <iframe
+            key={osmEmbedUrl}
+            src={osmEmbedUrl}
+            className="w-full h-full border-0"
+            loading="lazy"
+            title="Delivery map"
           />
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -192,6 +182,12 @@ export default function OrderTrackingPage() {
               </div>
               <div className="absolute -inset-2 bg-[#FF6B35]/20 rounded-full animate-ping" />
             </div>
+          </div>
+        )}
+        {/* Label showing what's pinned */}
+        {osmEmbedUrl && (
+          <div className="absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm rounded-lg px-2.5 py-1 text-xs font-semibold text-gray-700 shadow-sm pointer-events-none">
+            {nexterLocation ? '🛵 Driver location' : '🍳 Kitchen location'}
           </div>
         )}
       </div>
