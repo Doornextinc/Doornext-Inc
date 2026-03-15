@@ -38,7 +38,6 @@ export async function POST(req: NextRequest) {
       items,
       maker_id,
       delivery_address,
-      tip_amount,
       distance_miles,
       is_priority,
     } = body
@@ -85,7 +84,6 @@ export async function POST(req: NextRequest) {
       const dbItem = menuItems.find((m) => m.id === item.id)!
       return sum + dbItem.price * item.quantity
     }, 0)
-    const tip = tip_amount ?? 0
 
     const [tiersRes, priorityTiersRes, smallOrderFeesRes, surgeRes, settingsRes] = await Promise.all([
       serviceSupabase.from('delivery_distance_tiers').select('*').eq('is_active', true).order('sort_order'),
@@ -124,7 +122,7 @@ export async function POST(req: NextRequest) {
     const pricing = calculatePricing({
       distanceMiles:        distance_miles ?? 3,
       subtotal,
-      tip,
+      tip:                  0,
       isPriority:           is_priority ?? false,
       tiers:                tiersRes.data ?? [],
       priorityTiers:        priorityTiersRes.data ?? [],
@@ -141,7 +139,7 @@ export async function POST(req: NextRequest) {
     })
 
     const platformFee = subtotal * PLATFORM_FEE_PCT
-    const total = subtotal + pricing.deliveryFee + pricing.smallOrderFee + pricing.surgeFee + pricing.serviceFee + tip
+    const total = subtotal + pricing.deliveryFee + pricing.smallOrderFee + pricing.surgeFee + pricing.serviceFee
 
     // Create Stripe PaymentIntent — attach customer so payment method is saved
     const paymentIntent = await stripe.paymentIntents.create({
@@ -166,7 +164,7 @@ export async function POST(req: NextRequest) {
         payment_method:   'card',
         subtotal:         Math.round(subtotal * 100) / 100,
         delivery_fee:     pricing.deliveryFee,
-        tip_amount:       Math.round(tip * 100) / 100,
+        tip_amount:       0,
         platform_fee:     Math.round(platformFee * 100) / 100,
         service_fee:      pricing.serviceFee,
         small_order_fee:  pricing.smallOrderFee,
@@ -213,12 +211,10 @@ export async function POST(req: NextRequest) {
       orderId: order.id,
       total: Math.round(total * 100),
       subtotal: Math.round(subtotal * 100),
-      platform_fee: Math.round(platformFee * 100),
       delivery_fee: pricing.deliveryFee,
       small_order_fee: pricing.smallOrderFee,
       surge_fee: pricing.surgeFee,
       service_fee: pricing.serviceFee,
-      driver_payout: pricing.driverTotal,
       pricing_breakdown: {
         customerLines: pricing.customerLines,
         tierLabel: pricing.tierLabel,

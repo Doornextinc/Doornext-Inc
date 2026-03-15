@@ -7,10 +7,11 @@ interface TopMaker { name: string; revenue: number; orders: number }
 interface Summary {
   gmv: number
   platformFees: number
+  serviceFees: number
+  netRevenue: number
   driverPayouts: number
   makerPayouts: number
   discounts: number
-  netRevenue: number
   totalOrders: number
   deliveredCount: number
   cancelledCount: number
@@ -77,10 +78,12 @@ export default function AnalyticsPage() {
       ) : summary && (
         <>
           {/* Summary KPIs */}
-          <div className="grid grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-5 gap-4 mb-8">
             {[
               { label: 'GMV', value: `$${summary.gmv.toLocaleString('en', { minimumFractionDigits: 2 })}`, sub: 'Gross merchandise value' },
-              { label: 'Platform Fees', value: `$${summary.platformFees.toFixed(2)}`, sub: 'Net platform revenue' },
+              { label: 'Net Platform Revenue', value: `$${summary.netRevenue.toFixed(2)}`, sub: 'Commission + service fees' },
+              { label: 'Commission (15%)', value: `$${summary.platformFees.toFixed(2)}`, sub: '15% of food subtotal' },
+              { label: 'Service Fees', value: `$${summary.serviceFees.toFixed(2)}`, sub: 'Customer service charges' },
               { label: 'Total Orders', value: summary.totalOrders.toLocaleString(), sub: `${summary.deliveredCount} delivered` },
               { label: 'Avg Order Value', value: `$${summary.avgOrderValue.toFixed(2)}`, sub: `${summary.conversionRate}% conversion` },
               { label: 'Driver Payouts', value: `$${summary.driverPayouts.toFixed(2)}`, sub: 'Total paid to drivers' },
