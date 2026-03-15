@@ -7,9 +7,10 @@ import { CuisineFilter } from '@/components/home/cuisine-filter'
 import { MakerCardSkeleton } from '@/components/ui/skeleton'
 import { createClient } from '@/lib/supabase/client'
 import type { FoodMaker, Address } from '@/types'
-import { MapPin, Navigation, X, Check } from 'lucide-react'
+import { MapPin, Navigation, X, Check, Search } from 'lucide-react'
 import { haversineDistance } from '@/lib/utils'
 import { FALLBACK_LAT, FALLBACK_LNG, FALLBACK_LOCATION_LABEL } from '@/lib/constants'
+import { loadGoogleMapsScript, parsePlace } from '@/lib/google-maps'
 
 function getGreeting() {
   const h = new Date().getHours()
@@ -34,6 +35,8 @@ export default function HomePage() {
   const [gpsLocation, setGpsLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [selectedId, setSelectedId] = useState<string | 'gps' | null>(null)
   const overlayRef = useRef<HTMLDivElement>(null)
+  const searchRef = useRef<HTMLInputElement>(null)
+  const [searchSaving, setSearchSaving] = useState(false)
 
   useEffect(() => {
     if (!navigator.geolocation) return
@@ -91,6 +94,61 @@ export default function HomePage() {
     setSavedAddresses(addrRes.data || [])
     setDefaultAddressId(profileRes.data?.default_address_id || null)
   }
+
+  // Attach Google Places autocomplete to the picker search input
+  useEffect(() => {
+    if (!pickerOpen) return
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+    if (!apiKey) return
+
+    let ac: google.maps.places.Autocomplete | null = null
+
+    // Slight delay so the input is mounted in the DOM
+    const timer = setTimeout(() => {
+      if (!searchRef.current) return
+      loadGoogleMapsScript(apiKey).then(() => {
+        if (!searchRef.current) return
+        ac = new window.google.maps.places.Autocomplete(searchRef.current, {
+          types: ['address'],
+          fields: ['address_components', 'geometry'],
+        })
+        ac.addListener('place_changed', async () => {
+          const parsed = parsePlace(ac!.getPlace())
+          if (!parsed) return
+
+          setSearchSaving(true)
+          try {
+            const supabase = createClient()
+            const { data: { user } } = await supabase.auth.getUser()
+            if (user) {
+              const { data: newAddr, error } = await supabase
+                .from('addresses')
+                .insert({ user_id: user.id, label: 'Other', ...parsed })
+                .select()
+                .single()
+              if (newAddr && !error) {
+                setSavedAddresses((prev) => [...prev, newAddr as Address])
+                handleSelectAddress(newAddr as Address)
+                return
+              }
+            }
+            // Not logged in — still set the location
+            setSelectedId(null)
+            setLocation({ lat: parsed.lat, lng: parsed.lng, label: `${parsed.street}, ${parsed.city}` })
+            setPickerOpen(false)
+          } finally {
+            setSearchSaving(false)
+          }
+        })
+      })
+    }, 100)
+
+    return () => {
+      clearTimeout(timer)
+      if (ac) window.google?.maps?.event?.clearInstanceListeners(ac)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pickerOpen])
 
   const handleSelectAddress = (addr: Address) => {
     setSelectedId(addr.id)
@@ -209,6 +267,22 @@ export default function HomePage() {
                 </button>
               </div>
 
+              {/* Address search */}
+              <div className="relative">
+                <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                <input
+                  ref={searchRef}
+                  placeholder="Search for an address..."
+                  autoComplete="off"
+                  className="w-full border-2 border-gray-100 rounded-2xl pl-9 pr-4 py-3 text-sm outline-none focus:border-[#FF6B35] transition-colors"
+                />
+                {searchSaving && (
+                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
+                    <div className="w-4 h-4 border-2 border-[#FF6B35] border-t-transparent rounded-full animate-spin" />
+                  </div>
+                )}
+              </div>
+
               {/* GPS option */}
               <button
                 onClick={handleSelectGps}
@@ -271,7 +345,7 @@ export default function HomePage() {
 
               {savedAddresses.length === 0 && (
                 <p className="text-sm text-gray-400 text-center py-2">
-                  No saved addresses. Add one in your profile.
+                  Search above to find and save a delivery address.
                 </p>
               )}
             </div>

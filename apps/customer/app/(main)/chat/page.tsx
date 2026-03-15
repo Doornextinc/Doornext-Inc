@@ -30,6 +30,7 @@ export default function ChatListPage() {
   const router = useRouter()
   const [chats, setChats] = useState<ChatPreview[]>([])
   const [loading, setLoading] = useState(true)
+  const [unavailable, setUnavailable] = useState(false)
 
   const loadChats = useCallback(async () => {
     try {
@@ -74,7 +75,12 @@ export default function ChatListPage() {
 
       setChats(previews)
     } catch (e) {
-      console.error('Failed to load chats:', e)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ((e as any)?.code === 'STREAM_NOT_CONFIGURED') {
+        setUnavailable(true)
+      } else {
+        console.error('Failed to load chats:', e)
+      }
     } finally {
       setLoading(false)
     }
@@ -105,7 +111,13 @@ export default function ChatListPage() {
     <div className="flex flex-col min-h-full bg-[#f8f8f8]">
       <TopBar title="Messages" showCart={false} />
       <div className="flex-1">
-        {chats.length === 0 ? (
+        {unavailable ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center px-6">
+            <MessageCircle size={60} className="text-gray-200 mb-4" />
+            <h2 className="text-xl font-bold text-gray-700">Chat coming soon</h2>
+            <p className="text-gray-400 text-sm mt-1">In-app messaging will be available shortly.</p>
+          </div>
+        ) : chats.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <MessageCircle size={60} className="text-gray-200 mb-4" />
             <h2 className="text-xl font-bold text-gray-700">No messages yet</h2>
