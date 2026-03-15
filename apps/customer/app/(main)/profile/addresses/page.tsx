@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { MapPin, Plus, Trash2, Star, Loader2 } from 'lucide-react'
+import { MapPin, Plus, Trash2, Star, Loader2, Check } from 'lucide-react'
 import { BackBar } from '@/components/layout/top-bar'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
@@ -20,10 +20,7 @@ function loadGoogleMapsScript(apiKey: string): Promise<void> {
   return new Promise((resolve) => {
     if (window.google?.maps?.places) { resolve(); return }
     const existing = document.getElementById('google-maps-script')
-    if (existing) {
-      window.initGoogleMaps = resolve
-      return
-    }
+    if (existing) { window.initGoogleMaps = resolve; return }
     window.initGoogleMaps = resolve
     const script = document.createElement('script')
     script.id = 'google-maps-script'
@@ -54,11 +51,9 @@ export default function AddressesPage() {
   const streetRef = useRef<HTMLInputElement>(null)
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null)
 
-  useEffect(() => {
-    loadAddresses()
-  }, [])
+  useEffect(() => { loadAddresses() }, [])
 
-  // Initialize Places autocomplete when the add form opens
+  // Google Places autocomplete — progressive enhancement only
   useEffect(() => {
     if (!adding) return
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
@@ -68,28 +63,21 @@ export default function AddressesPage() {
       if (!streetRef.current || autocompleteRef.current) return
       const ac = new window.google.maps.places.Autocomplete(streetRef.current, {
         types: ['address'],
-        fields: ['address_components', 'geometry', 'formatted_address'],
+        fields: ['address_components', 'geometry'],
       })
       autocompleteRef.current = ac
       ac.addListener('place_changed', () => {
         const place = ac.getPlace()
         if (!place.address_components) return
-
-        let streetNumber = ''
-        let route = ''
-        let cityVal = ''
-        let stateVal = ''
-        let zipVal = ''
-
+        let streetNumber = '', route = '', cityVal = '', stateVal = '', zipVal = ''
         for (const comp of place.address_components) {
-          const types = comp.types
-          if (types.includes('street_number')) streetNumber = comp.long_name
-          else if (types.includes('route')) route = comp.long_name
-          else if (types.includes('locality')) cityVal = comp.long_name
-          else if (types.includes('administrative_area_level_1')) stateVal = comp.short_name
-          else if (types.includes('postal_code')) zipVal = comp.long_name
+          const t = comp.types
+          if (t.includes('street_number'))             streetNumber = comp.long_name
+          else if (t.includes('route'))                route = comp.long_name
+          else if (t.includes('locality'))             cityVal = comp.long_name
+          else if (t.includes('administrative_area_level_1')) stateVal = comp.short_name
+          else if (t.includes('postal_code'))          zipVal = comp.long_name
         }
-
         setStreet(streetNumber ? `${streetNumber} ${route}` : route)
         setCity(cityVal)
         setState(stateVal)
@@ -101,9 +89,7 @@ export default function AddressesPage() {
       })
     })
 
-    return () => {
-      autocompleteRef.current = null
-    }
+    return () => { autocompleteRef.current = null }
   }, [adding])
 
   async function loadAddresses() {
@@ -135,10 +121,12 @@ export default function AddressesPage() {
   }
 
   const handleAdd = async () => {
-    if (!userId || !street.trim() || !city.trim() || !state.trim() || !zip.trim()) {
-      setError('Please fill in all fields.')
-      return
-    }
+    if (!street.trim()) { setError('Please enter a street address.'); return }
+    if (!city.trim())   { setError('Please enter a city.'); return }
+    if (!state.trim())  { setError('Please enter a state.'); return }
+    if (!zip.trim())    { setError('Please enter a ZIP code.'); return }
+    if (!userId)        { setError('You must be signed in to save an address.'); return }
+
     setSaving(true)
     setError(null)
 
@@ -149,9 +137,9 @@ export default function AddressesPage() {
         user_id: userId,
         label,
         street: street.trim(),
-        city: city.trim(),
-        state: state.trim(),
-        zip: zip.trim(),
+        city:   city.trim(),
+        state:  state.trim(),
+        zip:    zip.trim(),
         lat,
         lng,
       })
@@ -167,7 +155,7 @@ export default function AddressesPage() {
     const newAddresses = [...addresses, data]
     setAddresses(newAddresses)
 
-    // Auto-set as default if it's the first address
+    // Auto-set as default if this is the first address
     if (newAddresses.length === 1) {
       await supabase.from('users').update({ default_address_id: data.id }).eq('id', userId)
       setDefaultAddressId(data.id)
@@ -184,9 +172,8 @@ export default function AddressesPage() {
     await supabase.from('addresses').delete().eq('id', id)
     const updated = addresses.filter((a) => a.id !== id)
     setAddresses(updated)
-
     if (defaultAddressId === id) {
-      const newDefault = updated[0]?.id || null
+      const newDefault = updated[0]?.id ?? null
       await supabase.from('users').update({ default_address_id: newDefault }).eq('id', userId)
       setDefaultAddressId(newDefault)
     }
@@ -201,9 +188,9 @@ export default function AddressesPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col min-h-full bg-[#f8f8f8]">
+      <div className="flex flex-col min-h-full bg-[#f9fafb]">
         <BackBar title="Saved Addresses" />
-        <div className="flex items-center justify-center py-16">
+        <div className="flex items-center justify-center py-20">
           <Loader2 size={24} className="animate-spin text-[#FF6B35]" />
         </div>
       </div>
@@ -211,20 +198,25 @@ export default function AddressesPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-full bg-[#f8f8f8]">
+    <div className="flex flex-col min-h-full bg-[#f9fafb]">
       <BackBar title="Saved Addresses" />
 
-      <div className="p-4 space-y-4">
+      <div className="p-4 space-y-3">
+
+        {/* Empty state */}
         {addresses.length === 0 && !adding && (
-          <div className="flex flex-col items-center justify-center py-12 text-center bg-white rounded-2xl">
-            <MapPin size={40} className="text-gray-200 mb-3" />
-            <h3 className="font-bold text-gray-700">No saved addresses</h3>
-            <p className="text-sm text-gray-400 mt-1">Add your home or work address for faster checkout</p>
+          <div className="flex flex-col items-center justify-center py-14 text-center bg-white rounded-2xl">
+            <div className="w-14 h-14 bg-orange-50 rounded-full flex items-center justify-center mb-4">
+              <MapPin size={24} className="text-[#FF6B35]" />
+            </div>
+            <h3 className="font-bold text-gray-800">No saved addresses</h3>
+            <p className="text-sm text-gray-400 mt-1">Add your home or work for faster checkout</p>
           </div>
         )}
 
+        {/* Address list */}
         {addresses.map((addr) => (
-          <div key={addr.id} className="bg-white rounded-2xl px-4 py-3 flex items-start gap-3">
+          <div key={addr.id} className="bg-white rounded-2xl px-4 py-4 flex items-start gap-3 border border-gray-100">
             <div className="w-9 h-9 rounded-full bg-orange-50 flex items-center justify-center mt-0.5 flex-shrink-0">
               <MapPin size={16} className="text-[#FF6B35]" />
             </div>
@@ -232,27 +224,32 @@ export default function AddressesPage() {
               <div className="flex items-center gap-2">
                 <span className="font-bold text-sm text-gray-900">{addr.label}</span>
                 {addr.id === defaultAddressId && (
-                  <span className="text-[10px] font-bold text-[#FF6B35] bg-orange-50 px-1.5 py-0.5 rounded-full">
+                  <span className="text-[10px] font-bold text-[#FF6B35] bg-orange-50 border border-orange-100 px-1.5 py-0.5 rounded-full">
                     Default
                   </span>
                 )}
               </div>
-              <p className="text-sm text-gray-500 truncate">{addr.street}</p>
+              <p className="text-sm text-gray-600 mt-0.5 truncate">{addr.street}</p>
               <p className="text-xs text-gray-400">{addr.city}, {addr.state} {addr.zip}</p>
             </div>
             <div className="flex items-center gap-1 flex-shrink-0">
               {addr.id !== defaultAddressId && (
                 <button
                   onClick={() => handleSetDefault(addr.id)}
-                  className="w-8 h-8 rounded-full hover:bg-orange-50 flex items-center justify-center"
+                  className="w-8 h-8 rounded-full hover:bg-orange-50 flex items-center justify-center transition-colors"
                   title="Set as default"
                 >
                   <Star size={15} className="text-gray-300" />
                 </button>
               )}
+              {addr.id === defaultAddressId && (
+                <div className="w-8 h-8 rounded-full flex items-center justify-center">
+                  <Check size={15} className="text-[#FF6B35]" />
+                </div>
+              )}
               <button
                 onClick={() => handleDelete(addr.id)}
-                className="w-8 h-8 rounded-full hover:bg-red-50 flex items-center justify-center"
+                className="w-8 h-8 rounded-full hover:bg-red-50 flex items-center justify-center transition-colors"
               >
                 <Trash2 size={15} className="text-red-400" />
               </button>
@@ -260,18 +257,21 @@ export default function AddressesPage() {
           </div>
         ))}
 
+        {/* Add form */}
         {adding ? (
-          <div className="bg-white rounded-2xl p-4 space-y-3">
-            {/* Label selector */}
+          <div className="bg-white rounded-2xl p-4 space-y-3 border border-gray-100">
+            <h3 className="font-bold text-gray-900 text-[15px]">New Address</h3>
+
+            {/* Label tabs */}
             <div className="flex gap-2">
               {LABELS.map((l) => (
                 <button
                   key={l}
                   onClick={() => setLabel(l)}
-                  className={`flex-1 py-2 rounded-xl text-sm font-semibold border transition-colors ${
+                  className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border-2 transition-colors ${
                     label === l
                       ? 'border-[#FF6B35] bg-orange-50 text-[#FF6B35]'
-                      : 'border-gray-200 text-gray-500'
+                      : 'border-gray-100 text-gray-500'
                   }`}
                 >
                   {l}
@@ -279,68 +279,70 @@ export default function AddressesPage() {
               ))}
             </div>
 
+            {/* Street — autocomplete attaches here when API key is present */}
             <div>
+              <label className="text-xs font-semibold text-gray-500 mb-1.5 block uppercase tracking-wide">
+                Street Address
+              </label>
               <input
                 ref={streetRef}
                 autoFocus
                 value={street}
                 onChange={(e) => setStreet(e.target.value)}
-                placeholder="Start typing your address..."
-                className="w-full border border-gray-200 rounded-xl px-3 py-3 text-sm outline-none focus:border-[#FF6B35]"
+                placeholder="123 Main St"
+                autoComplete="address-line1"
+                className="w-full border-2 border-gray-100 rounded-xl px-3.5 py-3 text-sm outline-none focus:border-[#FF6B35] transition-colors"
               />
-              <p className="text-xs text-gray-400 mt-1 px-1">Suggestions will appear as you type</p>
             </div>
 
-            {(city || state || zip) && (
-              <div className="flex gap-2">
-                <input
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  placeholder="City"
-                  className="flex-1 border border-gray-200 rounded-xl px-3 py-3 text-sm outline-none focus:border-[#FF6B35]"
-                />
-                <input
-                  value={state}
-                  onChange={(e) => setState(e.target.value)}
-                  placeholder="State"
-                  className="w-16 border border-gray-200 rounded-xl px-3 py-3 text-sm outline-none focus:border-[#FF6B35]"
-                />
-                <input
-                  value={zip}
-                  onChange={(e) => setZip(e.target.value)}
-                  placeholder="ZIP"
-                  className="w-20 border border-gray-200 rounded-xl px-3 py-3 text-sm outline-none focus:border-[#FF6B35]"
-                />
-              </div>
-            )}
-
-            {/* Show manual city/state/zip fields if no autocomplete */}
-            {!city && !state && !zip && street.length > 5 && (
-              <div className="flex gap-2">
-                <input
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  placeholder="City"
-                  className="flex-1 border border-gray-200 rounded-xl px-3 py-3 text-sm outline-none focus:border-[#FF6B35]"
-                />
-                <input
-                  value={state}
-                  onChange={(e) => setState(e.target.value)}
-                  placeholder="State"
-                  className="w-16 border border-gray-200 rounded-xl px-3 py-3 text-sm outline-none focus:border-[#FF6B35]"
-                />
-                <input
-                  value={zip}
-                  onChange={(e) => setZip(e.target.value)}
-                  placeholder="ZIP"
-                  className="w-20 border border-gray-200 rounded-xl px-3 py-3 text-sm outline-none focus:border-[#FF6B35]"
-                />
-              </div>
-            )}
-
-            {error && <p className="text-xs text-red-500">{error}</p>}
-
+            {/* City / State / ZIP — always visible */}
             <div className="flex gap-2">
+              <div className="flex-1">
+                <label className="text-xs font-semibold text-gray-500 mb-1.5 block uppercase tracking-wide">
+                  City
+                </label>
+                <input
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  placeholder="New York"
+                  autoComplete="address-level2"
+                  className="w-full border-2 border-gray-100 rounded-xl px-3.5 py-3 text-sm outline-none focus:border-[#FF6B35] transition-colors"
+                />
+              </div>
+              <div className="w-16">
+                <label className="text-xs font-semibold text-gray-500 mb-1.5 block uppercase tracking-wide">
+                  State
+                </label>
+                <input
+                  value={state}
+                  onChange={(e) => setState(e.target.value)}
+                  placeholder="NY"
+                  autoComplete="address-level1"
+                  maxLength={2}
+                  className="w-full border-2 border-gray-100 rounded-xl px-3 py-3 text-sm outline-none focus:border-[#FF6B35] transition-colors uppercase"
+                />
+              </div>
+              <div className="w-24">
+                <label className="text-xs font-semibold text-gray-500 mb-1.5 block uppercase tracking-wide">
+                  ZIP
+                </label>
+                <input
+                  value={zip}
+                  onChange={(e) => setZip(e.target.value)}
+                  placeholder="10001"
+                  autoComplete="postal-code"
+                  inputMode="numeric"
+                  maxLength={10}
+                  className="w-full border-2 border-gray-100 rounded-xl px-3 py-3 text-sm outline-none focus:border-[#FF6B35] transition-colors"
+                />
+              </div>
+            </div>
+
+            {error && (
+              <p className="text-sm text-red-500 font-medium">{error}</p>
+            )}
+
+            <div className="flex gap-2 pt-1">
               <Button
                 variant="outline"
                 onClick={() => { setAdding(false); resetForm() }}
@@ -350,23 +352,23 @@ export default function AddressesPage() {
                 Cancel
               </Button>
               <Button
-                disabled={!street.trim() || !city.trim() || !state.trim() || !zip.trim() || saving}
                 onClick={handleAdd}
                 className="flex-1"
+                loading={saving}
+                disabled={saving}
               >
-                {saving ? <Loader2 size={16} className="animate-spin" /> : 'Save Address'}
+                Save Address
               </Button>
             </div>
           </div>
         ) : (
-          <Button
-            variant="outline"
+          <button
             onClick={() => setAdding(true)}
-            className="w-full flex items-center gap-2 justify-center"
+            className="w-full flex items-center justify-center gap-2 py-4 border-2 border-dashed border-gray-200 rounded-2xl text-sm font-semibold text-gray-400 hover:border-[#FF6B35] hover:text-[#FF6B35] transition-colors active:bg-orange-50"
           >
             <Plus size={16} />
             Add New Address
-          </Button>
+          </button>
         )}
       </div>
     </div>
