@@ -3,7 +3,6 @@ import Stripe from 'stripe'
 import { createServerClient } from '@supabase/ssr'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
-import { PLATFORM_FEE_PCT, DELIVERY_FEE } from '@/lib/constants'
 import * as Sentry from '@sentry/nextjs'
 
 export async function POST(req: NextRequest) {
@@ -19,25 +18,23 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { paymentIntentId, orderId, tipPct, subtotal } = await req.json()
-  if (!paymentIntentId || !orderId || tipPct === undefined || subtotal === undefined) {
+  const { paymentIntentId, orderId, tipPct } = await req.json()
+  if (!paymentIntentId || !orderId || tipPct === undefined) {
     return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
   }
   if (typeof tipPct !== 'number' || tipPct < 0 || tipPct > 1) {
     return NextResponse.json({ error: 'Invalid tip percentage' }, { status: 400 })
   }
-  if (typeof subtotal !== 'number' || subtotal <= 0) {
-    return NextResponse.json({ error: 'Invalid subtotal' }, { status: 400 })
-  }
 
-  // Verify order belongs to authenticated user and paymentIntentId matches
-  const adminCheck = createServiceClient(
+  const admin = createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
-  const { data: order } = await adminCheck
+
+  // Verify ownership and fetch all stored fees from DB — never trust client-submitted amounts
+  const { data: order } = await admin
     .from('orders')
-    .select('customer_id, stripe_payment_intent_id')
+    .select('customer_id, stripe_payment_intent_id, subtotal, delivery_fee, platform_fee, service_fee, small_order_fee, surge_fee')
     .eq('id', orderId)
     .single()
   if (!order || order.customer_id !== user.id) {
@@ -47,9 +44,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Payment intent mismatch' }, { status: 400 })
   }
 
-  const tip = subtotal * tipPct
-  const platformFee = subtotal * PLATFORM_FEE_PCT
-  const total = subtotal + DELIVERY_FEE + platformFee + tip
+  const dbSubtotal = order.subtotal as number
+  const tip = Math.round(dbSubtotal * tipPct * 100) / 100
+  const total = dbSubtotal
+    + (order.delivery_fee as number)
+    + (order.platform_fee as number)
+    + ((order.service_fee as number) ?? 0)
+    + ((order.small_order_fee as number) ?? 0)
+    + ((order.surge_fee as number) ?? 0)
+    + tip
   const amountCents = Math.round(total * 100)
 
   const stripe = new Stripe(stripeKey)
@@ -61,14 +64,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to update payment amount' }, { status: 500 })
   }
 
-  const admin = createServiceClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
   await admin
     .from('orders')
     .update({
-      tip_amount: Math.round(tip * 100) / 100,
+      tip_amount: tip,
       total: Math.round(total * 100) / 100,
     })
     .eq('id', orderId)

@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   if (!amount || amount <= 0) {
     return NextResponse.json({ error: 'Invalid amount' }, { status: 400 })
   }
-  if (!method || !['bank_transfer', 'paypal', 'check'].includes(method)) {
+  if (!method || !['bank_transfer', 'stripe', 'cash'].includes(method)) {
     return NextResponse.json({ error: 'Invalid payout method' }, { status: 400 })
   }
 

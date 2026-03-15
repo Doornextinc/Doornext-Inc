@@ -45,24 +45,26 @@ export async function POST(req: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  // Cancel order in DB
-  await admin
-    .from('orders')
-    .update({ status: 'cancelled', updated_at: new Date().toISOString() })
-    .eq('id', orderId)
+  const isCash = (order as { payment_method?: string }).payment_method === 'cash'
 
-  // Refund via Stripe
-  if (order.stripe_payment_intent_id) {
+  // Refund via Stripe BEFORE cancelling — if refund fails, order stays pending so customer keeps their money
+  if (!isCash && order.stripe_payment_intent_id) {
     try {
       const stripe = new Stripe(stripeKey)
       await stripe.refunds.create({ payment_intent: order.stripe_payment_intent_id })
     } catch (err) {
       console.error('Stripe refund error:', err)
+      return NextResponse.json({ error: 'Refund failed — please try again or contact support' }, { status: 500 })
     }
   }
 
-  // Notify customer — message depends on payment method
-  const isCash = (order as { payment_method?: string }).payment_method === 'cash'
+  // Cancel order in DB (after successful refund or cash order)
+  await admin
+    .from('orders')
+    .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+    .eq('id', orderId)
+
+  // Notify customer
   await admin.from('notifications').insert({
     user_id: order.customer_id,
     type: 'order_rejected',
