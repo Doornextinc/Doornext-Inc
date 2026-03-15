@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     .from('orders')
     .update({
       nexter_id: user.id,
-      status: 'picked_up',
+      status: 'driver_assigned',
       updated_at: new Date().toISOString(),
     })
     .eq('id', orderId)
@@ -54,9 +54,9 @@ export async function POST(req: NextRequest) {
   // Notify customer
   await admin.from('notifications').insert({
     user_id: data.customer_id,
-    type: 'order_picked_up',
-    title: 'Order Picked Up!',
-    body: `Your order #${orderId.slice(-6).toUpperCase()} has been picked up and is on its way.`,
+    type: 'order_driver_assigned',
+    title: 'Driver Assigned!',
+    body: `A driver has accepted your order #${orderId.slice(-6).toUpperCase()} and is heading to the restaurant.`,
     data: { order_id: orderId },
   })
 

@@ -13,7 +13,7 @@ import { AppHeader } from '@/components/layout/app-header'
 
 type OrderItem = { quantity: number; unit_price: number; menu_items: { name: string } | null }
 type ActiveOrder = {
-  id: string; status: string; delivery_fee: number; tip_amount: number
+  id: string; status: string; driver_payout: number; tip_amount: number
   payment_method?: 'card' | 'cash'
   delivery_address: { street?: string; city?: string; state?: string; zip?: string; label?: string } | null
   food_maker: { display_name: string; lat: number; lng: number } | null
@@ -22,16 +22,27 @@ type ActiveOrder = {
   updated_at: string
 }
 
+// 6 milestone stages shown in the progress stepper
 const STEPS = [
-  { status: 'picked_up',  label: 'Heading to Pickup', sublabel: 'Go to restaurant' },
-  { status: 'on_the_way', label: 'Out for Delivery',  sublabel: 'Drive to customer' },
-  { status: 'delivered',  label: 'Delivered',          sublabel: 'Order complete' },
+  { status: 'driver_assigned',    label: 'Heading Out',     sublabel: 'Drive to restaurant' },
+  { status: 'arrived_at_maker',   label: 'At Restaurant',   sublabel: 'Verify & pick up' },
+  { status: 'picked_up',          label: 'Picked Up',       sublabel: 'Start delivery' },
+  { status: 'on_the_way',         label: 'On the Way',      sublabel: 'Drive to customer' },
+  { status: 'arrived_at_customer', label: 'At Customer',    sublabel: 'Complete dropoff' },
+  { status: 'delivered',          label: 'Delivered',       sublabel: 'Order complete' },
 ]
 
+// What action button to show at each status
 const NEXT_ACTION: Record<string, { next: OrderStatus; label: string }> = {
-  picked_up:  { next: 'on_the_way', label: 'Confirm Pickup' },
-  on_the_way: { next: 'delivered',  label: 'Confirm Delivery' },
+  driver_assigned:    { next: 'arrived_at_maker',   label: "Arrived at Restaurant" },
+  arrived_at_maker:   { next: 'picked_up',          label: 'Confirm Pickup' },
+  picked_up:          { next: 'on_the_way',         label: 'Start Delivery' },
+  on_the_way:         { next: 'arrived_at_customer', label: "Arrived at Customer" },
+  arrived_at_customer: { next: 'delivered',         label: 'Complete Delivery' },
 }
+
+// Active statuses to query from DB
+const ACTIVE_STATUSES = ['driver_assigned', 'arrived_at_maker', 'picked_up', 'on_the_way', 'arrived_at_customer']
 
 function formatElapsed(secs: number) {
   const m = Math.floor(secs / 60), s = secs % 60
@@ -87,7 +98,7 @@ export default function ActiveDeliveryPage() {
       .from('orders')
       .select(`*, payment_method, order_items(quantity, unit_price, menu_items(name)), food_maker:food_makers(display_name, lat, lng), customer:users!orders_customer_id_fkey(full_name, phone)`)
       .eq('nexter_id', user.id)
-      .in('status', ['picked_up', 'on_the_way'])
+      .in('status', ACTIVE_STATUSES)
       .order('updated_at', { ascending: false })
       .limit(1)
       .maybeSingle()
@@ -115,7 +126,8 @@ export default function ActiveDeliveryPage() {
 
   const handleStatusUpdate = async (newStatus: OrderStatus) => {
     if (!order) return
-    if (order.status === 'picked_up' && order.order_items.length > 0 && checkedItems.size < order.order_items.length) {
+    // Require item verification before confirming pickup
+    if (order.status === 'arrived_at_maker' && order.order_items.length > 0 && checkedItems.size < order.order_items.length) {
       const ok = window.confirm(`You haven't verified all ${order.order_items.length} items. Continue anyway?`)
       if (!ok) return
     }
@@ -167,7 +179,7 @@ export default function ActiveDeliveryPage() {
 
   /* ── Delivery success ── */
   if (delivered) {
-    const earn = (order?.delivery_fee ?? 0) + (order?.tip_amount ?? 0)
+    const earn = order?.driver_payout ?? 0
     return (
       <div className="flex flex-col min-h-full bg-[#080808]">
         <AppHeader title="Delivered!" />
@@ -220,9 +232,16 @@ export default function ActiveDeliveryPage() {
   const nextAction = NEXT_ACTION[order.status]
   const addr = order.delivery_address
   const currentStepIdx = STEPS.findIndex(s => s.status === order.status)
-  const earn = (order.delivery_fee ?? 0) + (order.tip_amount ?? 0)
-  const isHeadingToRestaurant = order.status === 'picked_up'
+  const earn = order.driver_payout ?? 0
+
+  const isHeadingToMaker    = order.status === 'driver_assigned'
+  const isAtMaker           = order.status === 'arrived_at_maker'
+  const isPickedUp          = order.status === 'picked_up'
   const isHeadingToCustomer = order.status === 'on_the_way'
+  const isAtCustomer        = order.status === 'arrived_at_customer'
+
+  const isPickupPhase = isHeadingToMaker || isAtMaker || isPickedUp
+  const isDropoffPhase = isHeadingToCustomer || isAtCustomer
 
   return (
     <div className="flex flex-col min-h-full pb-[144px]">
@@ -251,7 +270,7 @@ export default function ActiveDeliveryPage() {
         </div>
       </div>
 
-      {/* ── Progress stepper ── */}
+      {/* ── Progress stepper (6 milestones) ── */}
       <div className="px-5 pt-5 pb-4">
         <div className="flex items-start">
           {STEPS.map((step, i) => {
@@ -264,12 +283,12 @@ export default function ActiveDeliveryPage() {
                   {i > 0 && (
                     <div className={`flex-1 h-0.5 rounded-full transition-colors ${done || active ? 'bg-[#FF7A50]' : 'bg-[#1A1A1A]'}`} />
                   )}
-                  <div className={`relative w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all ${
+                  <div className={`relative w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-all ${
                     done ? 'bg-[#FF7A50]' : active ? 'bg-[#FF7A50] ring-4 ring-[#FF7A50]/25' : 'bg-[#1A1A1A]'
                   }`}>
                     {done
-                      ? <CheckCircle size={14} className="text-white" />
-                      : <span className={`text-xs font-black ${upcoming ? 'text-zinc-600' : 'text-white'}`}>{i + 1}</span>
+                      ? <CheckCircle size={13} className="text-white" />
+                      : <span className={`text-[10px] font-black ${upcoming ? 'text-zinc-600' : 'text-white'}`}>{i + 1}</span>
                     }
                     {active && <span className="absolute inset-0 rounded-full animate-ping bg-[#FF7A50]/25" />}
                   </div>
@@ -277,12 +296,9 @@ export default function ActiveDeliveryPage() {
                     <div className={`flex-1 h-0.5 rounded-full transition-colors ${done ? 'bg-[#FF7A50]' : 'bg-[#1A1A1A]'}`} />
                   )}
                 </div>
-                <div className="mt-2 text-center">
-                  <p className={`text-[11px] font-bold ${active ? 'text-[#FF7A50]' : done ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                <div className="mt-2 text-center px-0.5">
+                  <p className={`text-[9px] font-bold leading-tight ${active ? 'text-[#FF7A50]' : done ? 'text-zinc-400' : 'text-zinc-600'}`}>
                     {step.label}
-                  </p>
-                  <p className={`text-[9px] mt-0.5 ${active ? 'text-[#FF7A50]/70' : 'text-zinc-700'}`}>
-                    {step.sublabel}
                   </p>
                 </div>
               </div>
@@ -291,8 +307,8 @@ export default function ActiveDeliveryPage() {
         </div>
       </div>
 
-      {/* ── Stage 1: Heading to Restaurant ── */}
-      {isHeadingToRestaurant && (
+      {/* ── Stage: Heading to Restaurant ── */}
+      {isHeadingToMaker && (
         <>
           <div className="mx-4 mb-3 bg-[#141414] rounded-2xl border border-white/5 overflow-hidden">
             <div className="px-4 pt-4 pb-3">
@@ -310,6 +326,29 @@ export default function ActiveDeliveryPage() {
               Navigate to Restaurant
               <ArrowRight size={14} className="opacity-70" />
             </a>
+          </div>
+
+          {addr && (
+            <div className="mx-4 mb-3 bg-[#141414] rounded-2xl border border-white/5 px-4 py-3.5">
+              <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wide mb-1.5">Delivering to</p>
+              <div className="flex items-start gap-2">
+                <MapPin size={14} className="text-zinc-500 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-bold text-zinc-300">{addr.street}</p>
+                  <p className="text-xs text-zinc-500">{addr.city}, {addr.state} {addr.zip}</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ── Stage: Arrived at Restaurant ── */}
+      {isAtMaker && (
+        <>
+          <div className="mx-4 mb-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl px-4 py-3.5">
+            <p className="text-sm font-black text-amber-300">You've arrived at the restaurant</p>
+            <p className="text-xs text-amber-400/70 mt-0.5">Verify all items before confirming pickup</p>
           </div>
 
           {order.order_items.length > 0 && (
@@ -357,30 +396,52 @@ export default function ActiveDeliveryPage() {
                   {checkedItems.size === order.order_items.length && (
                     <div className="flex items-center gap-2 px-4 py-2.5 bg-green-500/10">
                       <CheckCircle size={13} className="text-green-400" />
-                      <span className="text-xs font-bold text-green-400">All items verified — ready to go!</span>
+                      <span className="text-xs font-bold text-green-400">All items verified — ready to confirm!</span>
                     </div>
                   )}
                 </div>
               )}
             </div>
           )}
+        </>
+      )}
+
+      {/* ── Stage: Picked Up — Start Delivery ── */}
+      {isPickedUp && (
+        <>
+          <div className="mx-4 mb-3 bg-green-500/10 border border-green-500/20 rounded-2xl px-4 py-3.5">
+            <div className="flex items-center gap-2">
+              <CheckCircle size={16} className="text-green-400 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-black text-green-300">Order picked up from {order.food_maker?.display_name}</p>
+                <p className="text-xs text-green-400/70 mt-0.5">Now head to the customer</p>
+              </div>
+            </div>
+          </div>
 
           {addr && (
-            <div className="mx-4 mb-3 bg-[#141414] rounded-2xl border border-white/5 px-4 py-3.5">
-              <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wide mb-1.5">Delivering to</p>
-              <div className="flex items-start gap-2">
-                <MapPin size={14} className="text-zinc-500 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-bold text-zinc-300">{addr.street}</p>
-                  <p className="text-xs text-zinc-500">{addr.city}, {addr.state} {addr.zip}</p>
-                </div>
+            <div className="mx-4 mb-3 bg-[#141414] rounded-2xl border border-white/5 overflow-hidden">
+              <div className="px-4 pt-4 pb-3">
+                <p className="text-[11px] font-black text-[#FF7A50] uppercase tracking-wider mb-1">Delivering to</p>
+                <p className="text-xl font-black text-white leading-tight">{addr.street}</p>
+                <p className="text-sm text-zinc-400 mt-0.5">{addr.city}, {addr.state} {addr.zip}</p>
               </div>
+              <a
+                href={mapsUrl(addr)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 bg-[#FF7A50] py-3.5 text-sm font-black text-white"
+              >
+                <Navigation size={16} />
+                Navigate to Customer
+                <ArrowRight size={14} className="opacity-70" />
+              </a>
             </div>
           )}
         </>
       )}
 
-      {/* ── Stage 2: On the Way to Customer ── */}
+      {/* ── Stage: On the Way to Customer ── */}
       {isHeadingToCustomer && (
         <>
           <div className="mx-4 mb-3 bg-[#141414] rounded-2xl border border-white/5 overflow-hidden">
@@ -410,8 +471,8 @@ export default function ActiveDeliveryPage() {
             )}
           </div>
 
-          <div className="mx-4 grid grid-cols-2 gap-3 mb-3">
-            {order.customer && (
+          {order.customer && (
+            <div className="mx-4 grid grid-cols-2 gap-3 mb-3">
               <div className="bg-[#141414] rounded-2xl p-3.5 border border-white/5">
                 <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wide mb-1.5">Customer</p>
                 <p className="font-bold text-white text-sm truncate leading-tight">{order.customer.full_name}</p>
@@ -423,15 +484,15 @@ export default function ActiveDeliveryPage() {
                   <p className="text-xs text-zinc-700 mt-2">No phone on file</p>
                 )}
               </div>
-            )}
-            <div className="bg-[#141414] rounded-2xl p-3.5 border border-white/5">
-              <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wide mb-1.5">You earn</p>
-              <p className="font-black text-[#FF7A50] text-3xl leading-none">${earn.toFixed(2)}</p>
-              {order.tip_amount > 0 && (
-                <p className="text-xs text-green-400 mt-1.5 font-semibold">+${order.tip_amount.toFixed(2)} tip</p>
-              )}
+              <div className="bg-[#141414] rounded-2xl p-3.5 border border-white/5">
+                <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wide mb-1.5">You earn</p>
+                <p className="font-black text-[#FF7A50] text-3xl leading-none">${earn.toFixed(2)}</p>
+                {order.tip_amount > 0 && (
+                  <p className="text-xs text-green-400 mt-1.5 font-semibold">incl. ${order.tip_amount.toFixed(2)} tip</p>
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
           {order.payment_method === 'cash' && (
             <div className="mx-4 mb-3 flex items-start gap-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl px-4 py-3.5">
@@ -456,6 +517,64 @@ export default function ActiveDeliveryPage() {
         </>
       )}
 
+      {/* ── Stage: Arrived at Customer ── */}
+      {isAtCustomer && (
+        <>
+          <div className="mx-4 mb-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl px-4 py-3.5">
+            <p className="text-sm font-black text-amber-300">You've arrived at the customer</p>
+            <p className="text-xs text-amber-400/70 mt-0.5">Hand over the order and confirm delivery</p>
+          </div>
+
+          {order.customer && (
+            <div className="mx-4 mb-3 bg-[#141414] rounded-2xl p-3.5 border border-white/5">
+              <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wide mb-1.5">Customer</p>
+              <p className="font-bold text-white text-sm">{order.customer.full_name}</p>
+              {order.customer.phone ? (
+                <a href={`tel:${order.customer.phone}`} className="mt-2 flex items-center gap-1.5 text-green-400 text-xs font-semibold">
+                  <Phone size={12} /> Call customer
+                </a>
+              ) : (
+                <p className="text-xs text-zinc-700 mt-2">No phone on file</p>
+              )}
+            </div>
+          )}
+
+          {addr && (
+            <div className="mx-4 mb-3 bg-[#141414] rounded-2xl border border-white/5 px-4 py-3.5">
+              <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wide mb-1.5">Delivery address</p>
+              <div className="flex items-start gap-2">
+                <MapPin size={14} className="text-zinc-500 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-bold text-zinc-300">{addr.street}</p>
+                  <p className="text-xs text-zinc-500">{addr.city}, {addr.state} {addr.zip}</p>
+                  {addr.label && <p className="text-xs text-zinc-600 mt-0.5 italic">{addr.label}</p>}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {order.payment_method === 'cash' && (
+            <div className="mx-4 mb-3 flex items-start gap-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl px-4 py-3.5">
+              <Banknote size={18} className="text-amber-400 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-bold text-amber-300">Collect cash before confirming</p>
+                <p className="text-xs text-amber-400/70 mt-0.5">Confirm the total with the customer before completing delivery</p>
+              </div>
+            </div>
+          )}
+
+          <div className="mx-4 mb-3 bg-[#141414] rounded-2xl border border-white/5 px-4 py-3 flex items-center justify-between">
+            <p className="text-xs text-zinc-600">Your earnings</p>
+            <div className="text-right">
+              <p className="font-black text-[#FF7A50]">${earn.toFixed(2)}</p>
+              {order.tip_amount > 0 && (
+                <p className="text-[10px] text-green-400">incl. ${order.tip_amount.toFixed(2)} tip</p>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+
       {/* ── Fixed CTA ── */}
       {nextAction && (
         <div className="fixed bottom-[68px] left-0 right-0 max-w-[430px] mx-auto px-4 pb-4 pt-3 bg-gradient-to-t from-[#080808] via-[#080808]/95 to-transparent">
@@ -468,21 +587,25 @@ export default function ActiveDeliveryPage() {
             onClick={() => handleStatusUpdate(nextAction.next)}
             disabled={updating}
             className={`w-full text-white rounded-2xl py-4 font-black text-base flex items-center justify-center gap-2.5 disabled:opacity-50 transition-all shadow-lg active:scale-[0.98] ${
-              isHeadingToCustomer
+              isAtCustomer
                 ? 'bg-green-500 shadow-green-500/25'
+                : isPickupPhase
+                ? 'bg-[#FF7A50] shadow-[#FF7A50]/25'
                 : 'bg-[#FF7A50] shadow-[#FF7A50]/25'
             }`}
           >
             {updating ? (
               <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-            ) : isHeadingToCustomer ? (
+            ) : isAtCustomer ? (
               <CheckCircle size={20} />
-            ) : (
+            ) : isAtMaker ? (
               <Package size={20} />
+            ) : (
+              <Navigation size={20} />
             )}
             {updating ? 'Updating…' : nextAction.label}
           </button>
-          {isHeadingToRestaurant && order.order_items.length > 0 && checkedItems.size < order.order_items.length && (
+          {isAtMaker && order.order_items.length > 0 && checkedItems.size < order.order_items.length && (
             <p className="text-center text-xs text-zinc-600 mt-2">
               {order.order_items.length - checkedItems.size} item{order.order_items.length - checkedItems.size !== 1 ? 's' : ''} not yet verified
             </p>

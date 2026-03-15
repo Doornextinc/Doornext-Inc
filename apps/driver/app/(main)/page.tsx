@@ -59,14 +59,14 @@ export default function HomePage() {
 
     const [profileRes, ordersRes, activeRes] = await Promise.all([
       supabase.from('driver_profiles').select('full_name, avg_rating, total_deliveries, is_active, kyc_status, avatar_url').eq('id', user.id).single(),
-      supabase.from('orders').select('delivery_fee, created_at').eq('nexter_id', user.id).eq('status', 'delivered').gte('created_at', weekStart.toISOString()),
-      supabase.from('orders').select('id, status, food_maker:food_makers(display_name)').eq('nexter_id', user.id).in('status', ['picked_up', 'on_the_way']).maybeSingle(),
+      supabase.from('orders').select('driver_payout, created_at').eq('nexter_id', user.id).eq('status', 'delivered').gte('created_at', weekStart.toISOString()),
+      supabase.from('orders').select('id, status, food_maker:food_makers(display_name)').eq('nexter_id', user.id).in('status', ['driver_assigned', 'arrived_at_maker', 'picked_up', 'on_the_way', 'arrived_at_customer']).maybeSingle(),
     ])
 
     const allDeliveries = ordersRes.data ?? []
     const todayDeliveries = allDeliveries.filter(d => new Date(d.created_at) >= today)
-    const todayEarnings = todayDeliveries.reduce((s: number, d: { delivery_fee: number }) => s + (d.delivery_fee ?? 0), 0)
-    const weekEarnings = allDeliveries.reduce((s: number, d: { delivery_fee: number }) => s + (d.delivery_fee ?? 0), 0)
+    const todayEarnings = todayDeliveries.reduce((s: number, d: { driver_payout: number }) => s + (d.driver_payout ?? 0), 0)
+    const weekEarnings = allDeliveries.reduce((s: number, d: { driver_payout: number }) => s + (d.driver_payout ?? 0), 0)
 
     if (profileRes.data?.is_active !== undefined) setOnline(profileRes.data.is_active)
     if (activeRes.data) setActiveOrder(activeRes.data.id)

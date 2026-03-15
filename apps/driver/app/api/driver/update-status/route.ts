@@ -5,8 +5,11 @@ import { cookies } from 'next/headers'
 import type { OrderStatus } from '@doornext/shared/types'
 
 const VALID_DRIVER_TRANSITIONS: Record<string, OrderStatus> = {
-  picked_up: 'on_the_way',
-  on_the_way: 'delivered',
+  driver_assigned:    'arrived_at_maker',
+  arrived_at_maker:   'picked_up',
+  picked_up:          'on_the_way',
+  on_the_way:         'arrived_at_customer',
+  arrived_at_customer: 'delivered',
 }
 
 export async function POST(req: NextRequest) {
@@ -53,9 +56,17 @@ export async function POST(req: NextRequest) {
     .eq('id', orderId)
 
   const notifMap: Record<string, { title: string; body: string }> = {
+    picked_up: {
+      title: 'Order Picked Up!',
+      body: `Your order #${orderId.slice(-6).toUpperCase()} has been picked up and is being prepared for dropoff.`,
+    },
     on_the_way: {
       title: 'Driver On The Way!',
       body: `Your order #${orderId.slice(-6).toUpperCase()} is on its way to you.`,
+    },
+    arrived_at_customer: {
+      title: 'Driver Arrived!',
+      body: `Your driver has arrived at your location with order #${orderId.slice(-6).toUpperCase()}.`,
     },
     delivered: {
       title: 'Order Delivered!',

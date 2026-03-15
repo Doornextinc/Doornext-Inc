@@ -3,8 +3,11 @@ export type OrderStatus =
   | 'confirmed'
   | 'preparing'
   | 'ready'
+  | 'driver_assigned'
+  | 'arrived_at_maker'
   | 'picked_up'
   | 'on_the_way'
+  | 'arrived_at_customer'
   | 'delivered'
   | 'cancelled'
 

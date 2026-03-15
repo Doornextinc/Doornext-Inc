@@ -48,8 +48,11 @@ export const ORDER_STATUS_LABELS: Record<string, string> = {
   confirmed: 'Confirmed',
   preparing: 'Being Prepared',
   ready: 'Ready for Pickup',
+  driver_assigned: 'Driver Assigned',
+  arrived_at_maker: 'Driver at Restaurant',
   picked_up: 'Picked Up',
   on_the_way: 'On The Way',
+  arrived_at_customer: 'Driver Arrived',
   delivered: 'Delivered',
   cancelled: 'Cancelled',
 }
