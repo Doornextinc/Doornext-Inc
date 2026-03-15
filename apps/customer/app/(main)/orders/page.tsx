@@ -36,13 +36,13 @@ export default function OrdersPage() {
   const router = useRouter()
   const [orders, setOrders] = useState<OrderWithMaker[]>([])
   const [loading, setLoading] = useState(true)
-  const [loadError, setLoadError] = useState(false)
+  const [loadError, setLoadError] = useState<string | false>(false)
   const [reorderConfirmId, setReorderConfirmId] = useState<string | null>(null)
   const addItem = useCartStore((s) => s.addItem)
   const clearCart = useCartStore((s) => s.clearCart)
 
   const loadOrders = useCallback(async () => {
-    setLoadError(false)
+    setLoadError(false as false)
     try {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
@@ -64,9 +64,10 @@ export default function OrdersPage() {
         .limit(50)
 
       if (error) {
-        console.error('Failed to load orders:', error)
-        setLoadError(true)
+        console.error('Failed to load orders:', JSON.stringify(error))
+        setLoadError(error.message ?? 'Unknown error')
       } else if (data) {
+        console.log(`[Orders] fetched ${data.length} orders for user ${user.id}`)
         setOrders(data as OrderWithMaker[])
       }
     } catch (e) {
@@ -129,7 +130,10 @@ export default function OrdersPage() {
         <div className="flex flex-col items-center justify-center py-20 text-center px-6">
           <span className="text-5xl mb-4">⚠️</span>
           <h2 className="heading-lg text-gray-700">Failed to load orders</h2>
-          <p className="text-gray-400 text-sm mt-2 mb-6">Check your connection and try again</p>
+          <p className="text-gray-400 text-sm mt-2 mb-2">Check your connection and try again</p>
+          {typeof loadError === 'string' && (
+            <p className="text-red-400 text-xs font-mono mt-1 mb-6 max-w-xs break-all">{loadError}</p>
+          )}
           <Button onClick={loadOrders} size="lg">Retry</Button>
         </div>
       </div>

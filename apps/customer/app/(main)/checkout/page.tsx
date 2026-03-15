@@ -247,7 +247,7 @@ function CardCheckoutForm({
 
     if (paymentIntent?.status === 'succeeded') {
       const deliveryAddress = selectedAddress
-        ? { street: selectedAddress.street, city: selectedAddress.city, state: selectedAddress.state, zip: selectedAddress.zip }
+        ? { street: selectedAddress.street, city: selectedAddress.city, state: selectedAddress.state, zip: selectedAddress.zip, lat: selectedAddress.lat, lng: selectedAddress.lng }
         : { street: address.trim(), city: '', state: '', zip: '' }
       const supabase = createClient()
       await supabase.from('orders').update({ delivery_address: deliveryAddress }).eq('id', orderId)
@@ -344,7 +344,7 @@ function CashCheckoutForm({
     setLoading(true); setError(null)
 
     const deliveryAddress = selectedAddress
-      ? { street: selectedAddress.street, city: selectedAddress.city, state: selectedAddress.state, zip: selectedAddress.zip }
+      ? { street: selectedAddress.street, city: selectedAddress.city, state: selectedAddress.state, zip: selectedAddress.zip, lat: selectedAddress.lat, lng: selectedAddress.lng }
       : { street: address.trim(), city: '', state: '', zip: '' }
 
     try {
