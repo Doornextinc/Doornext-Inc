@@ -7,7 +7,7 @@ import { Zap, Star, Package, TrendingUp, ChevronDown, ChevronRight, Clock, Dolla
 import { AppHeader } from '@/components/layout/app-header'
 
 /* ─── types ─── */
-type Delivery = { id: string; delivery_fee: number; tip_amount: number; created_at: string }
+type Delivery = { id: string; driver_payout: number; tip_amount: number; created_at: string }
 type Period = 'today' | 'week' | 'month' | 'all'
 type Mission = {
   id: string; icon: string; title: string; description: string | null
@@ -59,7 +59,7 @@ export default function EarningsPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
       const [ordersRes, profileRes, missionsRes] = await Promise.all([
-        supabase.from('orders').select('id, delivery_fee, tip_amount, created_at').eq('nexter_id', user.id).eq('status', 'delivered').order('created_at', { ascending: false }).limit(200),
+        supabase.from('orders').select('id, driver_payout, tip_amount, created_at').eq('nexter_id', user.id).eq('status', 'delivered').order('created_at', { ascending: false }).limit(200),
         supabase.from('driver_profiles').select('total_deliveries, avg_rating').eq('id', user.id).single(),
         supabase.from('driver_missions').select('id, icon, title, description, reward_amount, target_value, mission_type, period').eq('is_active', true).order('created_at'),
       ])
@@ -78,7 +78,8 @@ export default function EarningsPage() {
     return deliveries.filter(d => new Date(d.created_at) >= cutoff)
   })()
 
-  const totalEarnings = filtered.reduce((s, d) => s + (d.delivery_fee ?? 0), 0)
+  // driver_payout = base pay + surge share + tip (all-in payout stored at checkout)
+  const totalEarnings = filtered.reduce((s, d) => s + (d.driver_payout ?? 0), 0)
   const totalTips     = filtered.reduce((s, d) => s + (d.tip_amount  ?? 0), 0)
   const basePay       = totalEarnings - totalTips
   // Available to cash out = base earnings (tips pend for 24h — simplified as 70% of total)
@@ -94,7 +95,7 @@ export default function EarningsPage() {
       shortLabel: DAY_SHORT[dayDate.getDay()],
       label,
       isToday,
-      total: items.reduce((s, d) => s + (d.delivery_fee ?? 0), 0),
+      total: items.reduce((s, d) => s + (d.driver_payout ?? 0), 0),
       count: items.length,
       deliveries: items,
     }
@@ -324,7 +325,7 @@ export default function EarningsPage() {
                               </div>
                             </div>
                             <div className="text-right">
-                              <p className="text-sm font-black text-[#FF7A50]">+${d.delivery_fee.toFixed(2)}</p>
+                              <p className="text-sm font-black text-[#FF7A50]">+${d.driver_payout.toFixed(2)}</p>
                               {d.tip_amount > 0 && (
                                 <p className="text-[11px] text-green-600">+${d.tip_amount.toFixed(2)} tip</p>
                               )}

@@ -55,6 +55,7 @@ export default function ActiveDeliveryPage() {
   const [order, setOrder] = useState<ActiveOrder | null>(null)
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState(false)
+  const [updateError, setUpdateError] = useState<string | null>(null)
   const [elapsed, setElapsed] = useState(0)
   const [showItems, setShowItems] = useState(false)
   const [checkedItems, setCheckedItems] = useState<Set<number>>(new Set())
@@ -119,13 +120,21 @@ export default function ActiveDeliveryPage() {
       if (!ok) return
     }
     setUpdating(true)
+    setUpdateError(null)
 
-    const res = await fetch('/api/driver/update-status', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ orderId: order.id, status: newStatus }),
-    })
+    try {
+      const res = await fetch('/api/driver/update-status', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: order.id, status: newStatus }),
+      })
 
-    if (res.ok) {
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setUpdateError(data.error ?? 'Failed to update status. Please try again.')
+        setUpdating(false)
+        return
+      }
+
       if (newStatus === 'delivered') {
         await fetch('/api/driver/complete-delivery', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -138,6 +147,8 @@ export default function ActiveDeliveryPage() {
         setOrder(prev => prev ? { ...prev, status: newStatus } : prev)
         setCheckedItems(new Set())
       }
+    } catch {
+      setUpdateError('Network error. Please check your connection and try again.')
     }
     setUpdating(false)
   }
@@ -448,6 +459,11 @@ export default function ActiveDeliveryPage() {
       {/* ── Fixed CTA ── */}
       {nextAction && (
         <div className="fixed bottom-[68px] left-0 right-0 max-w-[430px] mx-auto px-4 pb-4 pt-3 bg-gradient-to-t from-[#080808] via-[#080808]/95 to-transparent">
+          {updateError && (
+            <div className="mb-2 px-4 py-2.5 bg-red-500/15 border border-red-500/30 rounded-2xl text-xs font-semibold text-red-400 text-center">
+              {updateError}
+            </div>
+          )}
           <button
             onClick={() => handleStatusUpdate(nextAction.next)}
             disabled={updating}
