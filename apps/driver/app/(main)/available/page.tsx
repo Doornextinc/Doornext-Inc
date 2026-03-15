@@ -131,7 +131,7 @@ export default function AvailablePickupsPage() {
           </p>
           <button
             onClick={() => setOnline(true)}
-            className="bg-[#FF6B35] text-white font-bold px-8 py-3.5 rounded-2xl text-sm shadow-lg shadow-[#FF6B35]/25"
+            className="bg-[#FF7A50] text-white font-bold px-8 py-3.5 rounded-2xl text-sm shadow-lg shadow-[#FF7A50]/25"
           >
             Go Online
           </button>
@@ -193,7 +193,7 @@ export default function AvailablePickupsPage() {
                       <p className="text-xs text-zinc-500 mt-0.5">#{order.id.slice(-6).toUpperCase()}</p>
                     </div>
                     <div className="text-right flex-shrink-0">
-                      <p className="text-2xl font-black text-[#FF6B35] leading-none">
+                      <p className="text-2xl font-black text-[#FF7A50] leading-none">
                         {formatPriceDollars(order.delivery_fee)}
                       </p>
                       <p className="text-[10px] text-zinc-500 mt-0.5">you earn</p>
@@ -203,7 +203,7 @@ export default function AvailablePickupsPage() {
                   {/* Route: pickup → dropoff */}
                   <div className="bg-white/5 rounded-xl p-3 mb-3 space-y-2">
                     <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-[#FF6B35] flex-shrink-0" />
+                      <div className="w-2 h-2 rounded-full bg-[#FF7A50] flex-shrink-0" />
                       <p className="text-xs text-zinc-300 font-medium truncate">
                         {order.food_maker?.display_name ?? 'Pickup location'}
                         {distance !== null && (
@@ -237,8 +237,8 @@ export default function AvailablePickupsPage() {
                   disabled={accepting !== null}
                   className={`w-full flex items-center justify-center gap-2 py-4 font-bold text-sm transition-all ${
                     isAccepting
-                      ? 'bg-[#FF6B35]/80 text-white/80'
-                      : 'bg-[#FF6B35] hover:bg-[#E55A24] active:bg-[#E55A24] text-white'
+                      ? 'bg-[#FF7A50]/80 text-white/80'
+                      : 'bg-[#FF7A50] hover:bg-[#E86B40] active:bg-[#E86B40] text-white'
                   } disabled:opacity-60`}
                 >
                   {isAccepting ? (
