@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 
 interface AdminUser {
   id: string
@@ -123,7 +124,11 @@ export default function UsersPage() {
             <tbody className="divide-y divide-gray-50">
               {users.map((user) => (
                 <tr key={user.id} className="hover:bg-gray-50/50">
-                  <td className="px-5 py-3 font-medium text-gray-900">{user.full_name}</td>
+                  <td className="px-5 py-3 font-medium text-gray-900">
+                    <Link href={`/users/${user.id}`} className="hover:text-[#FF6B35] hover:underline">
+                      {user.full_name}
+                    </Link>
+                  </td>
                   <td className="px-5 py-3 text-gray-500">{user.email ?? '—'}</td>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-2">

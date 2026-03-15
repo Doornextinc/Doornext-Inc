@@ -12,14 +12,20 @@ export async function GET(req: NextRequest) {
 
   const search = req.nextUrl.searchParams.get('search') ?? ''
 
+  const accountStatus = req.nextUrl.searchParams.get('account_status')
+
   let query = admin
     .from('users')
-    .select('id, full_name, email, phone, role, created_at')
+    .select('id, full_name, email, phone, role, account_status, created_at')
     .order('created_at', { ascending: false })
     .limit(100)
 
   if (search) {
     query = query.or(`full_name.ilike.%${search}%,email.ilike.%${search}%`)
+  }
+
+  if (accountStatus) {
+    query = query.eq('account_status', accountStatus)
   }
 
   const { data: users } = await query
