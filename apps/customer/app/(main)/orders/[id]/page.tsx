@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import dynamic from 'next/dynamic'
 import { CheckCircle, Circle, Clock, MapPin, MessageCircle, Star } from 'lucide-react'
 import { BackBar } from '@/components/layout/top-bar'
 import { Button } from '@/components/ui/button'
@@ -9,6 +10,11 @@ import { cn, ORDER_STATUS_LABELS } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { useOrderTracking } from '@/hooks/useOrderTracking'
 import type { Order, OrderStatus, OrderItem } from '@/types'
+
+const DeliveryMap = dynamic(
+  () => import('@/components/DeliveryMap').then((m) => m.DeliveryMap),
+  { ssr: false, loading: () => <div className="w-full h-full bg-[#0d1117] animate-pulse" /> }
+)
 
 const STATUS_STEPS: OrderStatus[] = [
   'confirmed', 'preparing', 'ready', 'picked_up', 'on_the_way', 'delivered',
@@ -129,11 +135,12 @@ export default function OrderTrackingPage() {
 
   const currentStep = STATUS_STEPS.indexOf(currentStatus)
 
-  // Use driver location when available, otherwise show kitchen location
-  const mapFocus = nexterLocation ?? (order?.food_maker ?? null)
-  const osmEmbedUrl = mapFocus
-    ? `https://www.openstreetmap.org/export/embed.html?bbox=${mapFocus.lng - 0.015},${mapFocus.lat - 0.015},${mapFocus.lng + 0.015},${mapFocus.lat + 0.015}&layer=mapnik&marker=${mapFocus.lat},${mapFocus.lng}`
-    : null
+  const deliveryAddr = order?.delivery_address as (typeof order extends null ? null : (typeof order)['delivery_address']) | null
+  const hasMapCoords =
+    order?.food_maker?.lat &&
+    order?.food_maker?.lng &&
+    (deliveryAddr as { lat?: number })?.lat &&
+    (deliveryAddr as { lng?: number })?.lng
 
   if (loading) {
     return (
@@ -165,14 +172,19 @@ export default function OrderTrackingPage() {
       <BackBar title="Order Tracking" />
 
       {/* Map */}
-      <div className="relative w-full h-52 bg-gradient-to-br from-blue-50 to-green-50 overflow-hidden">
-        {osmEmbedUrl ? (
-          <iframe
-            key={osmEmbedUrl}
-            src={osmEmbedUrl}
-            className="w-full h-full border-0"
-            loading="lazy"
-            title="Delivery map"
+      <div className="relative w-full h-52 bg-[#0d1117] overflow-hidden">
+        {hasMapCoords && order ? (
+          <DeliveryMap
+            maker={{
+              lat: order.food_maker.lat,
+              lng: order.food_maker.lng,
+              name: order.food_maker.display_name,
+            }}
+            customer={{
+              lat: (order.delivery_address as { lat: number }).lat,
+              lng: (order.delivery_address as { lng: number }).lng,
+            }}
+            driver={nexterLocation}
           />
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -184,10 +196,10 @@ export default function OrderTrackingPage() {
             </div>
           </div>
         )}
-        {/* Label showing what's pinned */}
-        {osmEmbedUrl && (
-          <div className="absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm rounded-lg px-2.5 py-1 text-xs font-semibold text-gray-700 shadow-sm pointer-events-none">
-            {nexterLocation ? '🛵 Driver location' : '🍳 Kitchen location'}
+        {/* Route label */}
+        {hasMapCoords && (
+          <div className="absolute bottom-2 left-2 bg-black/70 backdrop-blur-sm rounded-lg px-2.5 py-1 text-xs font-semibold text-white shadow-sm pointer-events-none">
+            {nexterLocation ? '🛵 Driver en route' : '🍳 Kitchen → 📍 You'}
           </div>
         )}
       </div>
