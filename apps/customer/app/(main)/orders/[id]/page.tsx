@@ -17,7 +17,7 @@ const DeliveryMap = dynamic(
 )
 
 const STATUS_STEPS: OrderStatus[] = [
-  'confirmed', 'preparing', 'ready', 'picked_up', 'on_the_way', 'delivered',
+  'confirmed', 'preparing', 'ready', 'driver_assigned', 'arrived_at_maker', 'picked_up', 'on_the_way', 'arrived_at_customer', 'delivered',
 ]
 
 const STATUS_MESSAGES: Partial<Record<OrderStatus, string>> = {
@@ -25,8 +25,11 @@ const STATUS_MESSAGES: Partial<Record<OrderStatus, string>> = {
   confirmed: 'Your order has been confirmed! 🎉',
   preparing: 'The maker is cooking your food 🍳',
   ready: 'Your order is ready for pickup!',
+  driver_assigned: 'A driver has accepted your order and is heading to the restaurant 🚗',
+  arrived_at_maker: 'Your driver has arrived at the restaurant 📦',
   picked_up: 'Your Nexter picked up your order!',
   on_the_way: 'Your Nexter is on the way 🛵',
+  arrived_at_customer: 'Your driver has arrived at your location!',
   delivered: 'Delivered! Enjoy your meal 🎉',
   cancelled: 'Order was cancelled',
 }
