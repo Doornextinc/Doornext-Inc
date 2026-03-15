@@ -23,6 +23,7 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<OrderRow[]>([])
   const [activeTab, setActiveTab] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -32,14 +33,16 @@ export default function OrdersPage() {
 
       const { data: maker } = await supabase
         .from('food_makers').select('id').eq('user_id', user.id).single()
-      if (!maker) return
+      if (!maker) { setError('Kitchen profile not found'); setLoading(false); return }
 
-      const { data } = await supabase
+      const { data, error: fetchError } = await supabase
         .from('orders')
         .select('id, status, total, created_at, maker_id, order_items(quantity, menu_item:menu_items(name))')
         .eq('maker_id', maker.id)
         .order('created_at', { ascending: false })
         .limit(100)
+
+      if (fetchError) { setError('Failed to load orders'); setLoading(false); return }
 
       setOrders((data ?? []) as OrderRow[])
       setLoading(false)
@@ -51,6 +54,29 @@ export default function OrdersPage() {
   const filtered = filter.statuses
     ? orders.filter((o) => filter.statuses!.includes(o.status as OrderStatus))
     : orders
+
+  if (error) {
+    return (
+      <div className="flex flex-col min-h-full bg-gray-50">
+        <header className="sticky top-0 z-40 bg-white border-b border-gray-100 px-4 h-[60px] flex items-center">
+          <h1 className="text-[18px] font-black text-gray-900">Orders</h1>
+        </header>
+        <div className="flex flex-col items-center justify-center py-24 text-center px-6">
+          <div className="w-16 h-16 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center mb-4">
+            <span className="text-3xl">⚠️</span>
+          </div>
+          <h3 className="text-lg font-black text-gray-900">Something went wrong</h3>
+          <p className="text-gray-400 text-sm mt-1">{error}</p>
+          <button
+            onClick={() => { setError(null); setLoading(true) }}
+            className="mt-6 px-6 py-3 bg-[#FF6B35] text-white rounded-2xl font-bold text-sm"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col min-h-full bg-gray-50">
