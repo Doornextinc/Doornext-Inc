@@ -11,6 +11,13 @@ import { MapPin, Navigation, X, Check } from 'lucide-react'
 import { haversineDistance } from '@/lib/utils'
 import { FALLBACK_LAT, FALLBACK_LNG, FALLBACK_LOCATION_LABEL } from '@/lib/constants'
 
+function getGreeting() {
+  const h = new Date().getHours()
+  if (h < 12) return 'Good morning'
+  if (h < 17) return 'Good afternoon'
+  return 'Good evening'
+}
+
 export default function HomePage() {
   const [selectedCuisine, setSelectedCuisine] = useState('All')
   const [makers, setMakers] = useState<FoodMaker[]>([])
@@ -21,7 +28,6 @@ export default function HomePage() {
     label: FALLBACK_LOCATION_LABEL,
   })
 
-  // Address picker state
   const [pickerOpen, setPickerOpen] = useState(false)
   const [savedAddresses, setSavedAddresses] = useState<Address[]>([])
   const [defaultAddressId, setDefaultAddressId] = useState<string | null>(null)
@@ -29,7 +35,6 @@ export default function HomePage() {
   const [selectedId, setSelectedId] = useState<string | 'gps' | null>(null)
   const overlayRef = useRef<HTMLDivElement>(null)
 
-  // Get real browser location
   useEffect(() => {
     if (!navigator.geolocation) return
     navigator.geolocation.getCurrentPosition(
@@ -39,9 +44,7 @@ export default function HomePage() {
         setLocation({ ...gps, label: 'Your Location' })
         setSelectedId('gps')
       },
-      () => {
-        // Permission denied — keep fallback
-      },
+      () => {},
       { timeout: 5000, maximumAge: 300000 }
     )
   }, [])
@@ -118,35 +121,39 @@ export default function HomePage() {
   const closedMakers = filteredMakers.filter((m) => !m.is_open)
 
   return (
-    <div className="flex flex-col min-h-full bg-[#f8f8f8]">
+    <div className="flex flex-col min-h-full bg-[#f9fafb]">
       <TopBar location={location.label} onLocationClick={handleOpenPicker} />
 
-      <div className="bg-white px-4 pt-4 pb-2">
-        <h2 className="text-2xl font-black text-gray-900">
-          What are you{' '}
-          <span className="text-[#FF6B35]">craving</span>?
+      {/* Hero greeting */}
+      <div className="bg-white px-4 pt-5 pb-3">
+        <p className="text-sm font-semibold text-[#FF6B35] mb-0.5">{getGreeting()} 👋</p>
+        <h2 className="heading-xl text-gray-900">
+          What are you <span className="text-[#FF6B35]">craving?</span>
         </h2>
-        <p className="text-gray-500 text-sm mt-0.5">Home-cooked meals near you</p>
+        <p className="text-gray-400 text-sm mt-1">Home-cooked meals near you</p>
       </div>
 
-      <div className="bg-white border-b border-gray-100">
+      {/* Cuisine filter */}
+      <div className="bg-white border-b border-gray-100 sticky top-14 z-30">
         <CuisineFilter selected={selectedCuisine} onChange={setSelectedCuisine} />
       </div>
 
-      <div className="flex-1 px-4 py-4 space-y-6">
+      <div className="flex-1 px-4 py-5 space-y-6 page-enter">
         {loading ? (
-          <div className="grid grid-cols-1 gap-4">
+          <div className="space-y-4">
             {[1, 2, 3].map((i) => <MakerCardSkeleton key={i} />)}
           </div>
         ) : (
           <>
             {openMakers.length > 0 && (
               <section>
-                <h3 className="font-bold text-gray-900 text-base mb-3">
-                  Open Now{' '}
-                  <span className="text-[#FF6B35] text-sm font-semibold">{openMakers.length}</span>
-                </h3>
-                <div className="grid grid-cols-1 gap-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <h3 className="font-bold text-gray-900 text-base">Open Now</h3>
+                  <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full">
+                    {openMakers.length}
+                  </span>
+                </div>
+                <div className="space-y-4">
                   {openMakers.map((maker) => <MakerCard key={maker.id} maker={maker} />)}
                 </div>
               </section>
@@ -154,17 +161,22 @@ export default function HomePage() {
 
             {closedMakers.length > 0 && (
               <section>
-                <h3 className="font-bold text-gray-400 text-base mb-3">Currently Closed</h3>
-                <div className="grid grid-cols-1 gap-4 opacity-60">
+                <div className="flex items-center gap-2 mb-3">
+                  <h3 className="font-bold text-gray-400 text-base">Closed Now</h3>
+                  <span className="bg-gray-100 text-gray-400 text-xs font-bold px-2 py-0.5 rounded-full">
+                    {closedMakers.length}
+                  </span>
+                </div>
+                <div className="space-y-4 opacity-60">
                   {closedMakers.map((maker) => <MakerCard key={maker.id} maker={maker} />)}
                 </div>
               </section>
             )}
 
             {filteredMakers.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="flex flex-col items-center justify-center py-20 text-center">
                 <span className="text-5xl mb-4">🍽️</span>
-                <h3 className="text-lg font-bold text-gray-700">No makers found</h3>
+                <h3 className="heading-md text-gray-700">No makers found</h3>
                 <p className="text-gray-400 text-sm mt-1">Try a different cuisine filter</p>
               </div>
             )}
@@ -177,87 +189,92 @@ export default function HomePage() {
         <div
           ref={overlayRef}
           className="fixed inset-0 z-50 flex flex-col justify-end"
-          style={{ background: 'rgba(0,0,0,0.4)' }}
+          style={{ background: 'rgba(0,0,0,0.5)' }}
           onClick={(e) => { if (e.target === overlayRef.current) setPickerOpen(false) }}
         >
-          <div className="bg-white rounded-t-3xl p-5 space-y-4 max-h-[70vh] overflow-y-auto">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-gray-900">Deliver to</h2>
-              <button
-                onClick={() => setPickerOpen(false)}
-                className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"
-              >
-                <X size={16} className="text-gray-600" />
-              </button>
+          <div className="bg-white rounded-t-3xl max-h-[75vh] overflow-y-auto sheet-enter">
+            {/* Handle */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 bg-gray-200 rounded-full" />
             </div>
 
-            {/* GPS option */}
-            <button
-              onClick={handleSelectGps}
-              className={`w-full flex items-center gap-3 p-3 rounded-2xl border transition-colors ${
-                selectedId === 'gps'
-                  ? 'border-[#FF6B35] bg-orange-50'
-                  : 'border-gray-100 hover:border-gray-200'
-              }`}
-            >
-              <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
-                <Navigation size={18} className="text-blue-500" />
+            <div className="px-5 pb-8 space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="heading-lg text-gray-900">Deliver to</h2>
+                <button
+                  onClick={() => setPickerOpen(false)}
+                  className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center active:bg-gray-200"
+                >
+                  <X size={15} className="text-gray-600" strokeWidth={2.5} />
+                </button>
               </div>
-              <div className="text-left">
-                <p className="font-semibold text-sm text-gray-900">Use current location</p>
-                <p className="text-xs text-gray-400">
-                  {gpsLocation ? 'GPS location detected' : 'Enable location permission'}
-                </p>
-              </div>
-              {selectedId === 'gps' && (
-                <Check size={16} className="text-[#FF6B35] ml-auto" />
-              )}
-            </button>
 
-            {savedAddresses.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wide px-1">
-                  Saved Addresses
-                </p>
-                {savedAddresses.map((addr) => (
-                  <button
-                    key={addr.id}
-                    onClick={() => handleSelectAddress(addr)}
-                    className={`w-full flex items-center gap-3 p-3 rounded-2xl border transition-colors ${
-                      selectedId === addr.id
-                        ? 'border-[#FF6B35] bg-orange-50'
-                        : 'border-gray-100 hover:border-gray-200'
-                    }`}
-                  >
-                    <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center flex-shrink-0">
-                      <MapPin size={18} className="text-[#FF6B35]" />
-                    </div>
-                    <div className="text-left flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="font-semibold text-sm text-gray-900">{addr.label}</p>
-                        {addr.id === defaultAddressId && (
-                          <span className="text-[10px] font-bold text-[#FF6B35] bg-orange-50 border border-orange-100 px-1.5 py-0.5 rounded-full">
-                            Default
-                          </span>
-                        )}
+              {/* GPS option */}
+              <button
+                onClick={handleSelectGps}
+                className={`w-full flex items-center gap-3 p-3.5 rounded-2xl border-2 transition-colors ${
+                  selectedId === 'gps'
+                    ? 'border-[#FF6B35] bg-orange-50'
+                    : 'border-gray-100 hover:border-gray-200'
+                }`}
+              >
+                <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
+                  <Navigation size={18} className="text-blue-500" strokeWidth={2} />
+                </div>
+                <div className="text-left flex-1">
+                  <p className="font-semibold text-sm text-gray-900">Use current location</p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {gpsLocation ? 'GPS detected' : 'Enable location permission'}
+                  </p>
+                </div>
+                {selectedId === 'gps' && (
+                  <Check size={16} className="text-[#FF6B35] flex-shrink-0" strokeWidth={2.5} />
+                )}
+              </button>
+
+              {savedAddresses.length > 0 && (
+                <div className="space-y-2">
+                  <p className="label-sm text-gray-400 px-1">Saved Addresses</p>
+                  {savedAddresses.map((addr) => (
+                    <button
+                      key={addr.id}
+                      onClick={() => handleSelectAddress(addr)}
+                      className={`w-full flex items-center gap-3 p-3.5 rounded-2xl border-2 transition-colors ${
+                        selectedId === addr.id
+                          ? 'border-[#FF6B35] bg-orange-50'
+                          : 'border-gray-100 hover:border-gray-200'
+                      }`}
+                    >
+                      <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center flex-shrink-0">
+                        <MapPin size={18} className="text-[#FF6B35]" strokeWidth={2} />
                       </div>
-                      <p className="text-xs text-gray-400 truncate">
-                        {addr.street}, {addr.city}
-                      </p>
-                    </div>
-                    {selectedId === addr.id && (
-                      <Check size={16} className="text-[#FF6B35] ml-auto flex-shrink-0" />
-                    )}
-                  </button>
-                ))}
-              </div>
-            )}
+                      <div className="text-left flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-sm text-gray-900">{addr.label}</p>
+                          {addr.id === defaultAddressId && (
+                            <span className="text-[10px] font-bold text-[#FF6B35] bg-orange-50 border border-orange-200 px-1.5 py-0.5 rounded-full">
+                              Default
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-400 truncate mt-0.5">
+                          {addr.street}, {addr.city}
+                        </p>
+                      </div>
+                      {selectedId === addr.id && (
+                        <Check size={16} className="text-[#FF6B35] flex-shrink-0" strokeWidth={2.5} />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
 
-            {savedAddresses.length === 0 && (
-              <p className="text-sm text-gray-400 text-center py-2">
-                No saved addresses. Add one in your profile.
-              </p>
-            )}
+              {savedAddresses.length === 0 && (
+                <p className="text-sm text-gray-400 text-center py-2">
+                  No saved addresses. Add one in your profile.
+                </p>
+              )}
+            </div>
           </div>
         </div>
       )}

@@ -25,9 +25,9 @@ function formatOrderDate(dateStr: string) {
   const diff = now.getTime() - date.getTime()
   const days = Math.floor(diff / 86400000)
   const time = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-  if (days === 0) return `Today, ${time}`
-  if (days === 1) return `Yesterday, ${time}`
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + `, ${time}`
+  if (days === 0) return `Today · ${time}`
+  if (days === 1) return `Yesterday · ${time}`
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ` · ${time}`
 }
 
 const ACTIVE_STATUSES: OrderStatus[] = ['pending', 'confirmed', 'preparing', 'ready', 'picked_up', 'on_the_way']
@@ -77,33 +77,20 @@ export default function OrdersPage() {
     }
   }, [])
 
-  useEffect(() => {
-    loadOrders()
-  }, [loadOrders])
+  useEffect(() => { loadOrders() }, [loadOrders])
 
-  // Realtime subscription: refresh when any active order status changes
   useEffect(() => {
     const supabase = createClient()
-    let userId: string | null = null
-
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return
-      userId = user.id
-
       const channel = supabase
         .channel('customer-orders-realtime')
         .on(
           'postgres_changes',
-          {
-            event: 'UPDATE',
-            schema: 'public',
-            table: 'orders',
-            filter: `customer_id=eq.${userId}`,
-          },
+          { event: 'UPDATE', schema: 'public', table: 'orders', filter: `customer_id=eq.${user.id}` },
           () => { loadOrders() }
         )
         .subscribe()
-
       return () => { supabase.removeChannel(channel) }
     })
   }, [loadOrders])
@@ -113,11 +100,7 @@ export default function OrdersPage() {
     clearCart()
     for (const oi of order.order_items) {
       if (oi.menu_item) {
-        addItem(
-          oi.menu_item,
-          order.maker_id,
-          order.food_maker.display_name
-        )
+        addItem(oi.menu_item, order.maker_id, order.food_maker.display_name)
       }
     }
     router.push('/cart')
@@ -128,8 +111,8 @@ export default function OrdersPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col min-h-full bg-[#f8f8f8]">
-        <TopBar title="Your Orders" showCart={false} />
+      <div className="flex flex-col min-h-full bg-[#f9fafb]">
+        <TopBar title="Orders" showCart={false} />
         <div className="flex-1 px-4 py-4 space-y-3">
           {[1, 2, 3].map((i) => (
             <div key={i} className="bg-white rounded-2xl p-4 h-28 animate-pulse" />
@@ -141,12 +124,12 @@ export default function OrdersPage() {
 
   if (loadError) {
     return (
-      <div className="flex flex-col min-h-full bg-[#f8f8f8]">
-        <TopBar title="Your Orders" showCart={false} />
+      <div className="flex flex-col min-h-full bg-[#f9fafb]">
+        <TopBar title="Orders" showCart={false} />
         <div className="flex flex-col items-center justify-center py-20 text-center px-6">
           <span className="text-5xl mb-4">⚠️</span>
-          <h2 className="text-xl font-bold text-gray-700">Failed to load orders</h2>
-          <p className="text-gray-400 text-sm mt-1 mb-6">Check your connection and try again</p>
+          <h2 className="heading-lg text-gray-700">Failed to load orders</h2>
+          <p className="text-gray-400 text-sm mt-2 mb-6">Check your connection and try again</p>
           <Button onClick={loadOrders} size="lg">Retry</Button>
         </div>
       </div>
@@ -154,38 +137,40 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-full bg-[#f8f8f8]">
-      <TopBar title="Your Orders" showCart={false} />
+    <div className="flex flex-col min-h-full bg-[#f9fafb]">
+      <TopBar title="Orders" showCart={false} />
 
-      <div className="flex-1 px-4 py-4 space-y-5">
+      <div className="flex-1 px-4 py-4 space-y-5 page-enter">
         {/* Active Orders */}
         {activeOrders.length > 0 && (
           <section>
-            <h2 className="font-bold text-gray-700 text-sm mb-3">Active</h2>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="w-2 h-2 bg-[#FF6B35] rounded-full animate-pulse" />
+              <h2 className="font-bold text-gray-900 text-[15px]">Active</h2>
+            </div>
             <div className="space-y-3">
               {activeOrders.map((order) => (
                 <button
                   key={order.id}
                   onClick={() => router.push(`/orders/${order.id}`)}
-                  className="w-full bg-white rounded-2xl p-4 shadow-sm border border-[#FF6B35]/20 text-left active:bg-orange-50 transition-colors"
+                  className="w-full bg-white rounded-2xl p-4 border-2 border-orange-100 text-left active:bg-orange-50 transition-colors pulse-ring"
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl">{'🍽️'}</span>
-                      <div>
-                        <p className="font-bold text-gray-900 text-sm">{order.food_maker.display_name}</p>
-                        <p className="text-xs text-gray-400">{formatOrderDate(order.created_at)}</p>
-                      </div>
+                  <div className="flex items-center justify-between mb-2.5">
+                    <div>
+                      <p className="font-bold text-gray-900 text-[15px]">
+                        {order.food_maker.display_name}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-0.5">{formatOrderDate(order.created_at)}</p>
                     </div>
                     <StatusBadge status={order.status as OrderStatus} />
                   </div>
-                  <p className="text-xs text-gray-500 truncate mb-2">
-                    {order.order_items.map((oi) => `${oi.quantity}x ${oi.menu_item?.name ?? 'Item'}`).join(', ')}
+                  <p className="text-xs text-gray-500 truncate mb-3">
+                    {order.order_items.map((oi) => `${oi.quantity}× ${oi.menu_item?.name ?? 'Item'}`).join(', ')}
                   </p>
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-gray-900">${order.total.toFixed(2)}</span>
-                    <span className="text-xs text-[#FF6B35] font-semibold flex items-center gap-1">
-                      Track Order <ChevronRight size={12} />
+                    <span className="flex items-center gap-1 text-xs font-semibold text-[#FF6B35]">
+                      Track order <ChevronRight size={13} />
                     </span>
                   </div>
                 </button>
@@ -197,28 +182,25 @@ export default function OrdersPage() {
         {/* Past Orders */}
         {pastOrders.length > 0 && (
           <section>
-            <h2 className="font-bold text-gray-700 text-sm mb-3">Past Orders</h2>
+            <h2 className="font-bold text-gray-500 text-[13px] mb-3 uppercase tracking-wide">Past Orders</h2>
             <div className="space-y-3">
               {pastOrders.map((order) => (
                 <div
                   key={order.id}
-                  className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"
+                  className="bg-white rounded-2xl p-4 border border-gray-100"
                 >
                   <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xl">{'🍽️'}</span>
-                      <div>
-                        <p className="font-bold text-gray-900 text-sm">{order.food_maker.display_name}</p>
-                        <p className="text-xs text-gray-400">{formatOrderDate(order.created_at)}</p>
-                      </div>
+                    <div>
+                      <p className="font-bold text-gray-900 text-[14px]">{order.food_maker.display_name}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">{formatOrderDate(order.created_at)}</p>
                     </div>
                     <StatusBadge status={order.status as OrderStatus} />
                   </div>
                   <p className="text-xs text-gray-400 truncate mb-3">
-                    {order.order_items.map((oi) => `${oi.quantity}x ${oi.menu_item?.name ?? 'Item'}`).join(', ')}
+                    {order.order_items.map((oi) => `${oi.quantity}× ${oi.menu_item?.name ?? 'Item'}`).join(', ')}
                   </p>
                   <div className="flex items-center justify-between">
-                    <span className="font-semibold text-gray-700 text-sm">${order.total.toFixed(2)}</span>
+                    <span className="font-semibold text-gray-800 text-sm">${order.total.toFixed(2)}</span>
                     {order.status === 'delivered' && (
                       reorderConfirmId === order.id ? (
                         <div className="flex items-center gap-2">
@@ -230,16 +212,16 @@ export default function OrdersPage() {
                           </button>
                           <button
                             onClick={() => handleReorder(order)}
-                            className="flex items-center gap-1.5 text-xs text-white font-semibold bg-[#FF6B35] px-3 py-1.5 rounded-full"
+                            className="flex items-center gap-1.5 text-xs text-white font-bold bg-[#FF6B35] px-3.5 py-2 rounded-full"
                           >
                             <RotateCcw size={11} />
-                            Confirm
+                            Confirm reorder
                           </button>
                         </div>
                       ) : (
                         <button
                           onClick={() => setReorderConfirmId(order.id)}
-                          className="flex items-center gap-1.5 text-xs text-[#FF6B35] font-semibold bg-orange-50 px-3 py-1.5 rounded-full"
+                          className="flex items-center gap-1.5 text-xs text-[#FF6B35] font-semibold bg-orange-50 px-3.5 py-2 rounded-full"
                         >
                           <RotateCcw size={11} />
                           Reorder
@@ -253,11 +235,13 @@ export default function OrdersPage() {
           </section>
         )}
 
-        {orders.length === 0 && !loading && (
+        {orders.length === 0 && (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <ShoppingBag size={60} className="text-gray-200 mb-4" />
-            <h2 className="text-xl font-bold text-gray-700">No orders yet</h2>
-            <p className="text-gray-400 text-sm mt-1 mb-6">Your order history will appear here</p>
+            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-5">
+              <ShoppingBag size={36} className="text-gray-300" />
+            </div>
+            <h2 className="heading-lg text-gray-700">No orders yet</h2>
+            <p className="text-gray-400 text-sm mt-2 mb-7">Your order history will appear here</p>
             <Button onClick={() => router.push('/')} size="lg">Browse Makers</Button>
           </div>
         )}
