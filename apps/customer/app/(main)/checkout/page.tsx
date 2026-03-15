@@ -8,10 +8,10 @@ import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-
 import { useCartStore } from '@/store/cart'
 import { BackBar } from '@/components/layout/top-bar'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { formatPriceDollars } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { DELIVERY_FEE, PLATFORM_FEE_PCT } from '@/lib/constants'
+import { loadGoogleMapsScript, parsePlace } from '@/lib/google-maps'
 import type { Address } from '@/types'
 
 const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
@@ -30,17 +30,69 @@ type PaymentMethod = 'card' | 'cash'
 /* ── shared address / tip / summary UI ── */
 function AddressSection({
   address, setAddress, selectedAddress, setSelectedAddress,
-  savedAddresses, showAddressInput, setShowAddressInput,
+  savedAddresses, showAddressInput, setShowAddressInput, onAddressSaved,
 }: {
   address: string; setAddress: (v: string) => void
   selectedAddress: Address | null; setSelectedAddress: (a: Address | null) => void
   savedAddresses: Address[]; showAddressInput: boolean; setShowAddressInput: (v: boolean) => void
+  onAddressSaved: (addr: Address) => void
 }) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const onAddressSavedRef = useRef(onAddressSaved)
+  onAddressSavedRef.current = onAddressSaved
+  const [saving, setSaving] = useState(false)
+
   const handleSelect = (addr: Address) => {
     setSelectedAddress(addr)
     setAddress(`${addr.street}, ${addr.city}, ${addr.state} ${addr.zip}`)
     setShowAddressInput(false)
   }
+
+  // Attach Google Places autocomplete when the new-address input is visible
+  useEffect(() => {
+    if (!showAddressInput) return
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+    if (!apiKey) return
+
+    let ac: google.maps.places.Autocomplete | null = null
+
+    loadGoogleMapsScript(apiKey).then(() => {
+      if (!inputRef.current) return
+      ac = new window.google.maps.places.Autocomplete(inputRef.current, {
+        types: ['address'],
+        fields: ['address_components', 'geometry'],
+      })
+      ac.addListener('place_changed', async () => {
+        const parsed = parsePlace(ac!.getPlace())
+        if (!parsed) return
+        setAddress(`${parsed.street}, ${parsed.city}, ${parsed.state} ${parsed.zip}`)
+        setSaving(true)
+        try {
+          const supabase = createClient()
+          const { data: { user } } = await supabase.auth.getUser()
+          if (user) {
+            const { data: newAddr, error } = await supabase
+              .from('addresses')
+              .insert({ user_id: user.id, label: 'Other', ...parsed })
+              .select()
+              .single()
+            if (newAddr && !error) {
+              onAddressSavedRef.current(newAddr as Address)
+              handleSelect(newAddr as Address)
+            }
+          }
+        } finally {
+          setSaving(false)
+        }
+      })
+    })
+
+    return () => {
+      if (ac) window.google?.maps?.event?.clearInstanceListeners(ac)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showAddressInput])
+
   return (
     <div className="bg-white px-4 py-4">
       <div className="flex items-center gap-2 mb-3">
@@ -83,12 +135,21 @@ function AddressSection({
             className="text-[#FF6B35] text-xs font-semibold flex-shrink-0">Change</button>
         </div>
       ) : (
-        <Input
-          placeholder="Enter your full delivery address"
-          value={address}
-          onChange={(e) => { setAddress(e.target.value); setSelectedAddress(null) }}
-          autoComplete="street-address"
-        />
+        <div className="relative">
+          <input
+            ref={inputRef}
+            placeholder="Start typing your address..."
+            value={address}
+            onChange={(e) => { setAddress(e.target.value); setSelectedAddress(null) }}
+            autoComplete="off"
+            className="w-full border-2 border-gray-100 rounded-xl px-3.5 py-3 text-sm outline-none focus:border-[#FF6B35] transition-colors"
+          />
+          {saving && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+              <div className="w-4 h-4 border-2 border-[#FF6B35] border-t-transparent rounded-full animate-spin" />
+            </div>
+          )}
+        </div>
       )}
     </div>
   )
@@ -126,13 +187,14 @@ function OrderSummary({ makerName, items, food, deliveryFee, tip, total, platfor
 /* ── Card checkout form (Stripe) ── */
 function CardCheckoutForm({
   orderId, paymentIntentId, total, address, setAddress,
-  selectedAddress, setSelectedAddress, savedAddresses,
+  selectedAddress, setSelectedAddress, savedAddresses, onAddressSaved,
   tipPct, setTipPct, food, deliveryFee,
 }: {
   orderId: string; paymentIntentId: string; total: number
   address: string; setAddress: (v: string) => void
   selectedAddress: Address | null; setSelectedAddress: (a: Address | null) => void
-  savedAddresses: Address[]; tipPct: number; setTipPct: (v: number) => void
+  savedAddresses: Address[]; onAddressSaved: (addr: Address) => void
+  tipPct: number; setTipPct: (v: number) => void
   food: number; deliveryFee: number
 }) {
   const stripe = useStripe()
@@ -201,7 +263,8 @@ function CardCheckoutForm({
         <AddressSection
           address={address} setAddress={setAddress}
           selectedAddress={selectedAddress} setSelectedAddress={setSelectedAddress}
-          savedAddresses={savedAddresses} showAddressInput={showAddressInput} setShowAddressInput={setShowAddressInput}
+          savedAddresses={savedAddresses} showAddressInput={showAddressInput}
+          setShowAddressInput={setShowAddressInput} onAddressSaved={onAddressSaved}
         />
         <div className="bg-white px-4 py-4">
           <div className="flex items-center gap-2 mb-3">
@@ -261,11 +324,12 @@ function CardCheckoutForm({
 /* ── Cash checkout form ── */
 function CashCheckoutForm({
   address, setAddress, selectedAddress, setSelectedAddress,
-  savedAddresses, food, total, deliveryFee, makerId, onSuccess,
+  savedAddresses, onAddressSaved, food, total, deliveryFee, makerId, onSuccess,
 }: {
   address: string; setAddress: (v: string) => void
   selectedAddress: Address | null; setSelectedAddress: (a: Address | null) => void
-  savedAddresses: Address[]; food: number; total: number; deliveryFee: number
+  savedAddresses: Address[]; onAddressSaved: (addr: Address) => void
+  food: number; total: number; deliveryFee: number
   makerId: string; onSuccess: (orderId: string) => void
 }) {
   const { items, clearCart } = useCartStore()
@@ -309,7 +373,8 @@ function CashCheckoutForm({
         <AddressSection
           address={address} setAddress={setAddress}
           selectedAddress={selectedAddress} setSelectedAddress={setSelectedAddress}
-          savedAddresses={savedAddresses} showAddressInput={showAddressInput} setShowAddressInput={setShowAddressInput}
+          savedAddresses={savedAddresses} showAddressInput={showAddressInput}
+          setShowAddressInput={setShowAddressInput} onAddressSaved={onAddressSaved}
         />
         <div className="bg-white px-4 py-4">
           <div className="flex items-center gap-2 mb-3">
@@ -474,6 +539,7 @@ export default function CheckoutPage() {
           address={address} setAddress={setAddress}
           selectedAddress={selectedAddress} setSelectedAddress={setSelectedAddress}
           savedAddresses={savedAddresses}
+          onAddressSaved={(addr) => setSavedAddresses((prev) => [...prev, addr])}
           food={food} total={cashTotal} deliveryFee={DELIVERY_FEE}
           makerId={makerId ?? ''}
           onSuccess={(id) => router.push(`/orders/${id}`)}
@@ -497,7 +563,9 @@ export default function CheckoutPage() {
             orderId={orderId} paymentIntentId={paymentIntentId}
             total={cardTotal} address={address} setAddress={setAddress}
             selectedAddress={selectedAddress} setSelectedAddress={setSelectedAddress}
-            savedAddresses={savedAddresses} tipPct={tipPct} setTipPct={setTipPct}
+            savedAddresses={savedAddresses}
+            onAddressSaved={(addr) => setSavedAddresses((prev) => [...prev, addr])}
+            tipPct={tipPct} setTipPct={setTipPct}
             food={food} deliveryFee={DELIVERY_FEE}
           />
         </Elements>

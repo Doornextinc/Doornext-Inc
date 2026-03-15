@@ -5,31 +5,10 @@ import { MapPin, Plus, Trash2, Star, Loader2, Check } from 'lucide-react'
 import { BackBar } from '@/components/layout/top-bar'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
+import { loadGoogleMapsScript, parsePlace } from '@/lib/google-maps'
 import type { Address } from '@/types'
 
 const LABELS = ['Home', 'Work', 'Other']
-
-declare global {
-  interface Window {
-    google: typeof google
-    initGoogleMaps?: () => void
-  }
-}
-
-function loadGoogleMapsScript(apiKey: string): Promise<void> {
-  return new Promise((resolve) => {
-    if (window.google?.maps?.places) { resolve(); return }
-    const existing = document.getElementById('google-maps-script')
-    if (existing) { window.initGoogleMaps = resolve; return }
-    window.initGoogleMaps = resolve
-    const script = document.createElement('script')
-    script.id = 'google-maps-script'
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=initGoogleMaps`
-    script.async = true
-    script.defer = true
-    document.head.appendChild(script)
-  })
-}
 
 export default function AddressesPage() {
   const [addresses, setAddresses] = useState<Address[]>([])
@@ -67,25 +46,14 @@ export default function AddressesPage() {
       })
       autocompleteRef.current = ac
       ac.addListener('place_changed', () => {
-        const place = ac.getPlace()
-        if (!place.address_components) return
-        let streetNumber = '', route = '', cityVal = '', stateVal = '', zipVal = ''
-        for (const comp of place.address_components) {
-          const t = comp.types
-          if (t.includes('street_number'))             streetNumber = comp.long_name
-          else if (t.includes('route'))                route = comp.long_name
-          else if (t.includes('locality'))             cityVal = comp.long_name
-          else if (t.includes('administrative_area_level_1')) stateVal = comp.short_name
-          else if (t.includes('postal_code'))          zipVal = comp.long_name
-        }
-        setStreet(streetNumber ? `${streetNumber} ${route}` : route)
-        setCity(cityVal)
-        setState(stateVal)
-        setZip(zipVal)
-        if (place.geometry?.location) {
-          setLat(place.geometry.location.lat())
-          setLng(place.geometry.location.lng())
-        }
+        const parsed = parsePlace(ac.getPlace())
+        if (!parsed) return
+        setStreet(parsed.street)
+        setCity(parsed.city)
+        setState(parsed.state)
+        setZip(parsed.zip)
+        setLat(parsed.lat)
+        setLng(parsed.lng)
       })
     })
 
