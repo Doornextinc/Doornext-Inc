@@ -11,7 +11,7 @@ import { useCartStore } from '@/store/cart'
 import type { Order, OrderStatus } from '@/types'
 
 interface OrderWithMaker extends Omit<Order, 'food_maker' | 'order_items'> {
-  food_maker: { display_name: string; id: string }
+  food_maker: { display_name: string; id: string } | null
   order_items: Array<{
     quantity: number
     unit_price: number
@@ -100,7 +100,7 @@ export default function OrdersPage() {
     clearCart()
     for (const oi of order.order_items) {
       if (oi.menu_item) {
-        addItem(oi.menu_item, order.maker_id, order.food_maker.display_name)
+        addItem(oi.menu_item, order.maker_id, order.food_maker?.display_name ?? 'Unknown Kitchen')
       }
     }
     router.push('/cart')
@@ -158,7 +158,7 @@ export default function OrdersPage() {
                   <div className="flex items-center justify-between mb-2.5">
                     <div>
                       <p className="font-bold text-gray-900 text-[15px]">
-                        {order.food_maker.display_name}
+                        {order.food_maker?.display_name ?? 'Unknown Kitchen'}
                       </p>
                       <p className="text-xs text-gray-400 mt-0.5">{formatOrderDate(order.created_at)}</p>
                     </div>
@@ -191,7 +191,7 @@ export default function OrdersPage() {
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div>
-                      <p className="font-bold text-gray-900 text-[14px]">{order.food_maker.display_name}</p>
+                      <p className="font-bold text-gray-900 text-[14px]">{order.food_maker?.display_name ?? 'Unknown Kitchen'}</p>
                       <p className="text-xs text-gray-400 mt-0.5">{formatOrderDate(order.created_at)}</p>
                     </div>
                     <StatusBadge status={order.status as OrderStatus} />
