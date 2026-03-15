@@ -29,16 +29,22 @@ function ProfileItem({ icon, label, value, onClick, danger }: ProfileItemProps) 
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center gap-3 px-4 py-4 active:bg-gray-50 transition-colors"
+      className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-gray-50 transition-colors"
     >
-      <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${danger ? 'bg-red-50' : 'bg-gray-100'}`}>
-        <div className={danger ? 'text-red-500' : 'text-gray-600'}>{icon}</div>
+      <div
+        className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
+          danger ? 'bg-red-50' : 'bg-gray-100'
+        }`}
+      >
+        <div className={`${danger ? 'text-red-500' : 'text-gray-600'}`}>{icon}</div>
       </div>
-      <div className="flex-1 text-left">
-        <p className={`text-sm font-semibold ${danger ? 'text-red-500' : 'text-gray-800'}`}>{label}</p>
-        {value && <p className="text-xs text-gray-400">{value}</p>}
+      <div className="flex-1 text-left min-w-0">
+        <p className={`text-sm font-semibold ${danger ? 'text-red-500' : 'text-gray-900'}`}>
+          {label}
+        </p>
+        {value && <p className="text-xs text-gray-400 mt-0.5 truncate">{value}</p>}
       </div>
-      <ChevronRight size={16} className="text-gray-300" />
+      <ChevronRight size={15} className="text-gray-300 flex-shrink-0" strokeWidth={2.5} />
     </button>
   )
 }
@@ -86,7 +92,6 @@ export default function ProfilePage() {
 
   useEffect(() => { loadProfile() }, [loadProfile])
 
-  // Refresh profile when user navigates back to the tab (works on mobile PWA too)
   useEffect(() => {
     const onVisible = () => { if (document.visibilityState === 'visible') loadProfile() }
     document.addEventListener('visibilitychange', onVisible)
@@ -105,14 +110,14 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col min-h-full bg-[#f8f8f8]">
+      <div className="flex flex-col min-h-full bg-[#f9fafb]">
         <TopBar title="Profile" showCart={false} showNotifications={false} />
-        <div className="bg-white px-4 py-6 mb-3 animate-pulse">
+        <div className="bg-white px-4 py-6 mb-2 animate-pulse">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-gray-200" />
-            <div className="space-y-2">
-              <div className="h-5 bg-gray-200 rounded w-32" />
-              <div className="h-4 bg-gray-200 rounded w-40" />
+            <div className="w-16 h-16 rounded-2xl bg-gray-200 flex-shrink-0" />
+            <div className="space-y-2 flex-1">
+              <div className="h-5 bg-gray-200 rounded-lg w-36" />
+              <div className="h-4 bg-gray-200 rounded-lg w-44" />
             </div>
           </div>
         </div>
@@ -121,77 +126,123 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="flex flex-col min-h-full bg-[#f8f8f8]">
+    <div className="flex flex-col min-h-full bg-[#f9fafb]">
       <TopBar title="Profile" showCart={false} showNotifications={false} />
 
-      {/* Profile Header */}
-      <div className="bg-white px-4 py-6 mb-3">
+      {/* Profile header */}
+      <div className="bg-white px-4 py-5 mb-2 page-enter">
         <div className="flex items-center gap-4">
-          <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-[#FF6B35] to-[#FF8C5A] flex items-center justify-center overflow-hidden">
+          <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-[#FF6B35] to-[#FF8C5A] flex items-center justify-center overflow-hidden flex-shrink-0">
             {profile?.avatar_url ? (
-              <Image src={profile.avatar_url} alt="Profile photo" fill className="object-cover rounded-2xl" />
+              <Image
+                src={profile.avatar_url}
+                alt="Profile photo"
+                fill
+                className="object-cover"
+                sizes="64px"
+              />
             ) : (
               <span className="text-white text-2xl font-black">
                 {(profile?.full_name?.[0] ?? 'U').toUpperCase()}
               </span>
             )}
           </div>
-          <div>
-            <h2 className="text-xl font-black text-gray-900">{profile?.full_name}</h2>
-            <p className="text-sm text-gray-400">{profile?.email}</p>
-            {memberSince && <p className="text-xs text-gray-300 mt-0.5">Member since {memberSince}</p>}
+          <div className="min-w-0">
+            <h2 className="heading-lg text-gray-900 truncate">{profile?.full_name}</h2>
+            <p className="text-sm text-gray-400 truncate">{profile?.email}</p>
+            {memberSince && (
+              <p className="text-xs text-gray-300 mt-0.5">Member since {memberSince}</p>
+            )}
           </div>
         </div>
 
         {/* Stats */}
-        <div className="flex gap-4 mt-5">
+        <div className="flex gap-3 mt-5">
           {[
-            { label: 'Orders', value: stats.orders, icon: '📦' },
-            { label: 'Favorites', value: stats.favorites, icon: '❤️' },
-            { label: 'Reviews', value: stats.reviews, icon: '⭐' },
-          ].map(({ label, value, icon }) => (
-            <div key={label} className="flex-1 bg-gray-50 rounded-xl p-3 text-center">
-              <span className="text-xl">{icon}</span>
-              <p className="font-black text-gray-900 text-lg leading-tight">{value}</p>
-              <p className="text-xs text-gray-400">{label}</p>
+            { label: 'Orders', value: stats.orders, color: 'text-[#FF6B35]' },
+            { label: 'Favorites', value: stats.favorites, color: 'text-pink-500' },
+            { label: 'Reviews', value: stats.reviews, color: 'text-yellow-500' },
+          ].map(({ label, value, color }) => (
+            <div key={label} className="flex-1 bg-gray-50 rounded-2xl py-3.5 text-center">
+              <p className={`font-black text-xl leading-tight ${color}`}>{value}</p>
+              <p className="text-xs text-gray-400 font-medium mt-0.5">{label}</p>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Account Section */}
-      <div className="bg-white mb-3 divide-y divide-gray-50">
-        <div className="px-4 py-3">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Account</p>
+      {/* Account section */}
+      <div className="bg-white mb-2 divide-y divide-gray-50">
+        <div className="px-4 pt-4 pb-2">
+          <p className="label-sm text-gray-400">Account</p>
         </div>
-        <ProfileItem icon={<User size={18} />} label="Personal Info" value={profile?.full_name} onClick={() => router.push('/profile/personal-info')} />
-        <ProfileItem icon={<MapPin size={18} />} label="Saved Addresses" onClick={() => router.push('/profile/addresses')} />
-        <ProfileItem icon={<CreditCard size={18} />} label="Payment Methods" onClick={() => router.push('/profile/payment')} />
+        <ProfileItem
+          icon={<User size={17} />}
+          label="Personal Info"
+          value={profile?.full_name}
+          onClick={() => router.push('/profile/personal-info')}
+        />
+        <ProfileItem
+          icon={<MapPin size={17} />}
+          label="Saved Addresses"
+          onClick={() => router.push('/profile/addresses')}
+        />
+        <ProfileItem
+          icon={<CreditCard size={17} />}
+          label="Payment Methods"
+          onClick={() => router.push('/profile/payment')}
+        />
       </div>
 
-      {/* Preferences Section */}
-      <div className="bg-white mb-3 divide-y divide-gray-50">
-        <div className="px-4 py-3">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Preferences</p>
+      {/* Preferences section */}
+      <div className="bg-white mb-2 divide-y divide-gray-50">
+        <div className="px-4 pt-4 pb-2">
+          <p className="label-sm text-gray-400">Preferences</p>
         </div>
-        <ProfileItem icon={<Heart size={18} />} label="Favorite Makers" value={`${stats.favorites} saved`} onClick={() => router.push('/profile/favorites')} />
-        <ProfileItem icon={<Star size={18} />} label="My Reviews" value={`${stats.reviews} reviews`} onClick={() => router.push('/profile/reviews')} />
-        <ProfileItem icon={<Bell size={18} />} label="Notifications" onClick={() => router.push('/notifications')} />
-        <ProfileItem icon={<Settings size={18} />} label="App Settings" onClick={() => router.push('/profile/settings')} />
+        <ProfileItem
+          icon={<Heart size={17} />}
+          label="Favorite Makers"
+          value={`${stats.favorites} saved`}
+          onClick={() => router.push('/profile/favorites')}
+        />
+        <ProfileItem
+          icon={<Star size={17} />}
+          label="My Reviews"
+          value={`${stats.reviews} reviews`}
+          onClick={() => router.push('/profile/reviews')}
+        />
+        <ProfileItem
+          icon={<Bell size={17} />}
+          label="Notifications"
+          onClick={() => router.push('/notifications')}
+        />
+        <ProfileItem
+          icon={<Settings size={17} />}
+          label="App Settings"
+          onClick={() => router.push('/profile/settings')}
+        />
       </div>
 
-      {/* Support Section */}
-      <div className="bg-white mb-3 divide-y divide-gray-50">
-        <div className="px-4 py-3">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Support</p>
+      {/* Support section */}
+      <div className="bg-white mb-2 divide-y divide-gray-50">
+        <div className="px-4 pt-4 pb-2">
+          <p className="label-sm text-gray-400">Support</p>
         </div>
-        <ProfileItem icon={<HelpCircle size={18} />} label="Help & Support" onClick={() => router.push('/profile/help')} />
-        <ProfileItem icon={<LogOut size={18} />} label="Sign Out" danger onClick={handleSignOut} />
+        <ProfileItem
+          icon={<HelpCircle size={17} />}
+          label="Help & Support"
+          onClick={() => router.push('/profile/help')}
+        />
+        <ProfileItem
+          icon={<LogOut size={17} />}
+          label="Sign Out"
+          danger
+          onClick={handleSignOut}
+        />
       </div>
 
-      <div className="px-4 py-6 text-center">
-        <p className="text-xs text-gray-300">Doornext v1.0.0</p>
-        <p className="text-xs text-gray-300 mt-0.5">© 2026 Doornext Inc.</p>
+      <div className="px-4 py-8 text-center">
+        <p className="text-xs text-gray-300 font-medium">Doornext v1.0.0 · © 2026 Doornext Inc.</p>
       </div>
     </div>
   )

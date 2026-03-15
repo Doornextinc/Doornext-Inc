@@ -47,50 +47,54 @@ export function TopBar({
   }, [showNotifications])
 
   return (
-    <header className="sticky top-0 z-40 bg-white border-b border-gray-100">
+    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-100">
       <div className="flex items-center justify-between px-4 h-14">
         {title ? (
-          <h1 className="text-lg font-bold text-gray-900">{title}</h1>
+          <h1 className="heading-md text-gray-900">{title}</h1>
         ) : (
-          <button className="flex items-center gap-1.5 group" onClick={onLocationClick}>
-            <MapPin size={16} className="text-[#FF6B35]" />
-            <div className="flex flex-col items-start">
-              <span className="text-xs text-gray-400 font-medium leading-none">
+          <button
+            className="flex items-center gap-2 group min-w-0"
+            onClick={onLocationClick}
+          >
+            <div className="w-7 h-7 rounded-full bg-orange-50 flex items-center justify-center flex-shrink-0">
+              <MapPin size={14} className="text-[#FF6B35]" strokeWidth={2.5} />
+            </div>
+            <div className="flex flex-col items-start min-w-0">
+              <span className="text-[10px] text-gray-400 font-semibold leading-none uppercase tracking-wide">
                 Delivering to
               </span>
-              <div className="flex items-center gap-1">
-                <span className="text-sm font-semibold text-gray-900 leading-tight">
+              <div className="flex items-center gap-0.5 mt-0.5">
+                <span className="text-sm font-bold text-gray-900 leading-tight truncate max-w-[160px]">
                   {location}
                 </span>
-                <ChevronDown size={14} className="text-gray-500" />
+                <ChevronDown size={13} className="text-gray-500 flex-shrink-0" strokeWidth={2.5} />
               </div>
             </div>
           </button>
         )}
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           {showNotifications && (
             <Link
               href="/notifications"
               aria-label="Notifications"
               className="relative w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center"
             >
-              <Bell size={18} className="text-gray-600" />
+              <Bell size={17} className="text-gray-600" strokeWidth={1.75} />
               {unreadCount > 0 && (
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#FF6B35] rounded-full" />
+                <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-[#FF6B35] rounded-full border-2 border-white" />
               )}
             </Link>
           )}
+
           {showCart && totalItems > 0 && (
             <Link
               href="/cart"
               aria-label={`Cart, ${totalItems} item${totalItems !== 1 ? 's' : ''}`}
-              className="relative w-9 h-9 rounded-full bg-[#FF6B35] flex items-center justify-center"
+              className="flex items-center gap-1.5 bg-[#FF6B35] text-white pl-3 pr-3.5 h-9 rounded-full shadow-cta"
             >
-              <ShoppingCart size={18} className="text-white" />
-              <span className="absolute -top-1 -right-1 bg-gray-900 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-                {totalItems > 9 ? '9+' : totalItems}
-              </span>
+              <ShoppingCart size={15} strokeWidth={2.25} />
+              <span className="text-sm font-bold tabular-nums">{totalItems}</span>
             </Link>
           )}
         </div>
@@ -109,15 +113,16 @@ export function BackBar({
   rightAction?: React.ReactNode
 }) {
   return (
-    <header className="sticky top-0 z-40 bg-white border-b border-gray-100">
+    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-100">
       <div className="flex items-center justify-between px-4 h-14">
         <button
           onClick={onBack ?? (() => history.back())}
-          className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center"
+          className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center active:bg-gray-200 transition-colors"
+          aria-label="Go back"
         >
           <svg
-            width="18"
-            height="18"
+            width="17"
+            height="17"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -128,8 +133,8 @@ export function BackBar({
             <polyline points="15 18 9 12 15 6" />
           </svg>
         </button>
-        <h1 className="text-base font-bold text-gray-900">{title}</h1>
-        <div className="w-9">{rightAction}</div>
+        <h1 className="heading-md text-gray-900">{title}</h1>
+        <div className="w-9 flex items-center justify-end">{rightAction}</div>
       </div>
     </header>
   )
