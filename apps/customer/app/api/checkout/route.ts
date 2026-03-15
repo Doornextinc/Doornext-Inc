@@ -167,8 +167,6 @@ export async function POST(req: NextRequest) {
         delivery_fee: pricing.deliveryFee,
         tip_amount:   Math.round(tip * 100) / 100,
         platform_fee: Math.round(platformFee * 100) / 100,
-        driver_payout: pricing.driverBasePay,
-        maker_payout:  Math.round(subtotal * 0.8 * 100) / 100,
         total:         Math.round(total * 100) / 100,
         delivery_address: delivery_address ?? { street: 'N/A', city: 'N/A', state: 'NY', zip: '00000' },
         stripe_payment_intent_id: paymentIntent.id,
