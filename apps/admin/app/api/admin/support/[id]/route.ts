@@ -35,7 +35,7 @@ export async function PATCH(
   const body = await request.json()
   const supabase = createAdminClient()
 
-  const allowed = ['status', 'priority', 'assigned_to', 'resolved_at']
+  const allowed = ['status', 'priority', 'assigned_to', 'resolved_at', 'order_id']
   const update: Record<string, unknown> = { updated_at: new Date().toISOString() }
   for (const key of allowed) {
     if (body[key] !== undefined) update[key] = body[key]
