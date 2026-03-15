@@ -2,150 +2,138 @@
 
 import { useEffect, useRef } from 'react'
 
-interface LatLng { lat: number; lng: number }
+// Leaflet is loaded from CDN to avoid module-resolution issues with Turbopack.
+// We keep a simple module-level promise so the script is only injected once.
+let leafletPromise: Promise<void> | null = null
 
+function loadLeafletFromCDN(): Promise<void> {
+  if (typeof window === 'undefined') return Promise.resolve()
+  // Already loaded
+  if ((window as Window & { L?: unknown }).L) return Promise.resolve()
+  if (leafletPromise) return leafletPromise
+
+  leafletPromise = new Promise((resolve) => {
+    // CSS
+    if (!document.getElementById('leaflet-css')) {
+      const link = document.createElement('link')
+      link.id = 'leaflet-css'
+      link.rel = 'stylesheet'
+      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
+      document.head.appendChild(link)
+    }
+    // JS
+    const script = document.createElement('script')
+    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+    script.onload = () => resolve()
+    script.onerror = () => resolve() // fail silently
+    document.head.appendChild(script)
+  })
+  return leafletPromise
+}
+
+interface LatLng { lat: number; lng: number }
 interface Props {
   maker: LatLng & { name: string }
   customer: LatLng
   driver?: LatLng | null
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type L = any
+
 export function DeliveryMap({ maker, customer, driver }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const mapRef = useRef<import('leaflet').Map | null>(null)
-  const driverMarkerRef = useRef<import('leaflet').Marker | null>(null)
-  const routeLineRef = useRef<import('leaflet').Polyline | null>(null)
+  const mapRef      = useRef<L>(null)
+  const driverRef   = useRef<L>(null)
+  const routeRef    = useRef<L>(null)
 
+  // Initialise map once maker / customer coords are known
   useEffect(() => {
     if (!containerRef.current) return
     let destroyed = false
 
-    const init = async () => {
-      const L = (await import('leaflet')).default
-      await import('leaflet/dist/leaflet.css')
+    loadLeafletFromCDN().then(() => {
       if (destroyed || !containerRef.current) return
+      const L: L = (window as Window & { L: L }).L
+      if (!L) return
 
-      if (mapRef.current) {
-        mapRef.current.remove()
-        mapRef.current = null
-      }
+      // Destroy previous instance if coords changed
+      if (mapRef.current) { mapRef.current.remove(); mapRef.current = null }
 
       const map = L.map(containerRef.current, {
-        zoomControl: false,
-        attributionControl: false,
-        dragging: true,
-        touchZoom: true,
-        doubleClickZoom: false,
-        scrollWheelZoom: false,
-        boxZoom: false,
-        keyboard: false,
+        zoomControl: false, attributionControl: false,
+        dragging: true, touchZoom: true,
+        doubleClickZoom: false, scrollWheelZoom: false,
       })
       mapRef.current = map
 
-      // CartoDB DarkMatter — fully black with white road lines, no API key needed
+      // CartoDB DarkMatter — fully black with white road lines, no API key
       L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        subdomains: 'abcd',
-        maxZoom: 19,
+        subdomains: 'abcd', maxZoom: 19,
       }).addTo(map)
 
-      // Build route points: maker → driver (if present) → customer
-      const routePoints: [number, number][] = driver
+      // Route points
+      const pts: [number, number][] = driver
         ? [[maker.lat, maker.lng], [driver.lat, driver.lng], [customer.lat, customer.lng]]
         : [[maker.lat, maker.lng], [customer.lat, customer.lng]]
 
-      // Fit to all relevant points
-      const bounds = L.latLngBounds(routePoints)
-      map.fitBounds(bounds, { padding: [44, 44] })
+      map.fitBounds(L.latLngBounds(pts), { padding: [44, 44] })
 
-      // White dashed itinerary line
-      routeLineRef.current = L.polyline(routePoints, {
-        color: '#ffffff',
-        weight: 3,
-        opacity: 0.85,
-        dashArray: '10 7',
+      // Dashed white itinerary line
+      routeRef.current = L.polyline(pts, {
+        color: '#ffffff', weight: 3, opacity: 0.85, dashArray: '10 7',
       }).addTo(map)
 
-      // Marker helpers
-      const dot = (emoji: string, bg: string, border: string, size = 36) =>
-        L.divIcon({
-          html: `<div style="width:${size}px;height:${size}px;background:${bg};border-radius:50%;display:flex;align-items:center;justify-content:center;border:2.5px solid ${border};font-size:${Math.floor(size * 0.44)}px;box-shadow:0 2px 10px rgba(0,0,0,0.7)">${emoji}</div>`,
-          className: '',
-          iconSize: [size, size],
-          iconAnchor: [size / 2, size / 2],
-        })
+      // Marker factory
+      const dot = (emoji: string, bg: string, border: string, size = 36) => L.divIcon({
+        html: `<div style="width:${size}px;height:${size}px;background:${bg};border-radius:50%;display:flex;align-items:center;justify-content:center;border:2.5px solid ${border};font-size:${Math.floor(size * 0.44)}px;box-shadow:0 2px 10px rgba(0,0,0,.7)">${emoji}</div>`,
+        className: '', iconSize: [size, size], iconAnchor: [size / 2, size / 2],
+      })
 
-      // Kitchen marker (orange)
-      L.marker([maker.lat, maker.lng], { icon: dot('🍳', '#FF6B35', '#fff') }).addTo(map)
-
-      // Customer / destination marker (green)
+      L.marker([maker.lat, maker.lng],    { icon: dot('🍳', '#FF6B35', '#fff') }).addTo(map)
       L.marker([customer.lat, customer.lng], { icon: dot('📍', '#22c55e', '#fff') }).addTo(map)
 
-      // Driver marker (white ring, larger, on top)
       if (driver) {
-        driverMarkerRef.current = L.marker(
+        driverRef.current = L.marker(
           [driver.lat, driver.lng],
-          { icon: dot('🛵', '#111111', '#FF6B35', 42), zIndexOffset: 1000 }
+          { icon: dot('🛵', '#111', '#FF6B35', 42), zIndexOffset: 1000 }
         ).addTo(map)
       }
-    }
+    })
 
-    init().catch(console.error)
     return () => {
       destroyed = true
       mapRef.current?.remove()
-      mapRef.current = null
-      driverMarkerRef.current = null
-      routeLineRef.current = null
+      mapRef.current = null; driverRef.current = null; routeRef.current = null
     }
-  // Only reinit on mount / coord changes for maker & customer
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [maker.lat, maker.lng, customer.lat, customer.lng])
 
-  // Smoothly update driver marker + route line without reinitialising the whole map
+  // Live-update driver marker without reinit
   useEffect(() => {
-    if (!mapRef.current) return
+    if (!mapRef.current || !driver) return
+    const L: L = (window as Window & { L: L }).L
+    if (!L) return
 
-    const updateDriver = async () => {
-      const L = (await import('leaflet')).default
-      const map = mapRef.current
-      if (!map) return
-
-      if (driver) {
-        if (driverMarkerRef.current) {
-          driverMarkerRef.current.setLatLng([driver.lat, driver.lng])
-        } else {
-          const dot = (emoji: string, bg: string, border: string, size = 36) =>
-            L.divIcon({
-              html: `<div style="width:${size}px;height:${size}px;background:${bg};border-radius:50%;display:flex;align-items:center;justify-content:center;border:2.5px solid ${border};font-size:${Math.floor(size * 0.44)}px;box-shadow:0 2px 10px rgba(0,0,0,0.7)">${emoji}</div>`,
-              className: '',
-              iconSize: [size, size],
-              iconAnchor: [size / 2, size / 2],
-            })
-          driverMarkerRef.current = L.marker(
-            [driver.lat, driver.lng],
-            { icon: dot('🛵', '#111111', '#FF6B35', 42), zIndexOffset: 1000 }
-          ).addTo(map)
-        }
-
-        // Redraw route line with updated driver position
-        const newPoints: [number, number][] = [
-          [maker.lat, maker.lng],
-          [driver.lat, driver.lng],
-          [customer.lat, customer.lng],
-        ]
-        routeLineRef.current?.setLatLngs(newPoints)
-      }
+    if (driverRef.current) {
+      driverRef.current.setLatLng([driver.lat, driver.lng])
+    } else {
+      const dot = (emoji: string, bg: string, border: string, size = 36) => L.divIcon({
+        html: `<div style="width:${size}px;height:${size}px;background:${bg};border-radius:50%;display:flex;align-items:center;justify-content:center;border:2.5px solid ${border};font-size:${Math.floor(size * 0.44)}px;box-shadow:0 2px 10px rgba(0,0,0,.7)">${emoji}</div>`,
+        className: '', iconSize: [size, size], iconAnchor: [size / 2, size / 2],
+      })
+      driverRef.current = L.marker(
+        [driver.lat, driver.lng],
+        { icon: dot('🛵', '#111', '#FF6B35', 42), zIndexOffset: 1000 }
+      ).addTo(mapRef.current)
     }
-
-    updateDriver().catch(console.error)
+    // Redraw route with updated driver position
+    const newPts: [number, number][] = [
+      [maker.lat, maker.lng], [driver.lat, driver.lng], [customer.lat, customer.lng],
+    ]
+    routeRef.current?.setLatLngs(newPts)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [driver?.lat, driver?.lng])
 
-  return (
-    <div
-      ref={containerRef}
-      className="w-full h-full"
-      style={{ background: '#0d1117' }}
-    />
-  )
+  return <div ref={containerRef} className="w-full h-full" style={{ background: '#0d1117' }} />
 }

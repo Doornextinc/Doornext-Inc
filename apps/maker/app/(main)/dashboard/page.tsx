@@ -11,7 +11,7 @@ import type { Order, FoodMaker, OrderStatus } from '@doornext/shared/types'
 import {
   Power, ChevronRight, Bell, Plus, Package, Clock,
   DollarSign, TrendingUp, UtensilsCrossed, User,
-  CheckCircle2, ImagePlus, ChefHat, ArrowRight,
+  CheckCircle2, ImagePlus, ChefHat, ArrowRight, Check,
 } from 'lucide-react'
 
 // ─── Audio alert ────────────────────────────────────────────────────────────
@@ -102,6 +102,7 @@ export default function DashboardPage() {
   })
   const [loading, setLoading] = useState(true)
   const [toggling, setToggling] = useState(false)
+  const [quickUpdating, setQuickUpdating] = useState<string | null>(null) // orderId being quick-actioned
   const prevPendingCount = useRef(0)
 
   const loadData = useCallback(async () => {
@@ -174,6 +175,21 @@ export default function DashboardPage() {
       .subscribe()
     return () => { supabase.removeChannel(channel) }
   }, [maker, loadData])
+
+  const quickAdvance = async (e: React.MouseEvent, orderId: string, nextStatus: string) => {
+    e.stopPropagation()
+    setQuickUpdating(orderId)
+    try {
+      const res = await fetch('/api/maker/update-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, status: nextStatus }),
+      })
+      if (res.ok) await loadData()
+    } finally {
+      setQuickUpdating(null)
+    }
+  }
 
   const toggleOpen = async () => {
     if (!maker || toggling) return
@@ -372,7 +388,13 @@ export default function DashboardPage() {
             </div>
             <div className="space-y-2">
               {pending.map((order) => (
-                <OrderCard key={order.id} order={order} accent="red" onClick={() => router.push(`/orders/${order.id}`)} />
+                <OrderCard
+                  key={order.id} order={order} accent="red"
+                  onClick={() => router.push(`/orders/${order.id}`)}
+                  onQuickAction={(e) => quickAdvance(e, order.id, 'confirmed')}
+                  quickActionLabel="Accept Order"
+                  quickActionUpdating={quickUpdating === order.id}
+                />
               ))}
             </div>
           </section>
@@ -385,7 +407,13 @@ export default function DashboardPage() {
             </h2>
             <div className="space-y-2">
               {preparing.map((order) => (
-                <OrderCard key={order.id} order={order} accent="amber" onClick={() => router.push(`/orders/${order.id}`)} />
+                <OrderCard
+                  key={order.id} order={order} accent="amber"
+                  onClick={() => router.push(`/orders/${order.id}`)}
+                  onQuickAction={(e) => quickAdvance(e, order.id, order.status === 'confirmed' ? 'preparing' : 'ready')}
+                  quickActionLabel={order.status === 'confirmed' ? 'Start Preparing' : 'Mark as Ready'}
+                  quickActionUpdating={quickUpdating === order.id}
+                />
               ))}
             </div>
           </section>
@@ -463,10 +491,13 @@ export default function DashboardPage() {
 }
 
 // ─── Order card component ─────────────────────────────────────────────────────
-function OrderCard({ order, accent, onClick }: {
+function OrderCard({ order, accent, onClick, onQuickAction, quickActionLabel, quickActionUpdating }: {
   order: OrderWithItems
   accent: 'red' | 'amber' | 'green'
   onClick: () => void
+  onQuickAction?: (e: React.MouseEvent) => void
+  quickActionLabel?: string
+  quickActionUpdating?: boolean
 }) {
   const itemsSummary = order.order_items
     .map((oi) => `${oi.quantity}× ${oi.menu_item?.name ?? 'Item'}`)
@@ -475,25 +506,52 @@ function OrderCard({ order, accent, onClick }: {
   const borderColor = accent === 'red' ? '#EF4444' : accent === 'amber' ? '#F59E0B' : '#10B981'
 
   return (
-    <button
-      onClick={onClick}
-      className="w-full bg-white rounded-2xl p-4 text-left border border-gray-100 active:bg-orange-50/50 transition-colors flex items-center gap-3"
+    <div
+      className="bg-white rounded-2xl border border-gray-100 overflow-hidden"
       style={{ borderLeft: `3px solid ${borderColor}` }}
     >
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between mb-1">
-          <p className="font-black text-gray-900 text-sm">#{order.id.slice(-6).toUpperCase()}</p>
-          <span className="text-xs text-gray-400">
-            {new Date(order.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
-          </span>
+      <button
+        onClick={onClick}
+        className="w-full p-4 text-left active:bg-orange-50/50 transition-colors flex items-center gap-3"
+      >
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between mb-1">
+            <p className="font-black text-gray-900 text-sm">#{order.id.slice(-6).toUpperCase()}</p>
+            <span className="text-xs text-gray-400">
+              {new Date(order.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+            </span>
+          </div>
+          <p className="text-xs text-gray-400 truncate mb-2">{itemsSummary}</p>
+          <div className="flex items-center justify-between">
+            <span className="font-black text-[#FF6B35] text-base">${order.total.toFixed(2)}</span>
+            <StatusBadge status={order.status} />
+          </div>
         </div>
-        <p className="text-xs text-gray-400 truncate mb-2">{itemsSummary}</p>
-        <div className="flex items-center justify-between">
-          <span className="font-black text-[#FF6B35] text-base">${order.total.toFixed(2)}</span>
-          <StatusBadge status={order.status} />
+        <ChevronRight size={16} className="text-gray-300 flex-shrink-0" />
+      </button>
+
+      {/* Quick action button for actionable states */}
+      {onQuickAction && quickActionLabel && (
+        <div className="px-3 pb-3">
+          <button
+            onClick={onQuickAction}
+            disabled={quickActionUpdating}
+            className={`w-full py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all active:opacity-90 disabled:opacity-60 ${
+              accent === 'red'
+                ? 'bg-blue-500 text-white shadow-sm shadow-blue-200'
+                : accent === 'amber'
+                  ? 'bg-[#FF6B35] text-white shadow-sm shadow-orange-200'
+                  : 'bg-emerald-500 text-white shadow-sm shadow-emerald-200'
+            }`}
+          >
+            {quickActionUpdating
+              ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              : <Check size={14} strokeWidth={3} />
+            }
+            {quickActionUpdating ? 'Updating…' : quickActionLabel}
+          </button>
         </div>
-      </div>
-      <ChevronRight size={16} className="text-gray-300 flex-shrink-0" />
-    </button>
+      )}
+    </div>
   )
 }
