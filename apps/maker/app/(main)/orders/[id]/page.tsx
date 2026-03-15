@@ -4,9 +4,10 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Order, OrderStatus } from '@doornext/shared/types'
-import { ChevronLeft, Check, X, ChefHat, MapPin, Clock, Bell } from 'lucide-react'
+import { ChevronLeft, Check, X, ChefHat, MapPin, Clock, Bell, CreditCard, Banknote } from 'lucide-react'
 
 type OrderDetail = Order & {
+  payment_method?: 'card' | 'cash'
   order_items: Array<{
     quantity: number
     unit_price: number
@@ -53,6 +54,7 @@ export default function OrderDetailPage() {
         .from('orders')
         .select(`
           *,
+          payment_method,
           order_items(
             quantity,
             unit_price,
@@ -139,14 +141,25 @@ export default function OrderDetailPage() {
 
       <div className="p-4 space-y-4 pb-32">
 
-        {/* Order time */}
-        <div className="flex items-center gap-2 text-xs text-gray-400">
-          <Clock size={12} />
-          <span>
-            {new Date(order.created_at).toLocaleString('en-US', {
-              month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
-            })}
-          </span>
+        {/* Order time + payment method */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-xs text-gray-400">
+            <Clock size={12} />
+            <span>
+              {new Date(order.created_at).toLocaleString('en-US', {
+                month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+              })}
+            </span>
+          </div>
+          {order.payment_method === 'cash' ? (
+            <span className="flex items-center gap-1 text-xs font-bold text-green-700 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">
+              <Banknote size={11} />Cash on Delivery
+            </span>
+          ) : (
+            <span className="flex items-center gap-1 text-xs font-semibold text-gray-500 bg-gray-50 border border-gray-200 px-2 py-0.5 rounded-full">
+              <CreditCard size={11} />Card
+            </span>
+          )}
         </div>
 
         {/* Items */}

@@ -7,20 +7,26 @@ import Link from 'next/link'
 interface OrderDetail {
   id: string
   status: string
+  payment_method?: 'card' | 'cash'
   total: number
-  platform_fee: number
-  driver_payout: number
-  maker_payout: number
-  discount_amt: number
-  surge_multiplier: number
+  subtotal?: number
+  delivery_fee?: number
+  tip_amount?: number
+  platform_fee?: number
+  service_fee?: number
+  driver_payout?: number
+  maker_payout?: number
+  discount_amt?: number
+  surge_multiplier?: number
   created_at: string
+  updated_at?: string
   nexter_id: string | null
-  food_maker: { display_name: string; address: string } | null
-  order_items: { quantity: number; unit_price: number; menu_items: { name: string } | null }[]
-  user: { full_name: string; email: string } | null
-  driver: { full_name: string; vehicle_type: string; avg_rating: number } | null
-  promo: { code: string; discount_type: string; discount_value: number } | null
-  price_tier: { name: string; base_fee: number } | null
+  food_maker: { display_name: string } | null
+  order_items: { quantity: number; unit_price: number; customization_notes?: string | null; menu_items: { name: string; price?: number } | null }[]
+  customer: { full_name: string; email: string } | null
+  driver: { full_name?: string; vehicle_type?: string; avg_rating?: number } | null
+  promo?: { code: string; discount_type: string; discount_value: number } | null
+  price_tier?: { name: string; base_fee: number } | null
 }
 
 interface DriverLocation { lat: number; lng: number; updated_at: string }
@@ -155,15 +161,28 @@ export default function OrderDetailPage() {
           {/* Customer */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <h3 className="font-bold text-gray-900 mb-3 text-sm">Customer</h3>
-            <p className="font-medium text-gray-900">{order.user?.full_name ?? '—'}</p>
-            <p className="text-xs text-gray-400">{order.user?.email ?? '—'}</p>
+            <p className="font-medium text-gray-900">{order.customer?.full_name ?? '—'}</p>
+            <p className="text-xs text-gray-400">{order.customer?.email ?? '—'}</p>
+          </div>
+
+          {/* Payment Method */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <h3 className="font-bold text-gray-900 mb-2 text-sm">Payment</h3>
+            {order.payment_method === 'cash' ? (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-50 text-green-700 text-xs font-bold rounded-lg">
+                💵 Cash on Delivery
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-600 text-xs font-bold rounded-lg">
+                💳 Card (Stripe)
+              </span>
+            )}
           </div>
 
           {/* Seller */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <h3 className="font-bold text-gray-900 mb-3 text-sm">Seller</h3>
             <p className="font-medium text-gray-900">{order.food_maker?.display_name ?? '—'}</p>
-            <p className="text-xs text-gray-400">{order.food_maker?.address ?? ''}</p>
           </div>
 
           {/* Driver */}
@@ -171,7 +190,7 @@ export default function OrderDetailPage() {
             <h3 className="font-bold text-gray-900 mb-3 text-sm">Driver</h3>
             {order.driver ? (
               <>
-                <p className="font-medium text-gray-900">{order.driver.full_name}</p>
+                <p className="font-medium text-gray-900">{order.driver.full_name ?? '—'}</p>
                 <p className="text-xs text-gray-400">{order.driver.vehicle_type} · ⭐ {order.driver.avg_rating?.toFixed(1)}</p>
                 {driverLocation && (
                   <div className="mt-3 p-3 bg-blue-50 rounded-xl">

@@ -29,14 +29,19 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
   const isAuthRoute = pathname.startsWith('/login')
 
-  if (!user && !isAuthRoute && !pathname.startsWith('/api')) {
-    return NextResponse.redirect(new URL('/login', request.url))  // admin: no public welcome
+  const isApiRoute = pathname.startsWith('/api/admin')
+
+  if (!user && !isAuthRoute) {
+    // Unauthenticated: redirect pages to login, return 401 for API routes
+    if (isApiRoute) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  if (user && !isAuthRoute && !pathname.startsWith('/api')) {
+  if (user && !isAuthRoute) {
     const { data: profile } = await supabase
       .from('users').select('role').eq('id', user.id).single()
     if (profile?.role !== 'admin') {
+      if (isApiRoute) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
       await supabase.auth.signOut()
       return NextResponse.redirect(new URL('/login?error=not_admin', request.url))
     }
