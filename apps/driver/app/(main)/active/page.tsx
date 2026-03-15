@@ -5,12 +5,13 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useDriverStore } from '@/store/driver-store'
 import type { OrderStatus } from '@doornext/shared/types'
-import { MapPin, Phone, CheckCircle, Navigation, Package, ChevronDown, ChevronUp } from 'lucide-react'
+import { MapPin, Phone, CheckCircle, Navigation, Package, ChevronDown, ChevronUp, Banknote } from 'lucide-react'
 import { AppHeader } from '@/components/layout/app-header'
 
 type OrderItem = { quantity: number; unit_price: number; menu_items: { name: string } | null }
 type ActiveOrder = {
   id: string; status: string; delivery_fee: number; tip_amount: number
+  payment_method?: 'card' | 'cash'
   delivery_address: { street?: string; city?: string; state?: string; zip?: string; label?: string } | null
   food_maker: { display_name: string; lat: number; lng: number } | null
   customer: { full_name: string; phone: string | null } | null
@@ -68,7 +69,7 @@ export default function ActiveDeliveryPage() {
 
     const { data } = await supabase
       .from('orders')
-      .select(`*, order_items(quantity, unit_price, menu_items(name)), food_maker:food_makers(display_name, lat, lng), customer:users!orders_customer_id_fkey(full_name, phone)`)
+      .select(`*, payment_method, order_items(quantity, unit_price, menu_items(name)), food_maker:food_makers(display_name, lat, lng), customer:users!orders_customer_id_fkey(full_name, phone)`)
       .eq('nexter_id', user.id)
       .in('status', ['picked_up', 'on_the_way'])
       .order('updated_at', { ascending: false })
@@ -160,6 +161,16 @@ export default function ActiveDeliveryPage() {
   return (
     <div className="flex flex-col min-h-full pb-[140px]">
       <AppHeader title="Active Delivery" />
+      {/* Cash collection banner */}
+      {order.payment_method === 'cash' && (
+        <div className="flex items-center gap-2 px-4 py-2.5 bg-green-500/15 border-b border-green-500/20">
+          <Banknote size={15} className="text-green-400 flex-shrink-0" />
+          <p className="text-sm font-bold text-green-400">
+            Collect cash on delivery — confirm total with customer
+          </p>
+        </div>
+      )}
+
       {/* Timer bar */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-white/5 bg-[#0A0A0A]">
         <span className="text-xs text-zinc-600">Delivery in progress</span>

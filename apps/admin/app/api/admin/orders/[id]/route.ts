@@ -8,35 +8,49 @@ export async function GET(
   const { id } = await params
   const supabase = createAdminClient()
 
-  const [orderRes, locationRes] = await Promise.all([
-    supabase
-      .from('orders')
-      .select(`
-        id, status, total, platform_fee, driver_payout, maker_payout,
-        discount_amt, surge_multiplier, created_at, nexter_id,
-        food_maker:food_makers(display_name, address),
-        order_items(quantity, unit_price, menu_items(name)),
-        delivery_address:addresses(line1, city, postcode),
-        user:users(full_name, email),
-        driver:driver_profiles(full_name, vehicle_type, avg_rating),
-        promo:promo_codes(code, discount_type, discount_value),
-        price_tier:price_tiers(name, base_fee)
-      `)
-      .eq('id', id)
-      .single(),
-    supabase
+  const { data: order, error } = await supabase
+    .from('orders')
+    .select(`
+      id, status, total, subtotal, delivery_fee, tip_amount,
+      platform_fee, service_fee, small_order_fee, surge_fee,
+      driver_payout, maker_payout, payment_method, is_priority,
+      stripe_payment_intent_id, delivery_address, created_at, updated_at,
+      nexter_id, customer_id, maker_id,
+      food_maker:food_makers(id, display_name, lat, lng),
+      order_items(quantity, unit_price, customization_notes, menu_items(name, price)),
+      customer:users!orders_customer_id_fkey(full_name, email, phone)
+    `)
+    .eq('id', id)
+    .single()
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Fetch driver location if assigned
+  let driverLocation = null
+  if (order?.nexter_id) {
+    const { data: loc } = await supabase
       .from('nexter_locations')
       .select('lat, lng, updated_at')
-      .eq('nexter_id',
-        (await supabase.from('orders').select('nexter_id').eq('id', id).single()).data?.nexter_id ?? ''
-      )
-      .single(),
-  ])
+      .eq('nexter_id', order.nexter_id)
+      .single()
+    driverLocation = loc ?? null
+  }
 
-  if (orderRes.error) return NextResponse.json({ error: orderRes.error.message }, { status: 500 })
+  // Fetch driver profile if assigned
+  let driver = null
+  if (order?.nexter_id) {
+    const { data: drv } = await supabase
+      .from('driver_profiles')
+      .select('vehicle_type, avg_rating, total_deliveries')
+      .eq('id', order.nexter_id)
+      .single()
+    const { data: drvUser } = await supabase
+      .from('users')
+      .select('full_name')
+      .eq('id', order.nexter_id)
+      .single()
+    driver = drv ? { ...drv, full_name: drvUser?.full_name } : null
+  }
 
-  return NextResponse.json({
-    order: orderRes.data,
-    driverLocation: locationRes.data ?? null,
-  })
+  return NextResponse.json({ order, driverLocation, driver })
 }

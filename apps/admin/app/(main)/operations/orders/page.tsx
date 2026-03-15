@@ -6,6 +6,7 @@ import Link from 'next/link'
 interface Order {
   id: string
   status: string
+  payment_method?: 'card' | 'cash'
   total: number
   created_at: string
   food_maker: { display_name: string } | null
@@ -88,6 +89,7 @@ export default function OrdersPage() {
                 <th className="text-left px-5 py-3 text-xs font-bold text-gray-400 uppercase">Order ID</th>
                 <th className="text-left px-5 py-3 text-xs font-bold text-gray-400 uppercase">Seller</th>
                 <th className="text-left px-5 py-3 text-xs font-bold text-gray-400 uppercase">Status</th>
+                <th className="text-left px-5 py-3 text-xs font-bold text-gray-400 uppercase">Payment</th>
                 <th className="text-left px-5 py-3 text-xs font-bold text-gray-400 uppercase">Driver</th>
                 <th className="text-right px-5 py-3 text-xs font-bold text-gray-400 uppercase">Total</th>
                 <th className="text-right px-5 py-3 text-xs font-bold text-gray-400 uppercase">Date</th>
@@ -109,6 +111,17 @@ export default function OrdersPage() {
                     }`}>
                       {order.status.replace(/_/g, ' ')}
                     </span>
+                  </td>
+                  <td className="px-5 py-3">
+                    {order.payment_method === 'cash' ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">
+                        💵 Cash
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-600">
+                        💳 Card
+                      </span>
+                    )}
                   </td>
                   <td className="px-5 py-3 text-xs text-gray-500">
                     {order.nexter_id ? '🚗 Assigned' : '—'}
@@ -133,7 +146,7 @@ export default function OrdersPage() {
               ))}
               {orders.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-5 py-12 text-center text-sm text-gray-400">
+                  <td colSpan={8} className="px-5 py-12 text-center text-sm text-gray-400">
                     No orders found
                   </td>
                 </tr>

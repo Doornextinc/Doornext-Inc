@@ -15,11 +15,27 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { orderId } = await req.json()
+  if (!orderId) return NextResponse.json({ error: 'orderId required' }, { status: 400 })
 
   const admin = createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
+
+  // Verify the order belongs to this driver and is in 'delivered' status
+  const { data: order } = await admin
+    .from('orders')
+    .select('nexter_id, status, delivery_fee, tip_amount')
+    .eq('id', orderId)
+    .single()
+
+  if (!order || order.nexter_id !== user.id) {
+    return NextResponse.json({ error: 'Order not found or not assigned to you' }, { status: 403 })
+  }
+
+  if (order.status !== 'delivered') {
+    return NextResponse.json({ error: 'Order is not yet delivered' }, { status: 400 })
+  }
 
   // Increment total_deliveries on driver profile
   const { data: profile } = await admin
@@ -31,7 +47,7 @@ export async function POST(req: NextRequest) {
   if (profile) {
     await admin
       .from('driver_profiles')
-      .update({ total_deliveries: profile.total_deliveries + 1 })
+      .update({ total_deliveries: (profile.total_deliveries ?? 0) + 1 })
       .eq('id', user.id)
   }
 

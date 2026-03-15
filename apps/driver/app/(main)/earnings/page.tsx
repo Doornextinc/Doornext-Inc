@@ -47,6 +47,11 @@ export default function EarningsPage() {
   const [loading, setLoading] = useState(true)
   const [period, setPeriod] = useState<Period>('week')
   const [expandedDay, setExpandedDay] = useState<number | null>(null)
+  const [showCashOut, setShowCashOut] = useState(false)
+  const [cashOutMethod, setCashOutMethod] = useState<'bank_transfer' | 'paypal' | 'check'>('bank_transfer')
+  const [cashOutLoading, setCashOutLoading] = useState(false)
+  const [cashOutError, setCashOutError] = useState<string | null>(null)
+  const [cashOutSuccess, setCashOutSuccess] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -173,14 +178,58 @@ export default function EarningsPage() {
             </div>
           </div>
 
-          {/* Cash Out button */}
+          {/* Cash Out button / modal */}
           <div className="px-4 pb-5">
-            <button
-              disabled={availableCashOut <= 0}
-              className="w-full bg-[#FF6B35] disabled:bg-zinc-800 disabled:text-zinc-600 text-white font-black text-base py-4 rounded-2xl shadow-lg shadow-[#FF6B35]/20 active:scale-[0.98] transition-all disabled:shadow-none"
-            >
-              {availableCashOut > 0 ? `Cash Out $${availableCashOut.toFixed(2)}` : 'Nothing to Cash Out'}
-            </button>
+            {cashOutSuccess ? (
+              <div className="w-full bg-green-500/15 border border-green-500/30 rounded-2xl py-4 text-center">
+                <p className="text-green-400 font-bold text-sm">✓ Withdrawal request submitted!</p>
+                <p className="text-zinc-600 text-xs mt-1">Admin will process within 1–2 business days</p>
+              </div>
+            ) : showCashOut ? (
+              <div className="space-y-3">
+                <p className="text-xs text-zinc-500 font-semibold uppercase tracking-wider">Payout method</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {([['bank_transfer', 'Bank'], ['paypal', 'PayPal'], ['check', 'Check']] as const).map(([val, label]) => (
+                    <button key={val} onClick={() => setCashOutMethod(val)}
+                      className={`py-2.5 rounded-xl text-xs font-bold border transition-colors ${
+                        cashOutMethod === val ? 'border-[#FF6B35] bg-[#FF6B35]/10 text-[#FF6B35]' : 'border-white/10 text-zinc-500'
+                      }`}
+                    >{label}</button>
+                  ))}
+                </div>
+                {cashOutError && <p className="text-xs text-red-400">{cashOutError}</p>}
+                <div className="flex gap-2">
+                  <button onClick={() => { setShowCashOut(false); setCashOutError(null) }}
+                    className="flex-1 py-3 rounded-2xl border border-white/10 text-zinc-500 text-sm font-bold">
+                    Cancel
+                  </button>
+                  <button
+                    disabled={cashOutLoading}
+                    onClick={async () => {
+                      setCashOutLoading(true); setCashOutError(null)
+                      const res = await fetch('/api/driver/request-withdrawal', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ amount: availableCashOut, method: cashOutMethod }),
+                      })
+                      const data = await res.json()
+                      if (!res.ok) { setCashOutError(data.error ?? 'Failed to submit request'); setCashOutLoading(false); return }
+                      setCashOutSuccess(true); setShowCashOut(false); setCashOutLoading(false)
+                    }}
+                    className="flex-1 py-3 rounded-2xl bg-[#FF6B35] text-white text-sm font-black disabled:opacity-50"
+                  >
+                    {cashOutLoading ? 'Submitting…' : `Request $${availableCashOut.toFixed(2)}`}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                disabled={availableCashOut <= 0}
+                onClick={() => setShowCashOut(true)}
+                className="w-full bg-[#FF6B35] disabled:bg-zinc-800 disabled:text-zinc-600 text-white font-black text-base py-4 rounded-2xl shadow-lg shadow-[#FF6B35]/20 active:scale-[0.98] transition-all disabled:shadow-none"
+              >
+                {availableCashOut > 0 ? `Cash Out $${availableCashOut.toFixed(2)}` : 'Nothing to Cash Out'}
+              </button>
+            )}
           </div>
         </div>
 

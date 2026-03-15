@@ -1,32 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
-import { createAdminClient, createSessionClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 
 export async function POST(req: NextRequest) {
   const stripeKey = process.env.STRIPE_SECRET_KEY
   if (!stripeKey) return NextResponse.json({ error: 'Stripe not configured' }, { status: 500 })
 
-  // Verify admin session
-  const session = await createSessionClient()
-  const { data: { user } } = await session.auth.getUser()
-  if (!user) return NextResponse.redirect(new URL('/login', req.url))
-
-  const { data: profile } = await session.from('users').select('role').eq('id', user.id).single()
-  if (profile?.role !== 'admin') return NextResponse.redirect(new URL('/login', req.url))
-
-  const body = await req.formData()
-  const orderId = body.get('orderId') as string
-  if (!orderId) return NextResponse.redirect(new URL('/orders', req.url))
+  const body = await req.json()
+  const orderId = body.orderId as string
+  if (!orderId) return NextResponse.json({ error: 'orderId required' }, { status: 400 })
 
   const admin = createAdminClient()
   const { data: order } = await admin
     .from('orders')
-    .select('stripe_payment_intent_id, status')
+    .select('stripe_payment_intent_id, payment_method, status, customer_id')
     .eq('id', orderId)
     .single()
 
-  if (!order?.stripe_payment_intent_id) {
-    return NextResponse.redirect(new URL('/orders?error=no_payment', req.url))
+  if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 })
+
+  if (order.status === 'cancelled') {
+    return NextResponse.json({ error: 'Order is already cancelled' }, { status: 400 })
+  }
+
+  // Cash orders cannot be refunded via Stripe
+  if ((order as { payment_method?: string }).payment_method === 'cash') {
+    await admin
+      .from('orders')
+      .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+      .eq('id', orderId)
+
+    await admin.from('notifications').insert({
+      user_id: order.customer_id,
+      type: 'order_cancelled',
+      title: 'Order Cancelled by Admin',
+      body: `Your order #${orderId.slice(-6).toUpperCase()} has been cancelled. No charge was made (cash order).`,
+      data: { order_id: orderId },
+    })
+
+    return NextResponse.json({ success: true, note: 'Cash order cancelled — no Stripe refund needed' })
+  }
+
+  if (!order.stripe_payment_intent_id) {
+    return NextResponse.json({ error: 'No payment to refund (no payment intent)' }, { status: 400 })
   }
 
   try {
@@ -37,10 +53,18 @@ export async function POST(req: NextRequest) {
       .from('orders')
       .update({ status: 'cancelled', updated_at: new Date().toISOString() })
       .eq('id', orderId)
+
+    await admin.from('notifications').insert({
+      user_id: order.customer_id,
+      type: 'order_cancelled',
+      title: 'Order Refunded',
+      body: `Your order #${orderId.slice(-6).toUpperCase()} has been refunded by admin.`,
+      data: { order_id: orderId },
+    })
+
+    return NextResponse.json({ success: true })
   } catch (err) {
     console.error('Refund error:', err)
-    return NextResponse.redirect(new URL('/orders?error=refund_failed', req.url))
+    return NextResponse.json({ error: 'Refund failed — check Stripe dashboard' }, { status: 500 })
   }
-
-  return NextResponse.redirect(new URL('/orders?refunded=1', req.url))
 }

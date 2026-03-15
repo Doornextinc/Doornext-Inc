@@ -16,7 +16,7 @@ const STATUS_STEPS: OrderStatus[] = [
 ]
 
 const STATUS_MESSAGES: Partial<Record<OrderStatus, string>> = {
-  pending: 'Waiting for payment confirmation...',
+  pending: 'Waiting for the kitchen to confirm your order...',
   confirmed: 'Your order has been confirmed! 🎉',
   preparing: 'The maker is cooking your food 🍳',
   ready: 'Your order is ready for pickup!',
@@ -30,6 +30,7 @@ interface FullOrder extends Omit<Order, 'food_maker'> {
   food_maker: { id: string; display_name: string; lat: number; lng: number }
   order_items: Array<OrderItem & { menu_item: { name: string; price: number } }>
   nexter?: { full_name: string; avatar_url: string | null } | null
+  payment_method?: 'card' | 'cash'
 }
 
 export default function OrderTrackingPage() {
@@ -60,6 +61,7 @@ export default function OrderTrackingPage() {
         .from('orders')
         .select(`
           *,
+          payment_method,
           food_maker:food_makers(id, display_name, lat, lng),
           order_items(*, menu_item:menu_items(name, price)),
           nexter:users!orders_nexter_id_fkey(full_name, avatar_url)
@@ -326,7 +328,8 @@ export default function OrderTrackingPage() {
           </div>
           <div className="h-px bg-gray-100 my-2" />
           <div className="flex justify-between font-bold text-gray-900 text-sm">
-            <span>Total paid</span><span>${order.total.toFixed(2)}</span>
+            <span>{order.payment_method === 'cash' ? 'Total (cash)' : 'Total paid'}</span>
+            <span>${order.total.toFixed(2)}</span>
           </div>
         </div>
       </div>

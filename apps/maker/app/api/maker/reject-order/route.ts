@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
 
   const { data: order } = await supabase
     .from('orders')
-    .select('maker_id, status, stripe_payment_intent_id, customer_id')
+    .select('maker_id, status, stripe_payment_intent_id, payment_method, customer_id')
     .eq('id', orderId)
     .single()
 
@@ -61,12 +61,15 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Notify customer
+  // Notify customer — message depends on payment method
+  const isCash = (order as { payment_method?: string }).payment_method === 'cash'
   await admin.from('notifications').insert({
     user_id: order.customer_id,
     type: 'order_rejected',
     title: 'Order Cancelled',
-    body: `Your order #${orderId.slice(-6).toUpperCase()} was cancelled. A full refund has been issued.`,
+    body: isCash
+      ? `Your order #${orderId.slice(-6).toUpperCase()} was cancelled by the kitchen. No charge was made.`
+      : `Your order #${orderId.slice(-6).toUpperCase()} was cancelled. A full refund has been issued.`,
     data: { order_id: orderId },
   })
 
