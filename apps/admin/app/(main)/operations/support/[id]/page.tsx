@@ -90,7 +90,7 @@ export default function SupportTicketPage() {
     await fetch(`/api/admin/support/${id}/messages`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: reply.trim(), is_internal: isInternal, sender_id: 'admin' }),
+      body: JSON.stringify({ message: reply.trim(), is_internal: isInternal }),
     })
     setReply('')
     setSending(false)
