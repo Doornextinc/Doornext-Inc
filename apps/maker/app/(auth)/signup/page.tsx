@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { Loader2, ChevronLeft, MapPin } from 'lucide-react'
+import { loadGoogleMapsScript, parsePlace } from '@/lib/google-maps'
+import { Loader2, ChevronLeft, MapPin, Navigation } from 'lucide-react'
 
 const CUISINE_OPTIONS = [
   'American', 'Mexican', 'Italian', 'Chinese', 'Indian',
@@ -21,8 +22,13 @@ export default function MakerSignupPage() {
     displayName: '',
     cuisineTags: [] as string[],
   })
+  const [kitchenAddress, setKitchenAddress] = useState('')
+  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null)
+  const [gpsLoading, setGpsLoading] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const addressRef = useRef<HTMLInputElement>(null)
 
   const set = (field: string, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }))
@@ -36,31 +42,55 @@ export default function MakerSignupPage() {
     }))
   }
 
-  const getLocation = (): Promise<{ lat: number; lng: number }> =>
-    new Promise((resolve, reject) => {
-      if (!navigator.geolocation) { reject(new Error('no_geolocation')); return }
-      navigator.geolocation.getCurrentPosition(
-        (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-        () => reject(new Error('denied')),
-        { timeout: 10000 }
-      )
+  // Attach Google Places autocomplete to the kitchen address input
+  useEffect(() => {
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+    if (!apiKey || !addressRef.current) return
+    let ac: google.maps.places.Autocomplete | null = null
+    loadGoogleMapsScript(apiKey).then(() => {
+      if (!addressRef.current) return
+      ac = new window.google.maps.places.Autocomplete(addressRef.current, {
+        types: ['address'],
+        fields: ['address_components', 'geometry', 'formatted_address'],
+      })
+      ac.addListener('place_changed', () => {
+        const place = ac!.getPlace()
+        const parsed = parsePlace(place)
+        if (parsed) {
+          setLocation({ lat: parsed.lat, lng: parsed.lng })
+          setKitchenAddress(place.formatted_address ?? `${parsed.street}, ${parsed.city}, ${parsed.state} ${parsed.zip}`)
+          setError(null)
+        }
+      })
     })
+    return () => { if (ac) window.google?.maps?.event?.clearInstanceListeners(ac) }
+  }, [])
+
+  const useGpsLocation = () => {
+    if (!navigator.geolocation) { setError('Geolocation is not supported by your browser.'); return }
+    setGpsLoading(true)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+        setKitchenAddress('Current GPS location')
+        setGpsLoading(false)
+        setError(null)
+      },
+      () => {
+        setError('Could not get your location. Please type your kitchen address instead.')
+        setGpsLoading(false)
+      },
+      { timeout: 10000 }
+    )
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (form.password.length < 6) { setError('Password must be at least 6 characters.'); return }
     if (!form.displayName.trim()) { setError('Kitchen name is required.'); return }
+    if (!location) { setError('Please enter your kitchen address or use your current location.'); return }
     setLoading(true)
     setError(null)
-
-    let location: { lat: number; lng: number }
-    try {
-      location = await getLocation()
-    } catch {
-      setError('Location access is required so customers nearby can find your kitchen. Please allow location and try again.')
-      setLoading(false)
-      return
-    }
 
     const res = await fetch('/api/auth/signup', {
       method: 'POST',
@@ -153,6 +183,41 @@ export default function MakerSignupPage() {
             />
           </div>
 
+          {/* Kitchen address with autocomplete */}
+          <div>
+            <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">
+              Kitchen Address
+            </label>
+            <div className="relative">
+              <MapPin size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              <input
+                ref={addressRef}
+                type="text"
+                value={kitchenAddress}
+                onChange={(e) => { setKitchenAddress(e.target.value); setLocation(null) }}
+                placeholder="Start typing your kitchen address…"
+                autoComplete="off"
+                className={`w-full bg-white border rounded-xl pl-9 pr-3.5 py-3 text-sm text-gray-900 focus:outline-none transition-colors ${
+                  location ? 'border-green-400 focus:border-green-500' : 'border-gray-200 focus:border-[#FF6B35]'
+                }`}
+              />
+              {location && kitchenAddress !== 'Current GPS location' && (
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-green-400" />
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={useGpsLocation}
+              disabled={gpsLoading}
+              className="mt-2 flex items-center gap-1.5 text-xs text-[#FF6B35] font-semibold hover:underline disabled:opacity-50"
+            >
+              {gpsLoading
+                ? <><Loader2 size={11} className="animate-spin" /> Detecting…</>
+                : <><Navigation size={11} /> Use my current location</>
+              }
+            </button>
+          </div>
+
           <div>
             <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">
               Cuisine Types <span className="text-gray-300 normal-case font-normal">(up to 5)</span>
@@ -173,11 +238,6 @@ export default function MakerSignupPage() {
                 </button>
               ))}
             </div>
-          </div>
-
-          <div className="flex items-center gap-2 text-xs text-gray-400 pt-1">
-            <MapPin size={12} className="text-[#FF6B35]" />
-            <span>We'll request your location so customers nearby can find you.</span>
           </div>
 
           <button
