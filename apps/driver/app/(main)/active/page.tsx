@@ -5,7 +5,10 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useDriverStore } from '@/store/driver-store'
 import type { OrderStatus } from '@doornext/shared/types'
-import { MapPin, Phone, CheckCircle, Navigation, Package, ChevronDown, ChevronUp, Banknote } from 'lucide-react'
+import {
+  MapPin, Phone, CheckCircle, Navigation, Package,
+  ChevronDown, ChevronUp, Banknote, ArrowRight, Clock, Star,
+} from 'lucide-react'
 import { AppHeader } from '@/components/layout/app-header'
 
 type OrderItem = { quantity: number; unit_price: number; menu_items: { name: string } | null }
@@ -19,20 +22,31 @@ type ActiveOrder = {
   updated_at: string
 }
 
-const STEPS: Array<{ status: string; label: string; sublabel: string }> = [
-  { status: 'picked_up', label: 'Picked Up', sublabel: 'At restaurant' },
-  { status: 'on_the_way', label: 'Driving', sublabel: 'En route' },
-  { status: 'delivered', label: 'Delivered', sublabel: 'Complete' },
+const STEPS = [
+  { status: 'picked_up',  label: 'Heading to Pickup', sublabel: 'Go to restaurant' },
+  { status: 'on_the_way', label: 'Out for Delivery',  sublabel: 'Drive to customer' },
+  { status: 'delivered',  label: 'Delivered',          sublabel: 'Order complete' },
 ]
 
-const NEXT_ACTION: Record<string, { next: OrderStatus; label: string; color: string }> = {
-  picked_up: { next: 'on_the_way', label: 'Start Driving', color: 'bg-[#D4622B] shadow-[#D4622B]/30' },
-  on_the_way: { next: 'delivered', label: 'Confirm Delivery', color: 'bg-green-500 shadow-green-500/30' },
+const NEXT_ACTION: Record<string, { next: OrderStatus; label: string }> = {
+  picked_up:  { next: 'on_the_way', label: 'Confirm Pickup' },
+  on_the_way: { next: 'delivered',  label: 'Confirm Delivery' },
 }
 
 function formatElapsed(secs: number) {
   const m = Math.floor(secs / 60), s = secs % 60
   return `${m}:${s.toString().padStart(2, '0')}`
+}
+
+function mapsUrl(addr: ActiveOrder['delivery_address']): string {
+  if (!addr) return '#'
+  return `https://maps.google.com/?q=${encodeURIComponent(`${addr.street}, ${addr.city}, ${addr.state}`)}`
+}
+
+function makerMapsUrl(maker: ActiveOrder['food_maker']): string {
+  if (!maker) return '#'
+  if (maker.lat && maker.lng) return `https://maps.google.com/?q=${maker.lat},${maker.lng}`
+  return `https://maps.google.com/?q=${encodeURIComponent(maker.display_name)}`
 }
 
 export default function ActiveDeliveryPage() {
@@ -44,6 +58,7 @@ export default function ActiveDeliveryPage() {
   const [elapsed, setElapsed] = useState(0)
   const [showItems, setShowItems] = useState(false)
   const [checkedItems, setCheckedItems] = useState<Set<number>>(new Set())
+  const [delivered, setDelivered] = useState(false)
   const locationIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -99,16 +114,17 @@ export default function ActiveDeliveryPage() {
 
   const handleStatusUpdate = async (newStatus: OrderStatus) => {
     if (!order) return
-    // For pickup: verify all items checked
     if (order.status === 'picked_up' && order.order_items.length > 0 && checkedItems.size < order.order_items.length) {
-      const confirmed = window.confirm(`You haven't checked all ${order.order_items.length} items. Continue anyway?`)
-      if (!confirmed) return
+      const ok = window.confirm(`You haven't verified all ${order.order_items.length} items. Continue anyway?`)
+      if (!ok) return
     }
     setUpdating(true)
+
     const res = await fetch('/api/driver/update-status', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ orderId: order.id, status: newStatus }),
     })
+
     if (res.ok) {
       if (newStatus === 'delivered') {
         await fetch('/api/driver/complete-delivery', {
@@ -116,25 +132,59 @@ export default function ActiveDeliveryPage() {
           body: JSON.stringify({ orderId: order.id }),
         })
         setActiveOrder(null)
-        router.push('/')
+        setDelivered(true)
+        setTimeout(() => router.push('/'), 3000)
       } else {
         setOrder(prev => prev ? { ...prev, status: newStatus } : prev)
+        setCheckedItems(new Set())
       }
     }
     setUpdating(false)
   }
 
+  /* ── Loading ── */
   if (loading) {
     return (
       <div className="flex flex-col min-h-full">
         <AppHeader title="Active Delivery" />
         <div className="flex-1 flex items-center justify-center">
-          <div className="w-10 h-10 border-[3px] border-[#D4622B] border-t-transparent rounded-full animate-spin" />
+          <div className="w-10 h-10 border-[3px] border-[#FF7A50] border-t-transparent rounded-full animate-spin" />
         </div>
       </div>
     )
   }
 
+  /* ── Delivery success ── */
+  if (delivered) {
+    const earn = (order?.delivery_fee ?? 0) + (order?.tip_amount ?? 0)
+    return (
+      <div className="flex flex-col min-h-full bg-[#080808]">
+        <AppHeader title="Delivered!" />
+        <div className="flex-1 flex flex-col items-center justify-center px-6 text-center gap-6">
+          <div className="w-24 h-24 rounded-full bg-green-500/15 border border-green-500/30 flex items-center justify-center">
+            <CheckCircle size={48} className="text-green-400" />
+          </div>
+          <div>
+            <h2 className="text-3xl font-black text-white mb-2">Order Delivered!</h2>
+            <p className="text-zinc-500">Great work — keep it up.</p>
+          </div>
+          <div className="bg-[#141414] rounded-2xl border border-white/5 px-8 py-5 w-full max-w-xs text-center">
+            <p className="text-sm text-zinc-500 mb-1">You earned</p>
+            <p className="text-4xl font-black text-[#FF7A50]">${earn.toFixed(2)}</p>
+            {(order?.tip_amount ?? 0) > 0 && (
+              <p className="text-sm text-green-400 mt-2">incl. ${order!.tip_amount.toFixed(2)} tip</p>
+            )}
+          </div>
+          <div className="flex items-center gap-2 text-zinc-600 text-sm">
+            <div className="w-4 h-4 border-2 border-zinc-700 border-t-zinc-400 rounded-full animate-spin" />
+            Returning to dashboard…
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  /* ── No active order ── */
   if (!order) {
     return (
       <div className="flex flex-col min-h-full">
@@ -145,7 +195,10 @@ export default function ActiveDeliveryPage() {
           </div>
           <h2 className="text-2xl font-black text-white mb-2">No active delivery</h2>
           <p className="text-zinc-500 text-base mb-8">Accept a pickup to start delivering</p>
-          <button onClick={() => router.push('/available')} className="bg-[#D4622B] text-white rounded-2xl px-10 py-4 font-black text-base shadow-lg shadow-[#D4622B]/20">
+          <button
+            onClick={() => router.push('/available')}
+            className="bg-[#FF7A50] text-white rounded-2xl px-10 py-4 font-black text-base shadow-lg shadow-[#FF7A50]/20"
+          >
             Find Pickups
           </button>
         </div>
@@ -157,47 +210,69 @@ export default function ActiveDeliveryPage() {
   const addr = order.delivery_address
   const currentStepIdx = STEPS.findIndex(s => s.status === order.status)
   const earn = (order.delivery_fee ?? 0) + (order.tip_amount ?? 0)
+  const isHeadingToRestaurant = order.status === 'picked_up'
+  const isHeadingToCustomer = order.status === 'on_the_way'
 
   return (
-    <div className="flex flex-col min-h-full pb-[140px]">
+    <div className="flex flex-col min-h-full pb-[144px]">
       <AppHeader title="Active Delivery" />
-      {/* Cash collection banner */}
+
+      {/* Cash banner */}
       {order.payment_method === 'cash' && (
-        <div className="flex items-center gap-2 px-4 py-2.5 bg-green-500/15 border-b border-green-500/20">
+        <div className="flex items-center gap-2 px-4 py-2.5 bg-green-500/12 border-b border-green-500/20">
           <Banknote size={15} className="text-green-400 flex-shrink-0" />
-          <p className="text-sm font-bold text-green-400">
-            Collect cash on delivery — confirm total with customer
-          </p>
+          <p className="text-sm font-bold text-green-400">Cash order — collect payment at drop-off</p>
         </div>
       )}
 
-      {/* Timer bar */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-white/5 bg-[#0A0A0A]">
-        <span className="text-xs text-zinc-600">Delivery in progress</span>
-        <div className="flex items-center gap-2 bg-[#141414] rounded-full px-3 py-1">
-          <div className="w-1.5 h-1.5 rounded-full bg-[#D4622B] animate-pulse" />
-          <span className="font-mono text-xs font-bold text-white">{formatElapsed(elapsed)}</span>
+      {/* Top bar: timer + earnings */}
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/5 bg-[#0A0A0A]">
+        <div className="flex items-center gap-2">
+          <Clock size={13} className="text-zinc-600" />
+          <span className="font-mono text-sm font-bold text-white">{formatElapsed(elapsed)}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-zinc-500">You earn</span>
+          <span className="font-black text-[#FF7A50] text-sm">${earn.toFixed(2)}</span>
+          {order.tip_amount > 0 && (
+            <span className="text-xs text-green-400 font-semibold ml-1">+${order.tip_amount.toFixed(2)} tip</span>
+          )}
         </div>
       </div>
 
-      {/* Progress stepper */}
-      <div className="px-5 py-5">
+      {/* ── Progress stepper ── */}
+      <div className="px-5 pt-5 pb-4">
         <div className="flex items-start">
           {STEPS.map((step, i) => {
-            const done = i < currentStepIdx; const active = i === currentStepIdx; const upcoming = i > currentStepIdx
+            const done = i < currentStepIdx
+            const active = i === currentStepIdx
+            const upcoming = i > currentStepIdx
             return (
               <div key={step.status} className="flex-1 flex flex-col items-center">
                 <div className="flex items-center w-full">
-                  {i > 0 && <div className={`flex-1 h-0.5 rounded-full transition-colors ${done || active ? 'bg-[#D4622B]' : 'bg-[#1A1A1A]'}`} />}
-                  <div className={`relative w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all ${done ? 'bg-[#D4622B]' : active ? 'bg-[#D4622B] ring-4 ring-[#D4622B]/25' : 'bg-[#1A1A1A]'}`}>
-                    {done ? <CheckCircle size={14} className="text-white" /> : <span className={`text-xs font-black ${upcoming ? 'text-zinc-500' : 'text-white'}`}>{i + 1}</span>}
-                    {active && <span className="absolute inset-0 rounded-full animate-ping bg-[#D4622B]/30" />}
+                  {i > 0 && (
+                    <div className={`flex-1 h-0.5 rounded-full transition-colors ${done || active ? 'bg-[#FF7A50]' : 'bg-[#1A1A1A]'}`} />
+                  )}
+                  <div className={`relative w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all ${
+                    done ? 'bg-[#FF7A50]' : active ? 'bg-[#FF7A50] ring-4 ring-[#FF7A50]/25' : 'bg-[#1A1A1A]'
+                  }`}>
+                    {done
+                      ? <CheckCircle size={14} className="text-white" />
+                      : <span className={`text-xs font-black ${upcoming ? 'text-zinc-600' : 'text-white'}`}>{i + 1}</span>
+                    }
+                    {active && <span className="absolute inset-0 rounded-full animate-ping bg-[#FF7A50]/25" />}
                   </div>
-                  {i < STEPS.length - 1 && <div className={`flex-1 h-0.5 rounded-full transition-colors ${done ? 'bg-[#D4622B]' : 'bg-[#1A1A1A]'}`} />}
+                  {i < STEPS.length - 1 && (
+                    <div className={`flex-1 h-0.5 rounded-full transition-colors ${done ? 'bg-[#FF7A50]' : 'bg-[#1A1A1A]'}`} />
+                  )}
                 </div>
                 <div className="mt-2 text-center">
-                  <p className={`text-[11px] font-bold ${active ? 'text-[#D4622B]' : done ? 'text-zinc-400' : 'text-zinc-600'}`}>{step.label}</p>
-                  <p className={`text-[9px] mt-0.5 ${active ? 'text-[#D4622B]/70' : 'text-zinc-600'}`}>{step.sublabel}</p>
+                  <p className={`text-[11px] font-bold ${active ? 'text-[#FF7A50]' : done ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                    {step.label}
+                  </p>
+                  <p className={`text-[9px] mt-0.5 ${active ? 'text-[#FF7A50]/70' : 'text-zinc-700'}`}>
+                    {step.sublabel}
+                  </p>
                 </div>
               </div>
             )
@@ -205,121 +280,197 @@ export default function ActiveDeliveryPage() {
         </div>
       </div>
 
-      {/* Route card */}
-      <div className="mx-4 mb-3 bg-[#141414] rounded-2xl border border-white/5 overflow-hidden">
-        <div className="p-4">
-          <div className="flex items-start gap-3 pb-3">
-            <div className="flex flex-col items-center flex-shrink-0 mt-0.5">
-              <div className="w-3 h-3 rounded-full bg-[#D4622B] border-2 border-[#FF6B35]/30" />
-              <div className="w-px h-8 bg-zinc-600 my-1" />
+      {/* ── Stage 1: Heading to Restaurant ── */}
+      {isHeadingToRestaurant && (
+        <>
+          <div className="mx-4 mb-3 bg-[#141414] rounded-2xl border border-white/5 overflow-hidden">
+            <div className="px-4 pt-4 pb-3">
+              <p className="text-[11px] font-black text-[#FF7A50] uppercase tracking-wider mb-1">Pickup at</p>
+              <p className="text-xl font-black text-white">{order.food_maker?.display_name}</p>
+              <p className="text-sm text-zinc-500 mt-0.5">Order #{order.id.slice(-6).toUpperCase()}</p>
             </div>
-            <div className="flex-1 pb-1">
-              <p className="text-xs text-zinc-500 font-bold uppercase tracking-wide">Pickup</p>
-              <p className="font-black text-white text-base mt-0.5">{order.food_maker?.display_name}</p>
-              <p className="text-xs text-zinc-500">Order #{order.id.slice(-6).toUpperCase()}</p>
-            </div>
+            <a
+              href={makerMapsUrl(order.food_maker)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 bg-[#FF7A50] py-3.5 text-sm font-black text-white"
+            >
+              <Navigation size={16} />
+              Navigate to Restaurant
+              <ArrowRight size={14} className="opacity-70" />
+            </a>
           </div>
-          <div className="flex items-start gap-3">
-            <div className="flex flex-col items-center flex-shrink-0"><MapPin size={13} className="text-zinc-400" /></div>
-            <div className="flex-1">
-              <p className="text-xs text-zinc-500 font-bold uppercase tracking-wide">Deliver to</p>
-              {addr ? (
-                <div className="mt-0.5">
-                  <p className="font-bold text-white text-sm">{addr.street}</p>
-                  <p className="text-xs text-zinc-400">{addr.city}, {addr.state} {addr.zip}</p>
-                  {addr.label && <p className="text-xs text-zinc-500 mt-0.5 italic">{addr.label}</p>}
-                </div>
-              ) : <p className="text-sm text-zinc-400 mt-0.5">Address not available</p>}
-            </div>
-          </div>
-        </div>
-        {addr && (
-          <a
-            href={`https://maps.google.com/?q=${encodeURIComponent(`${addr.street}, ${addr.city}, ${addr.state}`)}`}
-            target="_blank" rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 bg-[#1E1E1E] hover:bg-[#1A1A1A] border-t border-white/5 py-3 text-sm font-semibold text-white transition-colors"
-          >
-            <Navigation size={14} className="text-[#D4622B]" /> Open in Maps
-          </a>
-        )}
-      </div>
 
-      {/* Items checklist — expandable */}
-      {order.order_items.length > 0 && (
-        <div className="mx-4 mb-3 bg-[#141414] rounded-2xl border border-white/5 overflow-hidden">
-          <button
-            onClick={() => setShowItems(!showItems)}
-            className="w-full flex items-center justify-between px-4 py-3.5"
-          >
-            <div className="flex items-center gap-2">
-              <Package size={15} className="text-[#D4622B]" />
-              <span className="text-sm font-bold text-white">Order Items</span>
-              <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${checkedItems.size === order.order_items.length ? 'bg-green-500/20 text-green-400' : 'bg-[#1A1A1A] text-zinc-400'}`}>
-                {checkedItems.size}/{order.order_items.length}
-              </span>
-            </div>
-            {showItems ? <ChevronUp size={16} className="text-zinc-500" /> : <ChevronDown size={16} className="text-zinc-500" />}
-          </button>
-          {showItems && (
-            <div className="border-t border-white/5 divide-y divide-white/5">
-              {order.order_items.map((item, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCheckedItems(prev => {
-                    const next = new Set(prev)
-                    next.has(i) ? next.delete(i) : next.add(i)
-                    return next
-                  })}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-left"
-                >
-                  <div className={`w-5 h-5 rounded-md border-2 flex-shrink-0 flex items-center justify-center transition-all ${checkedItems.has(i) ? 'bg-green-500 border-green-500' : 'border-zinc-700'}`}>
-                    {checkedItems.has(i) && <CheckCircle size={12} className="text-white" />}
-                  </div>
-                  <span className={`text-sm flex-1 ${checkedItems.has(i) ? 'text-zinc-500 line-through' : 'text-white'}`}>
-                    {item.quantity}× {item.menu_items?.name ?? 'Item'}
+          {order.order_items.length > 0 && (
+            <div className="mx-4 mb-3 bg-[#141414] rounded-2xl border border-white/5 overflow-hidden">
+              <button
+                onClick={() => setShowItems(!showItems)}
+                className="w-full flex items-center justify-between px-4 py-3.5"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Package size={15} className="text-[#FF7A50]" />
+                  <span className="text-sm font-bold text-white">Verify Items</span>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                    checkedItems.size === order.order_items.length
+                      ? 'bg-green-500/20 text-green-400'
+                      : 'bg-[#1A1A1A] text-zinc-500'
+                  }`}>
+                    {checkedItems.size}/{order.order_items.length}
                   </span>
-                  <span className="text-xs text-zinc-500">${(item.quantity * item.unit_price).toFixed(2)}</span>
-                </button>
-              ))}
+                </div>
+                {showItems ? <ChevronUp size={16} className="text-zinc-500" /> : <ChevronDown size={16} className="text-zinc-500" />}
+              </button>
+              {showItems && (
+                <div className="border-t border-white/5 divide-y divide-white/5">
+                  {order.order_items.map((item, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setCheckedItems(prev => {
+                        const next = new Set(prev)
+                        next.has(i) ? next.delete(i) : next.add(i)
+                        return next
+                      })}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-left active:bg-white/5"
+                    >
+                      <div className={`w-5 h-5 rounded-md border-2 flex-shrink-0 flex items-center justify-center transition-all ${
+                        checkedItems.has(i) ? 'bg-green-500 border-green-500' : 'border-zinc-700'
+                      }`}>
+                        {checkedItems.has(i) && <CheckCircle size={12} className="text-white" />}
+                      </div>
+                      <span className={`text-sm flex-1 ${checkedItems.has(i) ? 'text-zinc-600 line-through' : 'text-white'}`}>
+                        {item.quantity}× {item.menu_items?.name ?? 'Item'}
+                      </span>
+                      <span className="text-xs text-zinc-600">${(item.quantity * item.unit_price).toFixed(2)}</span>
+                    </button>
+                  ))}
+                  {checkedItems.size === order.order_items.length && (
+                    <div className="flex items-center gap-2 px-4 py-2.5 bg-green-500/10">
+                      <CheckCircle size={13} className="text-green-400" />
+                      <span className="text-xs font-bold text-green-400">All items verified — ready to go!</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
-        </div>
+
+          {addr && (
+            <div className="mx-4 mb-3 bg-[#141414] rounded-2xl border border-white/5 px-4 py-3.5">
+              <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wide mb-1.5">Delivering to</p>
+              <div className="flex items-start gap-2">
+                <MapPin size={14} className="text-zinc-500 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-bold text-zinc-300">{addr.street}</p>
+                  <p className="text-xs text-zinc-500">{addr.city}, {addr.state} {addr.zip}</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
-      {/* Customer + Earnings row */}
-      <div className="mx-4 grid grid-cols-2 gap-3 mb-3">
-        {order.customer && (
-          <div className="bg-[#141414] rounded-2xl p-3.5 border border-white/5">
-            <p className="text-xs text-zinc-500 font-bold uppercase tracking-wide mb-1.5">Customer</p>
-            <p className="font-bold text-white text-base truncate">{order.customer.full_name}</p>
-            {order.customer.phone && (
-              <a href={`tel:${order.customer.phone}`} className="mt-2.5 flex items-center gap-1.5 text-green-400 text-xs font-semibold">
-                <Phone size={12} /> Call
+      {/* ── Stage 2: On the Way to Customer ── */}
+      {isHeadingToCustomer && (
+        <>
+          <div className="mx-4 mb-3 bg-[#141414] rounded-2xl border border-white/5 overflow-hidden">
+            <div className="px-4 pt-4 pb-3">
+              <p className="text-[11px] font-black text-[#FF7A50] uppercase tracking-wider mb-1">Delivering to</p>
+              {addr ? (
+                <>
+                  <p className="text-xl font-black text-white leading-tight">{addr.street}</p>
+                  <p className="text-sm text-zinc-400 mt-0.5">{addr.city}, {addr.state} {addr.zip}</p>
+                  {addr.label && <p className="text-xs text-zinc-500 mt-1 italic">{addr.label}</p>}
+                </>
+              ) : (
+                <p className="text-zinc-500">Address not available</p>
+              )}
+            </div>
+            {addr && (
+              <a
+                href={mapsUrl(addr)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 bg-[#FF7A50] py-3.5 text-sm font-black text-white"
+              >
+                <Navigation size={16} />
+                Navigate to Customer
+                <ArrowRight size={14} className="opacity-70" />
               </a>
             )}
           </div>
-        )}
-        <div className="bg-[#141414] rounded-2xl p-3.5 border border-white/5">
-          <p className="text-xs text-zinc-500 font-bold uppercase tracking-wide mb-1.5">You earn</p>
-          <p className="font-black text-[#D4622B] text-3xl leading-none">${earn.toFixed(2)}</p>
-          {order.tip_amount > 0 && <p className="text-sm text-green-400 mt-1.5">+${order.tip_amount.toFixed(2)} tip</p>}
-        </div>
-      </div>
 
-      {/* CTA */}
+          <div className="mx-4 grid grid-cols-2 gap-3 mb-3">
+            {order.customer && (
+              <div className="bg-[#141414] rounded-2xl p-3.5 border border-white/5">
+                <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wide mb-1.5">Customer</p>
+                <p className="font-bold text-white text-sm truncate leading-tight">{order.customer.full_name}</p>
+                {order.customer.phone ? (
+                  <a href={`tel:${order.customer.phone}`} className="mt-2 flex items-center gap-1.5 text-green-400 text-xs font-semibold">
+                    <Phone size={12} /> Call customer
+                  </a>
+                ) : (
+                  <p className="text-xs text-zinc-700 mt-2">No phone on file</p>
+                )}
+              </div>
+            )}
+            <div className="bg-[#141414] rounded-2xl p-3.5 border border-white/5">
+              <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wide mb-1.5">You earn</p>
+              <p className="font-black text-[#FF7A50] text-3xl leading-none">${earn.toFixed(2)}</p>
+              {order.tip_amount > 0 && (
+                <p className="text-xs text-green-400 mt-1.5 font-semibold">+${order.tip_amount.toFixed(2)} tip</p>
+              )}
+            </div>
+          </div>
+
+          {order.payment_method === 'cash' && (
+            <div className="mx-4 mb-3 flex items-start gap-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl px-4 py-3.5">
+              <Banknote size={18} className="text-amber-400 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-bold text-amber-300">Collect cash at drop-off</p>
+                <p className="text-xs text-amber-400/70 mt-0.5">Confirm the total with the customer before leaving</p>
+              </div>
+            </div>
+          )}
+
+          <div className="mx-4 mb-3 bg-[#141414] rounded-2xl border border-white/5 px-4 py-3 flex items-center gap-3">
+            <div className="w-7 h-7 rounded-full bg-[#FF7A50]/15 flex items-center justify-center flex-shrink-0">
+              <CheckCircle size={14} className="text-[#FF7A50]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-zinc-600">Picked up from</p>
+              <p className="text-sm font-bold text-zinc-300 truncate">{order.food_maker?.display_name}</p>
+            </div>
+            <Star size={13} className="text-zinc-700 flex-shrink-0" />
+          </div>
+        </>
+      )}
+
+      {/* ── Fixed CTA ── */}
       {nextAction && (
-        <div className="fixed bottom-[68px] left-0 right-0 max-w-[430px] mx-auto px-4 pb-4 pt-3 bg-gradient-to-t from-[#080808] via-[#080808]/98 to-transparent">
+        <div className="fixed bottom-[68px] left-0 right-0 max-w-[430px] mx-auto px-4 pb-4 pt-3 bg-gradient-to-t from-[#080808] via-[#080808]/95 to-transparent">
           <button
             onClick={() => handleStatusUpdate(nextAction.next)}
             disabled={updating}
-            className={`w-full ${nextAction.color} text-white rounded-2xl py-4 font-black text-base flex items-center justify-center gap-2.5 disabled:opacity-50 transition-all shadow-lg active:scale-[0.98]`}
+            className={`w-full text-white rounded-2xl py-4 font-black text-base flex items-center justify-center gap-2.5 disabled:opacity-50 transition-all shadow-lg active:scale-[0.98] ${
+              isHeadingToCustomer
+                ? 'bg-green-500 shadow-green-500/25'
+                : 'bg-[#FF7A50] shadow-[#FF7A50]/25'
+            }`}
           >
-            {updating
-              ? <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-              : order.status === 'picked_up' ? <Package size={20} /> : <CheckCircle size={20} />
-            }
+            {updating ? (
+              <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+            ) : isHeadingToCustomer ? (
+              <CheckCircle size={20} />
+            ) : (
+              <Package size={20} />
+            )}
             {updating ? 'Updating…' : nextAction.label}
           </button>
+          {isHeadingToRestaurant && order.order_items.length > 0 && checkedItems.size < order.order_items.length && (
+            <p className="text-center text-xs text-zinc-600 mt-2">
+              {order.order_items.length - checkedItems.size} item{order.order_items.length - checkedItems.size !== 1 ? 's' : ''} not yet verified
+            </p>
+          )}
         </div>
       )}
     </div>

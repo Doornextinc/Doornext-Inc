@@ -130,7 +130,7 @@ export default function EarningsPage() {
               key={p}
               onClick={() => setPeriod(p)}
               className={`flex-1 py-2 rounded-lg text-[11px] font-bold transition-colors ${
-                period === p ? 'bg-[#FF6B35] text-white' : 'text-zinc-500 hover:text-zinc-300'
+                period === p ? 'bg-[#FF7A50] text-white' : 'text-zinc-500 hover:text-zinc-300'
               }`}
             >
               {PERIOD_LABELS[p]}
@@ -165,15 +165,15 @@ export default function EarningsPage() {
                   Available to Cash Out
                 </p>
                 <div className="flex items-baseline gap-2">
-                  <p className="text-3xl font-black text-[#FF6B35]">${availableCashOut.toFixed(2)}</p>
+                  <p className="text-3xl font-black text-[#FF7A50]">${availableCashOut.toFixed(2)}</p>
                   {totalEarnings > 0 && (
                     <p className="text-xs text-zinc-600">of ${totalEarnings.toFixed(2)}</p>
                   )}
                 </div>
                 <p className="text-[10px] text-zinc-700 mt-1">Tips held 24h · Base pay instant</p>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-[#FF6B35]/10 flex items-center justify-center">
-                <DollarSign size={22} className="text-[#FF6B35]" />
+              <div className="w-12 h-12 rounded-xl bg-[#FF7A50]/10 flex items-center justify-center">
+                <DollarSign size={22} className="text-[#FF7A50]" />
               </div>
             </div>
           </div>
@@ -192,7 +192,7 @@ export default function EarningsPage() {
                   {([['bank_transfer', 'Bank Transfer'], ['stripe', 'Stripe'], ['cash', 'Cash']] as const).map(([val, label]) => (
                     <button key={val} onClick={() => setCashOutMethod(val)}
                       className={`py-2.5 rounded-xl text-xs font-bold border transition-colors ${
-                        cashOutMethod === val ? 'border-[#FF6B35] bg-[#FF6B35]/10 text-[#FF6B35]' : 'border-white/10 text-zinc-500'
+                        cashOutMethod === val ? 'border-[#FF7A50] bg-[#FF7A50]/10 text-[#FF7A50]' : 'border-white/10 text-zinc-500'
                       }`}
                     >{label}</button>
                   ))}
@@ -215,7 +215,7 @@ export default function EarningsPage() {
                       if (!res.ok) { setCashOutError(data.error ?? 'Failed to submit request'); setCashOutLoading(false); return }
                       setCashOutSuccess(true); setShowCashOut(false); setCashOutLoading(false)
                     }}
-                    className="flex-1 py-3 rounded-2xl bg-[#FF6B35] text-white text-sm font-black disabled:opacity-50"
+                    className="flex-1 py-3 rounded-2xl bg-[#FF7A50] text-white text-sm font-black disabled:opacity-50"
                   >
                     {cashOutLoading ? 'Submitting…' : `Request $${availableCashOut.toFixed(2)}`}
                   </button>
@@ -225,7 +225,7 @@ export default function EarningsPage() {
               <button
                 disabled={availableCashOut <= 0}
                 onClick={() => setShowCashOut(true)}
-                className="w-full bg-[#FF6B35] disabled:bg-zinc-800 disabled:text-zinc-600 text-white font-black text-base py-4 rounded-2xl shadow-lg shadow-[#FF6B35]/20 active:scale-[0.98] transition-all disabled:shadow-none"
+                className="w-full bg-[#1A1A1A] disabled:bg-[#111] disabled:text-zinc-700 border border-white/8 text-white font-black text-base py-4 rounded-2xl active:scale-[0.98] transition-all"
               >
                 {availableCashOut > 0 ? `Cash Out $${availableCashOut.toFixed(2)}` : 'Nothing to Cash Out'}
               </button>
@@ -246,12 +246,12 @@ export default function EarningsPage() {
                     <div
                       style={{ height: `${pct}%` }}
                       className={`w-full rounded-t-md transition-all ${
-                        day.isToday ? 'bg-[#FF6B35]' : day.total > 0 ? 'bg-zinc-700' : 'bg-zinc-800/60'
+                        day.isToday ? 'bg-[#FF7A50]' : day.total > 0 ? 'bg-zinc-700' : 'bg-zinc-800/60'
                       }`}
                       title={day.total > 0 ? `$${day.total.toFixed(2)}` : ''}
                     />
                   </div>
-                  <span className={`text-[10px] font-bold ${day.isToday ? 'text-[#FF6B35]' : 'text-zinc-700'}`}>
+                  <span className={`text-[10px] font-bold ${day.isToday ? 'text-[#FF7A50]' : 'text-zinc-700'}`}>
                     {day.shortLabel}
                   </span>
                 </div>
@@ -279,64 +279,61 @@ export default function EarningsPage() {
         {dailyRows.length > 0 && (
           <div className="space-y-2">
             <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1">Daily Breakdown</p>
-            <div className="bg-[#111] rounded-2xl border border-white/5 overflow-hidden divide-y divide-white/5">
+            <div className="bg-white rounded-2xl border border-zinc-200 overflow-hidden divide-y divide-zinc-100">
               {dailyRows.map((day, i) => {
                 const isOpen = expandedDay === i
                 return (
                   <div key={i}>
-                    {/* Day header row */}
                     <button
                       onClick={() => setExpandedDay(isOpen ? null : i)}
-                      className="w-full flex items-center justify-between px-4 py-3.5"
+                      className="w-full flex items-center justify-between px-4 py-3.5 bg-white active:bg-zinc-50"
                     >
                       <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${day.isToday ? 'bg-[#FF6B35]/15' : 'bg-zinc-800'}`}>
-                          <Clock size={13} className={day.isToday ? 'text-[#FF6B35]' : 'text-zinc-500'} />
+                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${day.isToday ? 'bg-[#FF7A50]/15' : 'bg-zinc-100'}`}>
+                          <Clock size={13} className={day.isToday ? 'text-[#FF7A50]' : 'text-zinc-400'} />
                         </div>
                         <div className="text-left">
-                          <p className={`text-sm font-bold ${day.isToday ? 'text-[#FF6B35]' : 'text-white'}`}>
+                          <p className={`text-sm font-bold ${day.isToday ? 'text-[#FF7A50]' : 'text-zinc-800'}`}>
                             {day.isToday ? 'Today' : day.label}
                           </p>
-                          <p className="text-[11px] text-zinc-600 mt-0.5">{day.count} {day.count === 1 ? 'delivery' : 'deliveries'}</p>
+                          <p className="text-[11px] text-zinc-400 mt-0.5">{day.count} {day.count === 1 ? 'delivery' : 'deliveries'}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className={`text-sm font-black ${day.isToday ? 'text-[#FF6B35]' : 'text-white'}`}>
+                        <span className={`text-sm font-black ${day.isToday ? 'text-[#FF7A50]' : 'text-zinc-800'}`}>
                           ${day.total.toFixed(2)}
                         </span>
                         {isOpen
-                          ? <ChevronDown size={14} className="text-zinc-600" />
-                          : <ChevronRight size={14} className="text-zinc-700" />
+                          ? <ChevronDown size={14} className="text-zinc-400" />
+                          : <ChevronRight size={14} className="text-zinc-300" />
                         }
                       </div>
                     </button>
 
-                    {/* Expanded deliveries list */}
                     {isOpen && (
-                      <div className="bg-[#0E0E0E] divide-y divide-white/[0.04]">
+                      <div className="bg-zinc-50 divide-y divide-zinc-100">
                         {day.deliveries.map(d => (
                           <div key={d.id} className="flex items-center justify-between px-4 py-3">
                             <div className="flex items-center gap-3">
-                              <div className="w-1.5 h-1.5 rounded-full bg-zinc-700 ml-2.5" />
+                              <div className="w-1.5 h-1.5 rounded-full bg-zinc-300 ml-2.5" />
                               <div>
-                                <p className="text-sm text-zinc-300 font-medium">#{d.id.slice(-6).toUpperCase()}</p>
-                                <p className="text-[11px] text-zinc-600">
+                                <p className="text-sm text-zinc-700 font-medium">#{d.id.slice(-6).toUpperCase()}</p>
+                                <p className="text-[11px] text-zinc-400">
                                   {new Date(d.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
                                 </p>
                               </div>
                             </div>
                             <div className="text-right">
-                              <p className="text-sm font-black text-[#FF6B35]">+${d.delivery_fee.toFixed(2)}</p>
+                              <p className="text-sm font-black text-[#FF7A50]">+${d.delivery_fee.toFixed(2)}</p>
                               {d.tip_amount > 0 && (
-                                <p className="text-[11px] text-green-500/80">+${d.tip_amount.toFixed(2)} tip</p>
+                                <p className="text-[11px] text-green-600">+${d.tip_amount.toFixed(2)} tip</p>
                               )}
                             </div>
                           </div>
                         ))}
-                        {/* Day subtotal */}
-                        <div className="flex items-center justify-between px-4 py-2.5 bg-[#111]">
-                          <span className="text-xs font-semibold text-zinc-600 pl-7">Subtotal</span>
-                          <span className="text-xs font-black text-white">${day.total.toFixed(2)}</span>
+                        <div className="flex items-center justify-between px-4 py-2.5 bg-white border-t border-zinc-100">
+                          <span className="text-xs font-semibold text-zinc-400 pl-7">Subtotal</span>
+                          <span className="text-xs font-black text-zinc-800">${day.total.toFixed(2)}</span>
                         </div>
                       </div>
                     )}
@@ -362,7 +359,7 @@ export default function EarningsPage() {
         <div className="space-y-2">
           <div className="flex items-center justify-between px-1">
             <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Available Missions</p>
-            <span className="text-[10px] font-bold text-[#FF6B35] bg-[#FF6B35]/10 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] font-bold text-[#FF7A50] bg-[#FF7A50]/10 px-2 py-0.5 rounded-full">
               Resets daily
             </span>
           </div>
@@ -383,7 +380,7 @@ export default function EarningsPage() {
               return (
                 <div key={m.id} className={`px-4 py-4 ${complete ? 'opacity-60' : ''}`}>
                   <div className="flex items-start gap-3">
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-xl flex-shrink-0 ${complete ? 'bg-green-500/10' : 'bg-[#FF6B35]/10'}`}>
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-xl flex-shrink-0 ${complete ? 'bg-green-500/10' : 'bg-[#FF7A50]/10'}`}>
                       {complete ? '✅' : m.icon}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -391,14 +388,14 @@ export default function EarningsPage() {
                         <p className={`text-sm font-bold leading-tight ${complete ? 'line-through text-zinc-600' : 'text-white'}`}>
                           {m.title}
                         </p>
-                        <span className={`text-xs font-black flex-shrink-0 ${complete ? 'text-green-400' : 'text-[#FF6B35]'}`}>
+                        <span className={`text-xs font-black flex-shrink-0 ${complete ? 'text-green-400' : 'text-[#FF7A50]'}`}>
                           +${m.reward_amount.toFixed(2)}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <div className="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
                           <div
-                            className={`h-full rounded-full transition-all ${complete ? 'bg-green-500' : 'bg-gradient-to-r from-[#FF6B35] to-[#FF8C5A]'}`}
+                            className={`h-full rounded-full transition-all ${complete ? 'bg-green-500' : 'bg-gradient-to-r from-[#FF7A50] to-[#FF8C5A]'}`}
                             style={{ width: `${pct}%` }}
                           />
                         </div>
@@ -417,14 +414,14 @@ export default function EarningsPage() {
           {/* Missions total potential */}
           {missions.length > 0 && (
           <div className="flex items-center gap-3 px-4 py-3 bg-[#111] rounded-2xl border border-white/5">
-            <div className="w-8 h-8 rounded-xl bg-[#FF6B35]/10 flex items-center justify-center flex-shrink-0">
-              <Zap size={15} className="text-[#FF6B35]" />
+            <div className="w-8 h-8 rounded-xl bg-[#FF7A50]/10 flex items-center justify-center flex-shrink-0">
+              <Zap size={15} className="text-[#FF7A50]" />
             </div>
             <div className="flex-1">
               <p className="text-sm font-bold text-white">Complete all missions</p>
               <p className="text-xs text-zinc-600">Earn up to ${missions.reduce((s, m) => s + m.reward_amount, 0).toFixed(2)} in bonuses today</p>
             </div>
-            <span className="font-black text-[#FF6B35] text-sm">${missions.reduce((s, m) => s + m.reward_amount, 0).toFixed(2)}</span>
+            <span className="font-black text-[#FF7A50] text-sm">${missions.reduce((s, m) => s + m.reward_amount, 0).toFixed(2)}</span>
           </div>
           )}
         </div>

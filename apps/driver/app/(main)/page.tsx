@@ -169,16 +169,16 @@ export default function HomePage() {
         >
           {/* Active order banner */}
           {data?.activeOrder && (
-            <Link href="/active" className="block bg-[#D4622B]/10 border border-[#D4622B]/20 rounded-2xl px-4 py-4 backdrop-blur-sm">
+            <Link href="/active" className="block bg-[#E06B38]/10 border border-[#E06B38]/20 rounded-2xl px-4 py-4 backdrop-blur-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-black text-[#D4622B] uppercase tracking-wider mb-1">Active Delivery</p>
+                  <p className="text-xs font-black text-[#E06B38] uppercase tracking-wider mb-1">Active Delivery</p>
                   <p className="font-black text-white text-base">{(data.activeOrder as any).food_maker?.display_name ?? 'Order'}</p>
                   <p className="text-sm text-zinc-400 mt-0.5 capitalize">{data.activeOrder.status.replace(/_/g, ' ')}</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#D4622B] animate-pulse" />
-                  <ChevronRight size={18} className="text-[#D4622B]" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#E06B38] animate-pulse" />
+                  <ChevronRight size={18} className="text-[#E06B38]" />
                 </div>
               </div>
             </Link>

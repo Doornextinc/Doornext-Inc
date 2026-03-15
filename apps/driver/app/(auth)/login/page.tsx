@@ -37,18 +37,18 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center px-6">
+    <div className="min-h-screen bg-[#080808] flex flex-col items-center justify-center px-6">
       <div className="w-full max-w-sm">
-        <Link href="/welcome" className="inline-flex items-center gap-1.5 text-slate-400 hover:text-white text-sm mb-8 transition-colors">
+        <Link href="/welcome" className="inline-flex items-center gap-1.5 text-zinc-400 hover:text-white text-sm mb-8 transition-colors">
           <ChevronLeft size={16} />
           Back
         </Link>
         <div className="mb-8">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#FF6B35] to-[#FF8C5A] flex items-center justify-center mb-4">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#FF7A50] to-[#FF9C78] flex items-center justify-center mb-4">
             <span className="text-white text-xl">🛵</span>
           </div>
           <h1 className="text-2xl font-black text-white">Welcome back</h1>
-          <p className="text-slate-400 text-sm mt-1">Sign in to your driver account</p>
+          <p className="text-zinc-400 text-sm mt-1">Sign in to your driver account</p>
         </div>
 
         {error && (
@@ -59,39 +59,39 @@ export default function LoginPage() {
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="text-sm font-medium text-slate-300 block mb-1.5">Email</label>
+            <label className="text-sm font-medium text-zinc-300 block mb-1.5">Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder:text-slate-500 focus:border-[#FF6B35] focus:ring-2 focus:ring-[#FF6B35]/20 transition-all"
+              className="w-full bg-[#141414] border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-zinc-500 focus:border-[#FF7A50] focus:ring-2 focus:ring-[#FF7A50]/20 transition-all"
               placeholder="driver@example.com"
             />
           </div>
           <div>
-            <label className="text-sm font-medium text-slate-300 block mb-1.5">Password</label>
+            <label className="text-sm font-medium text-zinc-300 block mb-1.5">Password</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder:text-slate-500 focus:border-[#FF6B35] focus:ring-2 focus:ring-[#FF6B35]/20 transition-all"
+              className="w-full bg-[#141414] border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-zinc-500 focus:border-[#FF7A50] focus:ring-2 focus:ring-[#FF7A50]/20 transition-all"
               placeholder="••••••••"
             />
           </div>
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#FF6B35] text-white rounded-xl py-4 font-bold text-base disabled:opacity-60 active:bg-[#E55A24] transition-colors mt-2"
+            className="w-full bg-[#FF7A50] text-white rounded-xl py-4 font-bold text-base disabled:opacity-60 active:bg-[#E86B40] transition-colors mt-2"
           >
             {loading ? 'Signing in…' : 'Sign In'}
           </button>
         </form>
 
-        <p className="text-center text-slate-500 text-sm mt-6">
+        <p className="text-center text-zinc-500 text-sm mt-6">
           New driver?{' '}
-          <Link href="/signup" className="text-[#FF6B35] font-semibold hover:underline">
+          <Link href="/signup" className="text-[#FF7A50] font-semibold hover:underline">
             Create an account
           </Link>
         </p>

@@ -3,14 +3,16 @@
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { ChevronLeft, Loader2, Lock, User, Bell, Shield, Trash2, Camera } from 'lucide-react'
+import { ChevronLeft, Loader2, Lock, User, Bell, Shield, Trash2, Camera, LogOut } from 'lucide-react'
 
 export default function SettingsPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [signingOut, setSigningOut] = useState(false)
   const [changingPassword, setChangingPassword] = useState(false)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const [togglingNotif, setTogglingNotif] = useState<string | null>(null)
   const [profile, setProfile] = useState({ display_name: '', bio: '' })
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
@@ -21,6 +23,7 @@ export default function SettingsPage() {
   })
   const [email, setEmail] = useState('')
   const [msg, setMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const avatarInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -29,6 +32,12 @@ export default function SettingsPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
       setEmail(user.email ?? '')
+
+      // Load notification preferences from user metadata
+      setNotifications({
+        newOrders: user.user_metadata?.notification_new_orders !== false,
+        soundEnabled: user.user_metadata?.notification_sound_enabled !== false,
+      })
 
       const { data: maker } = await supabase
         .from('food_makers')
@@ -48,7 +57,7 @@ export default function SettingsPage() {
 
   const flash = (type: 'ok' | 'err', text: string) => {
     setMsg({ type, text })
-    setTimeout(() => setMsg(null), 3000)
+    setTimeout(() => setMsg(null), 5000)
   }
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -93,6 +102,21 @@ export default function SettingsPage() {
     setSaving(false)
   }
 
+  const handleToggleNotification = async (key: 'newOrders' | 'soundEnabled') => {
+    const newValue = !notifications[key]
+    setNotifications(n => ({ ...n, [key]: newValue }))
+    setTogglingNotif(key)
+    const supabase = createClient()
+    const metaKey = key === 'newOrders' ? 'notification_new_orders' : 'notification_sound_enabled'
+    const { error } = await supabase.auth.updateUser({ data: { [metaKey]: newValue } })
+    if (error) {
+      // Revert on failure
+      setNotifications(n => ({ ...n, [key]: !newValue }))
+      flash('err', 'Failed to save notification setting')
+    }
+    setTogglingNotif(null)
+  }
+
   const handleChangePassword = async () => {
     if (password.new !== password.confirm) { flash('err', "Passwords don't match"); return }
     if (password.new.length < 6) { flash('err', 'Password must be at least 6 characters'); return }
@@ -105,6 +129,7 @@ export default function SettingsPage() {
   }
 
   const handleSignOut = async () => {
+    setSigningOut(true)
     const supabase = createClient()
     await supabase.auth.signOut()
     router.push('/login')
@@ -208,14 +233,21 @@ export default function SettingsPage() {
                 onChange={e => setProfile(p => ({ ...p, display_name: e.target.value }))}
                 className={inputClass}
                 placeholder="Jane's Kitchen"
+                maxLength={80}
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Bio</label>
+              <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">
+                Bio
+                <span className="ml-2 text-gray-300 normal-case font-medium tracking-normal">
+                  {profile.bio.length}/500
+                </span>
+              </label>
               <textarea
                 value={profile.bio}
                 onChange={e => setProfile(p => ({ ...p, bio: e.target.value }))}
                 rows={3}
+                maxLength={500}
                 className={`${inputClass} resize-none`}
                 placeholder="Tell customers about your kitchen…"
               />
@@ -255,10 +287,15 @@ export default function SettingsPage() {
                   <p className="text-xs text-gray-400 mt-0.5">{desc}</p>
                 </div>
                 <button
-                  onClick={() => setNotifications(n => ({ ...n, [key]: !n[key] }))}
-                  className={`relative w-11 h-6 rounded-full transition-colors ${notifications[key] ? 'bg-[#FF6B35]' : 'bg-gray-200'}`}
+                  onClick={() => handleToggleNotification(key)}
+                  disabled={togglingNotif === key}
+                  className={`relative w-11 h-6 rounded-full transition-colors disabled:opacity-60 ${notifications[key] ? 'bg-[#FF6B35]' : 'bg-gray-200'}`}
                 >
-                  <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all ${notifications[key] ? 'left-6' : 'left-1'}`} />
+                  {togglingNotif === key ? (
+                    <Loader2 size={12} className="absolute top-1.5 left-2.5 text-white animate-spin" />
+                  ) : (
+                    <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all ${notifications[key] ? 'left-6' : 'left-1'}`} />
+                  )}
                 </button>
               </div>
             ))}
@@ -308,21 +345,57 @@ export default function SettingsPage() {
             <Shield size={11} /> Account
           </p>
           <div className="bg-white rounded-2xl border border-gray-100 divide-y divide-gray-50">
-            <button onClick={handleSignOut} className="w-full flex items-center gap-3 px-4 py-3.5 text-left">
-              <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center">
-                <Shield size={14} className="text-gray-500" />
-              </div>
-              <span className="text-sm font-semibold text-gray-900 flex-1">Sign Out</span>
-            </button>
             <button
-              onClick={() => alert('Contact support@doornext.com to delete your account.')}
-              className="w-full flex items-center gap-3 px-4 py-3.5 text-left"
+              onClick={handleSignOut}
+              disabled={signingOut}
+              className="w-full flex items-center gap-3 px-4 py-3.5 text-left disabled:opacity-60"
             >
-              <div className="w-8 h-8 rounded-xl bg-red-50 flex items-center justify-center">
-                <Trash2 size={14} className="text-red-400" />
+              <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center">
+                {signingOut
+                  ? <Loader2 size={14} className="text-gray-500 animate-spin" />
+                  : <LogOut size={14} className="text-gray-500" />
+                }
               </div>
-              <span className="text-sm font-semibold text-red-500 flex-1">Delete Account</span>
+              <span className="text-sm font-semibold text-gray-900 flex-1">
+                {signingOut ? 'Signing out…' : 'Sign Out'}
+              </span>
             </button>
+
+            {/* Delete account — inline confirmation */}
+            {confirmDelete ? (
+              <div className="px-4 py-4 space-y-3">
+                <p className="text-sm font-bold text-red-600">Delete your account?</p>
+                <p className="text-xs text-gray-500">
+                  This is permanent and cannot be undone. Contact{' '}
+                  <span className="font-semibold text-gray-700">support@doornext.com</span>{' '}
+                  to proceed with account deletion.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setConfirmDelete(false)}
+                    className="flex-1 py-2 rounded-xl bg-gray-100 text-gray-700 text-sm font-bold"
+                  >
+                    Cancel
+                  </button>
+                  <a
+                    href="mailto:support@doornext.com?subject=Delete%20my%20maker%20account"
+                    className="flex-1 py-2 rounded-xl bg-red-500 text-white text-sm font-bold text-center"
+                  >
+                    Email Support
+                  </a>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="w-full flex items-center gap-3 px-4 py-3.5 text-left"
+              >
+                <div className="w-8 h-8 rounded-xl bg-red-50 flex items-center justify-center">
+                  <Trash2 size={14} className="text-red-400" />
+                </div>
+                <span className="text-sm font-semibold text-red-500 flex-1">Delete Account</span>
+              </button>
+            )}
           </div>
         </section>
 
