@@ -4,8 +4,6 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
-const MAKER_COMMISSION = 0.85
-
 interface EarningsSummary {
   today: number
   week: number
@@ -17,7 +15,7 @@ interface EarningsSummary {
 export default function EarningsPage() {
   const router = useRouter()
   const [summary, setSummary] = useState<EarningsSummary | null>(null)
-  const [recentOrders, setRecentOrders] = useState<Array<{ id: string; subtotal: number; created_at: string }>>([])
+  const [recentOrders, setRecentOrders] = useState<Array<{ id: string; maker_payout: number; created_at: string }>>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -38,7 +36,7 @@ export default function EarningsPage() {
 
       const { data: orders, error: fetchError } = await supabase
         .from('orders')
-        .select('id, subtotal, created_at')
+        .select('id, maker_payout, created_at')
         .eq('maker_id', maker.id)
         .eq('status', 'delivered')
         .order('created_at', { ascending: false })
@@ -46,16 +44,15 @@ export default function EarningsPage() {
       if (fetchError) { setError('Failed to load earnings data'); setLoading(false); return }
 
       const all = orders ?? []
-      // Maker earns MAKER_COMMISSION (85%) of the subtotal
-      const netEarnings = (arr: typeof all) =>
-        arr.reduce((acc, o) => acc + (o.subtotal ?? 0) * MAKER_COMMISSION, 0)
+      const sumPayout = (arr: typeof all) =>
+        arr.reduce((acc, o) => acc + (o.maker_payout ?? 0), 0)
 
       setSummary({
-        today: netEarnings(all.filter(o => new Date(o.created_at) >= startOfDay)),
-        week: netEarnings(all.filter(o => new Date(o.created_at) >= startOfWeek)),
-        month: netEarnings(all.filter(o => new Date(o.created_at) >= startOfMonth)),
+        today: sumPayout(all.filter(o => new Date(o.created_at) >= startOfDay)),
+        week: sumPayout(all.filter(o => new Date(o.created_at) >= startOfWeek)),
+        month: sumPayout(all.filter(o => new Date(o.created_at) >= startOfMonth)),
         totalOrders: all.length,
-        avgOrderValue: all.length > 0 ? netEarnings(all) / all.length : 0,
+        avgOrderValue: all.length > 0 ? sumPayout(all) / all.length : 0,
       })
       setRecentOrders(all.slice(0, 30))
       setLoading(false)
@@ -88,9 +85,8 @@ export default function EarningsPage() {
 
   return (
     <div className="flex flex-col min-h-full bg-gray-50">
-      <header className="sticky top-0 z-40 bg-white border-b border-gray-100 px-4 h-[60px] flex items-center justify-between">
+      <header className="sticky top-0 z-40 bg-white border-b border-gray-100 px-4 h-[60px] flex items-center">
         <h1 className="text-[18px] font-black text-gray-900">Earnings</h1>
-        <p className="text-xs text-gray-400 font-medium">Your 85% cut</p>
       </header>
 
       {loading ? (
@@ -143,12 +139,9 @@ export default function EarningsPage() {
                         })}
                       </p>
                     </div>
-                    <div className="text-right">
-                      <p className="font-black text-[#FF6B35] text-base">
-                        ${(order.subtotal * MAKER_COMMISSION).toFixed(2)}
-                      </p>
-                      <p className="text-[10px] text-gray-300">your cut</p>
-                    </div>
+                    <p className="font-black text-[#FF6B35] text-base">
+                      ${(order.maker_payout ?? 0).toFixed(2)}
+                    </p>
                   </div>
                 ))}
               </div>

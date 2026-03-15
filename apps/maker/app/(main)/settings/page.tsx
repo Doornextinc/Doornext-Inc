@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { ChevronLeft, Loader2, Lock, User, Bell, Shield, Trash2, Camera, LogOut } from 'lucide-react'
+import { ChevronLeft, Loader2, Lock, User, Bell, Shield, Trash2, Camera, LogOut, Image } from 'lucide-react'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -12,10 +12,14 @@ export default function SettingsPage() {
   const [signingOut, setSigningOut] = useState(false)
   const [changingPassword, setChangingPassword] = useState(false)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const [uploadingBanner, setUploadingBanner] = useState(false)
   const [togglingNotif, setTogglingNotif] = useState<string | null>(null)
   const [profile, setProfile] = useState({ display_name: '', bio: '' })
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  const [bannerUrl, setBannerUrl] = useState<string | null>(null)
+  const [bannerPreview, setBannerPreview] = useState<string | null>(null)
+  const bannerInputRef = useRef<HTMLInputElement>(null)
   const [password, setPassword] = useState({ new: '', confirm: '' })
   const [notifications, setNotifications] = useState({
     newOrders: true,
@@ -41,7 +45,7 @@ export default function SettingsPage() {
 
       const { data: maker } = await supabase
         .from('food_makers')
-        .select('display_name, bio, avatar_url')
+        .select('display_name, bio, avatar_url, banner_url')
         .eq('user_id', user.id)
         .single()
 
@@ -49,6 +53,8 @@ export default function SettingsPage() {
         setProfile({ display_name: maker.display_name ?? '', bio: maker.bio ?? '' })
         setAvatarUrl(maker.avatar_url ?? null)
         setAvatarPreview(maker.avatar_url ?? null)
+        setBannerUrl(maker.banner_url ?? null)
+        setBannerPreview(maker.banner_url ?? null)
       }
       setLoading(false)
     }
@@ -83,6 +89,27 @@ export default function SettingsPage() {
       setAvatarPreview(avatarUrl)
     } finally {
       setUploadingAvatar(false)
+    }
+  }
+
+  const handleBannerChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setBannerPreview(URL.createObjectURL(file))
+    setUploadingBanner(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await fetch('/api/maker/upload/banner', { method: 'POST', body: formData })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Upload failed')
+      setBannerUrl(data.url)
+      flash('ok', 'Cover photo updated')
+    } catch (err) {
+      flash('err', err instanceof Error ? err.message : 'Cover photo upload failed. Please try again.')
+      setBannerPreview(bannerUrl)
+    } finally {
+      setUploadingBanner(false)
     }
   }
 
@@ -223,6 +250,43 @@ export default function SettingsPage() {
                 </button>
                 <p className="text-[11px] text-gray-400 mt-0.5">JPEG, PNG, WebP · Max 5 MB</p>
               </div>
+            </div>
+
+            {/* Banner / cover photo */}
+            <div>
+              <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Cover Photo</label>
+              <input
+                ref={bannerInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={handleBannerChange}
+              />
+              <div className="relative w-full h-28 rounded-2xl overflow-hidden bg-gradient-to-br from-orange-100 to-amber-50 border border-gray-100">
+                {bannerPreview ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={bannerPreview} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <span className="text-4xl">🍽️</span>
+                  </div>
+                )}
+                {uploadingBanner && (
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                    <Loader2 size={20} className="text-white animate-spin" />
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => bannerInputRef.current?.click()}
+                  disabled={uploadingBanner}
+                  className="absolute bottom-2 right-2 flex items-center gap-1.5 bg-black/50 text-white text-xs font-semibold px-3 py-1.5 rounded-full disabled:opacity-50"
+                >
+                  <Image size={12} />
+                  {uploadingBanner ? 'Uploading…' : 'Change cover'}
+                </button>
+              </div>
+              <p className="text-[11px] text-gray-400 mt-1">Shown on your restaurant page · JPEG, PNG, WebP · Max 10 MB</p>
             </div>
 
             <div>
