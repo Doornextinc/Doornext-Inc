@@ -2,13 +2,13 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, ClipboardList, UtensilsCrossed, TrendingUp, User } from 'lucide-react'
+import { LayoutDashboard, ClipboardList, UtensilsCrossed, MessageCircle, User } from 'lucide-react'
 
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/orders',    icon: ClipboardList,   label: 'Orders' },
   { href: '/menu',      icon: UtensilsCrossed, label: 'Menu' },
-  { href: '/earnings',  icon: TrendingUp,      label: 'Earnings' },
+  { href: '/messages',  icon: MessageCircle,   label: 'Messages' },
   { href: '/profile',   icon: User,            label: 'Account' },
 ]
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
+import { StreamChat } from 'stream-chat'
 import { cookies } from 'next/headers'
 
 export async function POST(req: NextRequest) {
@@ -81,6 +82,26 @@ export async function POST(req: NextRequest) {
       body: `A driver has accepted your order #${orderId.slice(-6).toUpperCase()} and is heading to the restaurant.`,
       data: { order_id: orderId },
     })
+  }
+
+  // Add driver to the order's Stream Chat channel so all three parties can communicate
+  const streamApiKey = process.env.NEXT_PUBLIC_STREAM_API_KEY
+  const streamSecret = process.env.STREAM_API_SECRET
+  const isUnconfigured = (v?: string) =>
+    !v || v.startsWith('your-') || v.includes('placeholder') || v.length < 8
+  if (!isUnconfigured(streamApiKey) && !isUnconfigured(streamSecret)) {
+    try {
+      const stream = StreamChat.getInstance(streamApiKey!, streamSecret!)
+      // Upsert driver so they exist in Stream
+      await stream.upsertUser({ id: user.id, role: 'user' })
+      // Create or get the order channel and add the driver as a member
+      const channel = stream.channel('messaging', `order-${orderId}`)
+      await channel.create()
+      await channel.addMembers([user.id])
+    } catch (e) {
+      // Non-fatal — chat will still work once customer or maker creates the channel
+      console.error('Stream channel member add failed:', e)
+    }
   }
 
   return NextResponse.json({ success: true, orderId })

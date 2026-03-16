@@ -7,7 +7,7 @@ import type { OrderStatus } from '@doornext/shared/types'
 import {
   ChevronLeft, Check, X, ChefHat, MapPin, Clock,
   CreditCard, Banknote, CheckCircle, Circle, Loader2,
-  Timer, Package, AlertCircle, ShieldCheck, Delete,
+  Timer, Package, AlertCircle, ShieldCheck, Delete, MessageCircle,
 } from 'lucide-react'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -345,15 +345,24 @@ export default function OrderDetailPage() {
               })}
             </p>
           </div>
-          {order.payment_method === 'cash' ? (
-            <span className="flex items-center gap-1 text-[11px] font-bold text-green-700 bg-green-50 border border-green-200 px-2 py-1 rounded-full">
-              <Banknote size={10} />Cash
-            </span>
-          ) : (
-            <span className="flex items-center gap-1 text-[11px] font-semibold text-gray-500 bg-gray-50 border border-gray-200 px-2 py-1 rounded-full">
-              <CreditCard size={10} />Card
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => router.push(`/messages/order-${order.id}`)}
+              className="w-9 h-9 rounded-full bg-orange-50 flex items-center justify-center"
+              title="Message customer"
+            >
+              <MessageCircle size={18} className="text-[#FF6B35]" />
+            </button>
+            {order.payment_method === 'cash' ? (
+              <span className="flex items-center gap-1 text-[11px] font-bold text-green-700 bg-green-50 border border-green-200 px-2 py-1 rounded-full">
+                <Banknote size={10} />Cash
+              </span>
+            ) : (
+              <span className="flex items-center gap-1 text-[11px] font-semibold text-gray-500 bg-gray-50 border border-gray-200 px-2 py-1 rounded-full">
+                <CreditCard size={10} />Card
+              </span>
+            )}
+          </div>
         </div>
 
         {/* ── Status progress strip ──────────────────────────────────────── */}

@@ -2,15 +2,15 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, MapPin, Package, TrendingUp, User } from 'lucide-react'
+import { Home, MapPin, Package, MessageCircle, User } from 'lucide-react'
 import { useDriverStore } from '@/store/driver-store'
 
 const navItems = [
-  { href: '/',          icon: Home,       label: 'Home',     exact: true },
-  { href: '/available', icon: MapPin,      label: 'Pickups',  exact: false },
-  { href: '/active',    icon: Package,     label: 'Active',   exact: false },
-  { href: '/earnings',  icon: TrendingUp,  label: 'Earnings', exact: false },
-  { href: '/profile',   icon: User,        label: 'Account',  exact: false },
+  { href: '/',          icon: Home,          label: 'Home',     exact: true },
+  { href: '/available', icon: MapPin,         label: 'Pickups',  exact: false },
+  { href: '/active',    icon: Package,        label: 'Active',   exact: false },
+  { href: '/messages',  icon: MessageCircle,  label: 'Messages', exact: false },
+  { href: '/profile',   icon: User,           label: 'Account',  exact: false },
 ]
 
 export function BottomNav() {

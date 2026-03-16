@@ -28,6 +28,7 @@ const KYC_CONFIG: Record<string, { label: string; color: string; icon: React.Ele
 export default function ProfilePage() {
   const router = useRouter()
   const activeOrderId = useDriverStore((s) => s.activeOrderId)
+  const clearStore = useDriverStore((s) => s.clearStore)
   const [profile, setProfile] = useState<DriverProfile | null>(null)
   const [email, setEmail] = useState<string | null>(null)
   const [totalEarnings, setTotalEarnings] = useState<number | null>(null)
@@ -78,8 +79,12 @@ export default function ProfilePage() {
       if (!confirmed) return
     }
     const supabase = createClient()
-    // Set driver offline in DB before signing out
-    await supabase.from('driver_profiles').update({ is_active: false }).eq('id', profile?.id ?? '')
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      // Set driver offline in DB before signing out
+      await supabase.from('driver_profiles').update({ is_active: false }).eq('id', user.id)
+    }
+    clearStore()
     await supabase.auth.signOut()
     router.push('/login')
   }
