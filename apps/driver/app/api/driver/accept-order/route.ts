@@ -24,41 +24,57 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Not a driver account' }, { status: 403 })
   }
 
-  // Atomic accept: update only if still unassigned and ready
-  // Uses service role to bypass RLS for the atomic update
   const admin = createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  const { data, error } = await admin
+  // Atomic accept: update only if still unassigned and ready.
+  // Use count instead of select().single() — after updating status to
+  // 'driver_assigned' the row no longer matches status='ready', so
+  // select().single() always returns PGRST116 even on success.
+  const { error, count } = await admin
     .from('orders')
     .update({
       nexter_id: user.id,
       status: 'driver_assigned',
       updated_at: new Date().toISOString(),
-    })
+    }, { count: 'exact' })
     .eq('id', orderId)
     .eq('status', 'ready')
     .is('nexter_id', null)
-    .select()
-    .single()
 
-  if (error || !data) {
+  if (error) {
+    console.error('accept-order update error:', error)
     return NextResponse.json(
-      { error: 'Order is no longer available — another driver may have accepted it' },
+      { error: 'Failed to accept order. Please try again.' },
+      { status: 500 }
+    )
+  }
+
+  if (count === 0) {
+    return NextResponse.json(
+      { error: 'Order is no longer available — another driver accepted it.' },
       { status: 409 }
     )
   }
 
-  // Notify customer
-  await admin.from('notifications').insert({
-    user_id: data.customer_id,
-    type: 'order_driver_assigned',
-    title: 'Driver Assigned!',
-    body: `A driver has accepted your order #${orderId.slice(-6).toUpperCase()} and is heading to the restaurant.`,
-    data: { order_id: orderId },
-  })
+  // Fetch the accepted order for notification data
+  const { data: order } = await admin
+    .from('orders')
+    .select('customer_id')
+    .eq('id', orderId)
+    .single()
 
-  return NextResponse.json({ success: true, order: data })
+  if (order?.customer_id) {
+    await admin.from('notifications').insert({
+      user_id: order.customer_id,
+      type: 'order_driver_assigned',
+      title: 'Driver Assigned!',
+      body: `A driver has accepted your order #${orderId.slice(-6).toUpperCase()} and is heading to the restaurant.`,
+      data: { order_id: orderId },
+    })
+  }
+
+  return NextResponse.json({ success: true, orderId })
 }

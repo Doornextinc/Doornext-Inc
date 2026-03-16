@@ -66,6 +66,9 @@ export default function AvailablePickupsPage() {
 
   const handleAccept = async (orderId: string) => {
     setAccepting(orderId)
+    // Optimistically remove from list so it feels instant
+    setOrders(prev => prev.filter(o => o.id !== orderId))
+
     const res = await fetch('/api/driver/accept-order', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -76,8 +79,9 @@ export default function AvailablePickupsPage() {
       router.push('/active')
     } else {
       const { error } = await res.json()
-      alert(error ?? 'Order no longer available')
+      // Restore the order in the list and re-fetch latest state
       loadOrders()
+      alert(error ?? 'Order no longer available')
     }
     setAccepting(null)
   }
