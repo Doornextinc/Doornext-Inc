@@ -15,6 +15,8 @@ type OrderItem = { quantity: number; unit_price: number; menu_items: { name: str
 type ActiveOrder = {
   id: string; status: string; driver_payout: number; tip_amount: number
   payment_method?: 'card' | 'cash'
+  pickup_pin: string | null
+  pin_attempts: number
   delivery_address: { street?: string; city?: string; state?: string; zip?: string; label?: string } | null
   food_maker: { display_name: string; lat: number; lng: number } | null
   customer: { full_name: string; phone: string | null } | null
@@ -32,13 +34,14 @@ const STEPS = [
   { status: 'delivered',          label: 'Delivered',       sublabel: 'Order complete' },
 ]
 
-// What action button to show at each status
+// What action button to show at each status.
+// NOTE: 'arrived_at_maker' is intentionally absent — that transition to
+// 'picked_up' is triggered by the maker entering the PIN on their device.
 const NEXT_ACTION: Record<string, { next: OrderStatus; label: string }> = {
-  driver_assigned:    { next: 'arrived_at_maker',   label: "Arrived at Restaurant" },
-  arrived_at_maker:   { next: 'picked_up',          label: 'Confirm Pickup' },
-  picked_up:          { next: 'on_the_way',         label: 'Start Delivery' },
-  on_the_way:         { next: 'arrived_at_customer', label: "Arrived at Customer" },
-  arrived_at_customer: { next: 'delivered',         label: 'Complete Delivery' },
+  driver_assigned:     { next: 'arrived_at_maker',   label: 'Arrived at Restaurant' },
+  picked_up:           { next: 'on_the_way',         label: 'Start Delivery' },
+  on_the_way:          { next: 'arrived_at_customer', label: 'Arrived at Customer' },
+  arrived_at_customer: { next: 'delivered',           label: 'Complete Delivery' },
 }
 
 // Reasons driver can select when they can't complete delivery
@@ -123,6 +126,25 @@ export default function ActiveDeliveryPage() {
   }, [router, setActiveOrder])
 
   useEffect(() => { loadActiveOrder() }, [loadActiveOrder])
+
+  // Real-time: detect when maker confirms pickup PIN (status → picked_up)
+  // or any other external order status change.
+  useEffect(() => {
+    if (!order) return
+    const supabase = createClient()
+    const channel = supabase
+      .channel(`driver-order-${order.id}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'orders', filter: `id=eq.${order.id}` },
+        (payload) => {
+          const newStatus = payload.new.status as string
+          setOrder((prev) => prev ? { ...prev, status: newStatus } : prev)
+        }
+      )
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [order?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!order) return
@@ -383,14 +405,42 @@ export default function ActiveDeliveryPage() {
         </>
       )}
 
-      {/* ── Stage: Arrived at Restaurant ── */}
+      {/* ── Stage: Arrived at Restaurant — PIN handoff ── */}
       {isAtMaker && (
         <>
-          <div className="mx-4 mb-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl px-4 py-3.5">
-            <p className="text-sm font-black text-amber-300">You've arrived at the restaurant</p>
-            <p className="text-xs text-amber-400/70 mt-0.5">Verify all items before confirming pickup</p>
+          {/* PIN display card — driver shows this to the maker */}
+          <div className="mx-4 mb-3 bg-[#141414] rounded-2xl border border-[#FF7A50]/30 overflow-hidden">
+            <div className="px-4 pt-4 pb-2 flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-[#FF7A50] animate-pulse" />
+              <p className="text-[11px] font-black text-[#FF7A50] uppercase tracking-wider">Your Pickup PIN</p>
+            </div>
+            <div className="px-4 pb-4">
+              <div className="flex items-center gap-3 mt-1">
+                {(order.pickup_pin ?? '----').split('').map((digit, i) => (
+                  <div
+                    key={i}
+                    className="w-14 h-16 rounded-xl bg-[#0A0A0A] border-2 border-[#FF7A50]/40 flex items-center justify-center"
+                  >
+                    <span className="text-3xl font-black text-white tracking-widest">{digit}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-zinc-500 mt-3 leading-relaxed">
+                Read this code to the maker — they must enter it on their screen to confirm the pickup handoff.
+              </p>
+            </div>
           </div>
 
+          {/* Waiting state */}
+          <div className="mx-4 mb-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl px-4 py-3.5 flex items-center gap-3">
+            <div className="w-4 h-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin flex-shrink-0" />
+            <div>
+              <p className="text-sm font-black text-amber-300">Waiting for maker to confirm</p>
+              <p className="text-xs text-amber-400/70 mt-0.5">Your screen will update automatically once they enter the PIN</p>
+            </div>
+          </div>
+
+          {/* Item checklist — informational only while waiting */}
           {order.order_items.length > 0 && (
             <div className="mx-4 mb-3 bg-[#141414] rounded-2xl border border-white/5 overflow-hidden">
               <button
@@ -399,7 +449,7 @@ export default function ActiveDeliveryPage() {
               >
                 <div className="flex items-center gap-2.5">
                   <Package size={15} className="text-[#FF7A50]" />
-                  <span className="text-sm font-bold text-white">Verify Items</span>
+                  <span className="text-sm font-bold text-white">Check Items</span>
                   <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
                     checkedItems.size === order.order_items.length
                       ? 'bg-green-500/20 text-green-400'
@@ -436,7 +486,7 @@ export default function ActiveDeliveryPage() {
                   {checkedItems.size === order.order_items.length && (
                     <div className="flex items-center gap-2 px-4 py-2.5 bg-green-500/10">
                       <CheckCircle size={13} className="text-green-400" />
-                      <span className="text-xs font-bold text-green-400">All items verified — ready to confirm!</span>
+                      <span className="text-xs font-bold text-green-400">All items verified!</span>
                     </div>
                   )}
                 </div>
@@ -678,7 +728,8 @@ export default function ActiveDeliveryPage() {
       )}
 
       {/* ── Fixed CTA ── */}
-      {nextAction && (
+      {/* isAtMaker has no CTA — the maker triggers the transition via PIN */}
+      {nextAction && !isAtMaker && (
         <div className="fixed bottom-[68px] left-0 right-0 max-w-[430px] mx-auto px-4 pb-4 pt-3 bg-gradient-to-t from-[#080808] via-[#080808]/95 to-transparent">
           {updateError && (
             <div className="mb-2 px-4 py-2.5 bg-red-500/15 border border-red-500/30 rounded-2xl text-xs font-semibold text-red-400 text-center">
@@ -691,8 +742,6 @@ export default function ActiveDeliveryPage() {
             className={`w-full text-white rounded-2xl py-4 font-black text-base flex items-center justify-center gap-2.5 disabled:opacity-50 transition-all shadow-lg active:scale-[0.98] ${
               isAtCustomer
                 ? 'bg-green-500 shadow-green-500/25'
-                : isPickupPhase
-                ? 'bg-[#FF7A50] shadow-[#FF7A50]/25'
                 : 'bg-[#FF7A50] shadow-[#FF7A50]/25'
             }`}
           >
@@ -700,18 +749,11 @@ export default function ActiveDeliveryPage() {
               <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
             ) : isAtCustomer ? (
               <CheckCircle size={20} />
-            ) : isAtMaker ? (
-              <Package size={20} />
             ) : (
               <Navigation size={20} />
             )}
             {updating ? 'Updating…' : nextAction.label}
           </button>
-          {isAtMaker && order.order_items.length > 0 && checkedItems.size < order.order_items.length && (
-            <p className="text-center text-xs text-zinc-600 mt-2">
-              {order.order_items.length - checkedItems.size} item{order.order_items.length - checkedItems.size !== 1 ? 's' : ''} not yet verified
-            </p>
-          )}
           {isAtCustomer && (
             <button
               onClick={() => { setShowCantDeliver(true); setCantDeliverReason(null); setFailedError(null) }}

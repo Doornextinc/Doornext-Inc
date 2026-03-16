@@ -90,6 +90,10 @@ export interface Order {
   delivery_address: Address
   stripe_payment_intent_id: string | null
   scheduled_for: string | null
+  /** 4-digit pickup confirmation PIN — shown to driver, entered by maker */
+  pickup_pin: string | null
+  /** Cumulative failed PIN attempts; locked out after 5 */
+  pin_attempts: number
   created_at: string
   updated_at: string
   food_maker?: FoodMaker

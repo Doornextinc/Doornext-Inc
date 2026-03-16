@@ -29,6 +29,11 @@ export async function POST(req: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
+  // Generate a cryptographically-adequate 4-digit pickup confirmation PIN.
+  // The driver will show this to the maker, who must enter it on their screen
+  // to confirm the handoff. This PIN is mandatory — neither party can bypass it.
+  const pickup_pin = String(Math.floor(1000 + Math.random() * 9000))
+
   // Atomic accept: update only if still unassigned and ready.
   // Use count instead of select().single() — after updating status to
   // 'driver_assigned' the row no longer matches status='ready', so
@@ -38,6 +43,8 @@ export async function POST(req: NextRequest) {
     .update({
       nexter_id: user.id,
       status: 'driver_assigned',
+      pickup_pin,
+      pin_attempts: 0,
       updated_at: new Date().toISOString(),
     }, { count: 'exact' })
     .eq('id', orderId)
