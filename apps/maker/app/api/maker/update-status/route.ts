@@ -26,6 +26,17 @@ const CUSTOMER_NOTIF: Record<string, { title: string; body: (id: string, maker: 
   },
 }
 
+// Haversine distance in km
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371
+  const dLat = ((lat2 - lat1) * Math.PI) / 180
+  const dLng = ((lng2 - lng1) * Math.PI) / 180
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
 export async function POST(req: NextRequest) {
   const cookieStore = await cookies()
   const supabase = createServerClient(
@@ -45,7 +56,7 @@ export async function POST(req: NextRequest) {
   // Verify maker owns this order
   const { data: maker } = await supabase
     .from('food_makers')
-    .select('id, display_name')
+    .select('id, display_name, lat, lng')
     .eq('user_id', user.id)
     .single()
 
@@ -74,10 +85,6 @@ export async function POST(req: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  // Update order status — Supabase Realtime broadcasts this instantly to:
-  //   • Customer's useOrderTracking hook (filtered by order id)
-  //   • Driver's available-pickups page (when status = 'ready', order appears)
-  //   • Maker's own order detail page (filtered by order id)
   await admin
     .from('orders')
     .update({ status, updated_at: new Date().toISOString() })
@@ -98,27 +105,62 @@ export async function POST(req: NextRequest) {
     })
   }
 
-  // When order becomes 'ready', also notify all currently-online drivers
-  // so they see it in their available pickups list immediately.
-  // (The realtime subscription already handles it, but a push notification
-  //  means drivers see it even if the app is in the background.)
-  if (status === 'ready') {
-    const { data: onlineDrivers } = await admin
-      .from('drivers')
-      .select('user_id')
-      .eq('is_available', true)
+  // ── Driver notifications ──────────────────────────────────────────────────
 
-    if (onlineDrivers && onlineDrivers.length > 0) {
-      const driverNotifs = onlineDrivers.map((d: { user_id: string }) => ({
-        user_id: d.user_id,
+  // Get all currently online drivers with their last known locations
+  const { data: onlineDrivers } = await admin
+    .from('driver_profiles')
+    .select('id')
+    .eq('is_active', true)
+
+  if (onlineDrivers && onlineDrivers.length > 0) {
+    const driverIds = onlineDrivers.map((d: { id: string }) => d.id)
+
+    if (status === 'preparing') {
+      // When preparation starts: notify nearby drivers (≤8km) so they can head toward the area
+      // Get recent driver locations for proximity filtering
+      const { data: locations } = await admin
+        .from('nexter_locations')
+        .select('nexter_id, lat, lng')
+        .in('nexter_id', driverIds)
+
+      const nearbyDriverIds: string[] = []
+
+      if (locations && maker.lat && maker.lng) {
+        for (const loc of locations) {
+          const dist = haversineKm(maker.lat, maker.lng, loc.lat, loc.lng)
+          if (dist <= 8) nearbyDriverIds.push(loc.nexter_id)
+        }
+      }
+
+      // If no location data available, notify all online drivers
+      const targetIds = nearbyDriverIds.length > 0 ? nearbyDriverIds : driverIds
+
+      const driverNotifs = targetIds.map((id: string) => ({
+        user_id: id,
+        type: 'order_preparing',
+        title: '🍳 Order being prepared nearby',
+        body: `Order #${shortId} is being cooked at ${makerName}. Get ready — it'll be available for pickup soon!`,
+        data: { order_id: orderId, maker_name: makerName },
+      }))
+
+      admin.from('notifications').insert(driverNotifs).then(({ error }) => {
+        if (error) console.error('Failed to notify drivers (preparing):', error.message)
+      })
+    }
+
+    if (status === 'ready') {
+      // Order is ready for pickup — notify all online drivers immediately
+      const driverNotifs = driverIds.map((id: string) => ({
+        user_id: id,
         type: 'order_available',
         title: '📦 New pickup available!',
         body: `Order #${shortId} is ready at ${makerName}. Tap to accept.`,
-        data: { order_id: orderId },
+        data: { order_id: orderId, maker_name: makerName },
       }))
-      // Fire-and-forget — don't fail the request if this errors
+
       admin.from('notifications').insert(driverNotifs).then(({ error }) => {
-        if (error) console.error('Failed to notify drivers:', error.message)
+        if (error) console.error('Failed to notify drivers (ready):', error.message)
       })
     }
   }

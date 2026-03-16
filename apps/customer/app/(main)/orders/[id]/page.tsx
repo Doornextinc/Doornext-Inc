@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
-import { CheckCircle, Circle, Clock, MapPin, MessageCircle, Star } from 'lucide-react'
+import { CheckCircle, Circle, Clock, MapPin, MessageCircle, Star, XCircle } from 'lucide-react'
 import { BackBar } from '@/components/layout/top-bar'
 import { Button } from '@/components/ui/button'
 import { cn, ORDER_STATUS_LABELS } from '@/lib/utils'
@@ -31,6 +31,7 @@ const STATUS_MESSAGES: Partial<Record<OrderStatus, string>> = {
   on_the_way: 'Your Nexter is on the way 🛵',
   arrived_at_customer: 'Your driver has arrived at your location!',
   delivered: 'Delivered! Enjoy your meal 🎉',
+  failed_delivery: 'Delivery was unsuccessful. Our support team will reach out shortly.',
   cancelled: 'Order was cancelled',
 }
 
@@ -55,6 +56,9 @@ export default function OrderTrackingPage() {
   const [reviewText, setReviewText] = useState('')
   const [submittingReview, setSubmittingReview] = useState(false)
   const [reviewSubmitted, setReviewSubmitted] = useState(false)
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+  const [cancelling, setCancelling] = useState(false)
+  const [cancelError, setCancelError] = useState<string | null>(null)
 
   const { status: realtimeStatus, nexterLocation } = useOrderTracking(
     id,
@@ -119,6 +123,29 @@ export default function OrderTrackingPage() {
       setTimeout(() => setShowTip(true), 1500)
     }
   }, [realtimeStatus, tipDone])
+
+  const cancelOrder = async () => {
+    setCancelling(true)
+    setCancelError(null)
+    try {
+      const res = await fetch('/api/cancel-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: id }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setCancelError(data.error ?? 'Cancellation failed. Please try again.')
+        setCancelling(false)
+        return
+      }
+      setShowCancelConfirm(false)
+      setOrder(prev => prev ? { ...prev, status: 'cancelled' } : prev)
+    } catch {
+      setCancelError('Network error. Please try again.')
+    }
+    setCancelling(false)
+  }
 
   const submitTip = async (amount: number) => {
     setTipSubmitting(true)
@@ -201,6 +228,23 @@ export default function OrderTrackingPage() {
   return (
     <div className="flex flex-col min-h-full bg-[#f8f8f8]">
       <BackBar title="Order Tracking" />
+
+      {/* Cancel banner — only shown before preparation starts */}
+      {(currentStatus === 'pending' || currentStatus === 'confirmed') && (
+        <div className="mx-4 mt-3 flex items-center justify-between bg-red-50 border border-red-100 rounded-2xl px-4 py-3">
+          <div>
+            <p className="text-xs font-bold text-red-600">Need to cancel?</p>
+            <p className="text-[11px] text-red-400 mt-0.5">Free cancellation before preparation starts</p>
+          </div>
+          <button
+            onClick={() => setShowCancelConfirm(true)}
+            className="flex items-center gap-1.5 bg-red-500 text-white text-xs font-bold px-3 py-2 rounded-xl active:scale-95 transition-all"
+          >
+            <XCircle size={13} />
+            Cancel Order
+          </button>
+        </div>
+      )}
 
       {/* Map */}
       <div className="relative w-full h-52 bg-[#0d1117] overflow-hidden">
@@ -407,6 +451,49 @@ export default function OrderTrackingPage() {
             >
               {tipPct === 0 ? 'Skip tip' : `Tip $${(order.subtotal * tipPct).toFixed(2)}`}
             </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Cancel Confirmation Modal */}
+      {showCancelConfirm && (
+        <div className="fixed inset-0 z-50 flex items-end">
+          <div className="absolute inset-0 bg-black/50" onClick={() => !cancelling && setShowCancelConfirm(false)} />
+          <div className="relative w-full max-w-[430px] mx-auto bg-white rounded-t-3xl p-6 pb-10">
+            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-6" />
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
+                <XCircle size={32} className="text-red-400" />
+              </div>
+              <h2 className="text-xl font-black text-gray-900">Cancel this order?</h2>
+              <p className="text-gray-500 text-sm mt-2">
+                {order.payment_method === 'cash'
+                  ? 'Your order will be cancelled. No charge will be made.'
+                  : `You'll receive a full refund of $${order.total.toFixed(2)} in 3–5 business days.`}
+              </p>
+              <p className="text-xs text-orange-500 font-semibold mt-3 bg-orange-50 rounded-xl px-3 py-2">
+                Once the maker starts preparing, cancellation is not possible.
+              </p>
+            </div>
+            {cancelError && (
+              <p className="text-center text-sm text-red-500 mb-4 bg-red-50 rounded-xl px-4 py-2">{cancelError}</p>
+            )}
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setShowCancelConfirm(false); setCancelError(null) }}
+                disabled={cancelling}
+                className="flex-1 py-4 rounded-2xl border border-gray-200 text-gray-600 font-bold text-sm disabled:opacity-50"
+              >
+                Keep Order
+              </button>
+              <button
+                onClick={cancelOrder}
+                disabled={cancelling}
+                className="flex-1 py-4 rounded-2xl bg-red-500 text-white font-black text-sm disabled:opacity-50 active:scale-[0.98] transition-all"
+              >
+                {cancelling ? 'Cancelling…' : 'Yes, Cancel'}
+              </button>
+            </div>
           </div>
         </div>
       )}

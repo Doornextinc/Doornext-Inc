@@ -7,7 +7,7 @@ import { useDriverStore } from '@/store/driver-store'
 import type { OrderStatus } from '@doornext/shared/types'
 import {
   MapPin, Phone, CheckCircle, Navigation, Package,
-  ChevronDown, ChevronUp, Banknote, ArrowRight, Clock, Star,
+  ChevronDown, ChevronUp, Banknote, ArrowRight, Clock, Star, AlertTriangle, X,
 } from 'lucide-react'
 import { AppHeader } from '@/components/layout/app-header'
 
@@ -41,6 +41,16 @@ const NEXT_ACTION: Record<string, { next: OrderStatus; label: string }> = {
   arrived_at_customer: { next: 'delivered',         label: 'Complete Delivery' },
 }
 
+// Reasons driver can select when they can't complete delivery
+const CANT_DELIVER_REASONS = [
+  'Customer not available / no answer at door',
+  'Customer refused delivery',
+  'Unsafe or inaccessible drop-off location',
+  'Incorrect or unverifiable address',
+  'Customer requested cancellation at door',
+  'Other',
+]
+
 // Active statuses to query from DB
 const ACTIVE_STATUSES = ['driver_assigned', 'arrived_at_maker', 'picked_up', 'on_the_way', 'arrived_at_customer']
 
@@ -71,6 +81,10 @@ export default function ActiveDeliveryPage() {
   const [showItems, setShowItems] = useState(false)
   const [checkedItems, setCheckedItems] = useState<Set<number>>(new Set())
   const [delivered, setDelivered] = useState(false)
+  const [showCantDeliver, setShowCantDeliver] = useState(false)
+  const [cantDeliverReason, setCantDeliverReason] = useState<string | null>(null)
+  const [submittingFailed, setSubmittingFailed] = useState(false)
+  const [failedError, setFailedError] = useState<string | null>(null)
   const locationIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -123,6 +137,32 @@ export default function ActiveDeliveryPage() {
     timerRef.current = setInterval(() => setElapsed(Math.floor((Date.now() - start) / 1000)), 1000)
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
   }, [order])
+
+  const handleCantDeliver = async () => {
+    if (!order || !cantDeliverReason) return
+    setSubmittingFailed(true)
+    setFailedError(null)
+    try {
+      const res = await fetch('/api/driver/failed-delivery', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: order.id, reason: cantDeliverReason }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setFailedError(data.error ?? 'Failed to report. Please try again.')
+        setSubmittingFailed(false)
+        return
+      }
+      setActiveOrder(null)
+      setShowCantDeliver(false)
+      // Navigate home with a brief delay
+      setTimeout(() => router.push('/'), 500)
+    } catch {
+      setFailedError('Network error. Please try again.')
+    }
+    setSubmittingFailed(false)
+  }
 
   const handleStatusUpdate = async (newStatus: OrderStatus) => {
     if (!order) return
@@ -575,6 +615,68 @@ export default function ActiveDeliveryPage() {
         </>
       )}
 
+      {/* ── Can't Deliver modal ── */}
+      {showCantDeliver && (
+        <div className="fixed inset-0 z-50 flex items-end">
+          <div className="absolute inset-0 bg-black/60" onClick={() => !submittingFailed && setShowCantDeliver(false)} />
+          <div className="relative w-full max-w-[430px] mx-auto bg-[#111] rounded-t-3xl p-5 pb-10 border-t border-white/10">
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <h2 className="text-lg font-black text-white">Can't Complete Delivery</h2>
+                <p className="text-xs text-zinc-500 mt-0.5">Select a reason to notify support</p>
+              </div>
+              <button onClick={() => setShowCantDeliver(false)} className="w-8 h-8 rounded-full bg-[#1A1A1A] flex items-center justify-center">
+                <X size={14} className="text-zinc-400" />
+              </button>
+            </div>
+
+            <div className="space-y-2 mb-5">
+              {CANT_DELIVER_REASONS.map((reason) => (
+                <button
+                  key={reason}
+                  onClick={() => setCantDeliverReason(reason)}
+                  className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-left transition-all border ${
+                    cantDeliverReason === reason
+                      ? 'border-red-500/60 bg-red-500/10'
+                      : 'border-white/8 bg-[#1A1A1A]'
+                  }`}
+                >
+                  <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${
+                    cantDeliverReason === reason ? 'border-red-400' : 'border-zinc-600'
+                  }`}>
+                    {cantDeliverReason === reason && <div className="w-2 h-2 rounded-full bg-red-400" />}
+                  </div>
+                  <span className={`text-sm ${cantDeliverReason === reason ? 'text-white font-semibold' : 'text-zinc-400'}`}>
+                    {reason}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {failedError && (
+              <p className="text-xs text-red-400 text-center mb-3 bg-red-500/10 rounded-xl px-4 py-2">{failedError}</p>
+            )}
+
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl px-4 py-3 mb-4">
+              <div className="flex items-start gap-2.5">
+                <AlertTriangle size={14} className="text-amber-400 mt-0.5 flex-shrink-0" />
+                <p className="text-xs text-amber-300 leading-relaxed">
+                  A support ticket will be created automatically. The customer will be notified and our team will follow up to resolve this.
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={handleCantDeliver}
+              disabled={!cantDeliverReason || submittingFailed}
+              className="w-full bg-red-500 disabled:bg-[#1A1A1A] disabled:text-zinc-700 text-white font-black py-4 rounded-2xl text-base active:scale-[0.98] transition-all"
+            >
+              {submittingFailed ? 'Submitting…' : 'Report & Contact Support'}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ── Fixed CTA ── */}
       {nextAction && (
         <div className="fixed bottom-[68px] left-0 right-0 max-w-[430px] mx-auto px-4 pb-4 pt-3 bg-gradient-to-t from-[#080808] via-[#080808]/95 to-transparent">
@@ -609,6 +711,15 @@ export default function ActiveDeliveryPage() {
             <p className="text-center text-xs text-zinc-600 mt-2">
               {order.order_items.length - checkedItems.size} item{order.order_items.length - checkedItems.size !== 1 ? 's' : ''} not yet verified
             </p>
+          )}
+          {isAtCustomer && (
+            <button
+              onClick={() => { setShowCantDeliver(true); setCantDeliverReason(null); setFailedError(null) }}
+              className="w-full mt-2 flex items-center justify-center gap-2 py-2.5 text-red-400 text-sm font-bold"
+            >
+              <AlertTriangle size={14} />
+              Can't Deliver
+            </button>
           )}
         </div>
       )}

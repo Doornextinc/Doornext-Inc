@@ -12,6 +12,7 @@ const STATUS_COLORS: Record<string, string> = {
   picked_up: 'bg-indigo-100 text-indigo-700',
   on_the_way: 'bg-cyan-100 text-cyan-700',
   arrived_at_customer: 'bg-teal-100 text-teal-700',
+  failed_delivery: 'bg-red-100 text-red-700',
   delivered: 'bg-green-100 text-green-700',
   cancelled: 'bg-red-100 text-red-700',
 }
@@ -51,7 +52,7 @@ export default async function OrdersPage({ searchParams }: PageProps) {
       </div>
 
       <div className="flex gap-2 mb-6 flex-wrap">
-        {['all', 'pending', 'confirmed', 'preparing', 'ready', 'driver_assigned', 'arrived_at_maker', 'picked_up', 'on_the_way', 'arrived_at_customer', 'delivered', 'cancelled'].map((s) => (
+        {['all', 'pending', 'confirmed', 'preparing', 'ready', 'driver_assigned', 'arrived_at_maker', 'picked_up', 'on_the_way', 'arrived_at_customer', 'delivered', 'failed_delivery', 'cancelled'].map((s) => (
           <Link
             key={s}
             href={s === 'all' ? '/orders' : `/orders?status=${s}`}

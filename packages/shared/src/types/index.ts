@@ -9,6 +9,7 @@ export type OrderStatus =
   | 'on_the_way'
   | 'arrived_at_customer'
   | 'delivered'
+  | 'failed_delivery'
   | 'cancelled'
 
 export type UserRole = 'customer' | 'maker' | 'driver' | 'admin'

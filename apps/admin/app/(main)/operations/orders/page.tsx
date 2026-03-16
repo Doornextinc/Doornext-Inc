@@ -23,11 +23,12 @@ const STATUS_COLORS: Record<string, string> = {
   picked_up: 'bg-indigo-100 text-indigo-700',
   on_the_way: 'bg-cyan-100 text-cyan-700',
   arrived_at_customer: 'bg-teal-100 text-teal-700',
+  failed_delivery: 'bg-red-100 text-red-700',
   delivered: 'bg-green-100 text-green-700',
   cancelled: 'bg-red-100 text-red-700',
 }
 
-const ALL_STATUSES = ['all', 'pending', 'confirmed', 'preparing', 'ready', 'driver_assigned', 'arrived_at_maker', 'picked_up', 'on_the_way', 'arrived_at_customer', 'delivered', 'cancelled']
+const ALL_STATUSES = ['all', 'pending', 'confirmed', 'preparing', 'ready', 'driver_assigned', 'arrived_at_maker', 'picked_up', 'on_the_way', 'arrived_at_customer', 'delivered', 'failed_delivery', 'cancelled']
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
