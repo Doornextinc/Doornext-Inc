@@ -383,9 +383,20 @@ export default function OrderTrackingPage() {
 
         {/* Order Items */}
         <div className="bg-white rounded-2xl p-4">
-          <h3 className="font-bold text-gray-900 mb-3 text-sm">
-            Order from {order.food_maker.display_name}
-          </h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-bold text-gray-900 text-sm">
+              Order from {order.food_maker.display_name}
+            </h3>
+            {order.status !== 'cancelled' && (
+              <button
+                onClick={() => router.push(`/chat/order-${order.id}`)}
+                className="flex items-center gap-1.5 text-xs font-semibold text-[#FF6B35]"
+              >
+                <MessageCircle size={14} />
+                Message
+              </button>
+            )}
+          </div>
           {order.order_items.map((oi) => (
             <div key={oi.id} className="flex justify-between text-sm py-1.5 text-gray-600">
               <span>{oi.quantity}x {oi.menu_item?.name ?? 'Item'}</span>

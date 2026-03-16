@@ -9,6 +9,7 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
   const router = useRouter()
   const setOnline = useDriverStore((s) => s.setOnline)
   const setActiveOrder = useDriverStore((s) => s.setActiveOrder)
+  const clearStore = useDriverStore((s) => s.clearStore)
 
   useEffect(() => {
     const supabase = createClient()
@@ -21,7 +22,6 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
         .single()
       if (data) setOnline(data.is_active ?? false)
 
-      // Restore active order if any
       const { data: activeOrder } = await supabase
         .from('orders')
         .select('id')
@@ -33,6 +33,9 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_OUT') {
+        // Clear stale data from previous session so a different driver
+        // logging in on the same device doesn't see ghost state
+        clearStore()
         router.push('/login')
         return
       }
@@ -58,7 +61,7 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
       subscription.unsubscribe()
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [router, setOnline, setActiveOrder])
+  }, [router, setOnline, setActiveOrder, clearStore])
 
   return <>{children}</>
 }

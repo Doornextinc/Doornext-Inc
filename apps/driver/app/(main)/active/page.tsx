@@ -7,7 +7,7 @@ import { useDriverStore } from '@/store/driver-store'
 import type { OrderStatus } from '@doornext/shared/types'
 import {
   MapPin, Phone, CheckCircle, Navigation, Package,
-  ChevronDown, ChevronUp, Banknote, ArrowRight, Clock, Star, AlertTriangle, X,
+  ChevronDown, ChevronUp, Banknote, ArrowRight, Clock, Star, AlertTriangle, X, MessageCircle,
 } from 'lucide-react'
 import { AppHeader } from '@/components/layout/app-header'
 
@@ -566,13 +566,19 @@ export default function ActiveDeliveryPage() {
               <div className="bg-[#141414] rounded-2xl p-3.5 border border-white/5">
                 <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wide mb-1.5">Customer</p>
                 <p className="font-bold text-white text-sm truncate leading-tight">{order.customer.full_name}</p>
-                {order.customer.phone ? (
-                  <a href={`tel:${order.customer.phone}`} className="mt-2 flex items-center gap-1.5 text-green-400 text-xs font-semibold">
-                    <Phone size={12} /> Call customer
-                  </a>
-                ) : (
-                  <p className="text-xs text-zinc-700 mt-2">No phone on file</p>
-                )}
+                <div className="flex items-center gap-3 mt-2">
+                  {order.customer.phone && (
+                    <a href={`tel:${order.customer.phone}`} className="flex items-center gap-1.5 text-green-400 text-xs font-semibold">
+                      <Phone size={12} /> Call
+                    </a>
+                  )}
+                  <button
+                    onClick={() => router.push(`/messages/order-${order.id}`)}
+                    className="flex items-center gap-1.5 text-[#FF7A50] text-xs font-semibold"
+                  >
+                    <MessageCircle size={12} /> Message
+                  </button>
+                </div>
               </div>
               <div className="bg-[#141414] rounded-2xl p-3.5 border border-white/5">
                 <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wide mb-1.5">You earn</p>
