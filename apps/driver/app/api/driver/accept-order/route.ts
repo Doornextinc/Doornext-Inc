@@ -30,10 +30,10 @@ export async function POST(req: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  // Generate a cryptographically-adequate 4-digit pickup confirmation PIN.
+  // Generate a cryptographically secure 4-digit pickup confirmation PIN.
   // The driver will show this to the maker, who must enter it on their screen
   // to confirm the handoff. This PIN is mandatory — neither party can bypass it.
-  const pickup_pin = String(Math.floor(1000 + Math.random() * 9000))
+  const pickup_pin = String(1000 + (crypto.getRandomValues(new Uint32Array(1))[0] % 9000))
 
   // Atomic accept: update only if still unassigned and ready.
   // Use count instead of select().single() — after updating status to

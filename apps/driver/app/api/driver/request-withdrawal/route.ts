@@ -47,6 +47,33 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'You already have a pending withdrawal request' }, { status: 409 })
   }
 
+  // Balance validation: ensure the driver has sufficient available balance.
+  // Available = sum of delivery fees from delivered orders
+  //           - sum of all non-rejected withdrawal amounts.
+  const [{ data: delivered }, { data: withdrawn }] = await Promise.all([
+    admin
+      .from('orders')
+      .select('delivery_fee')
+      .eq('nexter_id', user.id)
+      .eq('status', 'delivered'),
+    admin
+      .from('withdrawals')
+      .select('amount')
+      .eq('user_id', user.id)
+      .in('status', ['pending', 'approved', 'paid']),
+  ])
+
+  const totalEarned = (delivered ?? []).reduce((s: number, o: { delivery_fee: number | null }) => s + (o.delivery_fee ?? 0), 0)
+  const totalWithdrawn = (withdrawn ?? []).reduce((s: number, w: { amount: number }) => s + w.amount, 0)
+  const availableBalance = Math.round((totalEarned - totalWithdrawn) * 100) / 100
+
+  if (amount > availableBalance) {
+    return NextResponse.json(
+      { error: `Insufficient balance. Available: $${availableBalance.toFixed(2)}` },
+      { status: 400 }
+    )
+  }
+
   const { data, error } = await admin
     .from('withdrawals')
     .insert({

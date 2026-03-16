@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
-import { createAdminClient } from '@/lib/supabase/server'
+import { createAdminClient, createSessionClient } from '@/lib/supabase/server'
 
 export async function POST(req: NextRequest) {
   const stripeKey = process.env.STRIPE_SECRET_KEY
@@ -10,7 +10,25 @@ export async function POST(req: NextRequest) {
   const orderId = body.orderId as string
   if (!orderId) return NextResponse.json({ error: 'orderId required' }, { status: 400 })
 
+  // Identify the acting admin for audit trail
+  const sessionClient = await createSessionClient()
+  const { data: { user: adminUser } } = await sessionClient.auth.getUser()
+
   const admin = createAdminClient()
+
+  const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? null
+
+  const writeAuditLog = async (action: string, payload: Record<string, unknown>) => {
+    if (!adminUser) return
+    await admin.from('admin_audit_log').insert({
+      admin_id: adminUser.id,
+      action,
+      target_type: 'order',
+      target_id: orderId,
+      payload,
+      ip_address: ip,
+    })
+  }
   const { data: order } = await admin
     .from('orders')
     .select('stripe_payment_intent_id, payment_method, status, customer_id')
@@ -38,6 +56,8 @@ export async function POST(req: NextRequest) {
       data: { order_id: orderId },
     })
 
+    await writeAuditLog('order_cancel_cash', { payment_method: 'cash' })
+
     return NextResponse.json({ success: true, note: 'Cash order cancelled — no Stripe refund needed' })
   }
 
@@ -61,6 +81,8 @@ export async function POST(req: NextRequest) {
       body: `Your order #${orderId.slice(-6).toUpperCase()} has been refunded by admin.`,
       data: { order_id: orderId },
     })
+
+    await writeAuditLog('refund', { stripe_payment_intent_id: order.stripe_payment_intent_id })
 
     return NextResponse.json({ success: true })
   } catch (err) {

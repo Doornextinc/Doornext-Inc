@@ -1,13 +1,17 @@
-import { NextResponse } from 'next/server'
-import { createAdminClient } from '@/lib/supabase/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { createAdminClient, createSessionClient } from '@/lib/supabase/server'
 
 export async function POST(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
   const { action, notes } = await request.json()
   const supabase = createAdminClient()
+
+  const sessionClient = await createSessionClient()
+  const { data: { user: adminUser } } = await sessionClient.auth.getUser()
+  const ip = request.headers.get('x-forwarded-for') ?? request.headers.get('x-real-ip') ?? null
 
   if (!['approve', 'reject'].includes(action)) {
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
@@ -35,6 +39,17 @@ export async function POST(
     .eq('id', doc.user_id)
 
   if (profileError) return NextResponse.json({ error: profileError.message }, { status: 500 })
+
+  if (adminUser) {
+    await supabase.from('admin_audit_log').insert({
+      admin_id: adminUser.id,
+      action: `kyc_${action}`,
+      target_type: 'driver',
+      target_id: doc.user_id,
+      payload: { document_id: id, notes: notes ?? null, kyc_status: kycStatus },
+      ip_address: ip,
+    })
+  }
 
   return NextResponse.json({ success: true })
 }

@@ -36,6 +36,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
 
+  // Idempotency: skip events we have already processed to prevent duplicate mutations.
+  const { error: dedupCheckError, data: existing } = await supabase
+    .from('stripe_processed_events')
+    .select('event_id')
+    .eq('event_id', event.id)
+    .maybeSingle()
+
+  if (!dedupCheckError && existing) {
+    // Already processed — acknowledge to Stripe without re-processing.
+    return NextResponse.json({ received: true, duplicate: true })
+  }
+
+  // Mark as processed before mutating state to handle concurrent deliveries.
+  await supabase
+    .from('stripe_processed_events')
+    .insert({ event_id: event.id })
+
   try {
     switch (event.type) {
       case 'payment_intent.succeeded': {

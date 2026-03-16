@@ -30,6 +30,7 @@ export default function ProfilePage() {
   const activeOrderId = useDriverStore((s) => s.activeOrderId)
   const clearStore = useDriverStore((s) => s.clearStore)
   const [profile, setProfile] = useState<DriverProfile | null>(null)
+  const [avatarDisplayUrl, setAvatarDisplayUrl] = useState<string | null>(null)
   const [email, setEmail] = useState<string | null>(null)
   const [totalEarnings, setTotalEarnings] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
@@ -48,7 +49,20 @@ export default function ProfilePage() {
         supabase.from('orders').select('delivery_fee').eq('nexter_id', user.id).eq('status', 'delivered'),
       ])
 
-      if (profileRes.data) setProfile(profileRes.data as DriverProfile)
+      if (profileRes.data) {
+        setProfile(profileRes.data as DriverProfile)
+        // avatar_url stores the storage path; generate a short-lived signed URL
+        const storagePath = (profileRes.data as DriverProfile).avatar_url
+        if (storagePath && !storagePath.startsWith('http')) {
+          const { data: signed } = await supabase.storage
+            .from('driver-documents')
+            .createSignedUrl(storagePath, 3600)
+          setAvatarDisplayUrl(signed?.signedUrl ?? null)
+        } else {
+          // Legacy: already a full URL (pre-migration rows)
+          setAvatarDisplayUrl(storagePath)
+        }
+      }
       if (earningsRes.data) setTotalEarnings(earningsRes.data.reduce((s, d) => s + (d.delivery_fee ?? 0), 0))
       setLoading(false)
     }
@@ -63,8 +77,9 @@ export default function ProfilePage() {
       const fd = new FormData(); fd.append('file', file)
       const res = await fetch('/api/driver/update-avatar', { method: 'POST', body: fd })
       if (res.ok) {
-        const { avatarUrl } = await res.json()
-        setProfile(prev => prev ? { ...prev, avatar_url: avatarUrl } : prev)
+        const { avatarUrl, storagePath } = await res.json()
+        setAvatarDisplayUrl(avatarUrl)
+        setProfile(prev => prev ? { ...prev, avatar_url: storagePath } : prev)
       }
     } finally {
       setUploadingAvatar(false)
@@ -117,9 +132,9 @@ export default function ProfilePage() {
           {/* Avatar */}
           <div className="relative">
             <div className="w-20 h-20 rounded-2xl overflow-hidden bg-[#242424] border border-white/8 flex items-center justify-center shadow-lg">
-              {profile?.avatar_url ? (
+              {avatarDisplayUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                <img src={avatarDisplayUrl} alt="Avatar" className="w-full h-full object-cover" />
               ) : (
                 <span className="text-white text-3xl font-black">{initials}</span>
               )}
