@@ -12,6 +12,8 @@ import { AppHeader } from '@/components/layout/app-header'
 type DeliveryAddress = { street?: string; city?: string; state?: string; zip?: string; label?: string }
 
 type AvailableOrder = Pick<Order, 'id' | 'total' | 'delivery_fee' | 'created_at'> & {
+  driver_payout: number
+  tip_amount: number
   delivery_address: DeliveryAddress | null
   food_maker: { display_name: string; lat: number; lng: number } | null
 }
@@ -42,7 +44,7 @@ export default function AvailablePickupsPage() {
     const supabase = createClient()
     const { data } = await supabase
       .from('orders')
-      .select('id, total, delivery_fee, created_at, delivery_address, food_maker:food_makers(display_name, lat, lng)')
+      .select('id, total, delivery_fee, driver_payout, tip_amount, created_at, delivery_address, food_maker:food_makers(display_name, lat, lng)')
       .eq('status', 'ready')
       .is('nexter_id', null)
       .order('created_at', { ascending: true })
@@ -193,10 +195,25 @@ export default function AvailablePickupsPage() {
                       <p className="text-xs text-zinc-500 mt-0.5">#{order.id.slice(-6).toUpperCase()}</p>
                     </div>
                     <div className="text-right flex-shrink-0">
-                      <p className="text-2xl font-black text-[#FF7A50] leading-none">
-                        {formatPriceDollars(order.delivery_fee)}
-                      </p>
-                      <p className="text-[10px] text-zinc-500 mt-0.5">you earn</p>
+                      {(() => {
+                        const base = order.driver_payout > 0 ? order.driver_payout : order.delivery_fee
+                        const tip = order.tip_amount ?? 0
+                        const total = base + tip
+                        return (
+                          <>
+                            <p className="text-2xl font-black text-[#FF7A50] leading-none">
+                              {formatPriceDollars(total)}
+                            </p>
+                            {tip > 0 ? (
+                              <p className="text-[10px] text-green-400 mt-0.5 font-semibold">
+                                ${base.toFixed(2)} + ${tip.toFixed(2)} tip
+                              </p>
+                            ) : (
+                              <p className="text-[10px] text-zinc-500 mt-0.5">you earn</p>
+                            )}
+                          </>
+                        )
+                      })()}
                     </div>
                   </div>
 

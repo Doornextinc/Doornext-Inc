@@ -54,6 +54,7 @@ export const ORDER_STATUS_LABELS: Record<string, string> = {
   on_the_way: 'On The Way',
   arrived_at_customer: 'Driver Arrived',
   delivered: 'Delivered',
+  failed_delivery: 'Delivery Failed',
   cancelled: 'Cancelled',
 }
 

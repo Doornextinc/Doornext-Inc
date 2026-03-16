@@ -12,6 +12,7 @@ const STATUS_COLORS: Record<string, string> = {
   picked_up: 'bg-indigo-100 text-indigo-700',
   on_the_way: 'bg-cyan-100 text-cyan-700',
   arrived_at_customer: 'bg-teal-100 text-teal-700',
+  failed_delivery: 'bg-red-100 text-red-700',
   delivered: 'bg-green-100 text-green-700',
   cancelled: 'bg-red-100 text-red-700',
 }
