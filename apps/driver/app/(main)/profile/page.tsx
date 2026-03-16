@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { useDriverStore } from '@/store/driver-store'
 import { LogOut, Star, Package, TrendingUp, Camera, ChevronRight, Shield, AlertCircle, CheckCircle, Clock } from 'lucide-react'
 
 type DriverProfile = {
@@ -26,6 +27,7 @@ const KYC_CONFIG: Record<string, { label: string; color: string; icon: React.Ele
 
 export default function ProfilePage() {
   const router = useRouter()
+  const activeOrderId = useDriverStore((s) => s.activeOrderId)
   const [profile, setProfile] = useState<DriverProfile | null>(null)
   const [email, setEmail] = useState<string | null>(null)
   const [totalEarnings, setTotalEarnings] = useState<number | null>(null)
@@ -69,7 +71,15 @@ export default function ProfilePage() {
   }
 
   const handleSignOut = async () => {
+    if (activeOrderId) {
+      const confirmed = window.confirm(
+        'You have an active delivery in progress. Signing out will not cancel your order, but you must log back in to complete it. Sign out anyway?'
+      )
+      if (!confirmed) return
+    }
     const supabase = createClient()
+    // Set driver offline in DB before signing out
+    await supabase.from('driver_profiles').update({ is_active: false }).eq('id', profile?.id ?? '')
     await supabase.auth.signOut()
     router.push('/login')
   }

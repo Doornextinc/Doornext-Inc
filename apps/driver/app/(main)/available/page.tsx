@@ -31,6 +31,25 @@ export default function AvailablePickupsPage() {
   const [orders, setOrders] = useState<AvailableOrder[]>([])
   const [accepting, setAccepting] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [togglingOnline, setTogglingOnline] = useState(false)
+
+  const handleToggleOnline = async () => {
+    const newStatus = !isOnline
+    setOnline(newStatus)
+    setTogglingOnline(true)
+    try {
+      const res = await fetch('/api/driver/set-online', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ online: newStatus }),
+      })
+      if (!res.ok) setOnline(!newStatus) // revert on failure
+    } catch {
+      setOnline(!newStatus) // revert on network error
+    } finally {
+      setTogglingOnline(false)
+    }
+  }
 
   useEffect(() => {
     if (typeof navigator === 'undefined') return
@@ -96,8 +115,9 @@ export default function AvailablePickupsPage() {
         </p>
         {/* Live-tracking icon button */}
         <button
-          onClick={() => setOnline(!isOnline)}
-          className="relative flex items-center justify-center w-10 h-10 rounded-full transition-all active:scale-90"
+          onClick={handleToggleOnline}
+          disabled={togglingOnline}
+          className="relative flex items-center justify-center w-10 h-10 rounded-full transition-all active:scale-90 disabled:opacity-60"
           title={isOnline ? 'Go Offline' : 'Go Online'}
         >
           {/* outer glow ring — only when online */}
@@ -136,8 +156,9 @@ export default function AvailablePickupsPage() {
             Tap "Online" above to start receiving delivery requests
           </p>
           <button
-            onClick={() => setOnline(true)}
-            className="bg-[#FF7A50] text-white font-bold px-8 py-3.5 rounded-2xl text-sm shadow-lg shadow-[#FF7A50]/25"
+            onClick={handleToggleOnline}
+            disabled={togglingOnline}
+            className="bg-[#FF7A50] text-white font-bold px-8 py-3.5 rounded-2xl text-sm shadow-lg shadow-[#FF7A50]/25 disabled:opacity-60"
           >
             Go Online
           </button>

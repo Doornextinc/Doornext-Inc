@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
+import { SupabaseAuthProvider } from '@/components/providers/supabase-auth-provider'
 
 export const metadata: Metadata = {
   title: 'Doornext Maker',
@@ -17,7 +18,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body><SupabaseAuthProvider>{children}</SupabaseAuthProvider></body>
     </html>
   )
 }
