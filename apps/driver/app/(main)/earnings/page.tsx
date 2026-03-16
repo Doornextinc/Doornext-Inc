@@ -82,8 +82,9 @@ export default function EarningsPage() {
   const totalEarnings = filtered.reduce((s, d) => s + (d.driver_payout ?? 0), 0)
   const totalTips     = filtered.reduce((s, d) => s + (d.tip_amount  ?? 0), 0)
   const basePay       = totalEarnings - totalTips
-  // Available to cash out = base earnings (tips pend for 24h — simplified as 70% of total)
-  const availableCashOut = totalEarnings * 0.7
+  // Available to cash out = all-time earnings (not period-filtered) minus held tips
+  const allTimeEarnings  = deliveries.reduce((s, d) => s + (d.driver_payout ?? 0), 0)
+  const availableCashOut = allTimeEarnings * 0.7
 
   /* ─── 7-day chart ─── */
   const weekChart = Array.from({ length: 7 }, (_, i) => {
@@ -167,8 +168,8 @@ export default function EarningsPage() {
                 </p>
                 <div className="flex items-baseline gap-2">
                   <p className="text-3xl font-black text-[#FF7A50]">${availableCashOut.toFixed(2)}</p>
-                  {totalEarnings > 0 && (
-                    <p className="text-xs text-zinc-600">of ${totalEarnings.toFixed(2)}</p>
+                  {allTimeEarnings > 0 && (
+                    <p className="text-xs text-zinc-600">of ${allTimeEarnings.toFixed(2)} all-time</p>
                   )}
                 </div>
                 <p className="text-[10px] text-zinc-700 mt-1">Tips held 24h · Base pay instant</p>
@@ -226,7 +227,7 @@ export default function EarningsPage() {
               <button
                 disabled={availableCashOut <= 0}
                 onClick={() => setShowCashOut(true)}
-                className="w-full bg-[#1A1A1A] disabled:bg-[#111] disabled:text-zinc-700 border border-white/8 text-white font-black text-base py-4 rounded-2xl active:scale-[0.98] transition-all"
+                className="w-full bg-[#1A1A1A] disabled:bg-[#111] disabled:text-zinc-700 border border-white/8 text-[#FF7A50] font-black text-sm py-2.5 rounded-xl active:scale-[0.98] transition-all"
               >
                 {availableCashOut > 0 ? `Cash Out $${availableCashOut.toFixed(2)}` : 'Nothing to Cash Out'}
               </button>

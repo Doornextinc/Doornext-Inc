@@ -4,11 +4,13 @@ import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import type { OrderStatus } from '@doornext/shared/types'
 
+// NOTE: arrived_at_maker → picked_up is intentionally EXCLUDED.
+// That transition is owned by the maker via PIN confirmation
+// (POST /api/maker/confirm-pickup). Drivers cannot self-confirm pickup.
 const VALID_DRIVER_TRANSITIONS: Record<string, OrderStatus> = {
-  driver_assigned:    'arrived_at_maker',
-  arrived_at_maker:   'picked_up',
-  picked_up:          'on_the_way',
-  on_the_way:         'arrived_at_customer',
+  driver_assigned:     'arrived_at_maker',
+  picked_up:           'on_the_way',
+  on_the_way:          'arrived_at_customer',
   arrived_at_customer: 'delivered',
 }
 

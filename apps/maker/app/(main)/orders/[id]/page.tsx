@@ -7,7 +7,7 @@ import type { OrderStatus } from '@doornext/shared/types'
 import {
   ChevronLeft, Check, X, ChefHat, MapPin, Clock,
   CreditCard, Banknote, CheckCircle, Circle, Loader2,
-  Timer, Package, AlertCircle,
+  Timer, Package, AlertCircle, ShieldCheck, Delete,
 } from 'lucide-react'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -35,12 +35,13 @@ type OrderDetail = {
 
 // ─── Status machine ───────────────────────────────────────────────────────────
 const STATUS_STEPS: { key: OrderStatus; label: string }[] = [
-  { key: 'pending',   label: 'Received'  },
-  { key: 'confirmed', label: 'Accepted'  },
-  { key: 'preparing', label: 'Preparing' },
-  { key: 'ready',     label: 'Ready'     },
-  { key: 'picked_up', label: 'Picked up' },
-  { key: 'delivered', label: 'Delivered' },
+  { key: 'pending',          label: 'Received'   },
+  { key: 'confirmed',        label: 'Accepted'   },
+  { key: 'preparing',        label: 'Preparing'  },
+  { key: 'ready',            label: 'Ready'      },
+  { key: 'arrived_at_maker', label: 'Driver Here' },
+  { key: 'picked_up',        label: 'Picked up'  },
+  { key: 'delivered',        label: 'Delivered'  },
 ]
 
 const NEXT_STATUS: Partial<Record<OrderStatus, OrderStatus>> = {
@@ -84,6 +85,12 @@ const STATE_BANNER: Partial<Record<OrderStatus, {
     title: 'Ready for driver pickup!',
     sub: (m) => `Marked ready ${m} min${m !== 1 ? 's' : ''} ago`,
   },
+  arrived_at_maker: {
+    bg: 'bg-amber-50 border-amber-100',
+    dot: 'bg-amber-500',
+    title: 'Driver has arrived — enter their PIN to confirm pickup',
+    sub: (m) => `Driver waiting ${m} min${m !== 1 ? 's' : ''}`,
+  },
   picked_up: {
     bg: 'bg-purple-50 border-purple-100',
     dot: 'bg-purple-500',
@@ -125,6 +132,13 @@ export default function OrderDetailPage() {
   const [rejectConfirm, setRejectConfirm] = useState(false)
   const [tick, setTick] = useState(0) // drives elapsed-time re-renders
   const channelRef = useRef<ReturnType<ReturnType<typeof createClient>['channel']> | null>(null)
+
+  // ── PIN confirmation state ──────────────────────────────────────────────────
+  const [pinDigits, setPinDigits] = useState<string[]>(['', '', '', ''])
+  const [pinError, setPinError] = useState<string | null>(null)
+  const [pinLocked, setPinLocked] = useState(false)
+  const [confirmingPin, setConfirmingPin] = useState(false)
+  const pinInputRefs = useRef<(HTMLInputElement | null)[]>([])
 
   // ── Load order ──────────────────────────────────────────────────────────────
   const loadOrder = useCallback(async () => {
@@ -215,6 +229,56 @@ export default function OrderDetailPage() {
       }
     } catch {
       setError('Network error'); setUpdating(false)
+    }
+  }
+
+  // ── PIN digit input helpers ──────────────────────────────────────────────────
+  const handlePinDigit = (index: number, value: string) => {
+    const digit = value.replace(/\D/g, '').slice(-1)
+    const next = [...pinDigits]
+    next[index] = digit
+    setPinDigits(next)
+    setPinError(null)
+    if (digit && index < 3) {
+      pinInputRefs.current[index + 1]?.focus()
+    }
+  }
+
+  const handlePinKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !pinDigits[index] && index > 0) {
+      pinInputRefs.current[index - 1]?.focus()
+    }
+  }
+
+  const handleConfirmPickup = async () => {
+    if (!order) return
+    const pin = pinDigits.join('')
+    if (pin.length !== 4) {
+      setPinError('Please enter all 4 digits')
+      return
+    }
+    setConfirmingPin(true)
+    setPinError(null)
+    try {
+      const res = await fetch('/api/maker/confirm-pickup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: order.id, pin }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        if (data.locked) setPinLocked(true)
+        setPinError(data.error ?? 'Confirmation failed')
+        setPinDigits(['', '', '', ''])
+        pinInputRefs.current[0]?.focus()
+      } else {
+        setOrder((prev) => prev ? { ...prev, status: 'picked_up', updated_at: new Date().toISOString() } : prev)
+        setPinDigits(['', '', '', ''])
+      }
+    } catch {
+      setPinError('Network error — please try again')
+    } finally {
+      setConfirmingPin(false)
     }
   }
 
@@ -358,6 +422,120 @@ export default function OrderDetailPage() {
           <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
             <AlertCircle size={15} className="text-red-500 flex-shrink-0" />
             <p className="text-sm text-red-600 font-medium">{error}</p>
+          </div>
+        )}
+
+        {/* ── PIN entry panel — shown when driver has arrived ─────────── */}
+        {order.status === 'arrived_at_maker' && (
+          <div className="bg-white rounded-2xl overflow-hidden shadow-sm border-2 border-amber-200">
+            {/* Header */}
+            <div className="px-4 py-3.5 bg-amber-50 border-b border-amber-100 flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0">
+                <ShieldCheck size={16} className="text-amber-600" />
+              </div>
+              <div>
+                <p className="font-black text-gray-900 text-sm">Confirm Pickup</p>
+                <p className="text-[11px] text-amber-700 mt-0.5">Ask the driver for their 4-digit PIN and enter it below</p>
+              </div>
+            </div>
+
+            <div className="px-4 py-4">
+              {/* 4-digit input boxes */}
+              <div className="flex gap-3 justify-center mb-4">
+                {pinDigits.map((digit, i) => (
+                  <input
+                    key={i}
+                    ref={(el) => { pinInputRefs.current[i] = el }}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={1}
+                    value={digit}
+                    onChange={(e) => handlePinDigit(i, e.target.value)}
+                    onKeyDown={(e) => handlePinKeyDown(i, e)}
+                    disabled={pinLocked || confirmingPin}
+                    className={`w-14 h-16 text-center text-3xl font-black rounded-2xl border-2 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                      pinError
+                        ? 'border-red-400 bg-red-50 text-red-700'
+                        : digit
+                        ? 'border-[#FF6B35] bg-orange-50 text-gray-900'
+                        : 'border-gray-200 bg-gray-50 text-gray-900 focus:border-[#FF6B35] focus:bg-white'
+                    }`}
+                  />
+                ))}
+              </div>
+
+              {/* Numeric keypad */}
+              <div className="grid grid-cols-3 gap-2 mb-4">
+                {['1','2','3','4','5','6','7','8','9','','0','⌫'].map((key, i) => {
+                  if (key === '') return <div key={i} />
+                  return (
+                    <button
+                      key={i}
+                      disabled={pinLocked || confirmingPin}
+                      onClick={() => {
+                        if (key === '⌫') {
+                          // Backspace: clear last filled digit
+                          const lastFilled = [...pinDigits].map((d, idx) => d ? idx : -1).filter(idx => idx >= 0).pop() ?? -1
+                          if (lastFilled >= 0) {
+                            const next = [...pinDigits]
+                            next[lastFilled] = ''
+                            setPinDigits(next)
+                            setPinError(null)
+                            pinInputRefs.current[lastFilled]?.focus()
+                          }
+                        } else {
+                          // Fill next empty slot
+                          const emptyIdx = pinDigits.findIndex(d => !d)
+                          if (emptyIdx >= 0) {
+                            handlePinDigit(emptyIdx, key)
+                            pinInputRefs.current[emptyIdx]?.focus()
+                          }
+                        }
+                      }}
+                      className={`h-12 rounded-xl font-bold text-lg flex items-center justify-center transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${
+                        key === '⌫'
+                          ? 'bg-gray-100 text-gray-500'
+                          : 'bg-gray-50 text-gray-900 active:bg-gray-100'
+                      }`}
+                    >
+                      {key === '⌫' ? <Delete size={18} className="text-gray-500" /> : key}
+                    </button>
+                  )
+                })}
+              </div>
+
+              {/* PIN error message */}
+              {pinError && (
+                <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5 mb-3">
+                  <AlertCircle size={14} className="text-red-500 flex-shrink-0" />
+                  <p className="text-xs text-red-600 font-semibold">{pinError}</p>
+                </div>
+              )}
+
+              {/* Locked state */}
+              {pinLocked && (
+                <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-3 mb-3">
+                  <AlertCircle size={14} className="text-red-500 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-red-700 font-medium leading-relaxed">
+                    This pickup has been locked after too many failed attempts. Support has been notified and will resolve this shortly.
+                  </p>
+                </div>
+              )}
+
+              {/* Confirm button */}
+              {!pinLocked && (
+                <button
+                  onClick={handleConfirmPickup}
+                  disabled={pinDigits.join('').length !== 4 || confirmingPin}
+                  className="w-full bg-amber-500 disabled:bg-gray-100 disabled:text-gray-400 text-white rounded-2xl py-4 font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-500/25 disabled:shadow-none transition-all active:opacity-90"
+                >
+                  {confirmingPin
+                    ? <><Loader2 size={17} className="animate-spin" />Verifying PIN…</>
+                    : <><ShieldCheck size={17} />Confirm Pickup</>
+                  }
+                </button>
+              )}
+            </div>
           </div>
         )}
 
