@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Bell } from 'lucide-react'
+import { Bell, ChevronRight } from 'lucide-react'
 import { BackBar } from '@/components/layout/top-bar'
 import { createClient } from '@/lib/supabase/client'
 
@@ -13,6 +13,33 @@ interface Notification {
   type: string
   read: boolean
   created_at: string
+  data: { order_id?: string; [key: string]: unknown }
+}
+
+function typeIcon(type: string): string {
+  switch (type) {
+    case 'order_confirmed':        return '✅'
+    case 'order_accepted':         return '✅'
+    case 'order_rejected':         return '❌'
+    case 'order_cancelled':        return '🚫'
+    case 'order_preparing':        return '🍳'
+    case 'order_ready':            return '🍽️'
+    case 'order_driver_assigned':  return '🛵'
+    case 'order_picked_up':        return '📦'
+    case 'order_on_the_way':       return '🚀'
+    case 'order_arrived_at_customer': return '📍'
+    case 'order_delivered':        return '🎉'
+    case 'failed_delivery':        return '⚠️'
+    case 'pickup_pin_locked':      return '🔒'
+    case 'payment_failed':         return '💳'
+    case 'new_message':            return '💬'
+    default:                       return '🔔'
+  }
+}
+
+function destinationFor(n: Notification): string | null {
+  if (n.data?.order_id) return `/orders/${n.data.order_id}`
+  return null
 }
 
 export default function NotificationsPage() {
@@ -28,15 +55,15 @@ export default function NotificationsPage() {
 
       const { data } = await supabase
         .from('notifications')
-        .select('*')
+        .select('id, title, body, type, read, created_at, data')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(50)
 
-      setNotifications(data || [])
+      setNotifications((data as Notification[]) || [])
       setLoading(false)
 
-      // Mark all as read
+      // Mark all unread as read
       if (data && data.some((n) => !n.read)) {
         await supabase
           .from('notifications')
@@ -47,16 +74,6 @@ export default function NotificationsPage() {
     }
     load()
   }, [router])
-
-  const typeIcon = (type: string) => {
-    switch (type) {
-      case 'order_accepted': return '✅'
-      case 'order_ready': return '🍽️'
-      case 'order_delivered': return '📦'
-      case 'new_message': return '💬'
-      default: return '🔔'
-    }
-  }
 
   return (
     <div className="flex flex-col min-h-full bg-[#f8f8f8]">
@@ -74,23 +91,34 @@ export default function NotificationsPage() {
         </div>
       ) : (
         <div className="p-4 space-y-2">
-          {notifications.map((n) => (
-            <div
-              key={n.id}
-              className={`bg-white rounded-2xl px-4 py-3 flex items-start gap-3 ${!n.read ? 'border-l-4 border-[#FF6B35]' : ''}`}
-            >
-              <span className="text-xl mt-0.5">{typeIcon(n.type)}</span>
-              <div className="flex-1">
-                <p className="text-sm font-bold text-gray-900">{n.title}</p>
-                <p className="text-xs text-gray-500 mt-0.5">{n.body}</p>
-                <p className="text-xs text-gray-300 mt-1">
-                  {new Date(n.created_at).toLocaleDateString('en-US', {
-                    month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
-                  })}
-                </p>
-              </div>
-            </div>
-          ))}
+          {notifications.map((n) => {
+            const dest = destinationFor(n)
+            const Wrapper = dest ? 'button' : 'div'
+            return (
+              <Wrapper
+                key={n.id}
+                {...(dest ? { onClick: () => router.push(dest) } : {})}
+                className={`w-full text-left bg-white rounded-2xl px-4 py-3 flex items-start gap-3 transition-colors
+                  ${!n.read ? 'border-l-4 border-[#FF6B35]' : ''}
+                  ${dest ? 'active:bg-gray-50 cursor-pointer' : ''}
+                `}
+              >
+                <span className="text-xl mt-0.5 flex-shrink-0">{typeIcon(n.type)}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-gray-900">{n.title}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{n.body}</p>
+                  <p className="text-xs text-gray-300 mt-1">
+                    {new Date(n.created_at).toLocaleDateString('en-US', {
+                      month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+                    })}
+                  </p>
+                </div>
+                {dest && (
+                  <ChevronRight size={15} className="text-gray-300 flex-shrink-0 mt-1" />
+                )}
+              </Wrapper>
+            )
+          })}
         </div>
       )}
     </div>
