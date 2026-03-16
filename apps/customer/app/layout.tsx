@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
+import { SupabaseAuthProvider } from '@/components/providers/supabase-auth-provider'
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://doornext.app'),
@@ -51,9 +52,11 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
       </head>
       <body className="antialiased bg-white">
-        <div className="relative max-w-[430px] mx-auto min-h-screen bg-white shadow-xl">
-          {children}
-        </div>
+        <SupabaseAuthProvider>
+          <div className="relative max-w-[430px] mx-auto min-h-screen bg-white shadow-xl">
+            {children}
+          </div>
+        </SupabaseAuthProvider>
       </body>
     </html>
   )
