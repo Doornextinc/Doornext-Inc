@@ -6,8 +6,8 @@ export async function middleware(request: NextRequest) {
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   if (!supabaseUrl || !supabaseKey) {
-    console.error('[middleware] Supabase env vars not set — blocking all protected routes')
-    return NextResponse.redirect(new URL('/welcome', request.url))
+    console.error('[middleware] Supabase env vars not set — returning 503')
+    return new NextResponse('Service unavailable: auth not configured', { status: 503 })
   }
 
   let supabaseResponse = NextResponse.next({ request })

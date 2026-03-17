@@ -14,6 +14,17 @@ export async function POST() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  // Enforce role: only drivers may receive a Stream token from this app.
+  const { data: profile } = await supabase
+    .from('users')
+    .select('full_name, avatar_url, role')
+    .eq('id', user.id)
+    .single()
+
+  if (profile?.role !== 'driver') {
+    return NextResponse.json({ error: 'Forbidden: driver account required' }, { status: 403 })
+  }
+
   const apiKey = process.env.NEXT_PUBLIC_STREAM_API_KEY
   const secret = process.env.STREAM_API_SECRET
 
@@ -26,16 +37,10 @@ export async function POST() {
 
   const serverClient = StreamChat.getInstance(apiKey!, secret!)
 
-  const { data: profile } = await supabase
-    .from('users')
-    .select('full_name, avatar_url')
-    .eq('id', user.id)
-    .single()
-
   await serverClient.upsertUser({
     id: user.id,
-    name: profile?.full_name ?? user.email ?? 'Driver',
-    image: profile?.avatar_url ?? undefined,
+    name: profile.full_name ?? user.email ?? 'Driver',
+    image: profile.avatar_url ?? undefined,
     role: 'user',
   })
 

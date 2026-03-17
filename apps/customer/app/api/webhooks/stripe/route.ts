@@ -36,22 +36,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
 
-  // Idempotency: skip events we have already processed to prevent duplicate mutations.
-  const { error: dedupCheckError, data: existing } = await supabase
-    .from('stripe_processed_events')
-    .select('event_id')
-    .eq('event_id', event.id)
-    .maybeSingle()
-
-  if (!dedupCheckError && existing) {
-    // Already processed — acknowledge to Stripe without re-processing.
-    return NextResponse.json({ received: true, duplicate: true })
-  }
-
-  // Mark as processed before mutating state to handle concurrent deliveries.
-  await supabase
+  // Idempotency: single atomic insert — if the event_id already exists the
+  // unique constraint fires and we abort without any state mutation.
+  // This eliminates the select-then-insert race condition.
+  const { error: idempotencyError } = await supabase
     .from('stripe_processed_events')
     .insert({ event_id: event.id })
+
+  if (idempotencyError) {
+    // Postgres unique_violation code 23505 → duplicate event, already processed.
+    if (idempotencyError.code === '23505') {
+      return NextResponse.json({ received: true, duplicate: true })
+    }
+    // Any other DB error — fail safe, do not process.
+    console.error('Idempotency insert failed:', idempotencyError)
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 })
+  }
 
   try {
     switch (event.type) {
