@@ -48,12 +48,12 @@ export async function POST(req: NextRequest) {
   }
 
   // Balance validation: ensure the driver has sufficient available balance.
-  // Available = sum of delivery fees from delivered orders
+  // Available = sum of driver_payout from delivered orders (includes surge/tip share)
   //           - sum of all non-rejected withdrawal amounts.
   const [{ data: delivered }, { data: withdrawn }] = await Promise.all([
     admin
       .from('orders')
-      .select('delivery_fee')
+      .select('driver_payout')
       .eq('nexter_id', user.id)
       .eq('status', 'delivered'),
     admin
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
       .in('status', ['pending', 'approved', 'paid']),
   ])
 
-  const totalEarned = (delivered ?? []).reduce((s: number, o: { delivery_fee: number | null }) => s + (o.delivery_fee ?? 0), 0)
+  const totalEarned = (delivered ?? []).reduce((s: number, o: { driver_payout: number | null }) => s + (o.driver_payout ?? 0), 0)
   const totalWithdrawn = (withdrawn ?? []).reduce((s: number, w: { amount: number }) => s + w.amount, 0)
   const availableBalance = Math.round((totalEarned - totalWithdrawn) * 100) / 100
 

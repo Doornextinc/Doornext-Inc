@@ -9,13 +9,11 @@ import type { Order } from '@doornext/shared/types'
 import { MapPin, Clock, ChevronRight } from 'lucide-react'
 import { AppHeader } from '@/components/layout/app-header'
 
-// Only city/state is shown before a driver accepts an order — do not expose full address.
-type DeliveryAddressCityState = { city?: string; state?: string }
-
+// delivery_address is intentionally NOT fetched for unassigned orders.
+// Full address is only available to the driver after they accept the order.
 type AvailableOrder = Pick<Order, 'id' | 'total' | 'delivery_fee' | 'created_at'> & {
   driver_payout: number
   tip_amount: number
-  delivery_address: DeliveryAddressCityState | null
   food_maker: { display_name: string; lat: number; lng: number } | null
 }
 
@@ -62,23 +60,16 @@ export default function AvailablePickupsPage() {
 
   const loadOrders = useCallback(async () => {
     const supabase = createClient()
+    // delivery_address is excluded from this query — full address must never be
+    // sent to drivers browsing unassigned orders (P0 privacy requirement).
     const { data } = await supabase
       .from('orders')
-      .select('id, total, delivery_fee, driver_payout, tip_amount, created_at, delivery_address, food_maker:food_makers(display_name, lat, lng)')
+      .select('id, total, delivery_fee, driver_payout, tip_amount, created_at, food_maker:food_makers(display_name, lat, lng)')
       .eq('status', 'ready')
       .is('nexter_id', null)
       .order('created_at', { ascending: true })
       .limit(20)
-    // Strip full delivery address before display — only city/state is needed to
-    // decide whether to accept; full address is exposed after acceptance.
-    const orders = (data ?? []).map((o) => {
-      const addr = o.delivery_address as { city?: string; state?: string } | null
-      return {
-        ...o,
-        delivery_address: addr ? { city: addr.city, state: addr.state } : null,
-      }
-    })
-    setOrders(orders as AvailableOrder[])
+    setOrders((data ?? []) as AvailableOrder[])
     setLoading(false)
   }, [])
 
@@ -211,7 +202,6 @@ export default function AvailablePickupsPage() {
               currentLat && currentLng && makerLat && makerLng
                 ? haversineDistance(currentLat, currentLng, makerLat, makerLng)
                 : null
-            const addr = order.delivery_address
             const isAccepting = accepting === order.id
 
             return (
@@ -266,9 +256,7 @@ export default function AvailablePickupsPage() {
                     <div className="ml-[3px] w-px h-3 bg-zinc-700" />
                     <div className="flex items-center gap-2">
                       <MapPin size={8} className="text-zinc-400 flex-shrink-0" />
-                      <p className="text-xs text-zinc-400 truncate">
-                        {addr?.city ? `${addr.city}, ${addr.state}` : 'Delivery address'}
-                      </p>
+                      <p className="text-xs text-zinc-400 truncate">Delivery location</p>
                     </div>
                   </div>
 
