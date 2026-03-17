@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getFirebaseAdmin } from '@/lib/firebase-admin'
 import * as Sentry from '@sentry/nextjs'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 /**
  * Internal endpoint called by Supabase Edge Functions or backend jobs
@@ -12,6 +13,12 @@ export async function POST(req: NextRequest) {
   const internalSecret = process.env.INTERNAL_WEBHOOK_SECRET
   if (!internalSecret || authHeader !== `Bearer ${internalSecret}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // Rate limit: 200 FCM sends per minute per IP (internal callers only)
+  const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown'
+  if (!checkRateLimit(`fcm:${ip}`, 200, 60)) {
+    return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
   }
 
   try {

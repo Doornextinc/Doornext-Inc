@@ -1,13 +1,16 @@
-import { NextResponse } from 'next/server'
-import { createAdminClient } from '@/lib/supabase/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/require-admin'
 
 export async function PATCH(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireAdmin(request)
+  if (!auth.ok) return auth.response
+  const { supabase } = auth
+
   const { id } = await params
   const body = await request.json()
-  const supabase = createAdminClient()
 
   const allowed = [
     'description', 'discount_type', 'discount_value', 'min_order_amt',
@@ -25,12 +28,14 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params
-  const supabase = createAdminClient()
+  const auth = await requireAdmin(request)
+  if (!auth.ok) return auth.response
+  const { supabase } = auth
 
+  const { id } = await params
   const { error } = await supabase.from('promo_codes').delete().eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ success: true })

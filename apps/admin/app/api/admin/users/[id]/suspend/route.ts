@@ -1,13 +1,16 @@
-import { NextResponse } from 'next/server'
-import { createAdminClient } from '@/lib/supabase/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/require-admin'
 
 export async function POST(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireAdmin(request)
+  if (!auth.ok) return auth.response
+  const { adminId, ip, supabase } = auth
+
   const { id } = await params
   const body = await request.json().catch(() => ({}))
-  const supabase = createAdminClient()
 
   const { error } = await supabase
     .from('users')
@@ -16,8 +19,14 @@ export async function POST(
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Optionally log reason via support ticket or notes field if extended later
-  void body
+  await supabase.from('admin_audit_log').insert({
+    admin_id: adminId,
+    action: 'user_suspend',
+    target_type: 'user',
+    target_id: id,
+    payload: { reason: (body as { reason?: string }).reason ?? null },
+    ip_address: ip,
+  })
 
   return NextResponse.json({ success: true })
 }

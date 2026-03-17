@@ -1,8 +1,10 @@
-import { NextResponse } from 'next/server'
-import { createAdminClient } from '@/lib/supabase/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/require-admin'
 
-export async function GET() {
-  const supabase = createAdminClient()
+export async function GET(request: NextRequest) {
+  const auth = await requireAdmin(request)
+  if (!auth.ok) return auth.response
+  const { supabase } = auth
 
   // Fetch driver_documents with correct column names from migration 005
   const { data: docs, error } = await supabase

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 const adminClient = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -8,6 +9,12 @@ const adminClient = createClient(
 )
 
 export async function POST(req: NextRequest) {
+  // Rate limit: 5 signup attempts per IP per hour
+  const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown'
+  if (!checkRateLimit(`maker-signup:${ip}`, 5, 3600)) {
+    return NextResponse.json({ error: 'Too many signup attempts. Please try again later.' }, { status: 429 })
+  }
+
   const { fullName, email, password, displayName, cuisineTags, lat, lng } = await req.json()
 
   if (!fullName || !email || !password || !displayName) {
@@ -17,11 +24,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Kitchen location is required.' }, { status: 400 })
   }
 
-  // Create auth user (pre-confirmed)
+  // Create auth user — email_confirm omitted so Supabase sends a verification email
   const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
     email,
     password,
-    email_confirm: true,
     user_metadata: { full_name: fullName },
   })
 
@@ -55,5 +61,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to create maker profile. ' + makerError.message }, { status: 500 })
   }
 
-  return NextResponse.json({ ok: true })
+  return NextResponse.json({ ok: true, emailVerificationRequired: true })
 }
