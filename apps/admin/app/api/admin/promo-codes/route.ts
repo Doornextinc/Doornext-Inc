@@ -1,8 +1,11 @@
-import { NextResponse } from 'next/server'
-import { createAdminClient } from '@/lib/supabase/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/require-admin'
 
-export async function GET() {
-  const supabase = createAdminClient()
+export async function GET(request: NextRequest) {
+  const auth = await requireAdmin(request)
+  if (!auth.ok) return auth.response
+  const { supabase } = auth
+
   const { data, error } = await supabase
     .from('promo_codes')
     .select('*, promo_code_usage(id)')
@@ -12,9 +15,12 @@ export async function GET() {
   return NextResponse.json({ codes: data })
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const auth = await requireAdmin(request)
+  if (!auth.ok) return auth.response
+  const { supabase } = auth
+
   const body = await request.json()
-  const supabase = createAdminClient()
 
   const { error, data } = await supabase
     .from('promo_codes')

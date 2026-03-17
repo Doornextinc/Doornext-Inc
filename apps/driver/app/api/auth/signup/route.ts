@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 const adminClient = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -8,17 +9,22 @@ const adminClient = createClient(
 )
 
 export async function POST(req: NextRequest) {
+  // Rate limit: 5 signup attempts per IP per hour
+  const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown'
+  if (!checkRateLimit(`driver-signup:${ip}`, 5, 3600)) {
+    return NextResponse.json({ error: 'Too many signup attempts. Please try again later.' }, { status: 429 })
+  }
+
   const { fullName, email, password, phone, vehicleType } = await req.json()
 
   if (!fullName || !email || !password) {
     return NextResponse.json({ error: 'All fields are required' }, { status: 400 })
   }
 
-  // Create auth user (pre-confirmed so no email verify step)
+  // Create auth user — email_confirm omitted so Supabase sends a verification email
   const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
     email,
     password,
-    email_confirm: true,
     user_metadata: { full_name: fullName },
   })
 
@@ -48,5 +54,5 @@ export async function POST(req: NextRequest) {
     { onConflict: 'id' }
   )
 
-  return NextResponse.json({ ok: true })
+  return NextResponse.json({ ok: true, emailVerificationRequired: true })
 }

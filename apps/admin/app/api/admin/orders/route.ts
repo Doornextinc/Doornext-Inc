@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createAdminClient } from '@/lib/supabase/server'
+import { requireAdmin } from '@/lib/require-admin'
 
 export async function GET(request: NextRequest) {
+  const auth = await requireAdmin(request)
+  if (!auth.ok) return auth.response
+  const { supabase } = auth
+
   const { searchParams } = new URL(request.url)
   const status = searchParams.get('status')
   const search = searchParams.get('search')
-
-  const supabase = createAdminClient()
 
   let query = supabase
     .from('orders')
@@ -22,7 +24,6 @@ export async function GET(request: NextRequest) {
   }
 
   if (search) {
-    // Search by order ID suffix or maker name
     const term = search.trim()
     query = query.or(`id.ilike.%${term}%`)
   }

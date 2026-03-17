@@ -1,27 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createAdminClient, createSessionClient } from '@/lib/supabase/server'
-
-async function verifyAdmin(req: NextRequest) {
-  const session = await createSessionClient()
-  const { data: { user } } = await session.auth.getUser()
-  if (!user) return null
-  const { data: profile } = await session.from('users').select('role').eq('id', user.id).single()
-  if (profile?.role !== 'admin') return null
-  return user
-}
+import { requireAdmin } from '@/lib/require-admin'
 
 export async function GET(req: NextRequest) {
-  const user = await verifyAdmin(req)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const admin = createAdminClient()
+  const auth = await requireAdmin(req)
+  if (!auth.ok) return auth.response
+  const { supabase } = auth
 
   const [standardRes, priorityRes, smallOrderRes, surgeRes, settingsRes] = await Promise.all([
-    admin.from('delivery_distance_tiers').select('*').order('sort_order'),
-    admin.from('priority_delivery_tiers').select('*').order('sort_order'),
-    admin.from('small_order_fees').select('*').order('sort_order'),
-    admin.from('surge_conditions').select('*').order('id'),
-    admin.from('settings').select('key, value').in('key', [
+    supabase.from('delivery_distance_tiers').select('*').order('sort_order'),
+    supabase.from('priority_delivery_tiers').select('*').order('sort_order'),
+    supabase.from('small_order_fees').select('*').order('sort_order'),
+    supabase.from('surge_conditions').select('*').order('id'),
+    supabase.from('settings').select('key, value').in('key', [
       'dynamic_base_pay', 'dynamic_per_mile', 'dynamic_per_min_wait',
       'use_dynamic_pricing', 'priority_driver_bonus', 'service_fee_pct',
     ]),
@@ -33,17 +23,18 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json({
-    standardTiers:  standardRes.data  ?? [],
-    priorityTiers:  priorityRes.data  ?? [],
-    smallOrderFees: smallOrderRes.data ?? [],
-    surgeConditions: surgeRes.data    ?? [],
+    standardTiers:   standardRes.data  ?? [],
+    priorityTiers:   priorityRes.data  ?? [],
+    smallOrderFees:  smallOrderRes.data ?? [],
+    surgeConditions: surgeRes.data     ?? [],
     formula,
   })
 }
 
 export async function PATCH(req: NextRequest) {
-  const user = await verifyAdmin(req)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const auth = await requireAdmin(req)
+  if (!auth.ok) return auth.response
+  const { adminId, ip, supabase } = auth
 
   const body = await req.json()
   const { table, id, data } = body as {
@@ -52,16 +43,23 @@ export async function PATCH(req: NextRequest) {
     data: Record<string, unknown>
   }
 
-  const admin = createAdminClient()
-
   if (table === 'formula') {
-    // data is { key: value, ... }
     const upserts = Object.entries(data).map(([key, value]) => ({
       key,
       value: String(value),
     }))
-    const { error } = await admin.from('settings').upsert(upserts, { onConflict: 'key' })
+    const { error } = await supabase.from('settings').upsert(upserts, { onConflict: 'key' })
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+    await supabase.from('admin_audit_log').insert({
+      admin_id: adminId,
+      action: 'delivery_pricing_formula_update',
+      target_type: 'settings',
+      target_id: 'formula',
+      payload: data,
+      ip_address: ip,
+    })
+
     return NextResponse.json({ ok: true })
   }
 
@@ -75,8 +73,17 @@ export async function PATCH(req: NextRequest) {
   const tableName = tableMap[table]
   if (!tableName || !id) return NextResponse.json({ error: 'Invalid table or id' }, { status: 400 })
 
-  const { error } = await admin.from(tableName).update(data).eq('id', id)
+  const { error } = await supabase.from(tableName).update(data).eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  await supabase.from('admin_audit_log').insert({
+    admin_id: adminId,
+    action: 'delivery_pricing_update',
+    target_type: table,
+    target_id: String(id),
+    payload: data,
+    ip_address: ip,
+  })
 
   return NextResponse.json({ ok: true })
 }

@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
-import { createAdminClient, createSessionClient } from '@/lib/supabase/server'
+import { requireAdmin } from '@/lib/require-admin'
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAdmin(req)
+  if (!auth.ok) return auth.response
+  const { adminId, ip, supabase } = auth
+
   const stripeKey = process.env.STRIPE_SECRET_KEY
   if (!stripeKey) return NextResponse.json({ error: 'Stripe not configured' }, { status: 500 })
 
@@ -10,18 +14,9 @@ export async function POST(req: NextRequest) {
   const orderId = body.orderId as string
   if (!orderId) return NextResponse.json({ error: 'orderId required' }, { status: 400 })
 
-  // Identify the acting admin for audit trail
-  const sessionClient = await createSessionClient()
-  const { data: { user: adminUser } } = await sessionClient.auth.getUser()
-
-  const admin = createAdminClient()
-
-  const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? null
-
   const writeAuditLog = async (action: string, payload: Record<string, unknown>) => {
-    if (!adminUser) return
-    await admin.from('admin_audit_log').insert({
-      admin_id: adminUser.id,
+    await supabase.from('admin_audit_log').insert({
+      admin_id: adminId,
       action,
       target_type: 'order',
       target_id: orderId,
@@ -29,7 +24,8 @@ export async function POST(req: NextRequest) {
       ip_address: ip,
     })
   }
-  const { data: order } = await admin
+
+  const { data: order } = await supabase
     .from('orders')
     .select('stripe_payment_intent_id, payment_method, status, customer_id')
     .eq('id', orderId)
@@ -43,12 +39,12 @@ export async function POST(req: NextRequest) {
 
   // Cash orders cannot be refunded via Stripe
   if ((order as { payment_method?: string }).payment_method === 'cash') {
-    await admin
+    await supabase
       .from('orders')
       .update({ status: 'cancelled', updated_at: new Date().toISOString() })
       .eq('id', orderId)
 
-    await admin.from('notifications').insert({
+    await supabase.from('notifications').insert({
       user_id: order.customer_id,
       type: 'order_cancelled',
       title: 'Order Cancelled by Admin',
@@ -69,12 +65,12 @@ export async function POST(req: NextRequest) {
     const stripe = new Stripe(stripeKey)
     await stripe.refunds.create({ payment_intent: order.stripe_payment_intent_id })
 
-    await admin
+    await supabase
       .from('orders')
       .update({ status: 'cancelled', updated_at: new Date().toISOString() })
       .eq('id', orderId)
 
-    await admin.from('notifications').insert({
+    await supabase.from('notifications').insert({
       user_id: order.customer_id,
       type: 'order_cancelled',
       title: 'Order Refunded',

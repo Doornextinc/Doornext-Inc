@@ -6,8 +6,15 @@ import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { PLATFORM_FEE_PCT } from '@/lib/constants'
 import { calculatePricing } from '@doornext/shared/pricing'
 import * as Sentry from '@sentry/nextjs'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 export async function POST(req: NextRequest) {
+  // Rate limit: 10 checkout attempts per IP per minute
+  const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown'
+  if (!checkRateLimit(`checkout:${ip}`, 10, 60)) {
+    return NextResponse.json({ error: 'Too many requests. Please try again shortly.' }, { status: 429 })
+  }
+
   const stripeKey = process.env.STRIPE_SECRET_KEY
   if (!stripeKey) {
     return NextResponse.json({ error: 'Payment not configured' }, { status: 500 })
