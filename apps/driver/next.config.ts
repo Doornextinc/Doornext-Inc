@@ -16,7 +16,7 @@ const securityHeaders = [
       "img-src 'self' data: blob: https://*.supabase.co https://*.supabase.in",
       "connect-src 'self' https://*.supabase.co https://*.supabase.in wss://*.supabase.co https://chat.stream-io-api.com wss://ws.stream-io-api.com",
       "font-src 'self'",
-      "frame-src 'self' https://js.stripe.com",
+      "frame-src 'self' https://js.stripe.com https://www.openstreetmap.org",
       "worker-src 'self' blob:",
     ].join('; '),
   },
