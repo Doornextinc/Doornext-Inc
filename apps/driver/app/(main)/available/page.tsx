@@ -9,12 +9,13 @@ import type { Order } from '@doornext/shared/types'
 import { MapPin, Clock, ChevronRight } from 'lucide-react'
 import { AppHeader } from '@/components/layout/app-header'
 
-type DeliveryAddress = { street?: string; city?: string; state?: string; zip?: string; label?: string }
+// Only city/state is shown before a driver accepts an order — do not expose full address.
+type DeliveryAddressCityState = { city?: string; state?: string }
 
 type AvailableOrder = Pick<Order, 'id' | 'total' | 'delivery_fee' | 'created_at'> & {
   driver_payout: number
   tip_amount: number
-  delivery_address: DeliveryAddress | null
+  delivery_address: DeliveryAddressCityState | null
   food_maker: { display_name: string; lat: number; lng: number } | null
 }
 
@@ -68,7 +69,16 @@ export default function AvailablePickupsPage() {
       .is('nexter_id', null)
       .order('created_at', { ascending: true })
       .limit(20)
-    setOrders((data as AvailableOrder[]) ?? [])
+    // Strip full delivery address before display — only city/state is needed to
+    // decide whether to accept; full address is exposed after acceptance.
+    const orders = (data ?? []).map((o) => {
+      const addr = o.delivery_address as { city?: string; state?: string } | null
+      return {
+        ...o,
+        delivery_address: addr ? { city: addr.city, state: addr.state } : null,
+      }
+    })
+    setOrders(orders as AvailableOrder[])
     setLoading(false)
   }, [])
 

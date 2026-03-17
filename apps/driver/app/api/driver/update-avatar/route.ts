@@ -24,21 +24,24 @@ export async function POST(req: NextRequest) {
 
   if (uploadError) return NextResponse.json({ error: uploadError.message }, { status: 500 })
 
-  // Generate a long-lived signed URL (1 year)
-  const { data: signed, error: signError } = await admin.storage
-    .from('driver-documents')
-    .createSignedUrl(path, 365 * 24 * 3600)
-
-  if (signError || !signed?.signedUrl) {
-    return NextResponse.json({ error: 'Failed to generate signed URL' }, { status: 500 })
-  }
-
+  // Store the storage path (not a signed URL) so we can generate
+  // short-lived signed URLs on demand rather than embedding a long-lived URL.
   const { error: updateError } = await admin
     .from('driver_profiles')
-    .update({ avatar_url: signed.signedUrl })
+    .update({ avatar_url: path })
     .eq('id', user.id)
 
   if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 })
 
-  return NextResponse.json({ avatarUrl: signed.signedUrl })
+  // Return a 1-hour signed URL for immediate display in the client.
+  const { data: signed, error: signError } = await admin.storage
+    .from('driver-documents')
+    .createSignedUrl(path, 3600)
+
+  if (signError || !signed?.signedUrl) {
+    // Path was saved successfully; signed URL generation is non-fatal.
+    return NextResponse.json({ avatarUrl: null, storagePath: path })
+  }
+
+  return NextResponse.json({ avatarUrl: signed.signedUrl, storagePath: path })
 }

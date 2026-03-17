@@ -9,7 +9,9 @@ export async function middleware(request: NextRequest) {
     supabaseUrl && supabaseKey &&
     !supabaseUrl.includes('placeholder') && !supabaseKey.includes('placeholder')
 
-  if (!isConfigured) return NextResponse.next()
+  if (!isConfigured) {
+    return new NextResponse('Service unavailable: auth not configured', { status: 503 })
+  }
 
   let supabaseResponse = NextResponse.next({ request })
   const supabase = createServerClient(supabaseUrl, supabaseKey, {
