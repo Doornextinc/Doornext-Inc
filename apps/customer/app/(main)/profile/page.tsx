@@ -61,27 +61,36 @@ export default function ProfilePage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
 
-      const [profileRes, ordersRes, favRes, reviewsRes] = await Promise.all([
+      // Load each stat independently so a single schema cache miss doesn't block the whole page
+      const [profileRes, ordersRes, favRes, reviewsRes] = await Promise.allSettled([
         supabase.from('users').select('*').eq('id', user.id).single(),
         supabase.from('orders').select('id', { count: 'exact', head: true }).eq('customer_id', user.id),
         supabase.from('favorites').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
         supabase.from('reviews').select('id', { count: 'exact', head: true }).eq('customer_id', user.id),
       ])
 
-      if (profileRes.data) {
-        setProfile({
-          id: user.id,
-          full_name: profileRes.data.full_name || user.email?.split('@')[0] || 'Customer',
-          email: profileRes.data.email || user.email,
-          avatar_url: profileRes.data.avatar_url,
-          created_at: profileRes.data.created_at,
-        })
+      const profileData = profileRes.status === 'fulfilled' ? profileRes.value.data : null
+
+      // Upsert a minimal profile row if none exists (trigger may not have fired)
+      if (!profileData) {
+        await supabase.from('users').upsert(
+          { id: user.id, email: user.email ?? '', full_name: user.user_metadata?.full_name ?? '' },
+          { onConflict: 'id', ignoreDuplicates: true }
+        )
       }
 
+      setProfile({
+        id: user.id,
+        full_name: profileData?.full_name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Customer',
+        email: profileData?.email || user.email || null,
+        avatar_url: profileData?.avatar_url ?? null,
+        created_at: profileData?.created_at || user.created_at,
+      })
+
       setStats({
-        orders: ordersRes.count ?? 0,
-        favorites: favRes.count ?? 0,
-        reviews: reviewsRes.count ?? 0,
+        orders: ordersRes.status === 'fulfilled' ? (ordersRes.value.count ?? 0) : 0,
+        favorites: favRes.status === 'fulfilled' ? (favRes.value.count ?? 0) : 0,
+        reviews: reviewsRes.status === 'fulfilled' ? (reviewsRes.value.count ?? 0) : 0,
       })
     } catch (e) {
       console.error('Failed to load profile:', e)

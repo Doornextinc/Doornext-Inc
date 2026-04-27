@@ -44,12 +44,16 @@ export function parsePlace(place: google.maps.places.PlaceResult): ParsedAddress
     else if (t.includes('administrative_area_level_1')) state = comp.short_name
     else if (t.includes('postal_code'))               zip = comp.long_name
   }
+  const lat = place.geometry?.location?.lat()
+  const lng = place.geometry?.location?.lng()
   return {
     street: streetNumber ? `${streetNumber} ${route}` : route,
     city,
     state,
     zip,
-    lat: place.geometry?.location?.lat() ?? 0,
-    lng: place.geometry?.location?.lng() ?? 0,
+    // Use null-safe values — 0 is the DB default and is treated as "no coordinate"
+    // by the checkout estimate flow, so never store 0,0 from a failed geocode.
+    lat: (lat != null && lat !== 0) ? lat : 0,
+    lng: (lng != null && lng !== 0) ? lng : 0,
   }
 }

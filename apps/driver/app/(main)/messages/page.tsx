@@ -6,6 +6,7 @@ import { MessageCircle } from 'lucide-react'
 import { AppHeader } from '@/components/layout/app-header'
 import { getStreamClient, connectStreamUser } from '@/lib/stream'
 import { createClient } from '@/lib/supabase/client'
+import { useDriverStore } from '@/store/driver-store'
 
 interface ChatPreview {
   id: string
@@ -27,31 +28,36 @@ function formatChannelTime(date?: Date | null): string {
 
 export default function MessagesPage() {
   const router = useRouter()
+  const userId = useDriverStore((s) => s.userId)
+  const userEmail = useDriverStore((s) => s.userEmail)
+  const hasHydrated = useDriverStore((s) => s._hasHydrated)
+  const authReady = useDriverStore((s) => s.authReady)
   const [chats, setChats] = useState<ChatPreview[]>([])
   const [loading, setLoading] = useState(true)
   const [unavailable, setUnavailable] = useState(false)
 
   const loadChats = useCallback(async () => {
+    if (!hasHydrated) return
+    if (!userId && !authReady) return
+    if (!userId) { setLoading(false); return }
     try {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { setLoading(false); return }
 
       const { data: profile } = await supabase
         .from('users')
         .select('full_name, avatar_url')
-        .eq('id', user.id)
+        .eq('id', userId)
         .single()
 
       await connectStreamUser(
-        user.id,
-        profile?.full_name ?? user.email ?? 'Driver',
+        userId,
+        profile?.full_name ?? userEmail ?? 'Driver',
         profile?.avatar_url ?? undefined
       )
 
       const streamClient = getStreamClient()
       const result = await streamClient.queryChannels(
-        { members: { $in: [user.id] }, type: 'messaging' },
+        { members: { $in: [userId] }, type: 'messaging' },
         [{ last_message_at: -1 }],
         { limit: 30, watch: true, state: true }
       )
@@ -74,16 +80,22 @@ export default function MessagesPage() {
 
       setChats(previews)
     } catch (e) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if ((e as any)?.code === 'STREAM_NOT_CONFIGURED') {
+      const err = e as { code?: string; isWSFailure?: boolean; message?: string }
+      if (
+        err?.code === 'STREAM_NOT_CONFIGURED' ||
+        err?.isWSFailure === true ||
+        err?.message?.includes('WS') ||
+        err?.message?.includes('connect')
+      ) {
         setUnavailable(true)
       } else {
         console.error('Failed to load chats:', e)
+        setUnavailable(true) // fall back gracefully for any other Stream error
       }
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [userId, userEmail, authReady, hasHydrated])
 
   useEffect(() => { loadChats() }, [loadChats])
 

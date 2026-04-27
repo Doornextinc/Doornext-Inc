@@ -44,6 +44,26 @@ export async function PATCH(req: NextRequest) {
   }
 
   if (table === 'formula') {
+    // Validate formula settings bounds
+    const FORMULA_BOUNDS: Record<string, [number, number]> = {
+      dynamic_base_pay:      [0, 50],
+      dynamic_per_mile:      [0, 10],
+      dynamic_per_min_wait:  [0, 5],
+      priority_driver_bonus: [0, 20],
+      service_fee_pct:       [0, 50],
+    }
+    for (const [key, value] of Object.entries(data)) {
+      const bounds = FORMULA_BOUNDS[key]
+      if (bounds) {
+        const n = Number(value)
+        if (!isFinite(n) || n < bounds[0] || n > bounds[1]) {
+          return NextResponse.json(
+            { error: `${key} must be between ${bounds[0]} and ${bounds[1]}` },
+            { status: 400 }
+          )
+        }
+      }
+    }
     const upserts = Object.entries(data).map(([key, value]) => ({
       key,
       value: String(value),
@@ -73,7 +93,54 @@ export async function PATCH(req: NextRequest) {
   const tableName = tableMap[table]
   if (!tableName || !id) return NextResponse.json({ error: 'Invalid table or id' }, { status: 400 })
 
-  const { error } = await supabase.from(tableName).update(data).eq('id', id)
+  // Validate tier/fee row values
+  const numericFields: Record<string, [number, number]> = {
+    customer_fee:          [0, 200],
+    driver_base_pay:       [0, 200],
+    driver_priority_bonus: [0, 50],
+    extra_fee:             [0, 100],
+    driver_share_pct:      [0, 100],
+    fee:                   [0, 50],
+    distance_min:          [0, 500],
+    distance_max:          [0, 500],
+    order_value_min:       [0, 10000],
+    order_value_max:       [0, 10000],
+  }
+  for (const [key, value] of Object.entries(data)) {
+    const bounds = numericFields[key]
+    if (bounds && value !== null) {
+      const n = Number(value)
+      if (!isFinite(n) || n < bounds[0] || n > bounds[1]) {
+        return NextResponse.json(
+          { error: `${key} must be between ${bounds[0]} and ${bounds[1]}` },
+          { status: 400 }
+        )
+      }
+    }
+  }
+  // Reject inverted distance ranges
+  if (data.distance_min !== undefined && data.distance_max !== undefined &&
+      data.distance_max !== null &&
+      Number(data.distance_min) >= Number(data.distance_max)) {
+    return NextResponse.json({ error: 'distance_min must be less than distance_max' }, { status: 400 })
+  }
+
+  // Only allow known safe columns — never let arbitrary keys through to the DB
+  const ALLOWED_TIER_COLS = new Set([
+    'label', 'is_active', 'sort_order', 'customer_fee', 'driver_base_pay',
+    'driver_priority_bonus', 'distance_min', 'distance_max',
+    'order_value_min', 'order_value_max', 'fee',
+    'extra_fee', 'driver_share_pct', 'condition_type',
+  ])
+  const safeData: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(data)) {
+    if (ALLOWED_TIER_COLS.has(key)) safeData[key] = value
+  }
+  if (Object.keys(safeData).length === 0) {
+    return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 })
+  }
+
+  const { error } = await supabase.from(tableName).update(safeData).eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   await supabase.from('admin_audit_log').insert({

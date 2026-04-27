@@ -1,15 +1,17 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
-import { CheckCircle, Circle, Clock, MapPin, MessageCircle, Star, XCircle } from 'lucide-react'
+import { AlertTriangle, CheckCircle, Circle, Clock, MapPin, MessageCircle, Star, XCircle } from 'lucide-react'
 import { BackBar } from '@/components/layout/top-bar'
 import { Button } from '@/components/ui/button'
 import { cn, ORDER_STATUS_LABELS } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { useOrderTracking } from '@/hooks/useOrderTracking'
+import { OrderClaimDialog } from '@/components/OrderClaimDialog'
 import type { Order, OrderStatus, OrderItem } from '@/types'
+import { playWithHaptic, type CustomerSoundType } from '@/lib/notification-sounds'
 
 const DeliveryMap = dynamic(
   () => import('@/components/DeliveryMap').then((m) => m.DeliveryMap),
@@ -42,6 +44,15 @@ interface FullOrder extends Omit<Order, 'food_maker'> {
   payment_method?: 'card' | 'cash'
 }
 
+interface OrderClaim {
+  id: string
+  type: 'refund' | 'replacement'
+  status: 'pending' | 'approved' | 'rejected'
+  reason: string
+  seller_notes: string | null
+  created_at: string
+}
+
 export default function OrderTrackingPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
@@ -59,11 +70,36 @@ export default function OrderTrackingPage() {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [cancelling, setCancelling] = useState(false)
   const [cancelError, setCancelError] = useState<string | null>(null)
+  const [showClaim, setShowClaim] = useState(false)
+  const [claim, setClaim] = useState<OrderClaim | null>(null)
+  const [userId, setUserId] = useState<string | null>(null)
 
   const { status: realtimeStatus, nexterLocation } = useOrderTracking(
     id,
     order?.nexter_id ?? null
   )
+
+  // Play a sound when the order status transitions to a notable step
+  const prevStatusRef = useRef<OrderStatus | null>(null)
+  useEffect(() => {
+    const prev = prevStatusRef.current
+    const next = realtimeStatus
+    if (!next || next === prev) return
+    prevStatusRef.current = next
+    // Map order status → sound type
+    const SOUND_MAP: Partial<Record<OrderStatus, CustomerSoundType>> = {
+      confirmed:          'order_confirmed',
+      preparing:          'order_preparing',
+      driver_assigned:    'driver_assigned',
+      arrived_at_maker:   'driver_assigned',
+      picked_up:          'driver_assigned',
+      on_the_way:         'driver_assigned',
+      arrived_at_customer:'driver_arrived',
+      delivered:          'delivered',
+    }
+    const sound = SOUND_MAP[next]
+    if (sound) playWithHaptic(sound)
+  }, [realtimeStatus])
 
   const currentStatus: OrderStatus = realtimeStatus ?? order?.status ?? 'pending'
 
@@ -87,6 +123,8 @@ export default function OrderTrackingPage() {
         .single()
 
       if (!error && data) {
+        setUserId(user.id)
+
         // Check if review already submitted to avoid showing modal again
         const { count } = await supabase
           .from('reviews')
@@ -95,6 +133,18 @@ export default function OrderTrackingPage() {
           .eq('customer_id', user.id)
         const alreadyReviewed = (count ?? 0) > 0
         setReviewSubmitted(alreadyReviewed)
+
+        // Fetch existing claim for this order
+        const { data: existingClaim } = await supabase
+          .from('order_claims')
+          .select('id, type, status, reason, seller_notes, created_at')
+          .eq('order_id', id)
+          .eq('customer_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+        setClaim(existingClaim as OrderClaim | null)
+
         setOrder(data as FullOrder)
         const alreadyTipped = (data.tip_amount ?? 0) > 0
         setTipDone(alreadyTipped)
@@ -117,7 +167,7 @@ export default function OrderTrackingPage() {
     loadOrder()
   }, [loadOrder])
 
-  // Show tip modal when delivered via realtime
+  // Show tip / review modals when delivered via realtime
   useEffect(() => {
     if (realtimeStatus === 'delivered' && !tipDone) {
       setTimeout(() => setShowTip(true), 1500)
@@ -193,12 +243,13 @@ export default function OrderTrackingPage() {
 
   const currentStep = STATUS_STEPS.indexOf(currentStatus)
 
-  const deliveryAddr = order?.delivery_address as (typeof order extends null ? null : (typeof order)['delivery_address']) | null
+  type DeliveryAddr = { street?: string; city?: string; state?: string; lat?: number; lng?: number } | null
+  const deliveryAddr = order?.delivery_address as DeliveryAddr
   const hasMapCoords =
     order?.food_maker?.lat &&
     order?.food_maker?.lng &&
-    (deliveryAddr as { lat?: number })?.lat &&
-    (deliveryAddr as { lng?: number })?.lng
+    deliveryAddr?.lat &&
+    deliveryAddr?.lng
 
   if (loading) {
     return (
@@ -223,7 +274,7 @@ export default function OrderTrackingPage() {
     )
   }
 
-  const addr = order.delivery_address as { street?: string; city?: string; state?: string }
+  const addr = deliveryAddr
 
   return (
     <div className="flex flex-col min-h-full bg-[#f8f8f8]">
@@ -411,9 +462,9 @@ export default function OrderTrackingPage() {
             <div className="flex justify-between">
               <span>Delivery</span><span>${order.delivery_fee.toFixed(2)}</span>
             </div>
-            {(order.service_fee ?? 0) > 0 && (
+            {(order.platform_fee ?? 0) > 0 && (
               <div className="flex justify-between">
-                <span>Service fee</span><span>${(order.service_fee as number).toFixed(2)}</span>
+                <span>Service fee</span><span>${(order.platform_fee as number).toFixed(2)}</span>
               </div>
             )}
             {order.tip_amount > 0 && (
@@ -428,6 +479,54 @@ export default function OrderTrackingPage() {
             <span>${order.total.toFixed(2)}</span>
           </div>
         </div>
+
+        {/* Claim status card — shown once a claim exists */}
+        {claim && (
+          <div className={cn(
+            'rounded-2xl border-2 p-4',
+            claim.status === 'pending'  && 'border-yellow-200 bg-yellow-50',
+            claim.status === 'approved' && 'border-green-200 bg-green-50',
+            claim.status === 'rejected' && 'border-red-200 bg-red-50',
+          )}>
+            <div className="flex items-center gap-2 mb-1">
+              <AlertTriangle size={15} className={cn(
+                claim.status === 'pending'  && 'text-yellow-500',
+                claim.status === 'approved' && 'text-green-600',
+                claim.status === 'rejected' && 'text-red-500',
+              )} />
+              <p className={cn(
+                'text-sm font-bold capitalize',
+                claim.status === 'pending'  && 'text-yellow-700',
+                claim.status === 'approved' && 'text-green-700',
+                claim.status === 'rejected' && 'text-red-700',
+              )}>
+                {claim.type === 'refund' ? 'Refund' : 'Replacement'} request —{' '}
+                {claim.status === 'pending' ? 'Under review' : claim.status}
+              </p>
+            </div>
+            <p className="text-xs text-gray-500 line-clamp-2">{claim.reason}</p>
+            {claim.seller_notes && (
+              <p className="text-xs text-gray-600 mt-2 italic">
+                <span className="font-semibold not-italic">Kitchen:</span> {claim.seller_notes}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Report issue button — shown 30 min after delivery, only if no claim yet */}
+        {currentStatus === 'delivered' && !claim && (() => {
+          const deliveredAt = order.updated_at ? new Date(order.updated_at).getTime() : 0
+          const withinWindow = Date.now() - deliveredAt < 30 * 60 * 1000
+          return withinWindow ? (
+            <button
+              onClick={() => setShowClaim(true)}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border-2 border-dashed border-gray-300 text-sm font-semibold text-gray-500 active:scale-[0.98] transition-all"
+            >
+              <AlertTriangle size={15} />
+              Report an issue with this order
+            </button>
+          ) : null
+        })()}
       </div>
 
       {/* Tip Modal */}
@@ -507,6 +606,34 @@ export default function OrderTrackingPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Claim Dialog */}
+      {showClaim && order && userId && (
+        <OrderClaimDialog
+          orderId={order.id}
+          customerId={userId}
+          items={order.order_items.map(oi => ({
+            id:         oi.id,
+            quantity:   oi.quantity,
+            unit_price: oi.unit_price,
+            name:       oi.menu_item?.name ?? 'Item',
+          }))}
+          onClose={() => setShowClaim(false)}
+          onClaimCreated={async () => {
+            const supabase = createClient()
+            const { data } = await supabase
+              .from('order_claims')
+              .select('id, type, status, reason, seller_notes, created_at')
+              .eq('order_id', id)
+              .eq('customer_id', userId)
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .maybeSingle()
+            setClaim(data as OrderClaim | null)
+            setShowClaim(false)
+          }}
+        />
       )}
 
       {/* Review Modal */}

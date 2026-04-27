@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { OrderStatusChanger } from './status-changer'
 
 const STATUS_COLORS: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-700',
@@ -232,6 +233,9 @@ export default async function OrderDetailPage({ params }: PageProps) {
               <p className="text-sm text-gray-400 italic">Not yet assigned</p>
             </div>
           )}
+
+          {/* Status changer */}
+          <OrderStatusChanger orderId={order.id} currentStatus={order.status} />
 
           {/* Timestamps */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">

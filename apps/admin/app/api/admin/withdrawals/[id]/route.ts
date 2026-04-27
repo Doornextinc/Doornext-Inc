@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/require-admin'
+import { notifyUser } from '@doornext/shared/notify'
+import * as Sentry from '@sentry/nextjs'
 
 export async function PATCH(
   request: NextRequest,
@@ -17,7 +19,7 @@ export async function PATCH(
     return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
   }
 
-  // Fetch current state for audit payload
+  // Fetch current state for audit payload and notification
   const { data: current } = await supabase
     .from('withdrawals')
     .select('status, amount, user_id, user_role')
@@ -51,6 +53,35 @@ export async function PATCH(
     },
     ip_address: ip,
   })
+
+  // Notify the driver/maker of the withdrawal decision
+  if (current?.user_id && (status === 'approved' || status === 'rejected' || status === 'paid')) {
+    const amountStr = current.amount ? `$${Number(current.amount).toFixed(2)}` : 'your payout'
+    const notifMap: Record<string, { title: string; body: string }> = {
+      approved: {
+        title: '✅ Withdrawal Approved',
+        body: `Your withdrawal request for ${amountStr} has been approved and is being processed.`,
+      },
+      rejected: {
+        title: '❌ Withdrawal Declined',
+        body: `Your withdrawal request for ${amountStr} was declined.${notes ? ` Reason: ${notes}` : ' Please contact support for details.'}`,
+      },
+      paid: {
+        title: '💰 Payout Sent!',
+        body: `Your payout of ${amountStr} has been sent.${payout_ref ? ` Reference: ${payout_ref}` : ''}`,
+      },
+    }
+    const notif = notifMap[status]
+    if (notif) {
+      // Fire-and-forget — don't block the response on notification delivery
+      notifyUser(supabase, {
+        userId: current.user_id,
+        type: `withdrawal_${status}`,
+        ...notif,
+        data: { withdrawal_id: id },
+      }).catch((err) => Sentry.captureException(err, { extra: { withdrawalId: id, userId: current?.user_id, context: 'withdrawal-notify' } }))
+    }
+  }
 
   return NextResponse.json({ success: true })
 }

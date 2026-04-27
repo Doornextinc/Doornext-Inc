@@ -4,77 +4,170 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useDriverStore } from '@/store/driver-store'
-import { LogOut, Star, Package, TrendingUp, Camera, ChevronRight, Shield, AlertCircle, CheckCircle, Clock } from 'lucide-react'
+import {
+  LogOut, Star, Package, TrendingUp, Camera, ChevronRight,
+  AlertCircle, CheckCircle, Clock, Settings, FileText, MapPin,
+  Mail, MessageCircle, Pencil,
+} from 'lucide-react'
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
 type DriverProfile = {
-  id: string; full_name: string; avatar_url: string | null; vehicle_type: string | null
-  is_active: boolean; total_deliveries: number; avg_rating: number; kyc_status: string | null; phone: string | null
+  id: string
+  full_name: string
+  avatar_url: string | null
+  is_active: boolean
+  total_deliveries: number
+  avg_rating: number
+  kyc_status: string | null
+  phone: string | null
 }
 
-const VEHICLE_LABELS: Record<string, { emoji: string; label: string }> = {
-  car:       { emoji: '🚗', label: 'Car' },
-  motorbike: { emoji: '🏍️',  label: 'Motorbike' },
-  bicycle:   { emoji: '🚲', label: 'Bicycle' },
-  foot:      { emoji: '🚶', label: 'On Foot' },
+// ---------------------------------------------------------------------------
+// Config
+// ---------------------------------------------------------------------------
+
+const KYC_CONFIG: Record<string, { label: string; bg: string; text: string; dot: string; icon: React.ElementType }> = {
+  not_submitted: { label: 'Not Submitted', bg: 'bg-zinc-800',  text: 'text-zinc-400',  dot: 'bg-zinc-500',  icon: AlertCircle },
+  pending_review: { label: 'Under Review',  bg: 'bg-amber-950', text: 'text-amber-400', dot: 'bg-amber-400', icon: Clock },
+  approved:        { label: 'Verified',      bg: 'bg-green-950', text: 'text-green-400', dot: 'bg-green-400', icon: CheckCircle },
+  rejected:        { label: 'Rejected',      bg: 'bg-red-950',   text: 'text-red-400',   dot: 'bg-red-400',   icon: AlertCircle },
 }
 
-const KYC_CONFIG: Record<string, { label: string; color: string; icon: React.ElementType }> = {
-  not_submitted: { label: 'Not Submitted', color: 'text-zinc-400', icon: AlertCircle },
-  pending_review: { label: 'Under Review',  color: 'text-zinc-300', icon: Clock },
-  approved:       { label: 'Verified',      color: 'text-green-400', icon: CheckCircle },
-  rejected:       { label: 'Rejected',      color: 'text-red-400',   icon: AlertCircle },
+// ---------------------------------------------------------------------------
+// Sub-components
+// ---------------------------------------------------------------------------
+
+function SectionLabel({ label }: { label: string }) {
+  return (
+    <p className="text-xs text-zinc-600 font-bold uppercase tracking-widest mb-2 px-1">
+      {label}
+    </p>
+  )
 }
+
+function MenuRow({
+  icon: Icon,
+  label,
+  onPress,
+  href,
+}: {
+  icon: React.ElementType
+  label: string
+  onPress?: () => void
+  href?: string
+}) {
+  const inner = (
+    <span className="flex items-center gap-3 px-4 py-3.5 w-full active:bg-white/5 transition-colors">
+      <span className="w-8 h-8 rounded-xl bg-[#1E1E1E] flex items-center justify-center flex-shrink-0">
+        <Icon size={16} className="text-zinc-400" />
+      </span>
+      <span className="text-sm font-semibold text-white flex-1 text-left">{label}</span>
+      <ChevronRight size={16} className="text-zinc-700" />
+    </span>
+  )
+
+  if (href) {
+    return (
+      <a href={href} className="block">
+        {inner}
+      </a>
+    )
+  }
+
+  return (
+    <button className="w-full text-left" onClick={onPress}>
+      {inner}
+    </button>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Page
+// ---------------------------------------------------------------------------
 
 export default function ProfilePage() {
   const router = useRouter()
   const activeOrderId = useDriverStore((s) => s.activeOrderId)
-  const clearStore = useDriverStore((s) => s.clearStore)
-  const [profile, setProfile] = useState<DriverProfile | null>(null)
+  const clearStore    = useDriverStore((s) => s.clearStore)
+  const userId        = useDriverStore((s) => s.userId)
+  const userEmail     = useDriverStore((s) => s.userEmail)
+  const hasHydrated   = useDriverStore((s) => s._hasHydrated)
+  const authReady     = useDriverStore((s) => s.authReady)
+
+  const [profile, setProfile]               = useState<DriverProfile | null>(null)
   const [avatarDisplayUrl, setAvatarDisplayUrl] = useState<string | null>(null)
-  const [email, setEmail] = useState<string | null>(null)
-  const [totalEarnings, setTotalEarnings] = useState<number | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [totalEarnings, setTotalEarnings]   = useState<number | null>(null)
+  const [loading, setLoading]               = useState(true)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const [toggling, setToggling]             = useState(false)
+
   const avatarInputRef = useRef<HTMLInputElement>(null)
 
+  // -------------------------------------------------------------------------
+  // Auth guard + data load
+  // -------------------------------------------------------------------------
+
   useEffect(() => {
+    if (!hasHydrated) return
+    if (!userId && !authReady) return
+    if (!userId) { router.push('/login'); return }
+
     async function load() {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/login'); return }
-      setEmail(user.email ?? null)
 
       const [profileRes, earningsRes] = await Promise.all([
-        supabase.from('driver_profiles').select('*').eq('id', user.id).single(),
-        supabase.from('orders').select('delivery_fee').eq('nexter_id', user.id).eq('status', 'delivered'),
+        supabase
+          .from('driver_profiles')
+          .select('id, full_name, phone, avatar_url, is_active, total_deliveries, avg_rating, kyc_status')
+          .eq('id', userId)
+          .single(),
+        supabase
+          .from('orders')
+          .select('driver_payout')
+          .eq('nexter_id', userId)
+          .eq('status', 'delivered'),
       ])
 
       if (profileRes.data) {
-        setProfile(profileRes.data as DriverProfile)
+        const p = profileRes.data as DriverProfile
+        setProfile(p)
         // avatar_url stores the storage path; generate a short-lived signed URL
-        const storagePath = (profileRes.data as DriverProfile).avatar_url
-        if (storagePath && !storagePath.startsWith('http')) {
+        if (p.avatar_url && !p.avatar_url.startsWith('http')) {
           const { data: signed } = await supabase.storage
             .from('driver-documents')
-            .createSignedUrl(storagePath, 3600)
+            .createSignedUrl(p.avatar_url, 3600)
           setAvatarDisplayUrl(signed?.signedUrl ?? null)
         } else {
-          // Legacy: already a full URL (pre-migration rows)
-          setAvatarDisplayUrl(storagePath)
+          setAvatarDisplayUrl(p.avatar_url)
         }
       }
-      if (earningsRes.data) setTotalEarnings(earningsRes.data.reduce((s, d) => s + (d.delivery_fee ?? 0), 0))
+
+      if (earningsRes.data) {
+        setTotalEarnings(
+          earningsRes.data.reduce((sum, row) => sum + (row.driver_payout ?? 0), 0)
+        )
+      }
+
       setLoading(false)
     }
+
     load()
-  }, [router])
+  }, [router, userId, authReady, hasHydrated])
+
+  // -------------------------------------------------------------------------
+  // Handlers
+  // -------------------------------------------------------------------------
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
     setUploadingAvatar(true)
     try {
-      const fd = new FormData(); fd.append('file', file)
+      const fd = new FormData()
+      fd.append('file', file)
       const res = await fetch('/api/driver/update-avatar', { method: 'POST', body: fd })
       if (res.ok) {
         const { avatarUrl, storagePath } = await res.json()
@@ -86,6 +179,26 @@ export default function ProfilePage() {
     }
   }
 
+  const handleOnlineToggle = async () => {
+    if (!profile || toggling) return
+    const next = !profile.is_active
+    setToggling(true)
+    // Optimistic update
+    setProfile(prev => prev ? { ...prev, is_active: next } : prev)
+    try {
+      await fetch('/api/driver/set-online', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ online: next }),
+      })
+    } catch {
+      // Revert on failure
+      setProfile(prev => prev ? { ...prev, is_active: !next } : prev)
+    } finally {
+      setToggling(false)
+    }
+  }
+
   const handleSignOut = async () => {
     if (activeOrderId) {
       const confirmed = window.confirm(
@@ -94,195 +207,227 @@ export default function ProfilePage() {
       if (!confirmed) return
     }
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      // Set driver offline in DB before signing out
-      await supabase.from('driver_profiles').update({ is_active: false }).eq('id', user.id)
+    if (userId) {
+      await supabase.from('driver_profiles').update({ is_active: false }).eq('id', userId)
     }
     clearStore()
     await supabase.auth.signOut()
     router.push('/login')
   }
 
+  // -------------------------------------------------------------------------
+  // Loading skeleton
+  // -------------------------------------------------------------------------
+
   if (loading) {
     return (
-      <div className="flex flex-col min-h-full">
-        <div className="h-48 bg-[#141414] animate-pulse" />
-        <div className="p-4 space-y-3">
-          <div className="h-24 bg-[#141414] rounded-2xl animate-pulse" />
-          <div className="h-40 bg-[#141414] rounded-2xl animate-pulse" />
-        </div>
+      <div className="min-h-full bg-[#080808]">
+        <div className="mx-4 mt-4 h-52 bg-[#141414] rounded-3xl animate-pulse" />
+        <div className="mx-4 mt-3 h-10 bg-[#141414] rounded-2xl animate-pulse" />
+        <div className="mx-4 mt-5 h-36 bg-[#141414] rounded-2xl animate-pulse" />
+        <div className="mx-4 mt-5 h-36 bg-[#141414] rounded-2xl animate-pulse" />
       </div>
     )
   }
 
-  const vehicle = profile?.vehicle_type ? VEHICLE_LABELS[profile.vehicle_type] : null
-  const initials = (profile?.full_name ?? 'D')[0].toUpperCase()
-  const kyc = KYC_CONFIG[profile?.kyc_status ?? 'not_submitted'] ?? KYC_CONFIG.not_submitted
-  const KycIcon = kyc.icon
+  // -------------------------------------------------------------------------
+  // Derived values
+  // -------------------------------------------------------------------------
+
+  const initials  = (profile?.full_name ?? 'D')[0].toUpperCase()
+  const kyc       = KYC_CONFIG[profile?.kyc_status ?? 'not_submitted'] ?? KYC_CONFIG.not_submitted
+  const KycIcon   = kyc.icon
+  const isOnline  = profile?.is_active ?? false
+
+  // -------------------------------------------------------------------------
+  // Render
+  // -------------------------------------------------------------------------
 
   return (
-    <div className="flex flex-col min-h-full">
-      {/* Hidden avatar input */}
-      <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+    <div className="min-h-full bg-[#080808] pb-safe">
+      {/* Hidden file input */}
+      <input
+        ref={avatarInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleAvatarChange}
+      />
 
-      {/* Hero header */}
-      <div className="relative bg-gradient-to-b from-[#181818] to-[#0A0A0A] px-5 pt-12 pb-6">
-        <div className="flex items-end gap-4">
-          {/* Avatar */}
-          <div className="relative">
-            <div className="w-20 h-20 rounded-2xl overflow-hidden bg-[#242424] border border-white/8 flex items-center justify-center shadow-lg">
+      {/* ------------------------------------------------------------------ */}
+      {/* 1. Hero card                                                         */}
+      {/* ------------------------------------------------------------------ */}
+      <div className="bg-[#141414] rounded-3xl border border-white/5 mx-4 mt-4 p-5">
+        {/* Top row: avatar + name */}
+        <div className="flex items-start gap-4">
+          {/* Avatar with camera badge */}
+          <div className="relative flex-shrink-0">
+            <div className="w-[72px] h-[72px] rounded-2xl overflow-hidden bg-[#242424] border border-white/8 flex items-center justify-center">
               {avatarDisplayUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={avatarDisplayUrl} alt="Avatar" className="w-full h-full object-cover" />
               ) : (
-                <span className="text-white text-3xl font-black">{initials}</span>
+                <span className="text-white text-2xl font-black">{initials}</span>
               )}
               {uploadingAvatar && (
                 <div className="absolute inset-0 bg-black/60 flex items-center justify-center rounded-2xl">
-                  <div className="w-6 h-6 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                  <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
                 </div>
               )}
             </div>
+            {/* Camera badge */}
             <button
               onClick={() => avatarInputRef.current?.click()}
               disabled={uploadingAvatar}
-              className="absolute -bottom-1 -right-1 w-7 h-7 bg-[#2A2A2A] border border-white/10 rounded-full flex items-center justify-center shadow-lg"
+              className="absolute -bottom-1.5 -right-1.5 w-6 h-6 bg-[#FF7A50] rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform"
             >
-              <Camera size={12} className="text-zinc-300" />
+              <Camera size={11} className="text-white" />
             </button>
-            {profile?.is_active && (
-              <div className="absolute -top-1 -left-1 w-4 h-4 bg-green-500 rounded-full border-2 border-[#080808]" />
-            )}
           </div>
 
-          <div className="flex-1 pb-1">
-            <h1 className="text-xl font-black text-white leading-tight">{profile?.full_name ?? 'Driver'}</h1>
-            <p className="text-xs text-zinc-500 mt-0.5">{email}</p>
-            {vehicle && (
-              <span className="inline-flex items-center gap-1 mt-1.5 text-[11px] text-zinc-400 bg-[#1E1E1E] border border-white/5 rounded-full px-2.5 py-0.5">
-                {vehicle.emoji} {vehicle.label}
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="mx-4 -mt-2 bg-[#141414] rounded-2xl border border-white/5 p-4 grid grid-cols-3 gap-4 shadow-lg">
-        <div className="text-center">
-          <div className="flex items-center justify-center mb-1.5"><Package size={14} className="text-zinc-500" /></div>
-          <p className="font-black text-white text-xl">{profile?.total_deliveries ?? 0}</p>
-          <p className="text-xs text-zinc-500">Deliveries</p>
-        </div>
-        <div className="text-center border-x border-white/5">
-          <div className="flex items-center justify-center mb-1.5"><Star size={14} className="text-zinc-500" /></div>
-          <p className="font-black text-white text-xl">{profile?.avg_rating?.toFixed(1) ?? '—'}</p>
-          <p className="text-xs text-zinc-500">Rating</p>
-        </div>
-        <div className="text-center">
-          <div className="flex items-center justify-center mb-1.5"><TrendingUp size={14} className="text-zinc-500" /></div>
-          <p className="font-black text-white text-xl">{totalEarnings !== null ? `$${totalEarnings.toFixed(0)}` : '—'}</p>
-          <p className="text-xs text-zinc-500">Earned</p>
-        </div>
-      </div>
-
-      {/* KYC status */}
-      <div className="mx-4 mt-5">
-        <p className="text-xs text-zinc-600 font-bold uppercase tracking-widest mb-2 px-1">Verification</p>
-        <div className="bg-[#141414] rounded-2xl border border-white/5 p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-[#1E1E1E] flex items-center justify-center flex-shrink-0">
-                <KycIcon size={16} className={kyc.color} />
-              </div>
-              <div>
-                <p className="font-bold text-white text-sm">Identity Verification</p>
-                <p className={`text-xs mt-0.5 ${kyc.color}`}>{kyc.label}</p>
-              </div>
-            </div>
-            {(profile?.kyc_status === 'not_submitted' || profile?.kyc_status === 'rejected') && (
-              <button onClick={() => router.push('/onboarding')} className="flex items-center gap-1 text-xs font-bold text-white">
-                {profile.kyc_status === 'rejected' ? 'Resubmit' : 'Start'} <ChevronRight size={12} />
+          {/* Name + email + phone */}
+          <div className="flex-1 min-w-0 pt-0.5">
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-black text-white leading-tight truncate">
+                {profile?.full_name ?? 'Driver'}
+              </h1>
+              <button className="flex-shrink-0 active:opacity-60 transition-opacity">
+                <Pencil size={13} className="text-zinc-600" />
               </button>
+            </div>
+            <p className="text-xs text-zinc-500 mt-0.5 truncate">{userEmail}</p>
+            {profile?.phone && (
+              <p className="text-xs text-zinc-600 mt-0.5">{profile.phone}</p>
             )}
           </div>
         </div>
-      </div>
 
-      {/* Account menu */}
-      <div className="mx-4 mt-5 space-y-4">
-        <p className="text-xs text-zinc-600 font-bold uppercase tracking-widest px-1">Account</p>
+        {/* Divider */}
+        <div className="border-t border-white/5 mt-4 mb-0" />
 
-        <div className="bg-[#141414] rounded-2xl border border-white/5 divide-y divide-white/5">
-          <div className="flex items-center gap-3 px-4 py-3.5">
-            <div className="w-8 h-8 rounded-xl bg-[#1E1E1E] flex items-center justify-center flex-shrink-0">
-              <span className="text-sm">{vehicle?.emoji ?? '🚗'}</span>
+        {/* Stats row */}
+        <div className="grid grid-cols-3 pt-4">
+          {/* Deliveries */}
+          <div className="text-center">
+            <div className="flex items-center justify-center mb-1.5">
+              <Package size={13} className="text-zinc-600" />
             </div>
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-white">Vehicle</p>
-              <p className="text-xs text-zinc-500">{vehicle?.label ?? 'Not set'}</p>
-            </div>
+            <p className="font-black text-white text-xl leading-none">
+              {profile?.total_deliveries ?? 0}
+            </p>
+            <p className="text-[11px] text-zinc-600 mt-1">Deliveries</p>
           </div>
-          <div className="flex items-center gap-3 px-4 py-3.5">
-            <div className="w-8 h-8 rounded-xl bg-[#1E1E1E] flex items-center justify-center flex-shrink-0">
-              <span className="text-sm">✉️</span>
+
+          {/* Rating */}
+          <div className="text-center border-x border-white/5">
+            <div className="flex items-center justify-center mb-1.5">
+              <Star size={13} className="text-zinc-600" />
             </div>
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-white">Email</p>
-              <p className="text-xs text-zinc-500">{email}</p>
-            </div>
+            <p className="font-black text-white text-xl leading-none">
+              {profile?.avg_rating != null ? profile.avg_rating.toFixed(1) : '—'}
+            </p>
+            <p className="text-[11px] text-zinc-600 mt-1">Rating</p>
           </div>
-          {profile?.phone && (
-            <div className="flex items-center gap-3 px-4 py-3.5">
-              <div className="w-8 h-8 rounded-xl bg-[#1E1E1E] flex items-center justify-center flex-shrink-0">
-                <span className="text-sm">📱</span>
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-white">Phone</p>
-                <p className="text-xs text-zinc-500">{profile.phone}</p>
-              </div>
-            </div>
-          )}
-        </div>
 
-        <div className="bg-[#141414] rounded-2xl border border-white/5 divide-y divide-white/5">
-          <button onClick={() => router.push('/earnings')} className="w-full flex items-center gap-3 px-4 py-3.5">
-            <div className="w-8 h-8 rounded-xl bg-[#1E1E1E] flex items-center justify-center flex-shrink-0">
-              <TrendingUp size={16} className="text-zinc-400" />
+          {/* Earned */}
+          <div className="text-center">
+            <div className="flex items-center justify-center mb-1.5">
+              <TrendingUp size={13} className="text-zinc-600" />
             </div>
-            <span className="text-sm font-semibold text-white flex-1 text-left">Earnings & Payouts</span>
-            <ChevronRight size={16} className="text-zinc-600" />
-          </button>
-          <button onClick={() => router.push('/history')} className="w-full flex items-center gap-3 px-4 py-3.5">
-            <div className="w-8 h-8 rounded-xl bg-[#1E1E1E] flex items-center justify-center flex-shrink-0">
-              <Package size={16} className="text-zinc-400" />
-            </div>
-            <span className="text-sm font-semibold text-white flex-1 text-left">Delivery History</span>
-            <ChevronRight size={16} className="text-zinc-600" />
-          </button>
-          <button onClick={() => router.push('/onboarding')} className="w-full flex items-center gap-3 px-4 py-3.5">
-            <div className="w-8 h-8 rounded-xl bg-[#1E1E1E] flex items-center justify-center flex-shrink-0">
-              <Shield size={16} className="text-zinc-400" />
-            </div>
-            <span className="text-sm font-semibold text-white flex-1 text-left">KYC & Documents</span>
-            <ChevronRight size={16} className="text-zinc-600" />
-          </button>
+            <p className="font-black text-white text-xl leading-none">
+              {totalEarnings !== null ? `$${totalEarnings.toFixed(0)}` : '—'}
+            </p>
+            <p className="text-[11px] text-zinc-600 mt-1">Earned</p>
+          </div>
         </div>
+      </div>
 
-        <div className="bg-[#141414] rounded-2xl border border-white/5">
-          <button onClick={handleSignOut} className="w-full flex items-center gap-3 px-4 py-4">
-            <div className="w-8 h-8 rounded-xl bg-[#1E1E1E] flex items-center justify-center flex-shrink-0">
-              <LogOut size={16} className="text-zinc-400" />
-            </div>
-            <span className="text-sm font-bold text-white">Sign Out</span>
+      {/* ------------------------------------------------------------------ */}
+      {/* 2. Status row                                                        */}
+      {/* ------------------------------------------------------------------ */}
+      <div className="flex items-center mx-4 mt-3 gap-2">
+        {/* Online / Offline pill */}
+        <button
+          onClick={handleOnlineToggle}
+          disabled={toggling}
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-full border text-xs font-bold transition-colors active:scale-95 ${
+            isOnline
+              ? 'bg-green-950 border-green-800 text-green-400'
+              : 'bg-zinc-900 border-zinc-800 text-zinc-400'
+          }`}
+        >
+          <span
+            className={`w-2 h-2 rounded-full flex-shrink-0 ${
+              isOnline ? 'bg-green-400 animate-pulse' : 'bg-zinc-600'
+            }`}
+          />
+          {isOnline ? 'Online' : 'Offline'}
+        </button>
+
+        {/* KYC status chip */}
+        <div className={`flex items-center gap-1.5 px-3 py-2 rounded-full border text-xs font-bold ${kyc.bg} ${kyc.text} border-white/5`}>
+          <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${kyc.dot}`} />
+          {kyc.label}
+        </div>
+      </div>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* 3. Section: Delivery                                                 */}
+      {/* ------------------------------------------------------------------ */}
+      <div className="mx-4 mt-5">
+        <SectionLabel label="Delivery" />
+        <div className="bg-[#141414] rounded-2xl border border-white/5 divide-y divide-white/5 overflow-hidden">
+          <MenuRow icon={TrendingUp} label="Earnings & Payouts" onPress={() => router.push('/earnings')} />
+          <MenuRow icon={Package}    label="Delivery History"   onPress={() => router.push('/history')} />
+          <MenuRow icon={MapPin}     label="GPS Tracking"       onPress={() => router.push('/tracking')} />
+        </div>
+      </div>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* 4. Section: Account                                                  */}
+      {/* ------------------------------------------------------------------ */}
+      <div className="mx-4 mt-5">
+        <SectionLabel label="Account" />
+        <div className="bg-[#141414] rounded-2xl border border-white/5 divide-y divide-white/5 overflow-hidden">
+          <MenuRow icon={FileText} label="Documents & KYC" onPress={() => router.push('/documents')} />
+          <MenuRow icon={Settings} label="App Settings"    onPress={() => router.push('/settings')} />
+        </div>
+      </div>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* 5. Section: Support                                                  */}
+      {/* ------------------------------------------------------------------ */}
+      <div className="mx-4 mt-5">
+        <SectionLabel label="Support" />
+        <div className="bg-[#141414] rounded-2xl border border-white/5 divide-y divide-white/5 overflow-hidden">
+          <MenuRow icon={Mail}          label="Email Support" href="mailto:support@doornext.com" />
+          <MenuRow icon={MessageCircle} label="Messages"      onPress={() => router.push('/messages')} />
+        </div>
+      </div>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* 6. Sign Out                                                          */}
+      {/* ------------------------------------------------------------------ */}
+      <div className="mx-4 mt-5">
+        <div className="bg-[#141414] rounded-2xl border border-white/5 overflow-hidden">
+          <button
+            onClick={handleSignOut}
+            className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-white/5 transition-colors"
+          >
+            <span className="w-8 h-8 rounded-xl bg-[#1E1E1E] flex items-center justify-center flex-shrink-0">
+              <LogOut size={16} className="text-red-400" />
+            </span>
+            <span className="text-sm font-bold text-red-400 flex-1 text-left">Sign Out</span>
           </button>
         </div>
       </div>
 
-      <div className="py-8 text-center">
-        <p className="text-[11px] text-zinc-800">Nexter Driver v1.0.0</p>
-      </div>
+      {/* ------------------------------------------------------------------ */}
+      {/* 7. Version footer                                                    */}
+      {/* ------------------------------------------------------------------ */}
+      <p className="text-[11px] text-zinc-800 text-center py-8">
+        Doornext Driver v1.0.0
+      </p>
     </div>
   )
 }

@@ -8,6 +8,7 @@
     "type-check": "turbo type-check"
   },
   "devDependencies": {
+    "sharp": "^0.34.5",
     "turbo": "^2.3.0",
     "typescript": "^5.8.0"
   },

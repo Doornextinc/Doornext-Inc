@@ -17,7 +17,17 @@ export async function POST(req: NextRequest) {
   const file = formData.get('file') as File | null
   if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 })
 
-  const path = `${user.id}/avatar-${Date.now()}.jpg`
+  const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+  const MAX_SIZE = 5 * 1024 * 1024 // 5 MB
+  if (!ALLOWED_TYPES.includes(file.type)) {
+    return NextResponse.json({ error: 'Only JPEG, PNG, and WebP images are allowed' }, { status: 400 })
+  }
+  if (file.size > MAX_SIZE) {
+    return NextResponse.json({ error: 'Image must be under 5 MB' }, { status: 400 })
+  }
+
+  const ext = file.type === 'image/webp' ? 'webp' : file.type === 'image/png' ? 'png' : 'jpg'
+  const path = `${user.id}/avatar-${Date.now()}.${ext}`
   const { error: uploadError } = await admin.storage
     .from('driver-documents')
     .upload(path, file, { cacheControl: '3600', upsert: true })

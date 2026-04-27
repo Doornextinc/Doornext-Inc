@@ -18,15 +18,18 @@ interface Notification {
 
 function typeIcon(type: string): string {
   switch (type) {
+    case 'new_order':              return '🔔'
     case 'order_confirmed':        return '✅'
     case 'order_accepted':         return '✅'
     case 'order_rejected':         return '❌'
     case 'order_cancelled':        return '🚫'
     case 'order_preparing':        return '🍳'
     case 'order_ready':            return '🍽️'
+    case 'driver_heading_to_maker': return '🛵'
     case 'order_driver_assigned':  return '🛵'
     case 'order_picked_up':        return '📦'
     case 'order_on_the_way':       return '🚀'
+    case 'order_arrived_at_maker': return '📍'
     case 'order_arrived_at_customer': return '📍'
     case 'order_delivered':        return '🎉'
     case 'failed_delivery':        return '⚠️'
@@ -53,10 +56,14 @@ export default function NotificationsPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
 
+      // Exclude driver-only notification types — a user who is also a driver
+      // in the same DB would otherwise see pickup/preparation alerts here.
+      const DRIVER_TYPES = ['order_available', 'order_preparing']
       const { data } = await supabase
         .from('notifications')
         .select('id, title, body, type, read, created_at, data')
         .eq('user_id', user.id)
+        .not('type', 'in', `(${DRIVER_TYPES.join(',')})`)
         .order('created_at', { ascending: false })
         .limit(50)
 

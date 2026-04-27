@@ -22,11 +22,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'No file provided' }, { status: 400 })
   }
 
-  const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
-  const allowedExts = ['jpg', 'jpeg', 'png', 'webp', 'gif']
-  const allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
-  if (!allowedExts.includes(ext) || !allowedMimes.includes(file.type)) {
-    return NextResponse.json({ error: 'Invalid file type' }, { status: 400 })
+  // Derive extension from MIME type — never from filename, which can be spoofed
+  const MIME_TO_EXT: Record<string, string> = {
+    'image/jpeg': 'jpg',
+    'image/png':  'png',
+    'image/webp': 'webp',
+    'image/gif':  'gif',
+  }
+  const ext = MIME_TO_EXT[file.type]
+  if (!ext) {
+    return NextResponse.json({ error: 'Invalid file type. Allowed: JPEG, PNG, WebP, GIF' }, { status: 400 })
   }
   if (file.size > 5 * 1024 * 1024) {
     return NextResponse.json({ error: 'File too large (max 5MB)' }, { status: 400 })
@@ -37,6 +42,24 @@ export async function POST(req: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
+
+  // Ensure the avatars bucket exists (creates it if missing)
+  const { data: buckets } = await admin.storage.listBuckets()
+  const bucketExists = buckets?.some((b) => b.id === 'avatars')
+  if (!bucketExists) {
+    const { error: createErr } = await admin.storage.createBucket('avatars', {
+      public: true,
+      fileSizeLimit: 5 * 1024 * 1024,
+      allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
+    })
+    if (createErr) {
+      console.error('[upload-avatar] Could not create avatars bucket:', createErr)
+      return NextResponse.json(
+        { error: `Storage bucket unavailable: ${createErr.message}` },
+        { status: 500 }
+      )
+    }
+  }
 
   const path = `${user.id}/avatar.${ext}`
   const arrayBuffer = await file.arrayBuffer()
@@ -50,7 +73,13 @@ export async function POST(req: NextRequest) {
     })
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    // StorageError may have .message or .error depending on version
+    const msg =
+      (error as { message?: string; error?: string }).message ??
+      (error as { message?: string; error?: string }).error ??
+      JSON.stringify(error)
+    console.error('[upload-avatar] Upload failed:', msg, error)
+    return NextResponse.json({ error: msg || 'Upload failed' }, { status: 500 })
   }
 
   const { data } = admin.storage.from('avatars').getPublicUrl(path)

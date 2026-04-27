@@ -3,8 +3,17 @@ import Stripe from 'stripe'
 import { createServerClient } from '@supabase/ssr'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
+import { notifyUser } from '@doornext/shared/notify'
+import * as Sentry from '@sentry/nextjs'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 export async function POST(req: NextRequest) {
+  // Rate limit: 20 rejections per minute per IP
+  const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown'
+  if (!await checkRateLimit(`reject-order:${ip}`, 20, 60)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+  }
+
   const stripeKey = process.env.STRIPE_SECRET_KEY
   if (!stripeKey) return NextResponse.json({ error: 'Not configured' }, { status: 500 })
 
@@ -53,7 +62,7 @@ export async function POST(req: NextRequest) {
       const stripe = new Stripe(stripeKey)
       await stripe.refunds.create({ payment_intent: order.stripe_payment_intent_id })
     } catch (err) {
-      console.error('Stripe refund error:', err)
+      Sentry.captureException(err, { extra: { orderId, userId: user.id } })
       return NextResponse.json({ error: 'Refund failed — please try again or contact support' }, { status: 500 })
     }
   }
@@ -64,9 +73,9 @@ export async function POST(req: NextRequest) {
     .update({ status: 'cancelled', updated_at: new Date().toISOString() })
     .eq('id', orderId)
 
-  // Notify customer
-  await admin.from('notifications').insert({
-    user_id: order.customer_id,
+  // Notify customer (DB + push)
+  await notifyUser(admin, {
+    userId: order.customer_id,
     type: 'order_rejected',
     title: 'Order Cancelled',
     body: isCash

@@ -1,20 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createAdminClient, createSessionClient } from '@/lib/supabase/server'
+import { requireAdmin } from '@/lib/require-admin'
 
 export async function GET(req: NextRequest) {
-  const session = await createSessionClient()
-  const { data: { user } } = await session.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const admin = createAdminClient()
-  const { data: me } = await admin.from('users').select('role').eq('id', user.id).single()
-  if (me?.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  const auth = await requireAdmin(req)
+  if (!auth.ok) return auth.response
+  const { supabase } = auth
 
   const search = req.nextUrl.searchParams.get('search') ?? ''
-
   const accountStatus = req.nextUrl.searchParams.get('account_status')
 
-  let query = admin
+  let query = supabase
     .from('users')
     .select('id, full_name, email, phone, role, account_status, created_at')
     .order('created_at', { ascending: false })
@@ -33,14 +28,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  // Verify admin session
-  const session = await createSessionClient()
-  const { data: { user } } = await session.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const admin = createAdminClient()
-  const { data: me } = await admin.from('users').select('role').eq('id', user.id).single()
-  if (me?.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  const auth = await requireAdmin(req)
+  if (!auth.ok) return auth.response
+  const { supabase } = auth
 
   const { userId, role } = await req.json()
   if (!userId || !role) return NextResponse.json({ error: 'userId and role required' }, { status: 400 })
@@ -50,7 +40,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
   }
 
-  const { error } = await admin.from('users').update({ role }).eq('id', userId)
+  const { error } = await supabase.from('users').update({ role }).eq('id', userId)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   return NextResponse.json({ ok: true })

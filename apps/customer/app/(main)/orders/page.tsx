@@ -30,7 +30,11 @@ function formatOrderDate(dateStr: string) {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ` · ${time}`
 }
 
-const ACTIVE_STATUSES: OrderStatus[] = ['pending', 'confirmed', 'preparing', 'ready', 'picked_up', 'on_the_way']
+const ACTIVE_STATUSES: OrderStatus[] = [
+  'pending', 'confirmed', 'preparing', 'ready',
+  'driver_assigned', 'arrived_at_maker',
+  'picked_up', 'on_the_way', 'arrived_at_customer',
+]
 
 export default function OrdersPage() {
   const router = useRouter()
@@ -45,8 +49,9 @@ export default function OrdersPage() {
     setLoadError(false as false)
     try {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { setLoading(false); return }
+      const { data: { session } } = await supabase.auth.getSession()
+      const userId = session?.user?.id
+      if (!userId) { setLoading(false); return }
 
       const { data, error } = await supabase
         .from('orders')
@@ -59,7 +64,7 @@ export default function OrdersPage() {
             menu_item:menu_items(*)
           )
         `)
-        .eq('customer_id', user.id)
+        .eq('customer_id', userId)
         .order('created_at', { ascending: false })
         .limit(50)
 
@@ -67,12 +72,12 @@ export default function OrdersPage() {
         console.error('Failed to load orders:', JSON.stringify(error))
         setLoadError(error.message ?? 'Unknown error')
       } else if (data) {
-        console.log(`[Orders] fetched ${data.length} orders for user ${user.id}`)
+        console.log(`[Orders] fetched ${data.length} orders for user ${userId}`)
         setOrders(data as OrderWithMaker[])
       }
     } catch (e) {
       console.error('Failed to load orders:', e)
-      setLoadError(true)
+      setLoadError('An unexpected error occurred')
     } finally {
       setLoading(false)
     }
@@ -80,20 +85,37 @@ export default function OrdersPage() {
 
   useEffect(() => { loadOrders() }, [loadOrders])
 
+  // Re-trigger load once auth session is confirmed (handles mount-before-session timing)
   useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) return
-      const channel = supabase
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') loadOrders()
+    })
+    return () => subscription.unsubscribe()
+  }, [loadOrders])
+
+  useEffect(() => {
+    const supabase = createClient()
+    // Keep a ref to the channel so the cleanup function (which runs synchronously)
+    // can always remove it — even when auth resolves after the component unmounts.
+    let channel: ReturnType<typeof supabase.channel> | null = null
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      const userId = session?.user?.id
+      if (!userId) return
+      channel = supabase
         .channel('customer-orders-realtime')
         .on(
           'postgres_changes',
-          { event: 'UPDATE', schema: 'public', table: 'orders', filter: `customer_id=eq.${user.id}` },
+          { event: '*', schema: 'public', table: 'orders', filter: `customer_id=eq.${userId}` },
           () => { loadOrders() }
         )
         .subscribe()
-      return () => { supabase.removeChannel(channel) }
     })
+
+    return () => {
+      if (channel) supabase.removeChannel(channel)
+    }
   }, [loadOrders])
 
   const handleReorder = (order: OrderWithMaker) => {
@@ -108,7 +130,7 @@ export default function OrdersPage() {
   }
 
   const activeOrders = orders.filter((o) => ACTIVE_STATUSES.includes(o.status as OrderStatus))
-  const pastOrders = orders.filter((o) => o.status === 'delivered' || o.status === 'cancelled')
+  const pastOrders = orders.filter((o) => o.status === 'delivered' || o.status === 'cancelled' || o.status === 'failed_delivery')
 
   if (loading) {
     return (

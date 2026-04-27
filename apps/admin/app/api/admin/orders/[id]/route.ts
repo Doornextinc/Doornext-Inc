@@ -1,6 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/require-admin'
 
+const VALID_STATUSES = [
+  'pending', 'confirmed', 'preparing', 'ready',
+  'driver_assigned', 'arrived_at_maker', 'picked_up',
+  'on_the_way', 'arrived_at_customer', 'delivered',
+  'failed_delivery', 'cancelled',
+] as const
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const auth = await requireAdmin(request)
+  if (!auth.ok) return auth.response
+  const { supabase } = auth
+
+  const { id } = await params
+  const body = await request.json()
+  const { status } = body
+
+  if (!status || !VALID_STATUSES.includes(status)) {
+    return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
+  }
+
+  const { error } = await supabase
+    .from('orders')
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq('id', id)
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  return NextResponse.json({ success: true })
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

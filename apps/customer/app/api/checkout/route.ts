@@ -8,10 +8,16 @@ import { calculatePricing } from '@doornext/shared/pricing'
 import * as Sentry from '@sentry/nextjs'
 import { checkRateLimit } from '@/lib/rate-limit'
 
+/** Parse a DB settings string to a float, falling back to `fallback` on NaN/Infinity. */
+function safeFloat(val: string | undefined, fallback: number): number {
+  const n = parseFloat(val ?? '')
+  return isFinite(n) && n >= 0 ? n : fallback
+}
+
 export async function POST(req: NextRequest) {
   // Rate limit: 10 checkout attempts per IP per minute
   const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown'
-  if (!checkRateLimit(`checkout:${ip}`, 10, 60)) {
+  if (!await checkRateLimit(`checkout:${ip}`, 10, 60)) {
     return NextResponse.json({ error: 'Too many requests. Please try again shortly.' }, { status: 429 })
   }
 
@@ -54,6 +60,9 @@ export async function POST(req: NextRequest) {
     }
     if (!maker_id) {
       return NextResponse.json({ error: 'maker_id required' }, { status: 400 })
+    }
+    if (typeof distance_miles !== 'number' || distance_miles < 0) {
+      return NextResponse.json({ error: 'distance_miles is required and must be a non-negative number' }, { status: 400 })
     }
 
     // Load pricing tables from DB (needed before price verification)
@@ -100,6 +109,7 @@ export async function POST(req: NextRequest) {
       serviceSupabase.from('settings').select('key, value').in('key', [
         'dynamic_base_pay', 'dynamic_per_mile', 'dynamic_per_min_wait',
         'use_dynamic_pricing', 'priority_driver_bonus', 'service_fee_pct',
+        'platform_commission_pct',
       ]),
     ])
 
@@ -127,7 +137,7 @@ export async function POST(req: NextRequest) {
     }
 
     const pricing = calculatePricing({
-      distanceMiles:        distance_miles ?? 3,
+      distanceMiles:        distance_miles,
       subtotal,
       tip:                  0,
       isPriority:           is_priority ?? false,
@@ -136,12 +146,12 @@ export async function POST(req: NextRequest) {
       smallOrderFees:       smallOrderFeesRes.data ?? [],
       activeSurgeConditions: surgeRes.data ?? [],
       formula: {
-        base_pay:              parseFloat(settingsMap.dynamic_base_pay     ?? '2.50'),
-        per_mile:              parseFloat(settingsMap.dynamic_per_mile     ?? '0.80'),
-        per_min_wait:          parseFloat(settingsMap.dynamic_per_min_wait ?? '0.30'),
+        base_pay:              safeFloat(settingsMap.dynamic_base_pay,      2.50),
+        per_mile:              safeFloat(settingsMap.dynamic_per_mile,      0.80),
+        per_min_wait:          safeFloat(settingsMap.dynamic_per_min_wait,  0.30),
         use_dynamic:           settingsMap.use_dynamic_pricing === 'true',
-        service_fee_pct:       parseFloat(settingsMap.service_fee_pct      ?? '9'),
-        priority_driver_bonus: parseFloat(settingsMap.priority_driver_bonus ?? '2.50'),
+        service_fee_pct:       safeFloat(settingsMap.service_fee_pct,       9),
+        priority_driver_bonus: safeFloat(settingsMap.priority_driver_bonus, 2.50),
       },
     })
 
@@ -167,7 +177,7 @@ export async function POST(req: NextRequest) {
       .insert({
         customer_id:      user.id,
         maker_id,
-        status:           'pending',
+        status:           'awaiting_payment',
         payment_method:   'card',
         subtotal:         Math.round(subtotal * 100) / 100,
         delivery_fee:     pricing.deliveryFee,
@@ -179,7 +189,7 @@ export async function POST(req: NextRequest) {
         total:            Math.round(total * 100) / 100,
         is_priority:      is_priority ?? false,
         driver_payout:    pricing.driverTotal,
-        maker_payout:     Math.round(subtotal * 0.85 * 100) / 100,
+        maker_payout:     Math.round(subtotal * (1 - safeFloat(settingsMap.platform_commission_pct, 5) / 100) * 100) / 100,
         delivery_address: delivery_address ?? { street: 'N/A', city: 'N/A', state: 'NY', zip: '00000' },
         stripe_payment_intent_id: paymentIntent.id,
       })

@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Bell, ChevronLeft } from 'lucide-react'
+import { Bell, ChevronLeft, MessageCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 interface AppHeaderProps {
@@ -31,8 +31,17 @@ export function AppHeader({ greeting, title, showBack, backHref }: AppHeaderProp
         .eq('id', user.id)
         .single()
       if (profile) {
-        setAvatarUrl(profile.avatar_url)
         setInitials((profile.full_name ?? 'D')[0].toUpperCase())
+        // avatar_url stores a storage path — generate a signed URL for display
+        const storagePath = profile.avatar_url
+        if (storagePath && !storagePath.startsWith('http')) {
+          const { data: signed } = await supabase.storage
+            .from('driver-documents')
+            .createSignedUrl(storagePath, 3600)
+          setAvatarUrl(signed?.signedUrl ?? null)
+        } else {
+          setAvatarUrl(storagePath)
+        }
       }
     })
   }, [])
@@ -62,12 +71,18 @@ export function AppHeader({ greeting, title, showBack, backHref }: AppHeaderProp
           )}
         </div>
 
-        {/* Right side: bell + avatar */}
-        <div className="flex items-center gap-2.5">
-          <button className="relative w-10 h-10 rounded-2xl bg-[#161616] border border-white/8 flex items-center justify-center active:scale-95 transition-transform">
-            <Bell size={18} className="text-zinc-300" />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-[#D4622B] rounded-full ring-2 ring-[#0A0A0A]" />
-          </button>
+        {/* Right side: messages + bell + avatar */}
+        <div className="flex items-center gap-2">
+          <Link href="/messages">
+            <div className="relative w-10 h-10 rounded-2xl bg-[#161616] border border-white/8 flex items-center justify-center active:scale-95 transition-transform">
+              <MessageCircle size={18} className="text-zinc-300" />
+            </div>
+          </Link>
+          <Link href="/messages">
+            <div className="relative w-10 h-10 rounded-2xl bg-[#161616] border border-white/8 flex items-center justify-center active:scale-95 transition-transform">
+              <Bell size={18} className="text-zinc-300" />
+            </div>
+          </Link>
           <Link href="/profile">
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#D4622B] to-[#E07545] flex items-center justify-center overflow-hidden active:scale-95 transition-transform">
               {avatarUrl ? (

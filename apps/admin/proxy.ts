@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ''
 
@@ -27,25 +27,35 @@ export async function middleware(request: NextRequest) {
     },
   })
 
-  const { data: { user } } = await supabase.auth.getUser()
   const pathname = request.nextUrl.pathname
   const isAuthRoute = pathname.startsWith('/login')
-
   const isApiRoute = pathname.startsWith('/api/admin')
 
+  // Get user — fail gracefully if Supabase is unreachable
+  let user = null
+  try {
+    const { data } = await supabase.auth.getUser()
+    user = data.user
+  } catch {
+    // Supabase unreachable — allow auth pages, block everything else
+  }
+
   if (!user && !isAuthRoute) {
-    // Unauthenticated: redirect pages to login, return 401 for API routes
     if (isApiRoute) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
   if (user && !isAuthRoute) {
-    const { data: profile } = await supabase
-      .from('users').select('role').eq('id', user.id).single()
-    if (profile?.role !== 'admin') {
-      if (isApiRoute) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-      await supabase.auth.signOut()
-      return NextResponse.redirect(new URL('/login?error=not_admin', request.url))
+    try {
+      const { data: profile } = await supabase
+        .from('users').select('role').eq('id', user.id).single()
+      if (profile?.role !== 'admin') {
+        if (isApiRoute) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+        await supabase.auth.signOut()
+        return NextResponse.redirect(new URL('/login?error=not_admin', request.url))
+      }
+    } catch {
+      // DB unreachable — allow through, page itself will handle errors
     }
   }
 

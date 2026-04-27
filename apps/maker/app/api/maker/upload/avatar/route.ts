@@ -37,8 +37,14 @@ export async function POST(req: NextRequest) {
     const file = formData.get('file') as File | null
     if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 })
 
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
-    if (!allowedTypes.includes(file.type)) {
+    // Derive extension from MIME type — never from filename, which can be spoofed
+    const MIME_TO_EXT: Record<string, string> = {
+      'image/jpeg': 'jpg',
+      'image/png':  'png',
+      'image/webp': 'webp',
+    }
+    const ext = MIME_TO_EXT[file.type]
+    if (!ext) {
       return NextResponse.json({ error: 'Only JPEG, PNG, and WebP images are allowed' }, { status: 400 })
     }
     if (file.size > 5 * 1024 * 1024) {
@@ -53,7 +59,6 @@ export async function POST(req: NextRequest) {
 
     await ensureBucket(admin)
 
-    const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
     const path = `${user.id}/kitchen-avatar.${ext}`
     const buffer = Buffer.from(await file.arrayBuffer())
 

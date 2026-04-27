@@ -50,6 +50,17 @@ export default function DriversPage() {
     setActing(null)
   }
 
+  const approveKyc = async (driver: Driver) => {
+    setActing(driver.id)
+    await fetch('/api/admin/drivers', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ driverId: driver.id, kyc_status: 'approved' }),
+    })
+    await loadDrivers()
+    setActing(null)
+  }
+
   if (loading) {
     return (
       <div className="p-8 space-y-2">
@@ -90,7 +101,7 @@ export default function DriversPage() {
               <th className="text-right px-5 py-3 text-xs font-bold text-gray-400 uppercase">Deliveries</th>
               <th className="text-right px-5 py-3 text-xs font-bold text-gray-400 uppercase">Rating</th>
               <th className="text-right px-5 py-3 text-xs font-bold text-gray-400 uppercase">Joined</th>
-              <th className="px-5 py-3" />
+              <th className="px-5 py-3 text-right text-xs font-bold text-gray-400 uppercase">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
@@ -126,23 +137,34 @@ export default function DriversPage() {
                   })}
                 </td>
                 <td className="px-5 py-3 text-right">
-                  <button
-                    onClick={() => toggleActive(driver)}
-                    disabled={acting === driver.id}
-                    className={`text-xs font-semibold px-2.5 py-1 rounded-lg transition-colors disabled:opacity-50 ${
-                      driver.is_active
-                        ? 'text-red-500 hover:bg-red-50 border border-red-200'
-                        : 'text-green-600 hover:bg-green-50 border border-green-200'
-                    }`}
-                  >
-                    {driver.is_active ? 'Deactivate' : 'Activate'}
-                  </button>
+                  <div className="flex items-center justify-end gap-2">
+                    {driver.kyc_status !== 'approved' && (
+                      <button
+                        onClick={() => approveKyc(driver)}
+                        disabled={acting === driver.id}
+                        className="text-xs font-semibold px-2.5 py-1 rounded-lg transition-colors disabled:opacity-50 text-amber-700 hover:bg-amber-50 border border-amber-200"
+                      >
+                        ✓ Approve KYC
+                      </button>
+                    )}
+                    <button
+                      onClick={() => toggleActive(driver)}
+                      disabled={acting === driver.id}
+                      className={`text-xs font-semibold px-2.5 py-1 rounded-lg transition-colors disabled:opacity-50 ${
+                        driver.is_active
+                          ? 'text-red-500 hover:bg-red-50 border border-red-200'
+                          : 'text-green-600 hover:bg-green-50 border border-green-200'
+                      }`}
+                    >
+                      {driver.is_active ? 'Deactivate' : 'Activate'}
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
             {drivers.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-5 py-12 text-center text-sm text-gray-400">No drivers found</td>
+                <td colSpan={9} className="px-5 py-12 text-center text-sm text-gray-400">No drivers found</td>
               </tr>
             )}
           </tbody>

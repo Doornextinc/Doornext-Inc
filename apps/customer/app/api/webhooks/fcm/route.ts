@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
 
   // Rate limit: 200 FCM sends per minute per IP (internal callers only)
   const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown'
-  if (!checkRateLimit(`fcm:${ip}`, 200, 60)) {
+  if (!await checkRateLimit(`fcm:${ip}`, 200, 60)) {
     return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
   }
 

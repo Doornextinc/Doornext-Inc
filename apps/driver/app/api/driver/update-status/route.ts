@@ -3,6 +3,10 @@ import { createServerClient } from '@supabase/ssr'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import type { OrderStatus } from '@doornext/shared/types'
+import { notifyUser } from '@doornext/shared/notify'
+import { snapshotFees } from '@doornext/shared/pricing'
+import * as Sentry from '@sentry/nextjs'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 // NOTE: arrived_at_maker → picked_up is intentionally EXCLUDED.
 // That transition is owned by the maker via PIN confirmation
@@ -15,6 +19,12 @@ const VALID_DRIVER_TRANSITIONS: Record<string, OrderStatus> = {
 }
 
 export async function POST(req: NextRequest) {
+  // Rate limit: 60 status updates per minute per IP (generous for real delivery flow)
+  const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown'
+  if (!await checkRateLimit(`update-status:${ip}`, 60, 60)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+  }
+
   const cookieStore = await cookies()
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -25,14 +35,20 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { orderId, status } = await req.json()
+  // Accept optional GPS coordinates from the driver app
+  const { orderId, status, lat, lng } = await req.json()
   if (!orderId || !status) {
     return NextResponse.json({ error: 'orderId and status required' }, { status: 400 })
   }
 
+  // Fetch order with fee columns + proof path so we can validate at delivery time
   const { data: order } = await supabase
     .from('orders')
-    .select('status, nexter_id, customer_id')
+    .select(`
+      status, nexter_id, customer_id, maker_id, proof_photo_path,
+      subtotal, delivery_fee, service_fee, small_order_fee,
+      surge_fee, tip_amount, driver_payout, platform_fee
+    `)
     .eq('id', orderId)
     .single()
 
@@ -52,11 +68,133 @@ export async function POST(req: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  await admin
+  // ── Delivery gate: proof photo + GPS ─────────────────────────────────────
+  if (status === 'delivered') {
+    // Check if proof photo is required (default: true in production)
+    const { data: proofSetting } = await admin
+      .from('app_settings')
+      .select('value')
+      .eq('key', 'require_delivery_proof')
+      .maybeSingle()
+    const requireProof = proofSetting ? proofSetting.value !== 'false' : true
+
+    if (requireProof && !order.proof_photo_path) {
+      return NextResponse.json(
+        { error: 'A proof photo is required before marking as delivered.' },
+        { status: 422 }
+      )
+    }
+
+    // Soft GPS audit: log to Sentry if driver reports no location.
+    // We store whatever they send — GPS is advisory (tunnels / bad signal are real).
+    if (!lat || !lng) {
+      Sentry.captureMessage('Delivered without GPS coordinates', {
+        level: 'warning',
+        extra: { orderId, userId: user.id },
+      })
+    }
+  }
+
+  // ── Build the status update payload ──────────────────────────────────────
+  const now = new Date().toISOString()
+  const updatePayload: Record<string, unknown> = { status, updated_at: now }
+  if (status === 'delivered') {
+    if (lat && lng) {
+      updatePayload.delivery_lat = lat
+      updatePayload.delivery_lng = lng
+    }
+    updatePayload.delivered_at = now
+  }
+
+  // ── Update the order status ───────────────────────────────────────────────
+  const { error: updateError } = await admin
     .from('orders')
-    .update({ status, updated_at: new Date().toISOString() })
+    .update(updatePayload)
     .eq('id', orderId)
 
+  if (updateError) {
+    Sentry.captureException(new Error(`update-status DB error: ${updateError.message}`), { extra: { orderId, status, userId: user.id } })
+    return NextResponse.json({ error: 'Failed to update order status. Please try again.' }, { status: 500 })
+  }
+
+  // ── Financial settlement — runs atomically with the delivered transition ──
+  let fees: ReturnType<typeof snapshotFees> | null = null
+  if (status === 'delivered') {
+    try {
+      // Look up platform commission from settings (default 5%)
+      const { data: settingRow } = await admin
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'platform_commission_pct')
+        .maybeSingle()
+      const commPct = settingRow ? parseFloat(settingRow.value) : 5
+
+      fees = snapshotFees({
+        subtotal:        Number(order.subtotal),
+        delivery_fee:    Number(order.delivery_fee),
+        service_fee:     Number(order.service_fee ?? 0),
+        small_order_fee: Number(order.small_order_fee ?? 0),
+        surge_fee:       Number(order.surge_fee ?? 0),
+        tip_amount:      Number(order.tip_amount ?? 0),
+        driver_payout:   Number(order.driver_payout),
+        platform_fee_pct: commPct,
+      })
+
+      // Write fee records in parallel — idempotent via ON CONFLICT
+      const [splitRes, makerRes, countRes] = await Promise.all([
+        admin.from('order_fee_splits').upsert(
+          {
+            order_id:            orderId,
+            subtotal:            order.subtotal,
+            delivery_fee:        order.delivery_fee,
+            service_fee:         order.service_fee ?? 0,
+            small_order_fee:     order.small_order_fee ?? 0,
+            surge_fee:           order.surge_fee ?? 0,
+            tip_amount:          order.tip_amount ?? 0,
+            driver_payout:       fees.driverPayout,
+            maker_payout:        fees.makerPayout,
+            platform_commission: fees.platformCommission,
+            platform_net:        fees.platformFee,
+          },
+          { onConflict: 'order_id', ignoreDuplicates: true }
+        ),
+        admin.from('maker_earnings').upsert(
+          {
+            maker_id:            order.maker_id,
+            order_id:            orderId,
+            subtotal:            order.subtotal,
+            platform_commission: fees.platformCommission,
+            payout:              fees.makerPayout,
+            status:              'pending',
+          },
+          { onConflict: 'order_id', ignoreDuplicates: true }
+        ),
+        admin
+          .from('orders')
+          .select('id', { count: 'exact', head: true })
+          .eq('nexter_id', user.id)
+          .eq('status', 'delivered'),
+      ])
+
+      if (splitRes.error) Sentry.captureException(splitRes.error, { extra: { orderId, context: 'fee_split_upsert' } })
+      if (makerRes.error) Sentry.captureException(makerRes.error, { extra: { orderId, context: 'maker_earnings_upsert' } })
+
+      // Update driver delivery count + recompute completion rate
+      await Promise.all([
+        admin
+          .from('driver_profiles')
+          .update({ total_deliveries: countRes.count ?? 0 })
+          .eq('id', user.id),
+        admin.rpc('recompute_driver_completion_rate', { driver_id: user.id }),
+      ])
+    } catch (err) {
+      // Settlement failure is non-blocking — order is already marked delivered.
+      // Log to Sentry for ops review; a reconciliation job can recover these.
+      Sentry.captureException(err, { extra: { orderId, userId: user.id, context: 'delivery-settlement' } })
+    }
+  }
+
+  // ── Customer notifications ─────────────────────────────────────────────────
   const notifMap: Record<string, { title: string; body: string }> = {
     picked_up: {
       title: 'Order Picked Up!',
@@ -77,13 +215,49 @@ export async function POST(req: NextRequest) {
   }
 
   if (notifMap[status]) {
-    await admin.from('notifications').insert({
-      user_id: order.customer_id,
-      type: `order_${status}`,
-      ...notifMap[status],
-      data: { order_id: orderId },
-    })
+    try {
+      await notifyUser(admin, {
+        userId: order.customer_id,
+        type: `order_${status}`,
+        ...notifMap[status],
+        data: { order_id: orderId },
+      })
+    } catch (err) {
+      Sentry.captureException(err, { extra: { orderId, status, userId: user.id, context: 'customer-notification' } })
+    }
   }
 
-  return NextResponse.json({ success: true, status })
+  // When driver arrives at the restaurant, notify the maker to look for the PIN
+  if (status === 'arrived_at_maker' && order.maker_id) {
+    try {
+      const { data: makerProfile } = await admin
+        .from('food_makers')
+        .select('user_id')
+        .eq('id', order.maker_id)
+        .single()
+      if (makerProfile?.user_id) {
+        await notifyUser(admin, {
+          userId: makerProfile.user_id,
+          type: 'driver_arrived',
+          title: '🛵 Driver has arrived!',
+          body: `Your driver is at the door for order #${orderId.slice(-6).toUpperCase()}. Ask for their PIN to confirm pickup.`,
+          data: { order_id: orderId },
+        })
+      }
+    } catch (err) {
+      Sentry.captureException(err, { extra: { orderId, status, context: 'notify-maker-arrived' } })
+    }
+  }
+
+  return NextResponse.json({
+    success: true,
+    status,
+    ...(fees ? {
+      fees: {
+        driverPayout:  fees.driverPayout,
+        makerPayout:   fees.makerPayout,
+        platformNet:   fees.platformFee,
+      },
+    } : {}),
+  })
 }

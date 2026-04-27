@@ -8,6 +8,7 @@ import type { OrderStatus } from '@doornext/shared/types'
 import {
   MapPin, Phone, CheckCircle, Navigation, Package,
   ChevronDown, ChevronUp, Banknote, ArrowRight, Clock, Star, AlertTriangle, X, MessageCircle,
+  ChevronRight, Camera, RotateCcw, MessageSquare,
 } from 'lucide-react'
 import { AppHeader } from '@/components/layout/app-header'
 
@@ -17,6 +18,7 @@ type ActiveOrder = {
   payment_method?: 'card' | 'cash'
   pickup_pin: string | null
   pin_attempts: number
+  dropoff_note: string | null
   delivery_address: { street?: string; city?: string; state?: string; zip?: string; label?: string } | null
   food_maker: { display_name: string; lat: number; lng: number } | null
   customer: { full_name: string; phone: string | null } | null
@@ -73,9 +75,205 @@ function makerMapsUrl(maker: ActiveOrder['food_maker']): string {
   return `https://maps.google.com/?q=${encodeURIComponent(maker.display_name)}`
 }
 
+// ── SlideToConfirm ──────────────────────────────────────────────────────────
+function SlideToConfirm({
+  onConfirm,
+  label = 'Slide to Complete',
+  disabled = false,
+}: {
+  onConfirm: () => void
+  label?: string
+  disabled?: boolean
+}) {
+  const trackRef = useRef<HTMLDivElement>(null)
+  const [progress, setProgress] = useState(0)   // 0–1
+  const [confirmed, setConfirmed] = useState(false)
+  const draggingRef = useRef(false)
+  const startXRef = useRef(0)
+  const currentProgressRef = useRef(0)
+
+  // Thumb width in px — kept in sync with the CSS (w-14 = 56px)
+  const THUMB_W = 56
+
+  const getTrackWidth = () => (trackRef.current?.clientWidth ?? 300) - THUMB_W
+
+  const clamp = (v: number) => Math.max(0, Math.min(1, v))
+
+  const springBack = () => {
+    // Animate back to 0 via CSS transition — just reset state
+    setProgress(0)
+    currentProgressRef.current = 0
+  }
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (disabled || confirmed) return
+    e.currentTarget.setPointerCapture(e.pointerId)
+    draggingRef.current = true
+    startXRef.current = e.clientX - currentProgressRef.current * getTrackWidth()
+  }
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!draggingRef.current) return
+    const raw = (e.clientX - startXRef.current) / getTrackWidth()
+    const clamped = clamp(raw)
+    currentProgressRef.current = clamped
+    setProgress(clamped)
+  }
+
+  const handlePointerUp = () => {
+    if (!draggingRef.current) return
+    draggingRef.current = false
+
+    if (currentProgressRef.current > 0.8) {
+      setConfirmed(true)
+      setProgress(1)
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate([100])
+      }
+      onConfirm()
+    } else {
+      springBack()
+    }
+  }
+
+  const thumbLeft = progress * (trackRef.current ? trackRef.current.clientWidth - THUMB_W : 0)
+  const labelOpacity = 1 - progress * 2   // fades out by 50% progress
+
+  return (
+    <div
+      ref={trackRef}
+      className={`relative w-full h-14 bg-[#1A1A1A] rounded-full overflow-hidden select-none ${disabled ? 'opacity-50' : ''}`}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+      style={{ touchAction: 'none' }}
+    >
+      {/* Filled track behind thumb */}
+      <div
+        className="absolute inset-y-0 left-0 bg-green-500/20 rounded-full"
+        style={{ width: thumbLeft + THUMB_W }}
+      />
+
+      {/* Label text */}
+      <div
+        className="absolute inset-0 flex items-center justify-center pointer-events-none"
+        style={{ opacity: Math.max(0, labelOpacity) }}
+      >
+        <span className="text-sm font-black text-zinc-400 tracking-wide">{confirmed ? 'Confirmed!' : label}</span>
+      </div>
+
+      {/* Thumb */}
+      <div
+        className={`absolute top-1 bottom-1 w-12 rounded-full flex items-center justify-center gap-0.5 shadow-lg ${
+          confirmed ? 'bg-green-400' : 'bg-green-500'
+        }`}
+        style={{
+          left: thumbLeft + 4,
+          transition: draggingRef.current ? 'none' : 'left 0.35s cubic-bezier(0.34,1.56,0.64,1)',
+        }}
+      >
+        {confirmed ? (
+          <CheckCircle size={22} className="text-white" />
+        ) : (
+          <>
+            <ChevronRight size={16} className="text-white opacity-80 -mr-1" />
+            <ChevronRight size={16} className="text-white" />
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ── DeliveryCompletionCelebration ────────────────────────────────────────────
+function DeliveryCompletionCelebration({
+  earn,
+  tip,
+  onContinue,
+}: {
+  earn: number
+  tip: number
+  onContinue: () => void
+}) {
+  const router = useRouter()
+  const [countdown, setCountdown] = useState(8)
+  const [checkVisible, setCheckVisible] = useState(false)
+
+  useEffect(() => {
+    // Trigger check animation after a brief paint delay
+    const t = setTimeout(() => setCheckVisible(true), 80)
+    return () => clearTimeout(t)
+  }, [])
+
+  useEffect(() => {
+    if (countdown <= 0) {
+      router.push('/')
+      return
+    }
+    const t = setTimeout(() => setCountdown(c => c - 1), 1000)
+    return () => clearTimeout(t)
+  }, [countdown, router])
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center px-6 text-center"
+      style={{
+        background: 'radial-gradient(ellipse at 50% 45%, rgba(34,197,94,0.08) 0%, rgba(255,122,80,0.05) 40%, #080808 70%)',
+        backgroundColor: '#080808',
+      }}
+    >
+      {/* Animated checkmark */}
+      <div
+        className="w-28 h-28 rounded-full border-2 border-green-500/40 bg-green-500/10 flex items-center justify-center mb-6"
+        style={{
+          transform: checkVisible ? 'scale(1)' : 'scale(0)',
+          transition: 'transform 0.45s cubic-bezier(0.34,1.56,0.64,1)',
+        }}
+      >
+        <CheckCircle size={56} className="text-green-400" />
+      </div>
+
+      {/* Heading */}
+      <h1 className="text-4xl font-black text-white mb-1">Delivered! 🎉</h1>
+      <p className="text-zinc-500 text-sm mb-8">Great work — you nailed it.</p>
+
+      {/* Earnings card */}
+      <div className="w-full max-w-xs bg-[#141414] rounded-3xl border border-white/5 px-8 py-6 mb-6 shadow-xl">
+        <p className="text-xs text-zinc-500 uppercase tracking-widest font-bold mb-2">You earned</p>
+        <p
+          className="text-5xl font-black mb-1"
+          style={{ color: '#FF7A50' }}
+        >
+          ${earn.toFixed(2)}
+        </p>
+        {tip > 0 && (
+          <p className="text-sm font-bold text-green-400 mt-1">+ ${tip.toFixed(2)} tip included</p>
+        )}
+      </div>
+
+      {/* Continue button */}
+      <button
+        onClick={onContinue}
+        className="w-full max-w-xs bg-[#FF7A50] text-white rounded-2xl py-4 font-black text-base shadow-lg shadow-[#FF7A50]/25 active:scale-[0.98] transition-all mb-4"
+      >
+        Continue Earning
+      </button>
+
+      {/* Countdown */}
+      <p className="text-xs text-zinc-700">
+        Returning to dashboard in {countdown}s…
+      </p>
+    </div>
+  )
+}
+
 export default function ActiveDeliveryPage() {
   const router = useRouter()
   const { setActiveOrder, setLocation } = useDriverStore()
+  const userId = useDriverStore((s) => s.userId)
+  const hasHydrated = useDriverStore((s) => s._hasHydrated)
+  const authReady = useDriverStore((s) => s.authReady)
   const [order, setOrder] = useState<ActiveOrder | null>(null)
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState(false)
@@ -84,37 +282,41 @@ export default function ActiveDeliveryPage() {
   const [showItems, setShowItems] = useState(false)
   const [checkedItems, setCheckedItems] = useState<Set<number>>(new Set())
   const [delivered, setDelivered] = useState(false)
+  const [deliveredOrder, setDeliveredOrder] = useState<ActiveOrder | null>(null)
   const [showCantDeliver, setShowCantDeliver] = useState(false)
   const [cantDeliverReason, setCantDeliverReason] = useState<string | null>(null)
   const [submittingFailed, setSubmittingFailed] = useState(false)
   const [failedError, setFailedError] = useState<string | null>(null)
+  // Proof photo state
+  const [proofPhoto, setProofPhoto] = useState<File | null>(null)
+  const [proofPhotoUrl, setProofPhotoUrl] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const locationIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const broadcastLocation = useCallback(async () => {
-    if (typeof navigator === 'undefined') return
+    if (typeof navigator === 'undefined' || !userId) return
     navigator.geolocation.getCurrentPosition(async pos => {
       const { latitude: lat, longitude: lng } = pos.coords
       setLocation(lat, lng)
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
       await supabase.from('nexter_locations').upsert(
-        { nexter_id: user.id, lat, lng, updated_at: new Date().toISOString() },
+        { nexter_id: userId, lat, lng, updated_at: new Date().toISOString() },
         { onConflict: 'nexter_id' }
       )
     })
-  }, [setLocation])
+  }, [setLocation, userId, authReady])
 
   const loadActiveOrder = useCallback(async () => {
+    if (!hasHydrated) return
+    if (!userId && !authReady) return
+    if (!userId) { router.push('/login'); return }
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { router.push('/login'); return }
 
     const { data } = await supabase
       .from('orders')
-      .select(`*, payment_method, order_items(quantity, unit_price, menu_items(name)), food_maker:food_makers(display_name, lat, lng), customer:users!orders_customer_id_fkey(full_name, phone)`)
-      .eq('nexter_id', user.id)
+      .select(`*, payment_method, dropoff_note, order_items(quantity, unit_price, menu_items(name)), food_maker:food_makers(display_name, lat, lng), customer:users!orders_customer_id_fkey(full_name, phone)`)
+      .eq('nexter_id', userId)
       .in('status', ACTIVE_STATUSES)
       .order('updated_at', { ascending: false })
       .limit(1)
@@ -123,7 +325,7 @@ export default function ActiveDeliveryPage() {
     if (data) { setOrder(data as ActiveOrder); setActiveOrder(data.id) }
     else setActiveOrder(null)
     setLoading(false)
-  }, [router, setActiveOrder])
+  }, [router, setActiveOrder, userId, authReady, hasHydrated])
 
   useEffect(() => { loadActiveOrder() }, [loadActiveOrder])
 
@@ -156,9 +358,25 @@ export default function ActiveDeliveryPage() {
   useEffect(() => {
     if (!order) return
     const start = new Date(order.updated_at).getTime()
+    // Reset timer only when the status changes, not on every order object update
     timerRef.current = setInterval(() => setElapsed(Math.floor((Date.now() - start) / 1000)), 1000)
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
-  }, [order])
+  }, [order?.id, order?.status]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Revoke object URL on cleanup
+  useEffect(() => {
+    return () => {
+      if (proofPhotoUrl) URL.revokeObjectURL(proofPhotoUrl)
+    }
+  }, [proofPhotoUrl])
+
+  const handleProofPhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (proofPhotoUrl) URL.revokeObjectURL(proofPhotoUrl)
+    setProofPhoto(file)
+    setProofPhotoUrl(URL.createObjectURL(file))
+  }
 
   const handleCantDeliver = async () => {
     if (!order || !cantDeliverReason) return
@@ -197,6 +415,18 @@ export default function ActiveDeliveryPage() {
     setUpdateError(null)
 
     try {
+      // If completing delivery and a proof photo was captured, upload it first (non-fatal)
+      if (newStatus === 'delivered' && proofPhoto) {
+        try {
+          const form = new FormData()
+          form.append('orderId', order.id)
+          form.append('file', proofPhoto)
+          await fetch('/api/driver/upload-proof', { method: 'POST', body: form })
+        } catch (err) {
+          console.error('Proof photo upload failed (non-fatal):', err)
+        }
+      }
+
       const res = await fetch('/api/driver/update-status', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orderId: order.id, status: newStatus }),
@@ -210,13 +440,14 @@ export default function ActiveDeliveryPage() {
       }
 
       if (newStatus === 'delivered') {
-        await fetch('/api/driver/complete-delivery', {
+        // Fire-and-forget complete-delivery (increments counter); errors are non-fatal
+        fetch('/api/driver/complete-delivery', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ orderId: order.id }),
-        })
+        }).catch(() => {/* non-fatal */})
+        setDeliveredOrder(order)
         setActiveOrder(null)
         setDelivered(true)
-        setTimeout(() => router.push('/'), 3000)
       } else {
         setOrder(prev => prev ? { ...prev, status: newStatus } : prev)
         setCheckedItems(new Set())
@@ -239,33 +470,16 @@ export default function ActiveDeliveryPage() {
     )
   }
 
-  /* ── Delivery success ── */
+  /* ── Delivery success celebration ── */
   if (delivered) {
-    const earn = order?.driver_payout ?? 0
+    const earn = deliveredOrder?.driver_payout ?? 0
+    const tip = deliveredOrder?.tip_amount ?? 0
     return (
-      <div className="flex flex-col min-h-full bg-[#080808]">
-        <AppHeader title="Delivered!" />
-        <div className="flex-1 flex flex-col items-center justify-center px-6 text-center gap-6">
-          <div className="w-24 h-24 rounded-full bg-green-500/15 border border-green-500/30 flex items-center justify-center">
-            <CheckCircle size={48} className="text-green-400" />
-          </div>
-          <div>
-            <h2 className="text-3xl font-black text-white mb-2">Order Delivered!</h2>
-            <p className="text-zinc-500">Great work — keep it up.</p>
-          </div>
-          <div className="bg-[#141414] rounded-2xl border border-white/5 px-8 py-5 w-full max-w-xs text-center">
-            <p className="text-sm text-zinc-500 mb-1">You earned</p>
-            <p className="text-4xl font-black text-[#FF7A50]">${earn.toFixed(2)}</p>
-            {(order?.tip_amount ?? 0) > 0 && (
-              <p className="text-sm text-green-400 mt-2">incl. ${order!.tip_amount.toFixed(2)} tip</p>
-            )}
-          </div>
-          <div className="flex items-center gap-2 text-zinc-600 text-sm">
-            <div className="w-4 h-4 border-2 border-zinc-700 border-t-zinc-400 rounded-full animate-spin" />
-            Returning to dashboard…
-          </div>
-        </div>
-      </div>
+      <DeliveryCompletionCelebration
+        earn={earn}
+        tip={tip}
+        onContinue={() => router.push('/')}
+      />
     )
   }
 
@@ -281,10 +495,10 @@ export default function ActiveDeliveryPage() {
           <h2 className="text-2xl font-black text-white mb-2">No active delivery</h2>
           <p className="text-zinc-500 text-base mb-8">Accept a pickup to start delivering</p>
           <button
-            onClick={() => router.push('/available')}
+            onClick={() => router.push('/')}
             className="bg-[#FF7A50] text-white rounded-2xl px-10 py-4 font-black text-base shadow-lg shadow-[#FF7A50]/20"
           >
-            Find Pickups
+            Go to Home
           </button>
         </div>
       </div>
@@ -509,6 +723,18 @@ export default function ActiveDeliveryPage() {
             </div>
           </div>
 
+          {order.dropoff_note && (
+            <div className="mx-4 mb-3 bg-[#FF7A50]/10 border border-[#FF7A50]/30 rounded-2xl px-4 py-3.5">
+              <div className="flex items-start gap-2.5">
+                <MessageSquare size={15} className="text-[#FF7A50] mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-[10px] font-black text-[#FF7A50] uppercase tracking-wider mb-1">Drop-off Instructions</p>
+                  <p className="text-sm text-zinc-200 leading-relaxed">{order.dropoff_note}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {addr && (
             <div className="mx-4 mb-3 bg-[#141414] rounded-2xl border border-white/5 overflow-hidden">
               <div className="px-4 pt-4 pb-3">
@@ -590,6 +816,18 @@ export default function ActiveDeliveryPage() {
             </div>
           )}
 
+          {order.dropoff_note && (
+            <div className="mx-4 mb-3 bg-[#FF7A50]/10 border border-[#FF7A50]/30 rounded-2xl px-4 py-3.5">
+              <div className="flex items-start gap-2.5">
+                <MessageSquare size={15} className="text-[#FF7A50] mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-[10px] font-black text-[#FF7A50] uppercase tracking-wider mb-1">Drop-off Instructions</p>
+                  <p className="text-sm text-zinc-200 leading-relaxed">{order.dropoff_note}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {order.payment_method === 'cash' && (
             <div className="mx-4 mb-3 flex items-start gap-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl px-4 py-3.5">
               <Banknote size={18} className="text-amber-400 mt-0.5 flex-shrink-0" />
@@ -621,6 +859,18 @@ export default function ActiveDeliveryPage() {
             <p className="text-xs text-amber-400/70 mt-0.5">Hand over the order and confirm delivery</p>
           </div>
 
+          {order.dropoff_note && (
+            <div className="mx-4 mb-3 bg-[#FF7A50]/10 border-2 border-[#FF7A50]/40 rounded-2xl px-4 py-3.5">
+              <div className="flex items-start gap-2.5">
+                <MessageSquare size={16} className="text-[#FF7A50] mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-[10px] font-black text-[#FF7A50] uppercase tracking-wider mb-1">Drop-off Instructions</p>
+                  <p className="text-sm font-semibold text-zinc-100 leading-relaxed">{order.dropoff_note}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {order.customer && (
             <div className="mx-4 mb-3 bg-[#141414] rounded-2xl p-3.5 border border-white/5">
               <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wide mb-1.5">Customer</p>
@@ -648,6 +898,59 @@ export default function ActiveDeliveryPage() {
               </div>
             </div>
           )}
+
+          {/* ── Proof photo capture ── */}
+          <div className="mx-4 mb-3 bg-[#141414] rounded-2xl border border-white/5 overflow-hidden">
+            <div className="px-4 pt-3.5 pb-3">
+              <div className="flex items-center justify-between mb-1.5">
+                <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wide">Photo of Delivery</p>
+                <span className="text-[10px] text-zinc-700 font-medium">Optional</span>
+              </div>
+
+              {proofPhotoUrl ? (
+                <div className="relative">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={proofPhotoUrl}
+                    alt="Proof of delivery"
+                    className="w-full h-40 object-cover rounded-xl"
+                  />
+                  <button
+                    onClick={() => {
+                      setProofPhoto(null)
+                      if (proofPhotoUrl) URL.revokeObjectURL(proofPhotoUrl)
+                      setProofPhotoUrl(null)
+                      if (fileInputRef.current) fileInputRef.current.value = ''
+                    }}
+                    className="absolute top-2 right-2 flex items-center gap-1.5 bg-black/70 backdrop-blur-sm text-white text-xs font-bold px-2.5 py-1.5 rounded-full"
+                  >
+                    <RotateCcw size={11} />
+                    Retake
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full flex flex-col items-center justify-center gap-2 border-2 border-dashed border-zinc-800 rounded-xl py-6 active:bg-white/5 transition-colors"
+                >
+                  <div className="w-10 h-10 rounded-full bg-[#1A1A1A] flex items-center justify-center">
+                    <Camera size={20} className="text-zinc-500" />
+                  </div>
+                  <p className="text-sm font-bold text-zinc-500">Tap to take photo</p>
+                  <p className="text-xs text-zinc-700">Helps verify contactless drop-offs</p>
+                </button>
+              )}
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={handleProofPhotoSelect}
+              />
+            </div>
+          </div>
 
           {order.payment_method === 'cash' && (
             <div className="mx-4 mb-3 flex items-start gap-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl px-4 py-3.5">
@@ -742,25 +1045,29 @@ export default function ActiveDeliveryPage() {
               {updateError}
             </div>
           )}
-          <button
-            onClick={() => handleStatusUpdate(nextAction.next)}
-            disabled={updating}
-            className={`w-full text-white rounded-2xl py-4 font-black text-base flex items-center justify-center gap-2.5 disabled:opacity-50 transition-all shadow-lg active:scale-[0.98] ${
-              isAtCustomer
-                ? 'bg-green-500 shadow-green-500/25'
-                : 'bg-[#FF7A50] shadow-[#FF7A50]/25'
-            }`}
-          >
-            {updating ? (
-              <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-            ) : isAtCustomer ? (
-              <CheckCircle size={20} />
-            ) : (
-              <Navigation size={20} />
-            )}
-            {updating ? 'Updating…' : nextAction.label}
-          </button>
-          {isAtCustomer && (
+
+          {isAtCustomer ? (
+            <SlideToConfirm
+              onConfirm={() => handleStatusUpdate('delivered')}
+              label="Slide to Complete"
+              disabled={updating}
+            />
+          ) : (
+            <button
+              onClick={() => handleStatusUpdate(nextAction.next)}
+              disabled={updating}
+              className="w-full text-white rounded-2xl py-4 font-black text-base flex items-center justify-center gap-2.5 disabled:opacity-50 transition-all shadow-lg active:scale-[0.98] bg-[#FF7A50] shadow-[#FF7A50]/25"
+            >
+              {updating ? (
+                <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+              ) : (
+                <Navigation size={20} />
+              )}
+              {updating ? 'Updating…' : nextAction.label}
+            </button>
+          )}
+
+          {(isAtCustomer || isHeadingToCustomer) && (
             <button
               onClick={() => { setShowCantDeliver(true); setCantDeliverReason(null); setFailedError(null) }}
               className="w-full mt-2 flex items-center justify-center gap-2 py-2.5 text-red-400 text-sm font-bold"

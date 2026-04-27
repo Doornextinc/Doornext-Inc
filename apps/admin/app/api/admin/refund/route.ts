@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { requireAdmin } from '@/lib/require-admin'
+import * as Sentry from '@sentry/nextjs'
 
 export async function POST(req: NextRequest) {
   const auth = await requireAdmin(req)
@@ -16,18 +17,18 @@ export async function POST(req: NextRequest) {
 
   const writeAuditLog = async (action: string, payload: Record<string, unknown>) => {
     await supabase.from('admin_audit_log').insert({
-      admin_id: adminId,
+      admin_id:    adminId,
       action,
       target_type: 'order',
-      target_id: orderId,
+      target_id:   orderId,
       payload,
-      ip_address: ip,
+      ip_address:  ip,
     })
   }
 
   const { data: order } = await supabase
     .from('orders')
-    .select('stripe_payment_intent_id, payment_method, status, customer_id')
+    .select('stripe_payment_intent_id, stripe_refund_id, payment_method, status, customer_id')
     .eq('id', orderId)
     .single()
 
@@ -46,14 +47,13 @@ export async function POST(req: NextRequest) {
 
     await supabase.from('notifications').insert({
       user_id: order.customer_id,
-      type: 'order_cancelled',
-      title: 'Order Cancelled by Admin',
-      body: `Your order #${orderId.slice(-6).toUpperCase()} has been cancelled. No charge was made (cash order).`,
-      data: { order_id: orderId },
+      type:    'order_cancelled',
+      title:   'Order Cancelled by Admin',
+      body:    `Your order #${orderId.slice(-6).toUpperCase()} has been cancelled. No charge was made (cash order).`,
+      data:    { order_id: orderId },
     })
 
     await writeAuditLog('order_cancel_cash', { payment_method: 'cash' })
-
     return NextResponse.json({ success: true, note: 'Cash order cancelled — no Stripe refund needed' })
   }
 
@@ -61,27 +61,52 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'No payment to refund (no payment intent)' }, { status: 400 })
   }
 
+  // Idempotency guard: if stripe_refund_id is already set, the refund was already issued.
+  // Return success rather than charging a second time.
+  if ((order as { stripe_refund_id?: string | null }).stripe_refund_id) {
+    return NextResponse.json({
+      success: true,
+      note:    'Refund already processed',
+      refundId: (order as { stripe_refund_id: string }).stripe_refund_id,
+    })
+  }
+
   try {
     const stripe = new Stripe(stripeKey)
-    await stripe.refunds.create({ payment_intent: order.stripe_payment_intent_id })
 
+    // Idempotency key prevents Stripe from creating a second refund if this
+    // endpoint is called twice before the DB write completes.
+    const refund = await stripe.refunds.create(
+      { payment_intent: order.stripe_payment_intent_id },
+      { idempotencyKey: `${orderId}-refund` }
+    )
+
+    // Persist refund ID so future calls are no-ops
     await supabase
       .from('orders')
-      .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+      .update({
+        status:           'cancelled',
+        stripe_refund_id: refund.id,
+        updated_at:       new Date().toISOString(),
+      })
       .eq('id', orderId)
 
     await supabase.from('notifications').insert({
       user_id: order.customer_id,
-      type: 'order_cancelled',
-      title: 'Order Refunded',
-      body: `Your order #${orderId.slice(-6).toUpperCase()} has been refunded by admin.`,
-      data: { order_id: orderId },
+      type:    'order_cancelled',
+      title:   'Order Refunded',
+      body:    `Your order #${orderId.slice(-6).toUpperCase()} has been refunded by admin.`,
+      data:    { order_id: orderId },
     })
 
-    await writeAuditLog('refund', { stripe_payment_intent_id: order.stripe_payment_intent_id })
+    await writeAuditLog('refund', {
+      stripe_payment_intent_id: order.stripe_payment_intent_id,
+      stripe_refund_id:         refund.id,
+    })
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true, refundId: refund.id })
   } catch (err) {
+    Sentry.captureException(err, { extra: { orderId, context: 'admin-refund' } })
     console.error('Refund error:', err)
     return NextResponse.json({ error: 'Refund failed — check Stripe dashboard' }, { status: 500 })
   }

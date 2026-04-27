@@ -2,17 +2,38 @@ name: CI
 
 on:
   push:
-    branches: [main, master, 'claude/**', 'feature/**']
+    branches: [main, master, 'feature/**', 'fix/**', 'chore/**']
   pull_request:
     branches: [main, master]
 
+# Cancel in-progress runs for the same branch to save CI minutes
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
-  # Provide stub env vars so Next.js config doesn't error during build
+  # Stub env vars so Next.js config doesn't error during build/typecheck
   NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key-xxxxxxxxxxxxxxxx
   NEXT_PUBLIC_STREAM_API_KEY: placeholder-stream-key
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_placeholder
+  NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: placeholder-maps-key
+  NEXT_PUBLIC_SENTRY_DSN: ''
+  # Server-side stubs (never real secrets in CI env block)
+  SUPABASE_SERVICE_ROLE_KEY: placeholder-service-role-key
+  STRIPE_SECRET_KEY: sk_test_placeholder
+  STRIPE_WEBHOOK_SECRET: whsec_placeholder
+  STREAM_API_SECRET: placeholder-stream-secret
+  FIREBASE_PROJECT_ID: placeholder-project
+  FIREBASE_CLIENT_EMAIL: placeholder@placeholder.iam.gserviceaccount.com
+  FIREBASE_PRIVATE_KEY: '-----BEGIN RSA PRIVATE KEY-----\nplaceholder\n-----END RSA PRIVATE KEY-----'
+  INTERNAL_WEBHOOK_SECRET: placeholder-webhook-secret
+  SENTRY_AUTH_TOKEN: ''
 
 jobs:
+  # ──────────────────────────────────────────────────────────
+  # Job 1: Lint + Type Check (fast feedback, runs first)
+  # ──────────────────────────────────────────────────────────
   lint-and-typecheck:
     name: Lint & Type Check
     runs-on: ubuntu-latest
@@ -32,17 +53,55 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Type check
+      - name: Type check (all workspaces)
         run: pnpm type-check
 
-      - name: Lint
+      - name: Lint (all workspaces)
         run: pnpm lint
 
-  build:
-    name: Build All Apps
+  # ──────────────────────────────────────────────────────────
+  # Job 2: Unit Tests
+  # ──────────────────────────────────────────────────────────
+  test:
+    name: Unit Tests
     runs-on: ubuntu-latest
     needs: lint-and-typecheck
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tests with coverage
+        run: pnpm --filter @doornext/customer test -- --coverage --run
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: 'apps/customer/coverage/**'
+          retention-days: 7
+
+  # ──────────────────────────────────────────────────────────
+  # Job 3: Build all apps (matrix, parallel)
+  # ──────────────────────────────────────────────────────────
+  build:
+    name: Build — ${{ matrix.app }}
+    runs-on: ubuntu-latest
+    needs: [lint-and-typecheck, test]
     strategy:
+      fail-fast: false
       matrix:
         app: [customer, driver, maker, admin]
     steps:
@@ -63,6 +122,106 @@ jobs:
 
       - name: Build ${{ matrix.app }}
         run: pnpm --filter @doornext/${{ matrix.app }} build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.app }}
+          path: apps/${{ matrix.app }}/.next
+          retention-days: 3
+
+  # ──────────────────────────────────────────────────────────
+  # Job 4: Security audit (dependency vulnerabilities)
+  # ──────────────────────────────────────────────────────────
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Audit dependencies (high severity)
+        run: pnpm audit --audit-level=high
+        continue-on-error: true  # Warn, don't block — review manually
+
+      - name: Check for secrets in code (gitleaks)
+        uses: gitleaks/gitleaks-action@v2
         env:
-          # Sentry config (optional in CI — disable to avoid auth errors)
-          SENTRY_AUTH_TOKEN: ''
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true  # Warn, don't block CI
+
+  # ──────────────────────────────────────────────────────────
+  # Job 5: Supabase migration validation
+  # ──────────────────────────────────────────────────────────
+  validate-migrations:
+    name: Validate DB Migrations
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Validate migration files (lint SQL)
+        run: |
+          echo "Checking migration file naming convention..."
+          for f in supabase/migrations/*.sql; do
+            filename=$(basename "$f")
+            if ! [[ "$filename" =~ ^[0-9]{3}_[a-z0-9_]+\.sql$ ]]; then
+              echo "ERROR: Migration file '$filename' does not follow naming convention NNN_description.sql"
+              exit 1
+            fi
+          done
+          echo "All migration files follow naming convention ✓"
+
+      - name: Check for duplicate migration numbers
+        run: |
+          numbers=$(ls supabase/migrations/*.sql | xargs -I{} basename {} | cut -d_ -f1 | sort)
+          dupes=$(echo "$numbers" | uniq -d)
+          if [ -n "$dupes" ]; then
+            echo "ERROR: Duplicate migration numbers found: $dupes"
+            exit 1
+          fi
+          echo "No duplicate migration numbers ✓"
+
+  # ──────────────────────────────────────────────────────────
+  # Job 6: CI summary (required status check for branch protection)
+  # ──────────────────────────────────────────────────────────
+  ci-success:
+    name: CI Passed
+    runs-on: ubuntu-latest
+    needs: [lint-and-typecheck, test, build, security-audit, validate-migrations]
+    if: always()
+    steps:
+      - name: Check all jobs passed
+        run: |
+          if [[ "${{ needs.lint-and-typecheck.result }}" != "success" ]]; then
+            echo "lint-and-typecheck failed"
+            exit 1
+          fi
+          if [[ "${{ needs.test.result }}" != "success" ]]; then
+            echo "test failed"
+            exit 1
+          fi
+          if [[ "${{ needs.build.result }}" != "success" ]]; then
+            echo "build failed"
+            exit 1
+          fi
+          echo "All required CI jobs passed ✓"

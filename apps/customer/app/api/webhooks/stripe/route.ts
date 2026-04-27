@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import * as Sentry from '@sentry/nextjs'
+import { notifyUser } from '@/lib/push-server'
 
 export async function POST(req: NextRequest) {
   const stripeKey = process.env.STRIPE_SECRET_KEY
@@ -65,11 +66,13 @@ export async function POST(req: NextRequest) {
         }
 
         // Update order status to confirmed
-        const { error } = await supabase
+        const { data: updatedOrder, error } = await supabase
           .from('orders')
           .update({ status: 'confirmed', updated_at: new Date().toISOString() })
           .eq('id', orderId)
           .eq('stripe_payment_intent_id', pi.id)
+          .select('maker_id')
+          .single()
 
         if (error) {
           Sentry.captureException(new Error(`Failed to confirm order ${orderId}: ${error.message}`))
@@ -77,16 +80,36 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ error: 'DB update failed' }, { status: 500 })
         }
 
-        // Insert notification for the customer
+        const shortId = orderId.slice(-6).toUpperCase()
+
+        // Notify customer (DB + push)
         const customerId = pi.metadata?.customer_id
         if (customerId) {
-          await supabase.from('notifications').insert({
-            user_id: customerId,
+          await notifyUser(supabase, {
+            userId: customerId,
             type: 'order_confirmed',
             title: 'Order Confirmed! 🎉',
             body: 'Your order has been confirmed and the maker is getting ready.',
             data: { order_id: orderId },
           })
+        }
+
+        // Notify maker — look up their user_id and push the new order alert
+        if (updatedOrder?.maker_id) {
+          const { data: makerProfile } = await supabase
+            .from('food_makers')
+            .select('user_id, display_name')
+            .eq('id', updatedOrder.maker_id)
+            .single()
+          if (makerProfile?.user_id) {
+            notifyUser(supabase, {
+              userId: makerProfile.user_id,
+              type: 'new_order',
+              title: '🔔 New Order!',
+              body: `Order #${shortId} is waiting for your confirmation.`,
+              data: { order_id: orderId },
+            })
+          }
         }
 
         console.log(`Order ${orderId} confirmed for PaymentIntent ${pi.id}`)
@@ -106,8 +129,8 @@ export async function POST(req: NextRequest) {
 
           const customerId = pi.metadata?.customer_id
           if (customerId) {
-            await supabase.from('notifications').insert({
-              user_id: customerId,
+            await notifyUser(supabase, {
+              userId: customerId,
               type: 'payment_failed',
               title: 'Payment Failed',
               body: 'Your payment could not be processed. Please try again.',

@@ -14,6 +14,7 @@ interface KYCDocument {
   back_url: string | null
   selfie_url: string | null
   insurance_url: string | null
+  registration_url: string | null
   bg_check_consent: boolean
   submitted_at: string
   reviewed_at: string | null
@@ -171,28 +172,38 @@ export default function KYCReviewPage() {
                 </div>
 
                 {/* Document images */}
-                <div className={`grid gap-3 mb-5 ${selected.insurance_url ? 'grid-cols-2' : 'grid-cols-3'}`}>
-                  {[
+                {(() => {
+                  const docItems = [
                     { label: 'ID Front', url: selected.front_url },
                     { label: 'ID Back', url: selected.back_url },
                     ...(selected.insurance_url ? [{ label: 'Insurance', url: selected.insurance_url }] : []),
+                    ...(selected.registration_url ? [{ label: 'Registration', url: selected.registration_url }] : []),
                     { label: 'Selfie', url: selected.selfie_url },
-                  ].map(({ label, url }) => (
-                    <div
-                      key={label}
-                      className="rounded-xl overflow-hidden border border-gray-100 bg-gray-50 aspect-video flex items-center justify-center"
-                    >
-                      {url ? (
-                        <a href={url} target="_blank" rel="noopener noreferrer" className="w-full h-full block">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={url} alt={label} className="w-full h-full object-cover" />
-                        </a>
-                      ) : (
-                        <p className="text-xs text-gray-400 p-2 text-center">{label}<br/>not uploaded</p>
-                      )}
+                  ]
+                  const cols = docItems.length <= 3 ? 'grid-cols-3' : 'grid-cols-3'
+                  return (
+                    <div className={`grid ${cols} gap-3 mb-5`}>
+                      {docItems.map(({ label, url }) => (
+                        <div
+                          key={label}
+                          className="rounded-xl overflow-hidden border border-gray-100 bg-gray-50 aspect-video flex items-center justify-center"
+                        >
+                          {url ? (
+                            <a href={url} target="_blank" rel="noopener noreferrer" className="w-full h-full block relative group">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={url} alt={label} className="w-full h-full object-cover" />
+                              <div className="absolute inset-x-0 bottom-0 bg-black/50 text-white text-[10px] font-bold text-center py-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                {label} ↗
+                              </div>
+                            </a>
+                          ) : (
+                            <p className="text-xs text-gray-400 p-2 text-center">{label}<br/>not uploaded</p>
+                          )}
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  )
+                })()}
 
                 {/* Actions — only when pending */}
                 {selected.kyc_status === 'pending_review' && (

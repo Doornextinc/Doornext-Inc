@@ -14,17 +14,18 @@ export async function GET(request: NextRequest) {
     .from('orders')
     .select(`
       id, status, total, payment_method, created_at, nexter_id,
-      food_maker:food_makers(display_name)
+      food_maker:food_makers(display_name),
+      customer:users!orders_customer_id_fkey(full_name, email)
     `)
     .order('created_at', { ascending: false })
-    .limit(100)
+    .limit(200)
 
   if (status && status !== 'all') {
     query = query.eq('status', status)
   }
 
   if (search) {
-    const term = search.trim()
+    const term = search.trim().toLowerCase()
     query = query.or(`id.ilike.%${term}%`)
   }
 

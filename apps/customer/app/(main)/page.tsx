@@ -1,16 +1,42 @@
 'use client'
 
 import { useState, useMemo, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { TopBar } from '@/components/layout/top-bar'
 import { MakerCard } from '@/components/home/maker-card'
 import { CuisineFilter } from '@/components/home/cuisine-filter'
 import { MakerCardSkeleton } from '@/components/ui/skeleton'
 import { createClient } from '@/lib/supabase/client'
-import type { FoodMaker, Address } from '@/types'
-import { MapPin, Navigation, X, Check, Search } from 'lucide-react'
+import type { FoodMaker, Address, OrderStatus } from '@/types'
+import { MapPin, Navigation, X, Check, Search, ChevronRight } from 'lucide-react'
 import { haversineDistance } from '@/lib/utils'
 import { FALLBACK_LAT, FALLBACK_LNG, FALLBACK_LOCATION_LABEL } from '@/lib/constants'
 import { loadGoogleMapsScript, parsePlace } from '@/lib/google-maps'
+
+// ── Active order types & helpers ──────────────────────────────────────────────
+interface ActiveOrder {
+  id: string
+  status: OrderStatus
+  food_maker: { display_name: string } | null
+}
+
+const ACTIVE_STATUSES: OrderStatus[] = [
+  'pending', 'confirmed', 'preparing', 'ready',
+  'driver_assigned', 'arrived_at_maker',
+  'picked_up', 'on_the_way', 'arrived_at_customer',
+]
+
+const STATUS_BANNER: Partial<Record<OrderStatus, { emoji: string; label: string; pulse: string }>> = {
+  pending:               { emoji: '⏳', label: 'Waiting for confirmation',       pulse: 'bg-gray-300' },
+  confirmed:             { emoji: '✅', label: 'Order confirmed!',                pulse: 'bg-blue-400' },
+  preparing:             { emoji: '🍳', label: 'Being prepared…',                 pulse: 'bg-orange-400' },
+  ready:                 { emoji: '🎉', label: 'Ready — waiting for driver',      pulse: 'bg-green-400' },
+  driver_assigned:       { emoji: '🚗', label: 'Driver heading to restaurant',    pulse: 'bg-[#FF6B35]' },
+  arrived_at_maker:      { emoji: '📦', label: 'Driver at restaurant',            pulse: 'bg-[#FF6B35]' },
+  picked_up:             { emoji: '🛵', label: 'Order picked up!',                pulse: 'bg-[#FF6B35]' },
+  on_the_way:            { emoji: '🚀', label: 'On the way to you',               pulse: 'bg-[#FF6B35]' },
+  arrived_at_customer:   { emoji: '📍', label: 'Driver has arrived!',             pulse: 'bg-green-400' },
+}
 
 function getGreeting() {
   const h = new Date().getHours()
@@ -20,9 +46,11 @@ function getGreeting() {
 }
 
 export default function HomePage() {
+  const router = useRouter()
   const [selectedCuisine, setSelectedCuisine] = useState('All')
   const [makers, setMakers] = useState<FoodMaker[]>([])
   const [loading, setLoading] = useState(true)
+  const [activeOrder, setActiveOrder] = useState<ActiveOrder | null>(null)
   const [location, setLocation] = useState<{ lat: number; lng: number; label: string }>({
     lat: FALLBACK_LAT,
     lng: FALLBACK_LNG,
@@ -81,6 +109,50 @@ export default function HomePage() {
     }
     loadMakers()
   }, [location.lat, location.lng])
+
+  // ── Active order: load + real-time ─────────────────────────────────────────
+  useEffect(() => {
+    const supabase = createClient()
+    let channel: ReturnType<typeof supabase.channel> | null = null
+
+    async function loadActive() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data } = await supabase
+        .from('orders')
+        .select('id, status, food_maker:food_makers(display_name)')
+        .eq('customer_id', user.id)
+        .in('status', ACTIVE_STATUSES)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      setActiveOrder(data as ActiveOrder | null)
+
+      channel = supabase
+        .channel('home-active-order')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'orders', filter: `customer_id=eq.${user.id}` },
+          async () => {
+            const { data: updated } = await supabase
+              .from('orders')
+              .select('id, status, food_maker:food_makers(display_name)')
+              .eq('customer_id', user.id)
+              .in('status', ACTIVE_STATUSES)
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .maybeSingle()
+            setActiveOrder(updated as ActiveOrder | null)
+          }
+        )
+        .subscribe()
+    }
+
+    loadActive()
+    return () => { if (channel) supabase.removeChannel(channel) }
+  }, [])
 
   const handleOpenPicker = async () => {
     setPickerOpen(true)
@@ -190,6 +262,38 @@ export default function HomePage() {
         </h2>
         <p className="text-gray-400 text-sm mt-1">Home-cooked meals near you</p>
       </div>
+
+      {/* ── Live order tracking banner ── */}
+      {activeOrder && (() => {
+        const info = STATUS_BANNER[activeOrder.status]
+        if (!info) return null
+        return (
+          <button
+            onClick={() => router.push(`/orders/${activeOrder.id}`)}
+            className="mx-4 mb-1 w-[calc(100%-2rem)] flex items-center gap-3 bg-white border-2 border-orange-100 rounded-2xl px-4 py-3.5 shadow-sm active:bg-orange-50 transition-colors text-left"
+          >
+            {/* Pulsing dot */}
+            <span className="relative flex h-3 w-3 flex-shrink-0">
+              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${info.pulse} opacity-60`} />
+              <span className={`relative inline-flex rounded-full h-3 w-3 ${info.pulse}`} />
+            </span>
+
+            {/* Emoji + text */}
+            <span className="text-xl leading-none flex-shrink-0">{info.emoji}</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold text-[#FF6B35] uppercase tracking-wide leading-none mb-0.5">
+                {activeOrder.food_maker?.display_name ?? 'Your order'}
+              </p>
+              <p className="text-sm font-bold text-gray-900 truncate">{info.label}</p>
+            </div>
+
+            {/* Track CTA */}
+            <span className="flex items-center gap-0.5 text-xs font-bold text-[#FF6B35] flex-shrink-0">
+              Track <ChevronRight size={13} />
+            </span>
+          </button>
+        )
+      })()}
 
       {/* Cuisine filter */}
       <div className="bg-white border-b border-gray-100 sticky top-14 z-30">

@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { MessageCircle } from 'lucide-react'
 import { TopBar } from '@/components/layout/top-bar'
-import { getStreamClient, connectStreamUser } from '@/lib/stream'
+import { getStreamClient, connectStreamUser, isChatUnavailableError } from '@/lib/stream'
 import { createClient } from '@/lib/supabase/client'
 
 interface ChatPreview {
@@ -75,8 +75,7 @@ export default function ChatListPage() {
 
       setChats(previews)
     } catch (e) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if ((e as any)?.code === 'STREAM_NOT_CONFIGURED') {
+      if (isChatUnavailableError(e)) {
         setUnavailable(true)
       } else {
         console.error('Failed to load chats:', e)

@@ -1,0 +1,18 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appIDs": ["TEAMID.com.doornext.customer"],
+        "components": [
+          { "/": "/orders/*", "comment": "Order detail deep links" },
+          { "/": "/makers/*", "comment": "Maker profile deep links" },
+          { "/": "/reset-password", "comment": "Auth deep links" }
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": ["TEAMID.com.doornext.customer"]
+  }
+}

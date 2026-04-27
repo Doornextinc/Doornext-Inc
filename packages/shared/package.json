@@ -8,7 +8,11 @@
     "./utils": "./src/lib/utils.ts",
     "./pricing": "./src/lib/pricing.ts",
     "./supabase/client": "./src/lib/supabase/client.ts",
-    "./supabase/server": "./src/lib/supabase/server.ts"
+    "./supabase/server": "./src/lib/supabase/server.ts",
+    "./env": "./src/lib/env.ts",
+    "./logger": "./src/lib/logger.ts",
+    "./rate-limit": "./src/lib/rate-limit.ts",
+    "./notify": "./src/lib/notify.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.9.0",

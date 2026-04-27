@@ -1,0 +1,248 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      app:
+        description: 'App to deploy (or "all")'
+        required: true
+        default: 'all'
+        type: choice
+        options: [all, customer, driver, maker, admin]
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false  # Never cancel in-flight deploys
+
+jobs:
+  # ──────────────────────────────────────────────────────────
+  # Determine which apps changed (skip unchanged apps on push)
+  # ──────────────────────────────────────────────────────────
+  detect-changes:
+    name: Detect Changed Apps
+    runs-on: ubuntu-latest
+    outputs:
+      customer: ${{ steps.filter.outputs.customer }}
+      driver: ${{ steps.filter.outputs.driver }}
+      maker: ${{ steps.filter.outputs.maker }}
+      admin: ${{ steps.filter.outputs.admin }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed paths
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            customer:
+              - 'apps/customer/**'
+              - 'packages/**'
+              - 'turbo.json'
+              - 'pnpm-lock.yaml'
+            driver:
+              - 'apps/driver/**'
+              - 'packages/**'
+              - 'turbo.json'
+              - 'pnpm-lock.yaml'
+            maker:
+              - 'apps/maker/**'
+              - 'packages/**'
+              - 'turbo.json'
+              - 'pnpm-lock.yaml'
+            admin:
+              - 'apps/admin/**'
+              - 'packages/**'
+              - 'turbo.json'
+              - 'pnpm-lock.yaml'
+
+  # ──────────────────────────────────────────────────────────
+  # Deploy customer app
+  # ──────────────────────────────────────────────────────────
+  deploy-customer:
+    name: Deploy Customer App
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: |
+      needs.detect-changes.outputs.customer == 'true' ||
+      github.event.inputs.app == 'customer' ||
+      github.event.inputs.app == 'all'
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_CUSTOMER }}
+          vercel-args: '--prod'
+          working-directory: apps/customer
+
+      - name: Health check (post-deploy)
+        run: |
+          sleep 15
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.CUSTOMER_APP_URL }}/api/health")
+          if [ "$STATUS" != "200" ]; then
+            echo "Health check failed with status $STATUS"
+            exit 1
+          fi
+          echo "Customer app health check passed ✓"
+
+  # ──────────────────────────────────────────────────────────
+  # Deploy driver app
+  # ──────────────────────────────────────────────────────────
+  deploy-driver:
+    name: Deploy Driver App
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: |
+      needs.detect-changes.outputs.driver == 'true' ||
+      github.event.inputs.app == 'driver' ||
+      github.event.inputs.app == 'all'
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_DRIVER }}
+          vercel-args: '--prod'
+          working-directory: apps/driver
+
+      - name: Health check (post-deploy)
+        run: |
+          sleep 15
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.DRIVER_APP_URL }}/api/health")
+          if [ "$STATUS" != "200" ]; then
+            echo "Health check failed with status $STATUS"
+            exit 1
+          fi
+          echo "Driver app health check passed ✓"
+
+  # ──────────────────────────────────────────────────────────
+  # Deploy maker app
+  # ──────────────────────────────────────────────────────────
+  deploy-maker:
+    name: Deploy Maker App
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: |
+      needs.detect-changes.outputs.maker == 'true' ||
+      github.event.inputs.app == 'maker' ||
+      github.event.inputs.app == 'all'
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_MAKER }}
+          vercel-args: '--prod'
+          working-directory: apps/maker
+
+      - name: Health check (post-deploy)
+        run: |
+          sleep 15
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.MAKER_APP_URL }}/api/health")
+          if [ "$STATUS" != "200" ]; then
+            echo "Health check failed with status $STATUS"
+            exit 1
+          fi
+          echo "Maker app health check passed ✓"
+
+  # ──────────────────────────────────────────────────────────
+  # Deploy admin app
+  # ──────────────────────────────────────────────────────────
+  deploy-admin:
+    name: Deploy Admin App
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: |
+      needs.detect-changes.outputs.admin == 'true' ||
+      github.event.inputs.app == 'admin' ||
+      github.event.inputs.app == 'all'
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_ADMIN }}
+          vercel-args: '--prod'
+          working-directory: apps/admin
+
+      - name: Health check (post-deploy)
+        run: |
+          sleep 15
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.ADMIN_APP_URL }}/api/health")
+          if [ "$STATUS" != "200" ]; then
+            echo "Health check failed with status $STATUS"
+            exit 1
+          fi
+          echo "Admin app health check passed ✓"
+
+  # ──────────────────────────────────────────────────────────
+  # Supabase migrations (run after all app deploys)
+  # ──────────────────────────────────────────────────────────
+  migrate-database:
+    name: Run DB Migrations
+    runs-on: ubuntu-latest
+    needs: [deploy-customer, deploy-driver, deploy-maker, deploy-admin]
+    if: always() && !failure() && !cancelled()
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Run migrations
+        run: |
+          supabase db push \
+            --db-url "${{ secrets.SUPABASE_DB_URL }}" \
+            --include-all
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+  # ──────────────────────────────────────────────────────────
+  # Notify on deployment failure
+  # ──────────────────────────────────────────────────────────
+  notify-failure:
+    name: Notify on Failure
+    runs-on: ubuntu-latest
+    needs: [deploy-customer, deploy-driver, deploy-maker, deploy-admin, migrate-database]
+    if: failure()
+    steps:
+      - name: Post failure to Slack
+        if: ${{ secrets.SLACK_WEBHOOK_URL != '' }}
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          payload: |
+            {
+              "text": "🚨 *Doornext Deploy Failed* on `${{ github.ref_name }}`\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View run>"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK

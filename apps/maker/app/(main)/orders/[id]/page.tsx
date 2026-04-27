@@ -9,6 +9,7 @@ import {
   CreditCard, Banknote, CheckCircle, Circle, Loader2,
   Timer, Package, AlertCircle, ShieldCheck, Delete, MessageCircle,
 } from 'lucide-react'
+import { playWithHaptic } from '@/lib/notification-sounds'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 type OrderDetail = {
@@ -203,8 +204,10 @@ export default function OrderDetailPage() {
       if (!res.ok) {
         const d = await res.json()
         setError(d.error ?? 'Failed to update status')
+        playWithHaptic('error')
       } else {
         setOrder((prev) => prev ? { ...prev, status: next, updated_at: new Date().toISOString() } : prev)
+        playWithHaptic(next === 'ready' ? 'order_ready' : 'success')
       }
     } finally {
       setUpdating(false)

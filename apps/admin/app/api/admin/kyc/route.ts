@@ -6,7 +6,9 @@ export async function GET(request: NextRequest) {
   if (!auth.ok) return auth.response
   const { supabase } = auth
 
-  // Fetch driver_documents with correct column names from migration 005
+  // Fetch driver_documents — registration_path excluded until migration 027
+  // (ALTER TABLE driver_documents ADD COLUMN IF NOT EXISTS registration_path text)
+  // is applied to the database.
   const { data: docs, error } = await supabase
     .from('driver_documents')
     .select(`
@@ -64,6 +66,7 @@ export async function GET(request: NextRequest) {
         back_url: backUrl.data?.signedUrl ?? null,
         selfie_url: selfieUrl.data?.signedUrl ?? null,
         insurance_url: insuranceUrl.data?.signedUrl ?? null,
+        registration_url: null, // migration 027 not yet applied
         bg_check_consent: doc.bg_check_consent,
         submitted_at: doc.submitted_at,
         reviewed_at: doc.reviewed_at,

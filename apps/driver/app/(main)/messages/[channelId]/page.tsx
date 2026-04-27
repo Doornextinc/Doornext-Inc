@@ -89,7 +89,11 @@ export default function ChatChannelPage() {
         channel.on('message.new', handleNew)
         cleanup = () => { channel.off('message.new', handleNew) }
       } catch (e) {
-        console.error('Chat setup failed:', e)
+        const err = e as { code?: string; isWSFailure?: boolean }
+        // WS / config failures are non-fatal — show empty state, don't crash
+        if (err?.code !== 'STREAM_NOT_CONFIGURED' && !err?.isWSFailure) {
+          console.error('Chat setup failed:', e)
+        }
       } finally {
         setLoading(false)
       }

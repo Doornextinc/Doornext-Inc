@@ -12,6 +12,7 @@
   "dependencies": {
     "@doornext/shared": "workspace:*",
     "@doornext/ui": "workspace:*",
+    "@sentry/nextjs": "^10.43.0",
     "@supabase/ssr": "^0.9.0",
     "@supabase/supabase-js": "^2.99.1",
     "firebase": "^12.10.0",

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { MapPin, CreditCard, Clock, Lock, Banknote } from 'lucide-react'
+import { MapPin, CreditCard, Clock, Lock, Banknote, Loader2, MessageSquare } from 'lucide-react'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { useCartStore } from '@/store/cart'
@@ -10,15 +10,36 @@ import { BackBar } from '@/components/layout/top-bar'
 import { Button } from '@/components/ui/button'
 import { formatPriceDollars } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
-import { DELIVERY_FEE, PLATFORM_FEE_PCT } from '@/lib/constants'
+import { PLATFORM_FEE_PCT } from '@/lib/constants'
 import { loadGoogleMapsScript, parsePlace } from '@/lib/google-maps'
-import type { Address } from '@/types'
+import type { Address, CartItem } from '@/types'
 
 const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
   ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
   : null
 
 type PaymentMethod = 'card' | 'cash'
+
+type FeeEstimate = {
+  delivery_fee: number
+  service_fee: number
+  small_order_fee: number
+  surge_fee: number
+  total: number
+  distance_miles: number
+}
+
+/** Haversine distance in miles between two lat/lng points */
+function haversineMiles(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 3958.8 // Earth radius in miles
+  const dLat = ((lat2 - lat1) * Math.PI) / 180
+  const dLng = ((lng2 - lng1) * Math.PI) / 180
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLng / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
 
 /* ── shared address UI ── */
 function AddressSection({
@@ -41,7 +62,6 @@ function AddressSection({
     setShowAddressInput(false)
   }
 
-  // Attach Google Places autocomplete when the new-address input is visible
   useEffect(() => {
     if (!showAddressInput) return
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
@@ -148,14 +168,134 @@ function AddressSection({
   )
 }
 
-function OrderSummary({ makerName, items, food, deliveryFee, total, platformFee }: {
-  makerName: string; items: ReturnType<typeof useCartStore>['items']
-  food: number; deliveryFee: number; total: number; platformFee: number
+/* ── drop-off instructions ── */
+const DROPOFF_OPTIONS = [
+  { id: 'leave_door',      emoji: '🚪', label: 'Leave at door' },
+  { id: 'hand_to_me',      emoji: '🤝', label: 'Hand to me' },
+  { id: 'doorman',         emoji: '🏢', label: 'Leave with doorman' },
+  { id: 'ring_bell',       emoji: '🔔', label: 'Ring bell / knock' },
+  { id: 'neighbor',        emoji: '👥', label: 'Leave with neighbor' },
+  { id: 'other',           emoji: '✏️', label: 'Other' },
+] as const
+
+type DropoffOptionId = typeof DROPOFF_OPTIONS[number]['id']
+
+function DropoffNoteSection({ note, setNote }: { note: string; setNote: (v: string) => void }) {
+  // Track which preset is selected and any extra detail text separately,
+  // composing them into the parent `note` string on every change.
+  const [selected, setSelected] = useState<DropoffOptionId | null>(null)
+  const [details, setDetails] = useState('')
+
+  const compose = (opt: DropoffOptionId | null, det: string) => {
+    if (!opt) { setNote(''); return }
+    if (opt === 'other') {
+      setNote(det.trim())
+    } else {
+      const label = DROPOFF_OPTIONS.find(o => o.id === opt)!.label
+      setNote(det.trim() ? `${label} — ${det.trim()}` : label)
+    }
+  }
+
+  const handleSelect = (id: DropoffOptionId) => {
+    setSelected(id)
+    compose(id, details)
+  }
+
+  const handleDetails = (val: string) => {
+    if (val.length > 200) return
+    setDetails(val)
+    compose(selected, val)
+  }
+
+  const nothingSelected = !selected
+  const otherMissingText = selected === 'other' && details.trim().length === 0
+
+  return (
+    <div className="bg-white px-4 py-4">
+      <div className="flex items-center gap-2 mb-1.5">
+        <MessageSquare size={18} className="text-[#FF6B35]" />
+        <h3 className="font-bold text-gray-900">
+          Drop-off Instructions
+          <span className="text-red-500 ml-0.5">*</span>
+        </h3>
+      </div>
+      <p className="text-xs text-gray-400 mb-3">How should the driver handle your order?</p>
+
+      {/* Option grid */}
+      <div className="grid grid-cols-2 gap-2 mb-3">
+        {DROPOFF_OPTIONS.map((opt) => {
+          const active = selected === opt.id
+          return (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => handleSelect(opt.id)}
+              className={`flex items-center gap-2.5 px-3.5 py-3 rounded-xl border-2 text-left transition-colors ${
+                active
+                  ? 'border-[#FF6B35] bg-orange-50 text-[#FF6B35]'
+                  : 'border-gray-100 bg-gray-50 text-gray-600 hover:border-gray-300'
+              }`}
+            >
+              <span className="text-lg leading-none">{opt.emoji}</span>
+              <span className={`text-xs font-semibold leading-tight ${active ? 'text-[#FF6B35]' : 'text-gray-700'}`}>
+                {opt.label}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Extra details / Other textarea */}
+      {selected && (
+        <div>
+          <textarea
+            value={details}
+            onChange={(e) => handleDetails(e.target.value)}
+            placeholder={
+              selected === 'other'
+                ? 'Describe where to leave your order…'
+                : 'Add details — apt number, gate code, floor, etc. (optional)'
+            }
+            rows={2}
+            className={`w-full border-2 rounded-xl px-3.5 py-3 text-sm outline-none transition-colors resize-none ${
+              otherMissingText
+                ? 'border-red-200 focus:border-red-400 bg-red-50/30'
+                : 'border-gray-100 focus:border-[#FF6B35]'
+            }`}
+          />
+          <div className="flex items-center justify-between mt-1">
+            {otherMissingText ? (
+              <p className="text-xs text-red-400 font-medium">Please describe where to leave your order</p>
+            ) : (
+              <span />
+            )}
+            <span className={`text-xs ml-auto ${details.length > 180 ? 'text-red-400' : 'text-gray-300'}`}>
+              {details.length}/200
+            </span>
+          </div>
+        </div>
+      )}
+
+      {nothingSelected && (
+        <p className="text-xs text-red-400 font-medium mt-1">Required — select a drop-off option</p>
+      )}
+    </div>
+  )
+}
+
+function OrderSummary({ makerName, items, food, estimate, estimating }: {
+  makerName: string | null; items: CartItem[]
+  food: number; estimate: FeeEstimate | null; estimating: boolean
 }) {
+  const platformFee = food * PLATFORM_FEE_PCT
+  const deliveryFee = estimate?.delivery_fee ?? null
+  const serviceFee  = estimate?.service_fee  ?? platformFee
+  const total       = estimate?.total        ?? (food + serviceFee)
+
   return (
     <div className="bg-white px-4 py-4">
       <h3 className="font-bold text-gray-900 mb-3">
-        Order from <span className="text-[#FF6B35]">{makerName}</span>
+        Order from <span className="text-[#FF6B35]">{makerName ?? 'Unknown Kitchen'}</span>
       </h3>
       {items.slice(0, 3).map(({ menu_item, quantity }) => (
         <div key={menu_item.id} className="flex justify-between text-sm text-gray-600 py-1">
@@ -167,27 +307,96 @@ function OrderSummary({ makerName, items, food, deliveryFee, total, platformFee 
       <div className="h-px bg-gray-100 my-3" />
       <div className="space-y-1.5 text-sm">
         <div className="flex justify-between text-gray-500"><span>Subtotal</span><span>{formatPriceDollars(food)}</span></div>
-        <div className="flex justify-between text-gray-500"><span>Delivery</span><span>{formatPriceDollars(deliveryFee)}</span></div>
-        <div className="flex justify-between text-gray-500"><span>Service fee</span><span>{formatPriceDollars(platformFee)}</span></div>
+        <div className="flex justify-between text-gray-500">
+          <span>Delivery</span>
+          {estimating ? (
+            <span className="flex items-center gap-1 text-gray-400"><Loader2 size={12} className="animate-spin" />Calculating…</span>
+          ) : deliveryFee !== null ? (
+            <span>{formatPriceDollars(deliveryFee)}</span>
+          ) : (
+            <span className="text-gray-400 text-xs">Enter address</span>
+          )}
+        </div>
+        {estimate?.small_order_fee ? (
+          <div className="flex justify-between text-gray-500"><span>Small order fee</span><span>{formatPriceDollars(estimate.small_order_fee)}</span></div>
+        ) : null}
+        {estimate?.surge_fee ? (
+          <div className="flex justify-between text-amber-600"><span>Surge fee</span><span>{formatPriceDollars(estimate.surge_fee)}</span></div>
+        ) : null}
+        <div className="flex justify-between text-gray-500"><span>Service fee</span><span>{formatPriceDollars(serviceFee)}</span></div>
         <div className="h-px bg-gray-100 my-1" />
-        <div className="flex justify-between font-bold text-gray-900 text-base"><span>Total</span><span>{formatPriceDollars(total)}</span></div>
+        <div className="flex justify-between font-bold text-gray-900 text-base">
+          <span>Total</span>
+          {estimating ? (
+            <span className="flex items-center gap-1 text-gray-400"><Loader2 size={13} className="animate-spin" /></span>
+          ) : (
+            <span>{formatPriceDollars(total)}</span>
+          )}
+        </div>
       </div>
       <p className="text-xs text-gray-400 mt-2">You can tip your driver after delivery</p>
     </div>
   )
 }
 
-/* ── Card checkout form (Stripe) ── */
-function CardCheckoutForm({
-  orderId, total, address, setAddress,
-  selectedAddress, setSelectedAddress, savedAddresses, onAddressSaved,
-  food, deliveryFee,
+/**
+ * Shell shown while we wait for the address (no estimate yet) or while the
+ * PaymentIntent is initialising after an estimate arrives.  No Stripe elements.
+ */
+function CardAddressShell({
+  address, setAddress, selectedAddress, setSelectedAddress,
+  savedAddresses, onAddressSaved, items, food, makerName,
+  estimate, estimating, dropoffNote, setDropoffNote,
 }: {
-  orderId: string; total: number
   address: string; setAddress: (v: string) => void
   selectedAddress: Address | null; setSelectedAddress: (a: Address | null) => void
   savedAddresses: Address[]; onAddressSaved: (addr: Address) => void
-  food: number; deliveryFee: number
+  items: CartItem[]; food: number; makerName: string | null
+  estimate: FeeEstimate | null; estimating: boolean
+  dropoffNote: string; setDropoffNote: (v: string) => void
+}) {
+  const [showAddressInput, setShowAddressInput] = useState(savedAddresses.length === 0 || !selectedAddress)
+
+  // True once we have estimate + no error — means PaymentIntent is being created
+  const waitingForIntent = !!selectedAddress && !!estimate && !estimating
+
+  return (
+    <div className="flex flex-col min-h-full">
+      <div className="flex-1 overflow-y-auto space-y-3 py-3">
+        <AddressSection
+          address={address} setAddress={setAddress}
+          selectedAddress={selectedAddress} setSelectedAddress={setSelectedAddress}
+          savedAddresses={savedAddresses} showAddressInput={showAddressInput}
+          setShowAddressInput={setShowAddressInput} onAddressSaved={onAddressSaved}
+        />
+        <DropoffNoteSection note={dropoffNote} setNote={setDropoffNote} />
+        <OrderSummary makerName={makerName} items={items} food={food} estimate={estimate} estimating={estimating} />
+      </div>
+      <div className="bg-white border-t border-gray-100 px-4 py-4 pb-nav">
+        <Button fullWidth size="lg" disabled>
+          {waitingForIntent
+            ? <span className="flex items-center gap-2"><Loader2 size={16} className="animate-spin" />Preparing payment…</span>
+            : estimating
+            ? 'Calculating delivery fee…'
+            : 'Enter delivery address to continue'}
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+/* ── Card checkout form ── */
+function CardCheckoutForm({
+  address, setAddress,
+  selectedAddress, setSelectedAddress, savedAddresses, onAddressSaved,
+  food, estimate, estimating, orderId, dropoffNote, setDropoffNote,
+}: {
+  address: string; setAddress: (v: string) => void
+  selectedAddress: Address | null; setSelectedAddress: (a: Address | null) => void
+  savedAddresses: Address[]; onAddressSaved: (addr: Address) => void
+  food: number; estimate: FeeEstimate | null; estimating: boolean
+  orderId: string
+  dropoffNote: string; setDropoffNote: (v: string) => void
 }) {
   const stripe = useStripe()
   const elements = useElements()
@@ -197,17 +406,19 @@ function CardCheckoutForm({
   const [error, setError] = useState<string | null>(null)
   const [showAddressInput, setShowAddressInput] = useState(savedAddresses.length === 0)
 
-  const platformFee = food * PLATFORM_FEE_PCT
+  const canPlace = !!selectedAddress && !!estimate && !estimating && dropoffNote.trim().length > 0
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!stripe || !elements) return
     if (!address.trim()) { setError('Please enter your delivery address'); return }
+    if (!dropoffNote.trim()) { setError('Drop-off instructions are required'); return }
+    if (!estimate) { setError('Waiting for delivery fee calculation…'); return }
     setLoading(true); setError(null)
 
     const { error: stripeError, paymentIntent } = await stripe.confirmPayment({
       elements,
-      confirmParams: { return_url: `${window.location.origin}/orders/${orderId}` },
+      confirmParams: { return_url: `${window.location.origin}/orders` },
       redirect: 'if_required',
     })
 
@@ -218,7 +429,10 @@ function CardCheckoutForm({
         ? { street: selectedAddress.street, city: selectedAddress.city, state: selectedAddress.state, zip: selectedAddress.zip, lat: selectedAddress.lat, lng: selectedAddress.lng }
         : { street: address.trim(), city: '', state: '', zip: '' }
       const supabase = createClient()
-      await supabase.from('orders').update({ delivery_address: deliveryAddress }).eq('id', orderId)
+      // Persist address + drop-off note now that payment is confirmed
+      await supabase.from('orders')
+        .update({ delivery_address: deliveryAddress, dropoff_note: dropoffNote.trim() })
+        .eq('id', orderId)
       clearCart()
       router.push(`/orders/${orderId}`)
     }
@@ -234,6 +448,7 @@ function CardCheckoutForm({
           savedAddresses={savedAddresses} showAddressInput={showAddressInput}
           setShowAddressInput={setShowAddressInput} onAddressSaved={onAddressSaved}
         />
+        <DropoffNoteSection note={dropoffNote} setNote={setDropoffNote} />
         <div className="bg-white px-4 py-4">
           <div className="flex items-center gap-2 mb-3">
             <Clock size={18} className="text-[#FF6B35]" />
@@ -245,7 +460,7 @@ function CardCheckoutForm({
             <span className="text-xs text-gray-400 ml-1">— as fast as possible</span>
           </div>
         </div>
-        <div className="bg-white px-4 py-4">
+        <div className="bg-white px-4 py-4" id="card-payment-section">
           <div className="flex items-center gap-2 mb-3">
             <CreditCard size={18} className="text-[#FF6B35]" />
             <h3 className="font-bold text-gray-900">Payment</h3>
@@ -256,14 +471,15 @@ function CardCheckoutForm({
           <PaymentElement options={{ layout: 'tabs', wallets: { applePay: 'auto', googlePay: 'auto' } }} />
           {error && <p className="mt-3 text-sm text-red-500">{error}</p>}
         </div>
-        <OrderSummary
-          makerName={makerName} items={items} food={food}
-          deliveryFee={deliveryFee} total={total} platformFee={platformFee}
-        />
+        <OrderSummary makerName={makerName} items={items} food={food} estimate={estimate} estimating={estimating} />
       </div>
       <div className="bg-white border-t border-gray-100 px-4 py-4 pb-nav">
-        <Button type="submit" fullWidth size="lg" loading={loading} disabled={!stripe}>
-          Place Order · {formatPriceDollars(total)}
+        <Button type="submit" fullWidth size="lg" loading={loading} disabled={!stripe || !canPlace}>
+          {canPlace
+            ? `Place Order · ${formatPriceDollars(estimate.total)}`
+            : estimating
+            ? 'Calculating fee…'
+            : 'Enter delivery address to continue'}
         </Button>
       </div>
     </form>
@@ -273,24 +489,30 @@ function CardCheckoutForm({
 /* ── Cash checkout form ── */
 function CashCheckoutForm({
   address, setAddress, selectedAddress, setSelectedAddress,
-  savedAddresses, onAddressSaved, food, total, deliveryFee, makerId, onSuccess,
+  savedAddresses, onAddressSaved, food, estimate, estimating, makerId, onSuccess,
+  dropoffNote, setDropoffNote,
 }: {
   address: string; setAddress: (v: string) => void
   selectedAddress: Address | null; setSelectedAddress: (a: Address | null) => void
   savedAddresses: Address[]; onAddressSaved: (addr: Address) => void
-  food: number; total: number; deliveryFee: number
+  food: number; estimate: FeeEstimate | null; estimating: boolean
   makerId: string; onSuccess: (orderId: string) => void
+  dropoffNote: string; setDropoffNote: (v: string) => void
 }) {
-  const { items, clearCart } = useCartStore()
+  const { items, makerName, clearCart } = useCartStore()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showAddressInput, setShowAddressInput] = useState(savedAddresses.length === 0)
-  const platformFee = food * PLATFORM_FEE_PCT
+
+  const canPlace = !!selectedAddress && !!estimate && !estimating && dropoffNote.trim().length > 0
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!address.trim()) { setError('Please enter your delivery address'); return }
-    setLoading(true); setError(null)
+    if (!dropoffNote.trim()) { setError('Drop-off instructions are required'); return }
+    if (!estimate) { setError('Waiting for delivery fee calculation…'); return }
+    setLoading(true)
+    setError(null)
 
     const deliveryAddress = selectedAddress
       ? { street: selectedAddress.street, city: selectedAddress.city, state: selectedAddress.state, zip: selectedAddress.zip, lat: selectedAddress.lat, lng: selectedAddress.lng }
@@ -303,6 +525,8 @@ function CashCheckoutForm({
           items: items.map((i) => ({ id: i.menu_item.id, quantity: i.quantity, notes: i.notes })),
           maker_id: makerId,
           delivery_address: deliveryAddress,
+          distance_miles: estimate.distance_miles,
+          dropoff_note: dropoffNote.trim(),
         }),
       })
       const data = await res.json()
@@ -314,8 +538,6 @@ function CashCheckoutForm({
     } finally { setLoading(false) }
   }
 
-  const { makerName } = useCartStore()
-
   return (
     <form onSubmit={handleSubmit} className="flex flex-col min-h-full">
       <div className="flex-1 overflow-y-auto space-y-3 py-3">
@@ -325,6 +547,7 @@ function CashCheckoutForm({
           savedAddresses={savedAddresses} showAddressInput={showAddressInput}
           setShowAddressInput={setShowAddressInput} onAddressSaved={onAddressSaved}
         />
+        <DropoffNoteSection note={dropoffNote} setNote={setDropoffNote} />
         <div className="bg-white px-4 py-4">
           <div className="flex items-center gap-2 mb-3">
             <Clock size={18} className="text-[#FF6B35]" />
@@ -336,7 +559,6 @@ function CashCheckoutForm({
             <span className="text-xs text-gray-400 ml-1">— as fast as possible</span>
           </div>
         </div>
-        {/* Cash payment notice */}
         <div className="bg-white px-4 py-4">
           <div className="flex items-center gap-2 mb-3">
             <Banknote size={18} className="text-green-600" />
@@ -348,20 +570,23 @@ function CashCheckoutForm({
               <p className="text-sm font-semibold text-green-800">Pay with cash</p>
               <p className="text-xs text-green-700 mt-0.5">
                 Please have exact change ready when your order arrives.
-                Your driver will collect <span className="font-bold">{formatPriceDollars(total)}</span> on delivery.
+                {estimate && !estimating && (
+                  <> Your driver will collect <span className="font-bold">{formatPriceDollars(estimate.total)}</span> on delivery.</>
+                )}
               </p>
             </div>
           </div>
           {error && <p className="mt-3 text-sm text-red-500">{error}</p>}
         </div>
-        <OrderSummary
-          makerName={makerName} items={items} food={food}
-          deliveryFee={deliveryFee} total={total} platformFee={platformFee}
-        />
+        <OrderSummary makerName={makerName} items={items} food={food} estimate={estimate} estimating={estimating} />
       </div>
       <div className="bg-white border-t border-gray-100 px-4 py-4 pb-nav">
-        <Button type="submit" fullWidth size="lg" loading={loading}>
-          Place Cash Order · {formatPriceDollars(total)}
+        <Button type="submit" fullWidth size="lg" loading={loading} disabled={!canPlace}>
+          {canPlace
+            ? `Place Cash Order · ${formatPriceDollars(estimate.total)}`
+            : estimating
+            ? 'Calculating fee…'
+            : 'Enter delivery address to continue'}
         </Button>
       </div>
     </form>
@@ -371,31 +596,49 @@ function CashCheckoutForm({
 /* ── Main page ── */
 export default function CheckoutPage() {
   const router = useRouter()
-  const { items, subtotal, makerId } = useCartStore()
+  const { items, subtotal, makerId, makerName } = useCartStore()
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card')
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [orderId, setOrderId] = useState<string | null>(null)
   const [address, setAddress] = useState('')
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null)
   const [savedAddresses, setSavedAddresses] = useState<Address[]>([])
+  const [dropoffNote, setDropoffNote] = useState('')
   const [initError, setInitError] = useState<string | null>(null)
 
-  const food = subtotal()
-  const platformFee = food * PLATFORM_FEE_PCT
-  const total = food + DELIVERY_FEE + platformFee
+  // Maker location — fetched on mount to compute distance when address is selected
+  const [makerLat, setMakerLat] = useState<number | null>(null)
+  const [makerLng, setMakerLng] = useState<number | null>(null)
 
-  // Load saved addresses
+  // Real fee estimate — null until address is selected and API responds
+  const [estimate, setEstimate] = useState<FeeEstimate | null>(null)
+  const [estimating, setEstimating] = useState(false)
+
+  const food = subtotal()
+
+  // Load saved addresses + maker lat/lng
   useEffect(() => {
-    async function loadAddresses() {
+    async function load() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
-      const [addrRes, profileRes] = await Promise.all([
+
+      const [addrRes, profileRes, makerRes] = await Promise.all([
         supabase.from('addresses').select('*').eq('user_id', user.id).order('created_at'),
         supabase.from('users').select('default_address_id').eq('id', user.id).single(),
+        makerId
+          ? supabase.from('food_makers').select('lat, lng').eq('id', makerId).single()
+          : Promise.resolve({ data: null }),
       ])
+
       const addrs: Address[] = addrRes.data || []
       setSavedAddresses(addrs)
+
+      if (makerRes.data) {
+        setMakerLat(makerRes.data.lat)
+        setMakerLng(makerRes.data.lng)
+      }
+
       const defaultId = profileRes.data?.default_address_id
       const def = defaultId ? addrs.find((a) => a.id === defaultId) : addrs[0]
       if (def) {
@@ -403,12 +646,53 @@ export default function CheckoutPage() {
         setAddress(`${def.street}, ${def.city}, ${def.state} ${def.zip}`)
       }
     }
-    loadAddresses()
-  }, [])
+    load()
+  }, [makerId])
 
-  // Create Stripe PaymentIntent (card only)
+  // Fetch real fee estimate whenever address or maker location changes.
+  // We always attempt the fetch — if either set of coords is missing or 0,0 we
+  // fall back to distance_miles: 0 so the base-tier fee is shown rather than
+  // blocking the user entirely (common when a maker has no coords in the DB yet,
+  // or when the saved address was geocoded to 0,0 by mistake).
+  const fetchEstimate = useCallback(async (addr: Address) => {
+    if (!makerId) return
+
+    // Treat 0,0 as "no real coordinate" — it's the DB default, not a valid location.
+    const addrValid  = addr.lat  != null && addr.lng  != null && !(addr.lat  === 0 && addr.lng  === 0)
+    const makerValid = makerLat  != null && makerLng  != null && !(makerLat  === 0 && makerLng  === 0)
+    const distance   = addrValid && makerValid
+      ? haversineMiles(makerLat!, makerLng!, addr.lat, addr.lng)
+      : 0
+
+    setEstimating(true)
+    try {
+      const res = await fetch('/api/checkout/estimate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ maker_id: makerId, subtotal: food, distance_miles: distance }),
+      })
+      const data = await res.json()
+      if (res.ok) setEstimate(data as FeeEstimate)
+    } catch { /* non-blocking */ } finally {
+      setEstimating(false)
+    }
+  }, [makerId, food, makerLat, makerLng])
+
+  useEffect(() => {
+    // Fire as soon as an address is selected — don't gate on makerLat/makerLng
+    // being non-null because 0,0 was a valid falsy value that blocked the fetch.
+    // fetchEstimate itself handles missing/zero coords gracefully with a fallback.
+    if (selectedAddress) {
+      setEstimate(null)
+      setClientSecret(null)
+      setOrderId(null)
+      fetchEstimate(selectedAddress)
+    }
+  }, [selectedAddress, makerLat, makerLng, fetchEstimate])
+
+  // Create PaymentIntent only once we have a real estimate (card only)
   const createCardIntent = useCallback(async () => {
-    if (items.length === 0 || !makerId || paymentMethod !== 'card') return
+    if (!estimate || !makerId || paymentMethod !== 'card') return
     setInitError(null)
     try {
       const res = await fetch('/api/checkout', {
@@ -416,7 +700,8 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           items: items.map((i) => ({ id: i.menu_item.id, price: i.menu_item.price, quantity: i.quantity, notes: i.notes })),
           maker_id: makerId,
-          delivery_address: null,
+          delivery_address: null, // will be saved after payment confirmation
+          distance_miles: estimate.distance_miles,
         }),
       })
       if (res.status === 401) { router.push('/login'); return }
@@ -427,12 +712,14 @@ export default function CheckoutPage() {
     } catch {
       setInitError('Failed to initialize payment. Please try again.')
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items, makerId, router, paymentMethod])
+  }, [estimate, makerId, paymentMethod, items, router])
 
+  // Trigger PaymentIntent creation once estimate is ready (card only)
   useEffect(() => {
-    if (paymentMethod === 'card' && !clientSecret) createCardIntent()
-  }, [paymentMethod, clientSecret, createCardIntent])
+    if (estimate && paymentMethod === 'card' && !clientSecret) {
+      createCardIntent()
+    }
+  }, [estimate, paymentMethod, clientSecret, createCardIntent])
 
   if (items.length === 0) {
     return (
@@ -455,7 +742,7 @@ export default function CheckoutPage() {
         <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Payment Method</p>
         <div className="flex gap-2">
           <button
-            onClick={() => setPaymentMethod('card')}
+            onClick={() => { setPaymentMethod('card'); setClientSecret(null); setOrderId(null) }}
             className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 text-sm font-semibold transition-colors ${
               paymentMethod === 'card'
                 ? 'border-[#FF6B35] bg-orange-50 text-[#FF6B35]'
@@ -483,9 +770,10 @@ export default function CheckoutPage() {
           selectedAddress={selectedAddress} setSelectedAddress={setSelectedAddress}
           savedAddresses={savedAddresses}
           onAddressSaved={(addr) => setSavedAddresses((prev) => [...prev, addr])}
-          food={food} total={total} deliveryFee={DELIVERY_FEE}
+          food={food} estimate={estimate} estimating={estimating}
           makerId={makerId ?? ''}
           onSuccess={(id) => router.push(`/orders/${id}`)}
+          dropoffNote={dropoffNote} setDropoffNote={setDropoffNote}
         />
       ) : initError ? (
         <div className="flex-1 flex flex-col items-center justify-center px-6 text-center gap-4">
@@ -503,18 +791,27 @@ export default function CheckoutPage() {
           }}
         >
           <CardCheckoutForm
-            orderId={orderId}
-            total={total} address={address} setAddress={setAddress}
+            address={address} setAddress={setAddress}
             selectedAddress={selectedAddress} setSelectedAddress={setSelectedAddress}
             savedAddresses={savedAddresses}
             onAddressSaved={(addr) => setSavedAddresses((prev) => [...prev, addr])}
-            food={food} deliveryFee={DELIVERY_FEE}
+            food={food} estimate={estimate} estimating={estimating}
+            orderId={orderId}
+            dropoffNote={dropoffNote} setDropoffNote={setDropoffNote}
           />
         </Elements>
       ) : (
-        <div className="flex-1 flex items-center justify-center">
-          <div className="w-8 h-8 border-2 border-[#FF6B35] border-t-transparent rounded-full animate-spin" />
-        </div>
+        // Address selected — waiting for PaymentIntent to initialize (brief spinner)
+        // OR no address yet — show a card-mode shell so user can pick address
+        <CardAddressShell
+          address={address} setAddress={setAddress}
+          selectedAddress={selectedAddress} setSelectedAddress={setSelectedAddress}
+          savedAddresses={savedAddresses}
+          onAddressSaved={(addr) => setSavedAddresses((prev) => [...prev, addr])}
+          items={items} food={food} makerName={makerName}
+          estimate={estimate} estimating={estimating}
+          dropoffNote={dropoffNote} setDropoffNote={setDropoffNote}
+        />
       )}
     </div>
   )

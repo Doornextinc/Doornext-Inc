@@ -6,7 +6,7 @@ import {
   LayoutDashboard, BarChart2, Users, Truck, Store,
   ShoppingBag, Headphones, ShieldCheck, Wallet,
   Zap, Tag, Layers, Award, DollarSign, Target,
-  Settings, LogOut,
+  Settings, LogOut, Wrench,
 } from 'lucide-react'
 
 type NavItem = { href: string; icon: React.ElementType; label: string }
@@ -31,10 +31,11 @@ const NAV: NavGroup[] = [
   {
     heading: 'Operations',
     items: [
-      { href: '/operations/orders',      icon: ShoppingBag,  label: 'Orders' },
-      { href: '/operations/support',     icon: Headphones,   label: 'Live Support' },
-      { href: '/operations/kyc',         icon: ShieldCheck,  label: 'KYC Review' },
-      { href: '/operations/withdrawals', icon: Wallet,       label: 'Withdrawals' },
+      { href: '/operations/orders',         icon: ShoppingBag,  label: 'Orders' },
+      { href: '/operations/orders-support', icon: Wrench,       label: 'Order Support' },
+      { href: '/operations/support',        icon: Headphones,   label: 'Live Support' },
+      { href: '/operations/kyc',            icon: ShieldCheck,  label: 'KYC Review' },
+      { href: '/operations/withdrawals',    icon: Wallet,       label: 'Withdrawals' },
     ],
   },
   {

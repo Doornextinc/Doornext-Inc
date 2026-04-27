@@ -92,11 +92,14 @@ export default function PersonalInfoPage() {
       const supabase = createClient()
       const { error } = await supabase
         .from('users')
-        .update({ full_name: fullName, avatar_url: newAvatarUrl })
-        .eq('id', userId)
+        .upsert(
+          { id: userId, full_name: fullName, avatar_url: newAvatarUrl },
+          { onConflict: 'id' }
+        )
 
       if (error) {
-        setUploadError('Failed to save changes. Please try again.')
+        console.error('[personal-info] Save error:', error)
+        setUploadError(`Failed to save changes: ${error.message}`)
         return
       }
 

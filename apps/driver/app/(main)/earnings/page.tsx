@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { useDriverStore } from '@/store/driver-store'
 import { Zap, Star, Package, TrendingUp, ChevronDown, ChevronRight, Clock, DollarSign } from 'lucide-react'
 import { AppHeader } from '@/components/layout/app-header'
 
@@ -41,9 +42,13 @@ const DAY_SHORT = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 
 export default function EarningsPage() {
   const router = useRouter()
+  const userId = useDriverStore((s) => s.userId)
+  const hasHydrated = useDriverStore((s) => s._hasHydrated)
+  const authReady = useDriverStore((s) => s.authReady)
   const [deliveries, setDeliveries] = useState<Delivery[]>([])
   const [profile, setProfile] = useState<{ total_deliveries: number; avg_rating: number } | null>(null)
   const [missions, setMissions] = useState<Mission[]>([])
+  const [withdrawnAmount, setWithdrawnAmount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [period, setPeriod] = useState<Period>('week')
   const [expandedDay, setExpandedDay] = useState<number | null>(null)
@@ -54,22 +59,29 @@ export default function EarningsPage() {
   const [cashOutSuccess, setCashOutSuccess] = useState(false)
 
   useEffect(() => {
+    // Wait for persist rehydration before making any auth decisions
+    if (!hasHydrated) return
+    // If userId is already known (from persisted store), load immediately.
+    // If userId is null, wait for authReady before redirecting to login.
+    if (!userId && !authReady) return
+    if (!userId) { router.push('/login'); return }
     async function load() {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/login'); return }
-      const [ordersRes, profileRes, missionsRes] = await Promise.all([
-        supabase.from('orders').select('id, driver_payout, tip_amount, created_at').eq('nexter_id', user.id).eq('status', 'delivered').order('created_at', { ascending: false }).limit(200),
-        supabase.from('driver_profiles').select('total_deliveries, avg_rating').eq('id', user.id).single(),
+      const [ordersRes, profileRes, missionsRes, withdrawalsRes] = await Promise.all([
+        supabase.from('orders').select('id, driver_payout, tip_amount, created_at').eq('nexter_id', userId).eq('status', 'delivered').order('created_at', { ascending: false }).limit(200),
+        supabase.from('driver_profiles').select('total_deliveries, avg_rating').eq('id', userId).single(),
         supabase.from('driver_missions').select('id, icon, title, description, reward_amount, target_value, mission_type, period').eq('is_active', true).order('created_at'),
+        // Sum withdrawals that have been requested or paid out (excluding rejected)
+        supabase.from('withdrawals').select('amount, status').eq('user_id', userId).in('status', ['pending', 'approved', 'paid']),
       ])
       setDeliveries(ordersRes.data ?? [])
       setProfile(profileRes.data)
       setMissions(missionsRes.data ?? [])
+      setWithdrawnAmount((withdrawalsRes.data ?? []).reduce((s, w) => s + (w.amount ?? 0), 0))
       setLoading(false)
     }
     load()
-  }, [router])
+  }, [router, userId, authReady, hasHydrated])
 
   /* ─── filtered set ─── */
   const filtered = (() => {
@@ -82,9 +94,9 @@ export default function EarningsPage() {
   const totalEarnings = filtered.reduce((s, d) => s + (d.driver_payout ?? 0), 0)
   const totalTips     = filtered.reduce((s, d) => s + (d.tip_amount  ?? 0), 0)
   const basePay       = totalEarnings - totalTips
-  // Available to cash out = all-time earnings (not period-filtered) minus held tips
+  // Available to cash out = all-time earnings minus already-withdrawn amounts
   const allTimeEarnings  = deliveries.reduce((s, d) => s + (d.driver_payout ?? 0), 0)
-  const availableCashOut = allTimeEarnings * 0.7
+  const availableCashOut = Math.max(0, allTimeEarnings - withdrawnAmount)
 
   /* ─── 7-day chart ─── */
   const weekChart = Array.from({ length: 7 }, (_, i) => {
@@ -172,7 +184,7 @@ export default function EarningsPage() {
                     <p className="text-xs text-zinc-600">of ${allTimeEarnings.toFixed(2)} all-time</p>
                   )}
                 </div>
-                <p className="text-[10px] text-zinc-700 mt-1">Tips held 24h · Base pay instant</p>
+                <p className="text-[10px] text-zinc-700 mt-1">All-time earnings minus prior withdrawals</p>
               </div>
               <div className="w-12 h-12 rounded-xl bg-[#FF7A50]/10 flex items-center justify-center">
                 <DollarSign size={22} className="text-[#FF7A50]" />
@@ -281,46 +293,46 @@ export default function EarningsPage() {
         {dailyRows.length > 0 && (
           <div className="space-y-2">
             <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1">Daily Breakdown</p>
-            <div className="bg-white rounded-2xl border border-zinc-200 overflow-hidden divide-y divide-zinc-100">
+            <div className="bg-[#111] rounded-2xl border border-white/5 overflow-hidden divide-y divide-white/5">
               {dailyRows.map((day, i) => {
                 const isOpen = expandedDay === i
                 return (
                   <div key={i}>
                     <button
                       onClick={() => setExpandedDay(isOpen ? null : i)}
-                      className="w-full flex items-center justify-between px-4 py-3.5 bg-white active:bg-zinc-50"
+                      className="w-full flex items-center justify-between px-4 py-3.5 active:bg-white/5"
                     >
                       <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${day.isToday ? 'bg-[#FF7A50]/15' : 'bg-zinc-100'}`}>
-                          <Clock size={13} className={day.isToday ? 'text-[#FF7A50]' : 'text-zinc-400'} />
+                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${day.isToday ? 'bg-[#FF7A50]/15' : 'bg-[#1A1A1A]'}`}>
+                          <Clock size={13} className={day.isToday ? 'text-[#FF7A50]' : 'text-zinc-500'} />
                         </div>
                         <div className="text-left">
-                          <p className={`text-sm font-bold ${day.isToday ? 'text-[#FF7A50]' : 'text-zinc-800'}`}>
+                          <p className={`text-sm font-bold ${day.isToday ? 'text-[#FF7A50]' : 'text-white'}`}>
                             {day.isToday ? 'Today' : day.label}
                           </p>
-                          <p className="text-[11px] text-zinc-400 mt-0.5">{day.count} {day.count === 1 ? 'delivery' : 'deliveries'}</p>
+                          <p className="text-[11px] text-zinc-500 mt-0.5">{day.count} {day.count === 1 ? 'delivery' : 'deliveries'}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className={`text-sm font-black ${day.isToday ? 'text-[#FF7A50]' : 'text-zinc-800'}`}>
+                        <span className={`text-sm font-black ${day.isToday ? 'text-[#FF7A50]' : 'text-white'}`}>
                           ${day.total.toFixed(2)}
                         </span>
                         {isOpen
-                          ? <ChevronDown size={14} className="text-zinc-400" />
-                          : <ChevronRight size={14} className="text-zinc-300" />
+                          ? <ChevronDown size={14} className="text-zinc-500" />
+                          : <ChevronRight size={14} className="text-zinc-600" />
                         }
                       </div>
                     </button>
 
                     {isOpen && (
-                      <div className="bg-zinc-50 divide-y divide-zinc-100">
+                      <div className="bg-[#0D0D0D] divide-y divide-white/5">
                         {day.deliveries.map(d => (
                           <div key={d.id} className="flex items-center justify-between px-4 py-3">
                             <div className="flex items-center gap-3">
-                              <div className="w-1.5 h-1.5 rounded-full bg-zinc-300 ml-2.5" />
+                              <div className="w-1.5 h-1.5 rounded-full bg-zinc-700 ml-2.5" />
                               <div>
-                                <p className="text-sm text-zinc-700 font-medium">#{d.id.slice(-6).toUpperCase()}</p>
-                                <p className="text-[11px] text-zinc-400">
+                                <p className="text-sm text-zinc-300 font-medium">#{d.id.slice(-6).toUpperCase()}</p>
+                                <p className="text-[11px] text-zinc-600">
                                   {new Date(d.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
                                 </p>
                               </div>
@@ -328,14 +340,14 @@ export default function EarningsPage() {
                             <div className="text-right">
                               <p className="text-sm font-black text-[#FF7A50]">+${d.driver_payout.toFixed(2)}</p>
                               {d.tip_amount > 0 && (
-                                <p className="text-[11px] text-green-600">+${d.tip_amount.toFixed(2)} tip</p>
+                                <p className="text-[11px] text-green-500">+${d.tip_amount.toFixed(2)} tip</p>
                               )}
                             </div>
                           </div>
                         ))}
-                        <div className="flex items-center justify-between px-4 py-2.5 bg-white border-t border-zinc-100">
-                          <span className="text-xs font-semibold text-zinc-400 pl-7">Subtotal</span>
-                          <span className="text-xs font-black text-zinc-800">${day.total.toFixed(2)}</span>
+                        <div className="flex items-center justify-between px-4 py-2.5 border-t border-white/5">
+                          <span className="text-xs font-semibold text-zinc-600 pl-7">Subtotal</span>
+                          <span className="text-xs font-black text-white">${day.total.toFixed(2)}</span>
                         </div>
                       </div>
                     )}

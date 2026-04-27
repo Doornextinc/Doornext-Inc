@@ -4,19 +4,40 @@ import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
+async function tryRegisterPushToken(userId: string) {
+  try {
+    // Dynamically import so it never runs on SSR
+    const { requestPushPermission, savePushToken } = await import('@/lib/fcm')
+    const token = await requestPushPermission()
+    if (token) await savePushToken(token, userId)
+  } catch {
+    // Non-fatal — push notifications are optional
+  }
+}
+
 export function SupabaseAuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
 
   useEffect(() => {
     const supabase = createClient()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_OUT') {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        // Register push token on sign-in (non-blocking)
+        tryRegisterPushToken(session.user.id)
+      }
+      if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESH_FAILED') {
+        await supabase.auth.signOut()
         router.push('/login')
       }
       if (event === 'TOKEN_REFRESHED') {
         router.refresh()
       }
+    })
+
+    // Also attempt registration for already-signed-in users on app load
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) tryRegisterPushToken(user.id)
     })
 
     const handleVisibilityChange = async () => {

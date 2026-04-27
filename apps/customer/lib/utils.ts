@@ -44,6 +44,7 @@ export function haversineDistance(
 }
 
 export const ORDER_STATUS_LABELS: Record<string, string> = {
+  awaiting_payment: 'Awaiting Payment',
   pending: 'Order Placed',
   confirmed: 'Confirmed',
   preparing: 'Being Prepared',

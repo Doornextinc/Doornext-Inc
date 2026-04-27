@@ -1,9 +1,17 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { StreamChat } from 'stream-chat'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import * as Sentry from '@sentry/nextjs'
+import { checkRateLimit } from '@/lib/rate-limit'
 
-export async function POST() {
+export async function POST(req: NextRequest) {
+  // Rate limit: 20 token requests per minute per IP
+  const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown'
+  if (!await checkRateLimit(`stream-token:${ip}`, 20, 60)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+  }
+
   const cookieStore = await cookies()
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -44,6 +52,11 @@ export async function POST() {
     role: 'user',
   })
 
-  const token = serverClient.createToken(user.id, Math.floor(Date.now() / 1000) + 86400)
-  return NextResponse.json({ token, userId: user.id })
+  try {
+    const token = serverClient.createToken(user.id, Math.floor(Date.now() / 1000) + 86400)
+    return NextResponse.json({ token, userId: user.id })
+  } catch (err) {
+    Sentry.captureException(err, { extra: { userId: user.id } })
+    return NextResponse.json({ error: 'Failed to generate chat token' }, { status: 500 })
+  }
 }

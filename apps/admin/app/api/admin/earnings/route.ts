@@ -16,7 +16,8 @@ export async function GET(request: NextRequest) {
 
   const { data: orders, error } = await supabase
     .from('orders')
-    .select('total, platform_fee, service_fee, driver_payout, maker_payout, discount_amt, status, created_at')
+    // tip_amount fetched separately — driver_payout is base pay only (tip stamped at $0 at creation)
+    .select('total, platform_fee, service_fee, driver_payout, tip_amount, maker_payout, discount_amt, status, created_at')
     .gte('created_at', sinceISO)
     .eq('status', 'delivered')
     .order('created_at')
@@ -27,7 +28,9 @@ export async function GET(request: NextRequest) {
   const gmv = rows.reduce((s, o) => s + (o.total ?? 0), 0)
   const platformFees = rows.reduce((s, o) => s + (o.platform_fee ?? 0), 0)
   const serviceFees = rows.reduce((s, o) => s + (o.service_fee ?? 0), 0)
-  const driverPayouts = rows.reduce((s, o) => s + (o.driver_payout ?? 0), 0)
+  // driver_payout is base pay only; add tip_amount to get actual driver earnings
+  const driverPayouts = rows.reduce((s, o) => s + (o.driver_payout ?? 0) + (o.tip_amount ?? 0), 0)
+  const tipPayouts = rows.reduce((s, o) => s + (o.tip_amount ?? 0), 0)
   const makerPayouts = rows.reduce((s, o) => s + (o.maker_payout ?? 0), 0)
   const discounts = rows.reduce((s, o) => s + (o.discount_amt ?? 0), 0)
 
@@ -48,7 +51,7 @@ export async function GET(request: NextRequest) {
     }
     dailyMap[d].gmv += o.total ?? 0
     dailyMap[d].platform_fees += (o.platform_fee ?? 0) + (o.service_fee ?? 0)
-    dailyMap[d].driver_payouts += o.driver_payout ?? 0
+    dailyMap[d].driver_payouts += (o.driver_payout ?? 0) + (o.tip_amount ?? 0)
     dailyMap[d].maker_payouts += o.maker_payout ?? 0
     dailyMap[d].orders++
   }
@@ -63,6 +66,7 @@ export async function GET(request: NextRequest) {
       serviceFees: parseFloat(serviceFees.toFixed(2)),
       netRevenue: parseFloat((platformFees + serviceFees).toFixed(2)),
       driverPayouts: parseFloat(driverPayouts.toFixed(2)),
+      tipPayouts: parseFloat(tipPayouts.toFixed(2)),
       makerPayouts: parseFloat(makerPayouts.toFixed(2)),
       discounts: parseFloat(discounts.toFixed(2)),
       totalOrders: rows.length,

@@ -8,7 +8,7 @@ import { useCartStore } from '@/store/cart'
 import { BackBar } from '@/components/layout/top-bar'
 import { Button } from '@/components/ui/button'
 import { formatPriceDollars } from '@/lib/utils'
-import { DELIVERY_FEE, PLATFORM_FEE_PCT } from '@/lib/constants'
+import { PLATFORM_FEE_PCT } from '@/lib/constants'
 
 export default function CartPage() {
   const router = useRouter()
@@ -18,7 +18,8 @@ export default function CartPage() {
   const { items, updateQuantity, clearCart, subtotal, makerName } = useCartStore()
   const total = mounted ? subtotal() : 0
   const platformFee = total * PLATFORM_FEE_PCT
-  const orderTotal = total + DELIVERY_FEE + platformFee
+  // Delivery fee varies by distance — shown accurately on the checkout page
+  const orderTotal = total + platformFee
 
   if (!mounted || items.length === 0) {
     return (
@@ -147,7 +148,7 @@ export default function CartPage() {
             </div>
             <div className="flex justify-between text-gray-600">
               <span>Delivery fee</span>
-              <span className="font-medium text-gray-800">{formatPriceDollars(DELIVERY_FEE)}</span>
+              <span className="text-xs text-gray-400 italic">Calculated at checkout</span>
             </div>
             <div className="flex justify-between text-gray-600">
               <span>Service fee</span>
@@ -159,7 +160,7 @@ export default function CartPage() {
               <span>{formatPriceDollars(orderTotal)}</span>
             </div>
           </div>
-          <p className="text-xs text-gray-400 mt-3">Tip is added at checkout · Final price may vary</p>
+          <p className="text-xs text-gray-400 mt-3">Delivery fee based on distance · Tip added at checkout</p>
         </div>
       </div>
 
@@ -171,7 +172,7 @@ export default function CartPage() {
           onClick={() => router.push('/checkout')}
           className="shadow-cta"
         >
-          Checkout · {formatPriceDollars(orderTotal)}
+          Checkout · {formatPriceDollars(total)} + delivery
         </Button>
       </div>
     </div>

@@ -61,19 +61,26 @@ export default function AddressesPage() {
   }, [adding])
 
   async function loadAddresses() {
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { setLoading(false); return }
-    setUserId(user.id)
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setLoading(false); return }
+      setUserId(user.id)
 
-    const [addrRes, profileRes] = await Promise.all([
-      supabase.from('addresses').select('*').eq('user_id', user.id).order('created_at'),
-      supabase.from('users').select('default_address_id').eq('id', user.id).single(),
-    ])
+      const [addrRes, profileRes] = await Promise.allSettled([
+        supabase.from('addresses').select('*').eq('user_id', user.id).order('created_at'),
+        supabase.from('users').select('default_address_id').eq('id', user.id).single(),
+      ])
 
-    setAddresses(addrRes.data || [])
-    setDefaultAddressId(profileRes.data?.default_address_id || null)
-    setLoading(false)
+      setAddresses(addrRes.status === 'fulfilled' ? (addrRes.value.data || []) : [])
+      setDefaultAddressId(
+        profileRes.status === 'fulfilled' ? (profileRes.value.data?.default_address_id || null) : null
+      )
+    } catch (e) {
+      console.error('[addresses] Load error:', e)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const resetForm = () => {

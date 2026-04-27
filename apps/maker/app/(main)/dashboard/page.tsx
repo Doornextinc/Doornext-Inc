@@ -47,7 +47,14 @@ interface DashboardStats {
   monthRevenue: number
 }
 
-const ACTIVE_STATUSES: OrderStatus[] = ['pending', 'confirmed', 'preparing', 'ready']
+// Orders stay "active" for the maker until a driver confirms pickup.
+// driver_assigned = driver accepted and is on the way to the kitchen.
+// arrived_at_maker = driver is at the door — hand over the food.
+// Once status reaches picked_up the order is in transit and leaves this view.
+const ACTIVE_STATUSES: OrderStatus[] = [
+  'pending', 'confirmed', 'preparing', 'ready',
+  'driver_assigned', 'arrived_at_maker',
+]
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 const fmt = (n: number) =>
@@ -217,7 +224,11 @@ export default function DashboardPage() {
   // ── Order buckets ─────────────────────────────────────────────────────────
   const pending   = activeOrders.filter((o) => o.status === 'pending')
   const preparing = activeOrders.filter((o) => ['confirmed', 'preparing'].includes(o.status))
-  const ready     = activeOrders.filter((o) => o.status === 'ready')
+  // "Ready / Pickup" bucket: food is ready AND includes driver-arrival states
+  // so orders never disappear before the driver has actually collected the food.
+  const ready     = activeOrders.filter((o) =>
+    ['ready', 'driver_assigned', 'arrived_at_maker'].includes(o.status)
+  )
   const initials  = (maker?.display_name?.[0] ?? 'D').toUpperCase()
 
   return (
@@ -422,11 +433,18 @@ export default function DashboardPage() {
         {ready.length > 0 && (
           <section>
             <h2 className="text-[11px] font-black text-emerald-500 uppercase tracking-widest mb-3">
-              Ready for Pickup ({ready.length})
+              Ready / Awaiting Pickup ({ready.length})
             </h2>
             <div className="space-y-2">
               {ready.map((order) => (
-                <OrderCard key={order.id} order={order} accent="green" onClick={() => router.push(`/orders/${order.id}`)} />
+                <OrderCard
+                  key={order.id} order={order} accent="green"
+                  onClick={() => router.push(`/orders/${order.id}`)}
+                  driverStatus={
+                    order.status === 'arrived_at_maker' ? 'arrived' :
+                    order.status === 'driver_assigned'  ? 'on_the_way' : null
+                  }
+                />
               ))}
             </div>
           </section>
@@ -491,13 +509,15 @@ export default function DashboardPage() {
 }
 
 // ─── Order card component ─────────────────────────────────────────────────────
-function OrderCard({ order, accent, onClick, onQuickAction, quickActionLabel, quickActionUpdating }: {
+function OrderCard({ order, accent, onClick, onQuickAction, quickActionLabel, quickActionUpdating, driverStatus }: {
   order: OrderWithItems
   accent: 'red' | 'amber' | 'green'
   onClick: () => void
   onQuickAction?: (e: React.MouseEvent) => void
   quickActionLabel?: string
   quickActionUpdating?: boolean
+  /** Non-null when a driver has been assigned — shows a pickup status banner */
+  driverStatus?: 'on_the_way' | 'arrived' | null
 }) {
   const itemsSummary = order.order_items
     .map((oi) => `${oi.quantity}× ${oi.menu_item?.name ?? 'Item'}`)
@@ -510,6 +530,20 @@ function OrderCard({ order, accent, onClick, onQuickAction, quickActionLabel, qu
       className="bg-white rounded-2xl border border-gray-100 overflow-hidden"
       style={{ borderLeft: `3px solid ${borderColor}` }}
     >
+      {/* Driver arrival banner — shown when driver is on the way or at the door */}
+      {driverStatus === 'arrived' && (
+        <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 border-b border-emerald-100">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
+          <span className="text-xs font-black text-emerald-700">🛵 Driver is here — ready to hand over</span>
+        </div>
+      )}
+      {driverStatus === 'on_the_way' && (
+        <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 border-b border-blue-100">
+          <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse flex-shrink-0" />
+          <span className="text-xs font-bold text-blue-700">🛵 Driver assigned — on the way to pick up</span>
+        </div>
+      )}
+
       <button
         onClick={onClick}
         className="w-full p-4 text-left active:bg-orange-50/50 transition-colors flex items-center gap-3"

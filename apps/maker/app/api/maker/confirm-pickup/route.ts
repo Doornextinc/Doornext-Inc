@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
+import { notifyUser } from '@doornext/shared/notify'
 
 const MAX_PIN_ATTEMPTS = 5
 
@@ -96,8 +97,8 @@ export async function POST(req: NextRequest) {
     const remaining = MAX_PIN_ATTEMPTS - newAttempts
     if (remaining <= 0) {
       // Flag for support
-      await admin.from('notifications').insert({
-        user_id: order.customer_id,
+      await notifyUser(admin, {
+        userId: order.customer_id,
         type: 'pickup_pin_locked',
         title: 'Pickup Issue — Support Notified',
         body: `Order #${orderId.slice(-6).toUpperCase()} pickup could not be confirmed after ${MAX_PIN_ATTEMPTS} attempts. Our support team has been alerted.`,
@@ -129,12 +130,12 @@ export async function POST(req: NextRequest) {
     })
     .eq('id', orderId)
 
-  // Notify the customer that the order is on its way
+  // Notify the customer that the order is on its way (DB + push)
   if (order.customer_id) {
-    await admin.from('notifications').insert({
-      user_id: order.customer_id,
+    await notifyUser(admin, {
+      userId: order.customer_id,
       type: 'order_picked_up',
-      title: 'Order Picked Up!',
+      title: '🛵 Order Picked Up!',
       body: `Your order #${orderId.slice(-6).toUpperCase()} has been picked up and is heading your way.`,
       data: { order_id: orderId },
     })

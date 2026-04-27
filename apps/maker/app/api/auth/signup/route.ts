@@ -11,7 +11,7 @@ const adminClient = createClient(
 export async function POST(req: NextRequest) {
   // Rate limit: 5 signup attempts per IP per hour
   const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown'
-  if (!checkRateLimit(`maker-signup:${ip}`, 5, 3600)) {
+  if (!await checkRateLimit(`maker-signup:${ip}`, 5, 3600)) {
     return NextResponse.json({ error: 'Too many signup attempts. Please try again later.' }, { status: 429 })
   }
 

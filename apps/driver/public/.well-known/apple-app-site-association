@@ -1,0 +1,17 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appIDs": ["TEAMID.com.doornext.driver"],
+        "components": [
+          { "/": "/orders/*", "comment": "Order detail deep links" },
+          { "/": "/reset-password", "comment": "Auth deep links" }
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": ["TEAMID.com.doornext.driver"]
+  }
+}

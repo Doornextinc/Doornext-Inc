@@ -3,11 +3,20 @@ import { createServerClient } from '@supabase/ssr'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import Stripe from 'stripe'
+import * as Sentry from '@sentry/nextjs'
+import { checkRateLimit } from '@/lib/rate-limit'
+import { notifyUser } from '@/lib/push-server'
 
 // Cancellation is only allowed before the maker starts preparing
 const CANCELLABLE_STATUSES = ['pending', 'confirmed']
 
 export async function POST(req: NextRequest) {
+  // Rate limit: 10 cancellations per minute per IP
+  const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown'
+  if (!await checkRateLimit(`cancel-order:${ip}`, 10, 60)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+  }
+
   const cookieStore = await cookies()
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -52,24 +61,24 @@ export async function POST(req: NextRequest) {
       .update({ status: 'cancelled', updated_at: new Date().toISOString() })
       .eq('id', orderId)
 
-    // Notify customer
-    await admin.from('notifications').insert({
-      user_id: user.id,
+    // Notify customer (DB + push)
+    await notifyUser(admin, {
+      userId: user.id,
       type: 'order_cancelled',
       title: 'Order Cancelled',
       body: `Your order #${shortId} has been cancelled. No charge was made.`,
       data: { order_id: orderId },
     })
 
-    // Notify maker so they don't start preparing
+    // Notify maker so they don't start preparing (DB + push)
     const { data: maker } = await admin
       .from('food_makers')
       .select('user_id')
       .eq('id', order.maker_id)
       .single()
-    if (maker) {
-      await admin.from('notifications').insert({
-        user_id: maker.user_id,
+    if (maker?.user_id) {
+      notifyUser(admin, {
+        userId: maker.user_id,
         type: 'order_cancelled',
         title: 'Order Cancelled by Customer',
         body: `Order #${shortId} has been cancelled by the customer.`,
@@ -102,24 +111,24 @@ export async function POST(req: NextRequest) {
       .update({ status: 'cancelled', updated_at: new Date().toISOString() })
       .eq('id', orderId)
 
-    // Notify customer
-    await admin.from('notifications').insert({
-      user_id: user.id,
+    // Notify customer (DB + push)
+    await notifyUser(admin, {
+      userId: user.id,
       type: 'order_cancelled',
       title: 'Order Cancelled — Full Refund',
       body: `Your order #${shortId} has been cancelled. Your full refund of $${order.total.toFixed(2)} will appear in 3–5 business days.`,
       data: { order_id: orderId },
     })
 
-    // Notify maker
+    // Notify maker (DB + push)
     const { data: maker } = await admin
       .from('food_makers')
       .select('user_id')
       .eq('id', order.maker_id)
       .single()
-    if (maker) {
-      await admin.from('notifications').insert({
-        user_id: maker.user_id,
+    if (maker?.user_id) {
+      notifyUser(admin, {
+        userId: maker.user_id,
         type: 'order_cancelled',
         title: 'Order Cancelled by Customer',
         body: `Order #${shortId} has been cancelled by the customer before preparation.`,
@@ -129,7 +138,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (err) {
-    console.error('Refund error:', err)
+    Sentry.captureException(err, { extra: { orderId, userId: user.id } })
     return NextResponse.json({ error: 'Refund failed. Please contact support.' }, { status: 500 })
   }
 }

@@ -3,8 +3,17 @@ import { createServerClient } from '@supabase/ssr'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { StreamChat } from 'stream-chat'
 import { cookies } from 'next/headers'
+import { notifyUser } from '@doornext/shared/notify'
+import { checkRateLimit } from '@/lib/rate-limit'
+import * as Sentry from '@sentry/nextjs'
 
 export async function POST(req: NextRequest) {
+  // Rate limit: 20 accept attempts per IP per minute
+  const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown'
+  if (!await checkRateLimit(`accept-order:${ip}`, 20, 60)) {
+    return NextResponse.json({ error: 'Too many requests. Please try again shortly.' }, { status: 429 })
+  }
+
   const cookieStore = await cookies()
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -53,6 +62,7 @@ export async function POST(req: NextRequest) {
     .is('nexter_id', null)
 
   if (error) {
+    Sentry.captureException(new Error(`accept-order update error: ${error.message}`))
     console.error('accept-order update error:', error)
     return NextResponse.json(
       { error: 'Failed to accept order. Please try again.' },
@@ -70,19 +80,46 @@ export async function POST(req: NextRequest) {
   // Fetch the accepted order for notification data
   const { data: order } = await admin
     .from('orders')
-    .select('customer_id')
+    .select('customer_id, maker_id')
     .eq('id', orderId)
     .single()
 
+  const shortId = orderId.slice(-6).toUpperCase()
+
   if (order?.customer_id) {
-    await admin.from('notifications').insert({
-      user_id: order.customer_id,
+    await notifyUser(admin, {
+      userId: order.customer_id,
       type: 'order_driver_assigned',
-      title: 'Driver Assigned!',
-      body: `A driver has accepted your order #${orderId.slice(-6).toUpperCase()} and is heading to the restaurant.`,
+      title: 'Driver Assigned! 🛵',
+      body: `A driver has accepted your order #${shortId} and is heading to the restaurant.`,
       data: { order_id: orderId },
     })
   }
+
+  // Notify the maker that a driver is on the way to pick up the order
+  if (order?.maker_id) {
+    const { data: makerProfile } = await admin
+      .from('food_makers')
+      .select('user_id')
+      .eq('id', order.maker_id)
+      .single()
+    if (makerProfile?.user_id) {
+      notifyUser(admin, {
+        userId: makerProfile.user_id,
+        type: 'driver_heading_to_maker',
+        title: '🛵 Driver is on the way!',
+        body: `A driver has accepted order #${shortId} and is heading to your kitchen.`,
+        data: { order_id: orderId },
+      })
+    }
+  }
+
+  // ── Reliability tracking ──────────────────────────────────────────────────
+  // Atomically increment total_accepted and recompute acceptance_rate.
+  // Fire-and-forget — stat failure must never block the accept response.
+  admin
+    .rpc('increment_driver_accepted', { driver_id: user.id })
+    .catch(() => {}) // non-fatal
 
   // Add driver to the order's Stream Chat channel so all three parties can communicate
   const streamApiKey = process.env.NEXT_PUBLIC_STREAM_API_KEY

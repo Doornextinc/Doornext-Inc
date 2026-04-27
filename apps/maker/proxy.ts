@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ''
 
@@ -30,25 +30,40 @@ export async function middleware(request: NextRequest) {
     },
   })
 
-  const { data: { user } } = await supabase.auth.getUser()
   const pathname = request.nextUrl.pathname
-  const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/welcome') || pathname.startsWith('/signup')
+  const isAuthRoute =
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/welcome') ||
+    pathname.startsWith('/signup') ||
+    pathname.startsWith('/forgot-password') ||
+    pathname.startsWith('/reset-password') ||
+    pathname.startsWith('/auth/')
+  const isApi = pathname.startsWith('/api')
 
-  if (!user && !isAuthRoute && !pathname.startsWith('/api')) {
-    return NextResponse.redirect(new URL('/welcome', request.url))
+  // Get user — fail gracefully if Supabase is unreachable
+  let user = null
+  try {
+    const { data } = await supabase.auth.getUser()
+    user = data.user
+  } catch {
+    // Supabase unreachable — treat as logged out
   }
 
-  // If authenticated, verify they have maker role
-  if (user && !isAuthRoute && !pathname.startsWith('/api')) {
-    const { data: profile } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', user.id)
-      .single()
+  if (!user && !isAuthRoute && !isApi) {
+    return NextResponse.redirect(new URL('/login', request.url))
+  }
 
-    if (profile?.role !== 'maker') {
-      await supabase.auth.signOut()
-      return NextResponse.redirect(new URL('/login?error=not_maker', request.url))
+  // Verify maker role — fail open if DB unreachable
+  if (user && !isAuthRoute && !isApi) {
+    try {
+      const { data: profile } = await supabase
+        .from('users').select('role').eq('id', user.id).single()
+      if (profile?.role !== 'maker') {
+        await supabase.auth.signOut()
+        return NextResponse.redirect(new URL('/login?error=not_maker', request.url))
+      }
+    } catch {
+      // DB unreachable — allow through
     }
   }
 

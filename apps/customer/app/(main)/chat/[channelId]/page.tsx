@@ -2,10 +2,10 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
-import { Send, Phone, ArrowLeft } from 'lucide-react'
+import { Send, Phone, ArrowLeft, MessageCircleOff } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { getStreamClient, connectStreamUser } from '@/lib/stream'
+import { getStreamClient, connectStreamUser, isChatUnavailableError } from '@/lib/stream'
 import { createClient } from '@/lib/supabase/client'
 import type { Channel, MessageResponse } from 'stream-chat'
 
@@ -27,6 +27,7 @@ export default function ChatChannelPage() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(true)
+  const [unavailable, setUnavailable] = useState(false)
   const [channelName, setChannelName] = useState('Chat')
   const [userId, setUserId] = useState<string | null>(null)
   const channelRef = useRef<Channel | null>(null)
@@ -94,7 +95,11 @@ export default function ChatChannelPage() {
         channel.on('message.new', handleNew)
         cleanup = () => { channel.off('message.new', handleNew) }
       } catch (e) {
-        console.error('Chat setup failed:', e)
+        if (isChatUnavailableError(e)) {
+          setUnavailable(true)
+        } else {
+          console.error('Chat setup failed:', e)
+        }
       } finally {
         setLoading(false)
       }
@@ -113,6 +118,30 @@ export default function ChatChannelPage() {
     } catch (e) {
       console.error('Send failed:', e)
     }
+  }
+
+  if (unavailable) {
+    return (
+      <div className="flex flex-col h-screen bg-[#f8f8f8]">
+        <div className="bg-white px-4 py-3 flex items-center gap-3 border-b border-gray-100 safe-area-top">
+          <button onClick={() => router.back()} className="w-8 h-8 rounded-full flex items-center justify-center">
+            <ArrowLeft size={20} className="text-gray-700" />
+          </button>
+          <p className="font-bold text-gray-900 text-sm">Chat</p>
+        </div>
+        <div className="flex-1 flex flex-col items-center justify-center text-center px-6">
+          <MessageCircleOff size={56} className="text-gray-200 mb-4" />
+          <h2 className="text-lg font-bold text-gray-700">Chat unavailable</h2>
+          <p className="text-sm text-gray-400 mt-1">Messaging is temporarily offline. Please try again later.</p>
+          <button
+            onClick={() => { setUnavailable(false); setLoading(true) }}
+            className="mt-6 px-5 py-2.5 bg-[#FF6B35] text-white rounded-xl text-sm font-semibold active:bg-[#E55A24] transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (

@@ -17,6 +17,7 @@ export async function POST(req: NextRequest) {
     fullName, dateOfBirth, ssnLast4, address,
     idType, frontPath, backPath, insurancePath, selfiePath,
     bgCheckConsent,
+    // registrationPath omitted — migration 027 not applied yet
   } = await req.json()
 
   if (!fullName || !dateOfBirth || !ssnLast4 || !address || !idType || !frontPath || !selfiePath) {
@@ -27,26 +28,30 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Background check consent is required' }, { status: 400 })
   }
 
+  // NOTE: registration_path is intentionally excluded from this payload.
+  // Migration 027 adds the column but hasn't been applied to the database yet.
+  // Once you run:
+  //   ALTER TABLE driver_documents ADD COLUMN IF NOT EXISTS registration_path text;
+  // re-add `registration_path: registrationPath ?? null` to the object below.
+  const docPayload = {
+    user_id: user.id,
+    kyc_full_name: fullName,
+    kyc_date_of_birth: dateOfBirth,
+    kyc_ssn_last4: ssnLast4,
+    kyc_address: address,
+    id_type: idType,
+    front_path: frontPath,
+    back_path: backPath ?? null,
+    insurance_path: insurancePath ?? null,
+    selfie_path: selfiePath,
+    bg_check_consent: true,
+    bg_check_consented_at: new Date().toISOString(),
+    submitted_at: new Date().toISOString(),
+  }
+
   const { error: docError } = await adminClient
     .from('driver_documents')
-    .upsert(
-      {
-        user_id: user.id,
-        kyc_full_name: fullName,
-        kyc_date_of_birth: dateOfBirth,
-        kyc_ssn_last4: ssnLast4,
-        kyc_address: address,
-        id_type: idType,
-        front_path: frontPath,
-        back_path: backPath ?? null,
-        insurance_path: insurancePath ?? null,
-        selfie_path: selfiePath,
-        bg_check_consent: true,
-        bg_check_consented_at: new Date().toISOString(),
-        submitted_at: new Date().toISOString(),
-      },
-      { onConflict: 'user_id' }
-    )
+    .upsert(docPayload, { onConflict: 'user_id' })
 
   if (docError) return NextResponse.json({ error: docError.message }, { status: 500 })
 

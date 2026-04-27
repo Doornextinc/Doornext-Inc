@@ -4,9 +4,23 @@ import { cookies } from 'next/headers'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { PLATFORM_FEE_PCT } from '@/lib/constants'
 import { calculatePricing } from '@doornext/shared/pricing'
+import { notifyUser } from '@/lib/push-server'
 import * as Sentry from '@sentry/nextjs'
+import { checkRateLimit } from '@/lib/rate-limit'
+
+/** Parse a DB settings string to a float, falling back to `fallback` on NaN/Infinity. */
+function safeFloat(val: string | undefined, fallback: number): number {
+  const n = parseFloat(val ?? '')
+  return isFinite(n) && n >= 0 ? n : fallback
+}
 
 export async function POST(req: NextRequest) {
+  // Rate limit: 10 cash checkout attempts per IP per minute
+  const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown'
+  if (!await checkRateLimit(`checkout-cash:${ip}`, 10, 60)) {
+    return NextResponse.json({ error: 'Too many requests. Please try again shortly.' }, { status: 429 })
+  }
+
   try {
     const cookieStore = await cookies()
     const supabase = createServerClient(
@@ -25,13 +39,16 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await req.json()
-    const { items, maker_id, delivery_address, distance_miles, is_priority } = body
+    const { items, maker_id, delivery_address, distance_miles, is_priority, dropoff_note } = body
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ error: 'No items provided' }, { status: 400 })
     }
     if (!maker_id) {
       return NextResponse.json({ error: 'maker_id required' }, { status: 400 })
+    }
+    if (typeof distance_miles !== 'number' || distance_miles < 0) {
+      return NextResponse.json({ error: 'distance_miles is required and must be a non-negative number' }, { status: 400 })
     }
 
     const serviceSupabase = createServiceClient(
@@ -71,6 +88,7 @@ export async function POST(req: NextRequest) {
       serviceSupabase.from('settings').select('key, value').in('key', [
         'dynamic_base_pay', 'dynamic_per_mile', 'dynamic_per_min_wait',
         'use_dynamic_pricing', 'priority_driver_bonus', 'service_fee_pct',
+        'platform_commission_pct',
       ]),
     ])
 
@@ -78,7 +96,7 @@ export async function POST(req: NextRequest) {
     for (const s of settingsRes.data ?? []) settingsMap[s.key] = s.value
 
     const pricing = calculatePricing({
-      distanceMiles:        distance_miles ?? 3,
+      distanceMiles:        distance_miles,
       subtotal,
       tip:                  0, // no tip for cash orders
       isPriority:           is_priority ?? false,
@@ -87,12 +105,12 @@ export async function POST(req: NextRequest) {
       smallOrderFees:       smallOrderFeesRes.data ?? [],
       activeSurgeConditions: surgeRes.data ?? [],
       formula: {
-        base_pay:              parseFloat(settingsMap.dynamic_base_pay     ?? '2.50'),
-        per_mile:              parseFloat(settingsMap.dynamic_per_mile     ?? '0.80'),
-        per_min_wait:          parseFloat(settingsMap.dynamic_per_min_wait ?? '0.30'),
+        base_pay:              safeFloat(settingsMap.dynamic_base_pay,      2.50),
+        per_mile:              safeFloat(settingsMap.dynamic_per_mile,      0.80),
+        per_min_wait:          safeFloat(settingsMap.dynamic_per_min_wait,  0.30),
         use_dynamic:           settingsMap.use_dynamic_pricing === 'true',
-        service_fee_pct:       parseFloat(settingsMap.service_fee_pct      ?? '9'),
-        priority_driver_bonus: parseFloat(settingsMap.priority_driver_bonus ?? '2.50'),
+        service_fee_pct:       safeFloat(settingsMap.service_fee_pct,       9),
+        priority_driver_bonus: safeFloat(settingsMap.priority_driver_bonus, 2.50),
       },
     })
 
@@ -116,8 +134,9 @@ export async function POST(req: NextRequest) {
         total:            Math.round(total * 100) / 100,
         is_priority:      is_priority ?? false,
         driver_payout:    pricing.driverTotal,
-        maker_payout:     Math.round(subtotal * 0.85 * 100) / 100,
+        maker_payout:     Math.round(subtotal * (1 - safeFloat(settingsMap.platform_commission_pct, 5) / 100) * 100) / 100,
         delivery_address: delivery_address ?? { street: 'N/A', city: 'N/A', state: 'NY', zip: '00000' },
+        dropoff_note:     typeof dropoff_note === 'string' ? dropoff_note.trim() : null,
         stripe_payment_intent_id: null,
       })
       .select('id')
@@ -137,6 +156,23 @@ export async function POST(req: NextRequest) {
       customization_notes: item.notes ?? null,
     }))
     await serviceSupabase.from('order_items').insert(orderItems)
+
+    // Notify maker of new cash order (fire-and-forget)
+    const { data: makerProfile } = await serviceSupabase
+      .from('food_makers')
+      .select('user_id')
+      .eq('id', maker_id)
+      .single()
+    if (makerProfile?.user_id) {
+      const shortId = order.id.slice(-6).toUpperCase()
+      notifyUser(serviceSupabase, {
+        userId: makerProfile.user_id,
+        type: 'new_order',
+        title: '🔔 New Cash Order!',
+        body: `Order #${shortId} — cash on delivery. Tap to review.`,
+        data: { order_id: order.id },
+      }).catch((err) => Sentry.captureException(err, { extra: { orderId: order.id, context: 'checkout-cash-notify' } }))
+    }
 
     return NextResponse.json({
       orderId:         order.id,

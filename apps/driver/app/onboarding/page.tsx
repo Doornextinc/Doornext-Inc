@@ -77,42 +77,82 @@ export default function OnboardingPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const insuranceInputRef = useRef<HTMLInputElement>(null)
+  const frontInputRef = useRef<HTMLInputElement>(null)
+  const backInputRef = useRef<HTMLInputElement>(null)
+  const registrationInputRef = useRef<HTMLInputElement>(null)
+  const selfieInputRef = useRef<HTMLInputElement>(null)
   const addressInputRef = useRef<HTMLInputElement>(null)
+
+  // Per-step capture mode: camera (live) vs file upload
+  const [frontScanMode, setFrontScanMode] = useState<'camera' | 'upload'>('camera')
+  const [backScanMode, setBackScanMode] = useState<'camera' | 'upload'>('camera')
+  const [selfieScanMode, setSelfieScanMode] = useState<'camera' | 'upload'>('camera')
+
+  // Vehicle registration (optional — shown for car/motorbike alongside insurance)
+  const [registrationFile, setRegistrationFile] = useState<File | null>(null)
+  const [registrationPreview, setRegistrationPreview] = useState('')
 
   const needsInsurance = NEEDS_INSURANCE(vehicleType)
 
-  useEffect(() => {
-    async function check() {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/welcome'); return }
+  const [checking, setChecking] = useState(false)
 
-      if (user.user_metadata?.full_name) {
-        setPersonalInfo(prev => ({ ...prev, fullName: user.user_metadata.full_name }))
-      }
+  const checkStatus = useCallback(async () => {
+    setChecking(true)
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { router.push('/welcome'); setChecking(false); return }
 
-      const { data: profile } = await supabase
-        .from('driver_profiles')
-        .select('kyc_status, vehicle_type')
-        .eq('id', user.id)
-        .single()
-
-      if (profile?.vehicle_type) setVehicleType(profile.vehicle_type)
-
-      if (profile?.kyc_status === 'approved') { router.push('/available'); return }
-      if (profile?.kyc_status === 'pending_review') { setStep('pending'); return }
-      if (profile?.kyc_status === 'rejected') {
-        const { data: doc } = await supabase.from('driver_documents').select('review_notes').eq('user_id', user.id).single()
-        setReviewNotes(doc?.review_notes ?? null)
-        setStep('rejected'); return
-      }
-
-      setStep('intro')
+    if (user.user_metadata?.full_name) {
+      setPersonalInfo(prev => ({ ...prev, fullName: user.user_metadata.full_name }))
     }
-    check()
+
+    const { data: profile } = await supabase
+      .from('driver_profiles')
+      .select('kyc_status, vehicle_type')
+      .eq('id', user.id)
+      .single()
+
+    if (profile?.vehicle_type) setVehicleType(profile.vehicle_type)
+
+    if (profile?.kyc_status === 'approved') { router.push('/'); setChecking(false); return }
+    if (profile?.kyc_status === 'pending_review') { setStep('pending'); setChecking(false); return }
+    if (profile?.kyc_status === 'rejected') {
+      const { data: doc } = await supabase.from('driver_documents').select('review_notes').eq('user_id', user.id).single()
+      setReviewNotes(doc?.review_notes ?? null)
+      setStep('rejected'); setChecking(false); return
+    }
+
+    setStep('intro')
+    setChecking(false)
   }, [router])
 
+  useEffect(() => {
+    checkStatus()
+  }, [checkStatus])
+
+  // Poll every 15s while on the pending screen so approval is picked up automatically
+  useEffect(() => {
+    if (step !== 'pending') return
+    const interval = setInterval(() => { checkStatus() }, 15000)
+    return () => clearInterval(interval)
+  }, [step, checkStatus])
+
   useEffect(() => () => { streamRef.current?.getTracks().forEach(t => t.stop()) }, [])
+
+  // Start the camera AFTER React has re-rendered for the new step so that
+  // videoRef.current already points to the mounted <video> element.
+  // The mode-toggle buttons still call openCamera() directly (DOM is already rendered).
+  useEffect(() => {
+    if (step === 'scan-front' && frontScanMode === 'camera' && !frontPreview) {
+      openCamera('environment')
+    } else if (step === 'scan-back' && backScanMode === 'camera' && !backPreview) {
+      openCamera('environment')
+    } else if (step === 'scan-selfie' && selfieScanMode === 'camera' && !selfiePreview) {
+      openCamera('user')
+    }
+    // openCamera is stable (useCallback); only re-run when the step actually changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step])
 
   // Attach Google Places autocomplete when on the personal-info step
   useEffect(() => {
@@ -150,14 +190,44 @@ export default function OnboardingPage() {
   }, [])
 
   const openCamera = useCallback(async (facing: 'user' | 'environment') => {
-    stopCamera(); setError(null)
+    stopCamera()
+    setError(null)
+
+    // Selfie uses front camera — no resolution constraints; many front cameras
+    // don't advertise 1080p and some browsers reject the constraint entirely.
+    const constraints: MediaStreamConstraints = facing === 'user'
+      ? { video: { facingMode: 'user' } }
+      : { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } } }
+
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facing, width: { ideal: 1920 }, height: { ideal: 1080 } } })
+      const stream = await navigator.mediaDevices.getUserMedia(constraints)
       streamRef.current = stream
-      if (videoRef.current) { videoRef.current.srcObject = stream; await videoRef.current.play() }
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+        await videoRef.current.play()
+      }
       setCameraActive(true)
-    } catch {
-      setError('Camera access denied. Please allow camera permissions and try again.')
+    } catch (err) {
+      const e = err as DOMException
+      if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
+        setError("Camera access denied. Tap the lock icon in your browser address bar, set Camera to Allow, then tap Try Again.")
+      } else if (e.name === 'NotFoundError' || e.name === 'DevicesNotFoundError') {
+        setError('No camera found on this device. Use the upload option instead.')
+      } else if (e.name === 'NotReadableError' || e.name === 'TrackStartError') {
+        setError('Camera is in use by another app. Close other camera apps and tap Try Again.')
+      } else if (e.name === 'OverconstrainedError') {
+        // Retry without any constraints as last-resort fallback
+        try {
+          const fallback = await navigator.mediaDevices.getUserMedia({ video: true })
+          streamRef.current = fallback
+          if (videoRef.current) { videoRef.current.srcObject = fallback; await videoRef.current.play() }
+          setCameraActive(true)
+        } catch {
+          setError('Could not start camera. Use the upload option instead.')
+        }
+      } else {
+        setError(`Could not start camera (${e.name || 'unknown error'}). Tap Try Again or use the upload option.`)
+      }
     }
   }, [stopCamera])
 
@@ -182,12 +252,19 @@ export default function OnboardingPage() {
   const retake = (target: 'front' | 'back' | 'selfie') => {
     if (target === 'front') { setFrontFile(null); setFrontPreview(''); openCamera('environment') }
     else if (target === 'back') { setBackFile(null); setBackPreview(''); openCamera('environment') }
-    else { setSelfieFile(null); setSelfiePreview(''); openCamera('user') }
+    else {
+      setSelfieFile(null); setSelfiePreview('')
+      if (selfieScanMode === 'camera') openCamera('user')
+      else selfieInputRef.current?.click()
+    }
   }
 
-  const goToFront = () => { setError(null); setStep('scan-front'); openCamera('environment') }
-  const goToBack = () => { setError(null); setStep('scan-back'); openCamera('environment') }
-  const goToSelfie = () => { setError(null); setStep('scan-selfie'); openCamera('user') }
+  // Do NOT call openCamera() directly here — videoRef.current won't be populated
+  // until React re-renders for the new step. The useEffect below handles startup
+  // after the DOM has updated.
+  const goToFront  = () => { stopCamera(); setError(null); setFrontScanMode('camera');  setStep('scan-front') }
+  const goToBack   = () => { stopCamera(); setError(null); setBackScanMode('camera');   setStep('scan-back') }
+  const goToSelfie = () => { stopCamera(); setError(null); setSelfieScanMode('camera'); setStep('scan-selfie') }
   const goToInsurance = () => { setError(null); setStep('insurance') }
   const goToBgCheck = () => { setError(null); setStep('bg-check') }
 
@@ -227,6 +304,38 @@ export default function OnboardingPage() {
     setInsurancePreview(URL.createObjectURL(file))
   }
 
+  const handleFrontFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    stopCamera()
+    setFrontFile(file)
+    setFrontPreview(URL.createObjectURL(file))
+  }
+
+  const handleBackFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    stopCamera()
+    setBackFile(file)
+    setBackPreview(URL.createObjectURL(file))
+  }
+
+  const handleRegistrationFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setRegistrationFile(file)
+    setRegistrationPreview(URL.createObjectURL(file))
+  }
+
+  const handleSelfieFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    stopCamera()
+    setSelfieFile(file)
+    setSelfiePreview(URL.createObjectURL(file))
+    setError(null)
+  }
+
   const handleInsuranceNext = () => {
     if (!insuranceFile) { setError('Please upload your insurance document.'); return }
     setError(null); goToBgCheck()
@@ -251,12 +360,13 @@ export default function OnboardingPage() {
       const frontPath = await uploadFile(frontFile!, 'front')
       const backPath = backFile ? await uploadFile(backFile, 'back') : null
       const insurancePath = insuranceFile ? await uploadFile(insuranceFile, 'insurance') : null
+      const registrationPath = registrationFile ? await uploadFile(registrationFile, 'registration') : null
       const selfiePath = await uploadFile(selfieFile!, 'selfie')
 
       const res = await fetch('/api/driver/submit-kyc', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...personalInfo, idType, frontPath, backPath, insurancePath, selfiePath, bgCheckConsent }),
+        body: JSON.stringify({ ...personalInfo, idType, frontPath, backPath, insurancePath, registrationPath, selfiePath, bgCheckConsent }),
       })
 
       if (!res.ok) { const { error: apiError } = await res.json(); throw new Error(apiError ?? 'Submission failed') }
@@ -298,7 +408,15 @@ export default function OnboardingPage() {
             </div>
           ))}
         </div>
-        <p className="text-xs text-slate-600">We'll notify you once your account is approved.</p>
+        <button
+          onClick={() => checkStatus()}
+          disabled={checking}
+          className="flex items-center gap-2 mx-auto px-5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-700 transition-colors disabled:opacity-50"
+        >
+          <RefreshCw size={14} className={checking ? 'animate-spin' : ''} />
+          {checking ? 'Checking…' : 'Check Status'}
+        </button>
+        <p className="text-xs text-slate-600">Automatically checks every 15 seconds.</p>
       </div>
     )
   }
@@ -332,6 +450,9 @@ export default function OnboardingPage() {
   return (
     <div className="space-y-6">
       <canvas ref={canvasRef} className="hidden" />
+      <input ref={frontInputRef} type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={handleFrontFileChange} className="hidden" />
+      <input ref={backInputRef} type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={handleBackFileChange} className="hidden" />
+      <input ref={registrationInputRef} type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={handleRegistrationFileChange} className="hidden" />
 
       {showProgress && (
         <div className="space-y-2">
@@ -368,8 +489,10 @@ export default function OnboardingPage() {
           <div className="space-y-3">
             {[
               { icon: '📋', title: 'Personal Information', desc: 'Name, date of birth, SSN last 4, address' },
-              { icon: '🪪', title: 'Government-Issued ID', desc: "Driver's license or passport" },
-              ...(needsInsurance ? [{ icon: '📄', title: 'Insurance Document', desc: 'Current vehicle insurance card required' }] : []),
+              { icon: '🪪', title: 'Government-Issued ID', desc: "Driver's license or passport — scan with camera or upload a file" },
+              ...(needsInsurance ? [
+                { icon: '📄', title: 'Insurance Document', desc: 'Current vehicle insurance card — upload photo or PDF' },
+              ] : []),
               { icon: '🔍', title: 'Background Check', desc: 'Consent required for identity verification' },
               { icon: '🤳', title: 'Selfie Match', desc: "Quick photo to confirm it's you" },
             ].map((item, i) => (
@@ -387,6 +510,12 @@ export default function OnboardingPage() {
           </div>
           <button onClick={() => setStep('personal-info')} className="w-full bg-[#FF6B35] text-white rounded-2xl py-4 font-black text-base shadow-lg shadow-[#FF6B35]/20 flex items-center justify-center gap-2">
             Start Verification <ChevronRight size={18} />
+          </button>
+          <button
+            onClick={() => router.push('/')}
+            className="w-full text-slate-500 text-sm py-3 font-semibold hover:text-slate-300 transition-colors"
+          >
+            Skip for now — continue to dashboard
           </button>
         </div>
       )}
@@ -465,8 +594,47 @@ export default function OnboardingPage() {
               <p className="text-sm text-slate-400">{selectedId?.label} · {selectedId?.twoSides ? 'Step 1 of 2' : 'Single side'}</p>
             </div>
           </div>
-          {error && <div className="flex items-start gap-2 p-3 bg-red-900/20 border border-red-700/30 rounded-xl text-sm text-red-400"><AlertCircle size={15} className="mt-0.5 flex-shrink-0" />{error}</div>}
-          {!frontPreview ? (
+
+          {/* Mode toggle: Camera | Upload */}
+          {!frontPreview && (
+            <div className="flex gap-1 bg-slate-800 rounded-xl p-1 border border-slate-700/40">
+              {(['camera', 'upload'] as const).map(mode => (
+                <button
+                  key={mode}
+                  onClick={() => {
+                    setFrontScanMode(mode)
+                    if (mode === 'camera') openCamera('environment')
+                    else stopCamera()
+                  }}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-colors ${
+                    frontScanMode === mode ? 'bg-[#FF6B35] text-white' : 'text-slate-400'
+                  }`}
+                >
+                  {mode === 'camera' ? <><Eye size={12} /> Use Camera</> : <><Upload size={12} /> Upload File</>}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {error && (
+            <div className="space-y-2">
+              <div className="flex items-start gap-2 p-3 bg-red-900/20 border border-red-700/30 rounded-xl text-sm text-red-400">
+                <AlertCircle size={15} className="mt-0.5 flex-shrink-0" />
+                <span>{error}</span>
+              </div>
+              {frontScanMode === 'camera' && (
+                <button
+                  onClick={() => openCamera('environment')}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-slate-700 bg-slate-800 text-slate-300 text-sm font-semibold active:scale-[0.98] transition-all"
+                >
+                  <RefreshCw size={14} /> Try Again
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Camera mode */}
+          {frontScanMode === 'camera' && !frontPreview && (
             <div className="relative rounded-2xl overflow-hidden bg-black aspect-[3/2] border border-slate-700/40">
               <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
               <div className="absolute inset-0 pointer-events-none">
@@ -481,15 +649,54 @@ export default function OnboardingPage() {
                 </div>
               )}
             </div>
-          ) : (
-            <div className="relative rounded-2xl overflow-hidden aspect-[3/2] border border-slate-700/40">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={frontPreview} alt="Front of ID" className="w-full h-full object-cover" />
+          )}
+
+          {/* Upload mode */}
+          {frontScanMode === 'upload' && !frontPreview && (
+            <button
+              onClick={() => frontInputRef.current?.click()}
+              className="w-full aspect-[3/2] rounded-2xl border-2 border-dashed border-slate-600 hover:border-[#FF6B35] bg-slate-800/40 hover:bg-[#FF6B35]/5 transition-all flex flex-col items-center justify-center gap-3"
+            >
+              <div className="w-14 h-14 rounded-2xl bg-slate-700 flex items-center justify-center">
+                <Upload size={24} className="text-slate-400" />
+              </div>
+              <div className="text-center">
+                <p className="font-bold text-white text-sm">Upload Front of {selectedId?.label ?? 'ID'}</p>
+                <p className="text-xs text-slate-500 mt-1">Photo or PDF · JPEG, PNG, WebP</p>
+              </div>
+            </button>
+          )}
+
+          {/* Preview (shared between camera and upload) */}
+          {frontPreview && (
+            <div className="relative rounded-2xl overflow-hidden aspect-[3/2] border border-slate-700/40 bg-slate-900">
+              {frontFile?.type === 'application/pdf' ? (
+                <div className="w-full h-full flex flex-col items-center justify-center gap-3">
+                  <FileText size={40} className="text-[#FF6B35]" />
+                  <p className="font-bold text-white text-sm">{frontFile.name}</p>
+                  <p className="text-xs text-slate-500">PDF ready</p>
+                </div>
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={frontPreview} alt="Front of ID" className="w-full h-full object-cover" />
+              )}
               <div className="absolute bottom-3 left-3 bg-[#FF6B35] text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5"><CheckCircle size={13} /> Captured</div>
             </div>
           )}
+
           <div className="flex gap-3">
-            {frontPreview && <button onClick={() => retake('front')} className="flex-1 border border-slate-700 bg-slate-800 text-slate-300 rounded-2xl py-3.5 font-semibold flex items-center justify-center gap-2 hover:border-slate-600"><RefreshCw size={15} /> Retake</button>}
+            {frontPreview && (
+              <button
+                onClick={() => {
+                  setFrontFile(null); setFrontPreview('')
+                  if (frontScanMode === 'camera') openCamera('environment')
+                  else frontInputRef.current?.click()
+                }}
+                className="flex-1 border border-slate-700 bg-slate-800 text-slate-300 rounded-2xl py-3.5 font-semibold flex items-center justify-center gap-2 hover:border-slate-600"
+              >
+                <RefreshCw size={15} /> {frontScanMode === 'camera' ? 'Retake' : 'Replace'}
+              </button>
+            )}
             <button onClick={handleFrontNext} disabled={!frontFile} className="flex-1 bg-[#FF6B35] text-white rounded-2xl py-3.5 font-bold flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-[#FF6B35]/20">
               Next <ChevronRight size={18} />
             </button>
@@ -507,8 +714,47 @@ export default function OnboardingPage() {
               <p className="text-sm text-slate-400">Flip your {selectedId?.label} · Step 2 of 2</p>
             </div>
           </div>
-          {error && <div className="flex items-start gap-2 p-3 bg-red-900/20 border border-red-700/30 rounded-xl text-sm text-red-400"><AlertCircle size={15} className="mt-0.5 flex-shrink-0" />{error}</div>}
-          {!backPreview ? (
+
+          {/* Mode toggle: Camera | Upload */}
+          {!backPreview && (
+            <div className="flex gap-1 bg-slate-800 rounded-xl p-1 border border-slate-700/40">
+              {(['camera', 'upload'] as const).map(mode => (
+                <button
+                  key={mode}
+                  onClick={() => {
+                    setBackScanMode(mode)
+                    if (mode === 'camera') openCamera('environment')
+                    else stopCamera()
+                  }}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-colors ${
+                    backScanMode === mode ? 'bg-[#FF6B35] text-white' : 'text-slate-400'
+                  }`}
+                >
+                  {mode === 'camera' ? <><Eye size={12} /> Use Camera</> : <><Upload size={12} /> Upload File</>}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {error && (
+            <div className="space-y-2">
+              <div className="flex items-start gap-2 p-3 bg-red-900/20 border border-red-700/30 rounded-xl text-sm text-red-400">
+                <AlertCircle size={15} className="mt-0.5 flex-shrink-0" />
+                <span>{error}</span>
+              </div>
+              {backScanMode === 'camera' && (
+                <button
+                  onClick={() => openCamera('environment')}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-slate-700 bg-slate-800 text-slate-300 text-sm font-semibold active:scale-[0.98] transition-all"
+                >
+                  <RefreshCw size={14} /> Try Again
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Camera mode */}
+          {backScanMode === 'camera' && !backPreview && (
             <div className="relative rounded-2xl overflow-hidden bg-black aspect-[3/2] border border-slate-700/40">
               <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
               <div className="absolute inset-0 pointer-events-none">
@@ -523,15 +769,54 @@ export default function OnboardingPage() {
                 </div>
               )}
             </div>
-          ) : (
-            <div className="relative rounded-2xl overflow-hidden aspect-[3/2] border border-slate-700/40">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={backPreview} alt="Back of ID" className="w-full h-full object-cover" />
+          )}
+
+          {/* Upload mode */}
+          {backScanMode === 'upload' && !backPreview && (
+            <button
+              onClick={() => backInputRef.current?.click()}
+              className="w-full aspect-[3/2] rounded-2xl border-2 border-dashed border-slate-600 hover:border-[#FF6B35] bg-slate-800/40 hover:bg-[#FF6B35]/5 transition-all flex flex-col items-center justify-center gap-3"
+            >
+              <div className="w-14 h-14 rounded-2xl bg-slate-700 flex items-center justify-center">
+                <Upload size={24} className="text-slate-400" />
+              </div>
+              <div className="text-center">
+                <p className="font-bold text-white text-sm">Upload Back of {selectedId?.label ?? 'ID'}</p>
+                <p className="text-xs text-slate-500 mt-1">Photo or PDF · JPEG, PNG, WebP</p>
+              </div>
+            </button>
+          )}
+
+          {/* Preview (shared between camera and upload) */}
+          {backPreview && (
+            <div className="relative rounded-2xl overflow-hidden aspect-[3/2] border border-slate-700/40 bg-slate-900">
+              {backFile?.type === 'application/pdf' ? (
+                <div className="w-full h-full flex flex-col items-center justify-center gap-3">
+                  <FileText size={40} className="text-[#FF6B35]" />
+                  <p className="font-bold text-white text-sm">{backFile.name}</p>
+                  <p className="text-xs text-slate-500">PDF ready</p>
+                </div>
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={backPreview} alt="Back of ID" className="w-full h-full object-cover" />
+              )}
               <div className="absolute bottom-3 left-3 bg-[#FF6B35] text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5"><CheckCircle size={13} /> Captured</div>
             </div>
           )}
+
           <div className="flex gap-3">
-            {backPreview && <button onClick={() => retake('back')} className="flex-1 border border-slate-700 bg-slate-800 text-slate-300 rounded-2xl py-3.5 font-semibold flex items-center justify-center gap-2 hover:border-slate-600"><RefreshCw size={15} /> Retake</button>}
+            {backPreview && (
+              <button
+                onClick={() => {
+                  setBackFile(null); setBackPreview('')
+                  if (backScanMode === 'camera') openCamera('environment')
+                  else backInputRef.current?.click()
+                }}
+                className="flex-1 border border-slate-700 bg-slate-800 text-slate-300 rounded-2xl py-3.5 font-semibold flex items-center justify-center gap-2 hover:border-slate-600"
+              >
+                <RefreshCw size={15} /> {backScanMode === 'camera' ? 'Retake' : 'Replace'}
+              </button>
+            )}
             <button onClick={handleBackNext} disabled={!backFile} className="flex-1 bg-[#FF6B35] text-white rounded-2xl py-3.5 font-bold flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-[#FF6B35]/20">
               Next <ChevronRight size={18} />
             </button>
@@ -589,6 +874,8 @@ export default function OnboardingPage() {
               <div className="absolute bottom-3 left-3 bg-[#FF6B35] text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5"><CheckCircle size={13} /> Document Ready</div>
             </div>
           )}
+
+          {/* Vehicle Registration upload hidden — migration 027 not yet applied */}
 
           <div className="flex gap-3">
             {insurancePreview && (
@@ -668,20 +955,83 @@ export default function OnboardingPage() {
               <p className="text-sm text-slate-400">Face must match your ID photo</p>
             </div>
           </div>
-          {error && <div className="flex items-start gap-2 p-3 bg-red-900/20 border border-red-700/30 rounded-xl text-sm text-red-400"><AlertCircle size={15} className="mt-0.5 flex-shrink-0" />{error}</div>}
-          {!selfiePreview ? (
-            <div className="relative rounded-2xl overflow-hidden bg-black aspect-square border border-slate-700/40">
-              <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" style={{ transform: 'scaleX(-1)' }} />
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="w-44 h-60 border-2 border-white/40 rounded-full shadow-[0_0_60px_rgba(255,107,53,0.1)]" />
+
+          {/* Mode toggle */}
+          {!selfiePreview && (
+            <div className="flex gap-1 bg-slate-800 rounded-xl p-1 border border-slate-700/40">
+              {(['camera', 'upload'] as const).map(mode => (
+                <button
+                  key={mode}
+                  onClick={() => {
+                    setSelfieScanMode(mode)
+                    setError(null)
+                    if (mode === 'camera') openCamera('user')
+                    else stopCamera()
+                  }}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-colors ${
+                    selfieScanMode === mode ? 'bg-[#FF6B35] text-white' : 'text-slate-400'
+                  }`}
+                >
+                  {mode === 'camera' ? <><Eye size={12} /> Use Camera</> : <><Upload size={12} /> Upload Photo</>}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {error && (
+            <div className="space-y-2">
+              <div className="flex items-start gap-2 p-3 bg-red-900/20 border border-red-700/30 rounded-xl text-sm text-red-400">
+                <AlertCircle size={15} className="mt-0.5 flex-shrink-0" />
+                <span>{error}</span>
               </div>
-              <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-md flex items-center gap-1.5 uppercase tracking-wider"><Eye size={10} /> Biometric</div>
-              {cameraActive && (
-                <div className="absolute bottom-4 left-0 right-0 flex justify-center">
-                  <button onClick={() => capture('selfie')} className="w-16 h-16 rounded-full bg-white border-4 border-slate-400 hover:scale-95 active:scale-90 transition-transform shadow-xl" />
-                </div>
+              {selfieScanMode === 'camera' && (
+                <button
+                  onClick={() => openCamera('user')}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-slate-700 bg-slate-800 text-slate-300 text-sm font-semibold active:scale-[0.98] transition-all"
+                >
+                  <RefreshCw size={14} /> Try Again
+                </button>
               )}
             </div>
+          )}
+
+          {/* Hidden file input */}
+          <input
+            ref={selfieInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            onChange={handleSelfieFileChange}
+            className="hidden"
+          />
+
+          {!selfiePreview ? (
+            selfieScanMode === 'camera' ? (
+              <div className="relative rounded-2xl overflow-hidden bg-black aspect-square border border-slate-700/40">
+                <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" style={{ transform: 'scaleX(-1)' }} />
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="w-44 h-60 border-2 border-white/40 rounded-full shadow-[0_0_60px_rgba(255,107,53,0.1)]" />
+                </div>
+                <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-md flex items-center gap-1.5 uppercase tracking-wider"><Eye size={10} /> Biometric</div>
+                {cameraActive && (
+                  <div className="absolute bottom-4 left-0 right-0 flex justify-center">
+                    <button onClick={() => capture('selfie')} className="w-16 h-16 rounded-full bg-white border-4 border-slate-400 hover:scale-95 active:scale-90 transition-transform shadow-xl" />
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button
+                onClick={() => selfieInputRef.current?.click()}
+                className="w-full aspect-square rounded-2xl border-2 border-dashed border-slate-600 hover:border-[#FF6B35] bg-slate-800/40 hover:bg-[#FF6B35]/5 transition-all flex flex-col items-center justify-center gap-3"
+              >
+                <div className="w-14 h-14 rounded-2xl bg-slate-700 flex items-center justify-center">
+                  <Upload size={24} className="text-slate-400" />
+                </div>
+                <div className="text-center">
+                  <p className="font-bold text-white text-sm">Upload a Photo of Your Face</p>
+                  <p className="text-xs text-slate-500 mt-1">Clear, well-lit photo · JPEG, PNG, WebP</p>
+                </div>
+              </button>
+            )
           ) : (
             <div className="relative rounded-2xl overflow-hidden aspect-square border border-slate-700/40">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -689,12 +1039,20 @@ export default function OnboardingPage() {
               <div className="absolute bottom-3 left-3 bg-[#FF6B35] text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5"><CheckCircle size={13} /> Captured</div>
             </div>
           )}
+
           <div className="flex items-center gap-1.5 px-3 py-2 bg-slate-800/60 rounded-xl border border-slate-700/40">
             <Lock size={11} className="text-slate-500 flex-shrink-0" />
             <p className="text-[10px] text-slate-500">Biometric data is encrypted and never stored after verification</p>
           </div>
           <div className="flex gap-3">
-            {selfiePreview && <button onClick={() => retake('selfie')} className="flex-1 border border-slate-700 bg-slate-800 text-slate-300 rounded-2xl py-3.5 font-semibold flex items-center justify-center gap-2 hover:border-slate-600"><RefreshCw size={15} /> Retake</button>}
+            {selfiePreview && (
+              <button
+                onClick={() => retake('selfie')}
+                className="flex-1 border border-slate-700 bg-slate-800 text-slate-300 rounded-2xl py-3.5 font-semibold flex items-center justify-center gap-2 hover:border-slate-600"
+              >
+                <RefreshCw size={15} /> {selfieScanMode === 'camera' ? 'Retake' : 'Replace'}
+              </button>
+            )}
             <button onClick={handleSubmit} disabled={!selfieFile} className="flex-1 bg-[#FF6B35] text-white rounded-2xl py-3.5 font-bold flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-[#FF6B35]/20">
               <ShieldCheck size={18} /> Submit
             </button>
@@ -736,7 +1094,7 @@ export default function OnboardingPage() {
           <div className="bg-slate-800 rounded-2xl p-4 border border-slate-700/40 text-left space-y-3">
             {[
               { label: 'Personal info', done: true },
-              { label: 'ID document scanned', done: true },
+              { label: 'ID document uploaded', done: true },
               ...(needsInsurance ? [{ label: 'Insurance document uploaded', done: true }] : []),
               { label: 'Background check initiated', done: true },
               { label: 'Biometric captured', done: true },

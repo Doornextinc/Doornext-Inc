@@ -3,6 +3,9 @@ import { createServerClient } from '@supabase/ssr'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import type { OrderStatus } from '@doornext/shared/types'
+import { notifyUser } from '@doornext/shared/notify'
+import * as Sentry from '@sentry/nextjs'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 const VALID_TRANSITIONS: Record<string, OrderStatus> = {
   pending:   'confirmed',
@@ -38,6 +41,12 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): nu
 }
 
 export async function POST(req: NextRequest) {
+  // Rate limit: 60 status updates per minute per IP
+  const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown'
+  if (!await checkRateLimit(`maker-update-status:${ip}`, 60, 60)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+  }
+
   const cookieStore = await cookies()
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -94,10 +103,10 @@ export async function POST(req: NextRequest) {
   const makerName = maker.display_name ?? 'Your kitchen'
   const notif = CUSTOMER_NOTIF[status]
 
-  // Notify customer
+  // Notify customer (DB + push)
   if (notif) {
-    await admin.from('notifications').insert({
-      user_id: order.customer_id,
+    await notifyUser(admin, {
+      userId: order.customer_id,
       type: `order_${status}`,
       title: notif.title,
       body: notif.body(shortId, makerName),
@@ -144,8 +153,8 @@ export async function POST(req: NextRequest) {
         data: { order_id: orderId, maker_name: makerName },
       }))
 
-      admin.from('notifications').insert(driverNotifs).then(({ error }) => {
-        if (error) console.error('Failed to notify drivers (preparing):', error.message)
+      admin.from('notifications').insert(driverNotifs).then(({ error: e }) => {
+        if (e) Sentry.captureException(new Error(e.message), { extra: { context: 'notify-drivers-preparing', orderId } })
       })
     }
 
@@ -159,8 +168,8 @@ export async function POST(req: NextRequest) {
         data: { order_id: orderId, maker_name: makerName },
       }))
 
-      admin.from('notifications').insert(driverNotifs).then(({ error }) => {
-        if (error) console.error('Failed to notify drivers (ready):', error.message)
+      admin.from('notifications').insert(driverNotifs).then(({ error: e }) => {
+        if (e) Sentry.captureException(new Error(e.message), { extra: { context: 'notify-drivers-ready', orderId } })
       })
     }
   }

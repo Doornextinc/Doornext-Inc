@@ -1,19 +1,23 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { StatusBadge } from '@doornext/ui/badge'
 import type { Order, OrderStatus } from '@doornext/shared/types'
 import { ChevronRight } from 'lucide-react'
+import { playWithHaptic, initAudio } from '@/lib/notification-sounds'
 
 type OrderRow = Pick<Order, 'id' | 'status' | 'total' | 'created_at'> & {
   order_items: Array<{ quantity: number; menu_item: { name: string } | null }>
 }
 
 const FILTER_TABS: Array<{ label: string; statuses: OrderStatus[] | null }> = [
-  { label: 'Active',    statuses: ['pending', 'confirmed', 'preparing', 'ready'] },
-  { label: 'Done',      statuses: ['delivered'] },
+  // Active = everything the maker still has responsibility for.
+  // driver_assigned / arrived_at_maker are included so orders don't vanish the
+  // moment a driver accepts — they stay until the driver confirms pickup.
+  { label: 'Active',    statuses: ['pending', 'confirmed', 'preparing', 'ready', 'driver_assigned', 'arrived_at_maker'] },
+  { label: 'Done',      statuses: ['picked_up', 'on_the_way', 'arrived_at_customer', 'delivered'] },
   { label: 'Cancelled', statuses: ['cancelled'] },
   { label: 'All',       statuses: null },
 ]
@@ -24,31 +28,57 @@ export default function OrdersPage() {
   const [activeTab, setActiveTab] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const makerIdRef = useRef<string | null>(null)
+  const knownIdsRef = useRef<Set<string>>(new Set())
+
+  // Unlock audio context on mount
+  useEffect(() => { initAudio() }, [])
+
+  const loadOrders = useCallback(async (makerId: string, isRefresh = false) => {
+    const supabase = createClient()
+    const { data, error: fetchError } = await supabase
+      .from('orders')
+      .select('id, status, total, created_at, maker_id, order_items(quantity, menu_item:menu_items(name))')
+      .eq('maker_id', makerId)
+      .order('created_at', { ascending: false })
+      .limit(100)
+
+    if (fetchError) { setError('Failed to load orders'); setLoading(false); return }
+    const rows = (data ?? []).filter(o => o.status !== 'awaiting_payment') as OrderRow[]
+
+    if (isRefresh) {
+      const newPending = rows.filter(o => o.status === 'pending' && !knownIdsRef.current.has(o.id))
+      if (newPending.length > 0) playWithHaptic('order_received')
+    }
+    knownIdsRef.current = new Set(rows.map(o => o.id))
+    setOrders(rows)
+    setLoading(false)
+  }, [])
 
   useEffect(() => {
-    async function load() {
+    async function init() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
-
       const { data: maker } = await supabase
         .from('food_makers').select('id').eq('user_id', user.id).single()
       if (!maker) { setError('Kitchen profile not found'); setLoading(false); return }
+      makerIdRef.current = maker.id
+      await loadOrders(maker.id)
 
-      const { data, error: fetchError } = await supabase
-        .from('orders')
-        .select('id, status, total, created_at, maker_id, order_items(quantity, menu_item:menu_items(name))')
-        .eq('maker_id', maker.id)
-        .order('created_at', { ascending: false })
-        .limit(100)
+      // Real-time subscription for new / updated orders
+      const ch = supabase
+        .channel('maker-orders-rt')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders', filter: `maker_id=eq.${maker.id}` },
+          () => loadOrders(maker.id, true))
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `maker_id=eq.${maker.id}` },
+          () => loadOrders(maker.id, false))
+        .subscribe()
 
-      if (fetchError) { setError('Failed to load orders'); setLoading(false); return }
-
-      setOrders((data ?? []) as OrderRow[])
-      setLoading(false)
+      return () => { supabase.removeChannel(ch) }
     }
-    load()
-  }, [router])
+    init()
+  }, [router, loadOrders])
 
   const filter = FILTER_TABS[activeTab]
   const filtered = filter.statuses

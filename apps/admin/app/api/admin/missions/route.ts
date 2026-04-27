@@ -1,21 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createAdminClient, createSessionClient } from '@/lib/supabase/server'
-
-async function verifyAdmin(req: NextRequest) {
-  const session = await createSessionClient()
-  const { data: { user } } = await session.auth.getUser()
-  if (!user) return null
-  const { data: profile } = await session.from('users').select('role').eq('id', user.id).single()
-  if (profile?.role !== 'admin') return null
-  return user
-}
+import { requireAdmin } from '@/lib/require-admin'
 
 export async function GET(req: NextRequest) {
-  const user = await verifyAdmin(req)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const auth = await requireAdmin(req)
+  if (!auth.ok) return auth.response
+  const { supabase } = auth
 
-  const admin = createAdminClient()
-  const { data, error } = await admin
+  const { data, error } = await supabase
     .from('driver_missions')
     .select('*')
     .order('is_preset', { ascending: false })
@@ -26,17 +17,50 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const user = await verifyAdmin(req)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const auth = await requireAdmin(req)
+  if (!auth.ok) return auth.response
+  const { supabase, adminId } = auth
 
   const body = await req.json()
-  const admin = createAdminClient()
 
-  const { data, error } = await admin
+  // Validate required fields
+  const { title, description, icon, mission_type, target_value, reward_amount, period, is_active, starts_at, ends_at } = body
+
+  if (!title || typeof title !== 'string' || !title.trim()) {
+    return NextResponse.json({ error: 'title is required' }, { status: 400 })
+  }
+  const VALID_TYPES = ['deliveries', 'ratings', 'hours', 'distance', 'custom']
+  if (!VALID_TYPES.includes(mission_type)) {
+    return NextResponse.json({ error: `mission_type must be one of: ${VALID_TYPES.join(', ')}` }, { status: 400 })
+  }
+  const VALID_PERIODS = ['daily', 'weekly', 'monthly', 'one_time']
+  if (!VALID_PERIODS.includes(period)) {
+    return NextResponse.json({ error: `period must be one of: ${VALID_PERIODS.join(', ')}` }, { status: 400 })
+  }
+  if (typeof target_value !== 'number' || target_value <= 0) {
+    return NextResponse.json({ error: 'target_value must be a positive number' }, { status: 400 })
+  }
+  if (typeof reward_amount !== 'number' || reward_amount < 0) {
+    return NextResponse.json({ error: 'reward_amount must be a non-negative number' }, { status: 400 })
+  }
+  if (starts_at && ends_at && new Date(ends_at) <= new Date(starts_at)) {
+    return NextResponse.json({ error: 'ends_at must be after starts_at' }, { status: 400 })
+  }
+
+  const { data, error } = await supabase
     .from('driver_missions')
     .insert({
-      ...body,
-      created_by: user.id,
+      title: title.trim(),
+      description: description ?? null,
+      icon: icon ?? null,
+      mission_type,
+      target_value,
+      reward_amount,
+      period,
+      is_active: is_active ?? true,
+      starts_at: starts_at ?? null,
+      ends_at: ends_at ?? null,
+      created_by: adminId,
       is_preset: false,
     })
     .select()
