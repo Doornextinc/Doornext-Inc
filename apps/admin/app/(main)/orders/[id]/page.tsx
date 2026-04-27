@@ -181,7 +181,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
               <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">Customer</h2>
               <p className="font-bold text-gray-900">{(customer as Record<string, unknown>).full_name as string}</p>
               <p className="text-sm text-gray-500 mt-1">{(customer as Record<string, unknown>).email as string}</p>
-              {(customer as Record<string, unknown>).phone && (
+              {!!(customer as Record<string, unknown>).phone && (
                 <p className="text-sm text-gray-500">{(customer as Record<string, unknown>).phone as string}</p>
               )}
               <Link
