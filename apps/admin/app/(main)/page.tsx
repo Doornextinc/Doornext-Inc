@@ -142,7 +142,7 @@ export default async function DashboardPage() {
               status: string
               total: number
               created_at: string
-              food_maker: { display_name: string } | null
+              food_maker: { display_name: string }[] | null
             }) => (
               <tr key={order.id} className="hover:bg-gray-50/50 transition-colors">
                 <td className="px-6 py-3 font-mono text-xs text-gray-500">
@@ -151,7 +151,7 @@ export default async function DashboardPage() {
                   </Link>
                 </td>
                 <td className="px-6 py-3 font-medium text-gray-800">
-                  {order.food_maker?.display_name ?? '—'}
+                  {order.food_maker?.[0]?.display_name ?? '—'}
                 </td>
                 <td className="px-6 py-3">
                   <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${

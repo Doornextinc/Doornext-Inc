@@ -57,9 +57,9 @@ export default async function SettingsPage() {
                   description={row.description}
                   settingKey={row.key}
                   currentValue={sm[row.key] ?? null}
-                  prefix={row.prefix}
-                  suffix={row.suffix}
-                  multiplier={row.multiplier ?? 1}
+                  prefix={(row as { prefix?: string }).prefix}
+                  suffix={(row as { suffix?: string }).suffix}
+                  multiplier={(row as { multiplier?: number }).multiplier ?? 1}
                   type={row.type as 'number' | 'boolean' | 'text'}
                 />
               ))}

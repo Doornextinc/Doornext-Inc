@@ -509,7 +509,7 @@ function StandardTierRow({ tier, saving, onSave }: {
                 <label className="block text-xs font-semibold text-gray-500 mb-1">{label}</label>
                 <input
                   type="number" step="0.01"
-                  value={d[key] ?? ''}
+                  value={(d[key] as string | number) ?? ''}
                   onChange={e => setD(prev => ({ ...prev, [key]: e.target.value === '' ? null : parseFloat(e.target.value) }))}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-400"
                 />
@@ -578,7 +578,7 @@ function PriorityTierRow({ tier, saving, onSave }: {
                 <label className="block text-xs font-semibold text-gray-500 mb-1">{label}</label>
                 <input
                   type="number" step="0.01"
-                  value={d[key] ?? ''}
+                  value={(d[key] as string | number) ?? ''}
                   onChange={e => setD(prev => ({ ...prev, [key]: e.target.value === '' ? null : parseFloat(e.target.value) }))}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none"
                 />
@@ -645,7 +645,7 @@ function SmallOrderFeeRow({ fee, saving, onSave }: {
                 <label className="block text-xs font-semibold text-gray-500 mb-1">{label}</label>
                 <input
                   type="number" step="0.01"
-                  value={d[key] ?? ''}
+                  value={(d[key] as string | number) ?? ''}
                   onChange={e => setD(prev => ({ ...prev, [key]: e.target.value === '' ? null : parseFloat(e.target.value) }))}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none"
                 />
