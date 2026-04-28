@@ -21,7 +21,8 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
     const supabase = createClient()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESH_FAILED') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (event === 'SIGNED_OUT' || (event as any) === 'TOKEN_REFRESH_FAILED') {
         await supabase.auth.signOut()
         router.push('/login')
         return

@@ -117,9 +117,7 @@ export async function POST(req: NextRequest) {
   // ── Reliability tracking ──────────────────────────────────────────────────
   // Atomically increment total_accepted and recompute acceptance_rate.
   // Fire-and-forget — stat failure must never block the accept response.
-  admin
-    .rpc('increment_driver_accepted', { driver_id: user.id })
-    .catch(() => {}) // non-fatal
+  void (admin.rpc('increment_driver_accepted', { driver_id: user.id }) as unknown as Promise<unknown>).catch(() => {}) // non-fatal
 
   // Add driver to the order's Stream Chat channel so all three parties can communicate
   const streamApiKey = process.env.NEXT_PUBLIC_STREAM_API_KEY

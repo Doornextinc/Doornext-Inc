@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
     try {
       const stripeKey = process.env.STRIPE_SECRET_KEY
       if (!stripeKey) throw new Error('STRIPE_SECRET_KEY not configured')
-      const stripe = new Stripe(stripeKey, { apiVersion: '2025-03-31.basil' })
+      const stripe = new Stripe(stripeKey, { apiVersion: '2026-02-25.clover' })
       const refund = await stripe.refunds.create({
         payment_intent: order.stripe_payment_intent_id,
         reason: 'fraudulent', // closest standard reason; ops can update via dashboard
@@ -96,9 +96,7 @@ export async function POST(req: NextRequest) {
   }
 
   // ── 2b. Reliability: increment cancellations ─────────────────────────────
-  admin
-    .rpc('increment_driver_cancellation', { driver_id: user.id })
-    .catch(() => {}) // non-fatal
+  void (admin.rpc('increment_driver_cancellation', { driver_id: user.id }) as unknown as Promise<unknown>).catch(() => {}) // non-fatal
 
   // ── 3. Support ticket ─────────────────────────────────────────────────────
   const { data: ticket } = await admin

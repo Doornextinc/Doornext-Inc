@@ -5,7 +5,7 @@ import { cookies } from 'next/headers'
 
 const BUCKET = 'banners'
 
-async function ensureBucket(admin: ReturnType<typeof createServiceClient>) {
+async function ensureBucket(admin: { storage: ReturnType<typeof createServiceClient>['storage'] }) {
   try {
     const { data: buckets } = await admin.storage.listBuckets()
     const exists = buckets?.some((b) => b.id === BUCKET)

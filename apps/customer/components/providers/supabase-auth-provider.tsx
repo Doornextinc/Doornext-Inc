@@ -26,7 +26,8 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
         // Register push token on sign-in (non-blocking)
         tryRegisterPushToken(session.user.id)
       }
-      if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESH_FAILED') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (event === 'SIGNED_OUT' || (event as any) === 'TOKEN_REFRESH_FAILED') {
         await supabase.auth.signOut()
         router.push('/login')
       }

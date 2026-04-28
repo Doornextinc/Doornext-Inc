@@ -44,7 +44,7 @@ export default function OrdersPage() {
       .limit(100)
 
     if (fetchError) { setError('Failed to load orders'); setLoading(false); return }
-    const rows = (data ?? []).filter(o => o.status !== 'awaiting_payment') as OrderRow[]
+    const rows = (data ?? []).filter(o => o.status !== 'awaiting_payment') as unknown as OrderRow[]
 
     if (isRefresh) {
       const newPending = rows.filter(o => o.status === 'pending' && !knownIdsRef.current.has(o.id))

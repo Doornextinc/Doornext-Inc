@@ -75,8 +75,9 @@ export async function POST(req: NextRequest) {
       per_mile:              safeFloat(settingsMap.dynamic_per_mile,      0.80),
       per_min_wait:          safeFloat(settingsMap.dynamic_per_min_wait,  0.30),
       use_dynamic:           settingsMap.use_dynamic_pricing === 'true',
-      service_fee_pct:       safeFloat(settingsMap.service_fee_pct,       9),
-      priority_driver_bonus: safeFloat(settingsMap.priority_driver_bonus, 2.50),
+      service_fee_pct:          safeFloat(settingsMap.service_fee_pct,          9),
+      platform_commission_pct:  safeFloat(settingsMap.platform_commission_pct,  5),
+      priority_driver_bonus:    safeFloat(settingsMap.priority_driver_bonus,    2.50),
     },
   })
 
