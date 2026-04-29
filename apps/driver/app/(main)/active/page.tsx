@@ -311,7 +311,7 @@ export default function ActiveDeliveryPage() {
       () => { /* location unavailable — silently skip this tick */ },
       { timeout: 5000, maximumAge: 15000 }
     )
-  }, [setLocation, userId, authReady])
+  }, [setLocation, userId])
 
   const loadActiveOrder = useCallback(async () => {
     if (!hasHydrated) return
