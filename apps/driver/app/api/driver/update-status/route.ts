@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
       .select('value')
       .eq('key', 'require_delivery_proof')
       .maybeSingle()
-    const requireProof = proofSetting?.value === 'true'
+    const requireProof = proofSetting?.value === true || proofSetting?.value === 'true'
 
     if (requireProof) {
       const { data: proofRow } = await admin
@@ -142,11 +142,11 @@ export async function POST(req: NextRequest) {
     try {
       // Look up platform commission from settings (default 5%)
       const { data: settingRow } = await admin
-        .from('app_settings')
+        .from('settings')
         .select('value')
         .eq('key', 'platform_commission_pct')
         .maybeSingle()
-      const commPct = settingRow ? parseFloat(settingRow.value) : 5
+      const commPct = settingRow ? parseFloat(String(settingRow.value)) : 5
 
       fees = snapshotFees({
         subtotal:        Number(order.subtotal),

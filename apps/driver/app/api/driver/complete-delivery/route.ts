@@ -54,11 +54,11 @@ export async function POST(req: NextRequest) {
 
     // ── 2. Look up platform_commission_pct from settings ──────────────────
     const { data: settingRow } = await admin
-      .from('app_settings')
+      .from('settings')
       .select('value')
       .eq('key', 'platform_commission_pct')
       .maybeSingle()
-    const commPct = settingRow ? parseFloat(settingRow.value) : 5
+    const commPct = settingRow ? parseFloat(String(settingRow.value)) : 5
 
     // ── 3. Calculate fee split ─────────────────────────────────────────────
     const fees = snapshotFees({
