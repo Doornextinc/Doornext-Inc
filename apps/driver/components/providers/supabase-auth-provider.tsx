@@ -77,7 +77,10 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
         router.push('/login')
+        return
       }
+      // Re-sync online status and active order in case they changed while the app was in the background
+      if (session.user) syncDriverStatus(session.user.id)
     }
 
     document.addEventListener('visibilitychange', handleVisibilityChange)

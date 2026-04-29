@@ -3,6 +3,7 @@ import { createServerClient } from '@supabase/ssr'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { checkRateLimit } from '@/lib/rate-limit'
+import * as Sentry from '@sentry/nextjs'
 
 export async function POST(req: NextRequest) {
   // 120 pings per minute = 1 every 0.5 s — far more than any real driver sends.
@@ -27,10 +28,14 @@ export async function POST(req: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  await admin
+  const { error } = await admin
     .from('driver_profiles')
     .update({ last_seen_at: new Date().toISOString() })
     .eq('id', user.id)
+
+  if (error) {
+    Sentry.captureException(error, { extra: { userId: user.id, context: 'heartbeat' } })
+  }
 
   return NextResponse.json({ ok: true })
 }

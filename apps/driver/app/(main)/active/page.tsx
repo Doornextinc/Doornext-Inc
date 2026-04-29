@@ -11,6 +11,7 @@ import {
   ChevronRight, Camera, RotateCcw, MessageSquare,
 } from 'lucide-react'
 import { AppHeader } from '@/components/layout/app-header'
+import { playWithHaptic } from '@/lib/notification-sounds'
 
 type OrderItem = { quantity: number; unit_price: number; menu_items: { name: string } | null }
 type ActiveOrder = {
@@ -290,21 +291,26 @@ export default function ActiveDeliveryPage() {
   // Proof photo state
   const [proofPhoto, setProofPhoto] = useState<File | null>(null)
   const [proofPhotoUrl, setProofPhotoUrl] = useState<string | null>(null)
+  const [proofUploadError, setProofUploadError] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const locationIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const broadcastLocation = useCallback(async () => {
     if (typeof navigator === 'undefined' || !userId) return
-    navigator.geolocation.getCurrentPosition(async pos => {
-      const { latitude: lat, longitude: lng } = pos.coords
-      setLocation(lat, lng)
-      const supabase = createClient()
-      await supabase.from('nexter_locations').upsert(
-        { nexter_id: userId, lat, lng, updated_at: new Date().toISOString() },
-        { onConflict: 'nexter_id' }
-      )
-    })
+    navigator.geolocation.getCurrentPosition(
+      async pos => {
+        const { latitude: lat, longitude: lng } = pos.coords
+        setLocation(lat, lng)
+        const supabase = createClient()
+        await supabase.from('nexter_locations').upsert(
+          { nexter_id: userId, lat, lng, updated_at: new Date().toISOString() },
+          { onConflict: 'nexter_id' }
+        )
+      },
+      () => { /* location unavailable — silently skip this tick */ },
+      { timeout: 5000, maximumAge: 15000 }
+    )
   }, [setLocation, userId, authReady])
 
   const loadActiveOrder = useCallback(async () => {
@@ -342,6 +348,10 @@ export default function ActiveDeliveryPage() {
         (payload) => {
           const newStatus = payload.new.status as string
           setOrder((prev) => prev ? { ...prev, status: newStatus } : prev)
+          // Maker confirmed the pickup PIN — alert the driver
+          if (newStatus === 'picked_up') {
+            playWithHaptic('order_ready')
+          }
         }
       )
       .subscribe()
@@ -421,9 +431,11 @@ export default function ActiveDeliveryPage() {
           const form = new FormData()
           form.append('orderId', order.id)
           form.append('file', proofPhoto)
-          await fetch('/api/driver/upload-proof', { method: 'POST', body: form })
+          const uploadRes = await fetch('/api/driver/upload-proof', { method: 'POST', body: form })
+          if (!uploadRes.ok) setProofUploadError(true)
         } catch (err) {
           console.error('Proof photo upload failed (non-fatal):', err)
+          setProofUploadError(true)
         }
       }
 
@@ -440,11 +452,12 @@ export default function ActiveDeliveryPage() {
       }
 
       if (newStatus === 'delivered') {
-        // Fire-and-forget complete-delivery (increments counter); errors are non-fatal
+        // Fire-and-forget complete-delivery (fee settlement); errors are non-fatal
         fetch('/api/driver/complete-delivery', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ orderId: order.id }),
         }).catch(() => {/* non-fatal */})
+        playWithHaptic('delivery_done')
         setDeliveredOrder(order)
         setActiveOrder(null)
         setDelivered(true)
@@ -904,7 +917,7 @@ export default function ActiveDeliveryPage() {
             <div className="px-4 pt-3.5 pb-3">
               <div className="flex items-center justify-between mb-1.5">
                 <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wide">Photo of Delivery</p>
-                <span className="text-[10px] text-zinc-700 font-medium">Optional</span>
+                <span className="text-[10px] text-zinc-700 font-medium">{proofUploadError ? <span className="text-amber-400">Upload failed — order still completed</span> : 'Optional'}</span>
               </div>
 
               {proofPhotoUrl ? (
