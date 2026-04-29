@@ -154,8 +154,11 @@ export default function AccountPage() {
   const [earningsAlerts, setEarningsAlerts] = useState(true)
 
   // ── Collapsible sections ──────────────────────────────────────────────────
-  const [prefsOpen, setPrefsOpen]   = useState(false)
-  const [supportOpen, setSupportOpen] = useState(false)
+  const [performanceOpen, setPerformanceOpen] = useState(false)
+  const [highlightsOpen, setHighlightsOpen]   = useState(false)
+  const [deliveryOpen, setDeliveryOpen]       = useState(false)
+  const [prefsOpen, setPrefsOpen]             = useState(false)
+  const [supportOpen, setSupportOpen]         = useState(false)
 
   // ─────────────────────────────────────────────────────────────────────────
   // Auth guard + data load
@@ -495,7 +498,7 @@ export default function AccountPage() {
             <SettingRow
               icon={KycIcon}
               label="Identity Verification"
-              sublabel={profile?.kyc_status === 'approved' ? 'Your identity has been verified' : 'Verification required to receive payouts'}
+              sublabel={profile?.kyc_status === 'approved' ? 'Verified — eligible for payouts' : 'Verification required to receive payouts'}
               onClick={profile?.kyc_status !== 'approved' ? () => router.push('/documents') : undefined}
               right={
                 <div className={`flex items-center gap-1.5 text-xs font-bold ${kyc.color}`}>
@@ -507,104 +510,110 @@ export default function AccountPage() {
           </div>
         </div>
 
-        {/* ── Performance ──────────────────────────────────────────────────── */}
+        {/* ── Performance (collapsible) ─────────────────────────────────── */}
         <div>
-          <SectionLabel label="Performance" />
-          <div className="bg-[#141414] rounded-2xl border border-white/5 overflow-hidden">
-            <div className="grid grid-cols-2 divide-x divide-white/5">
-              <div className="py-4 text-center">
-                <p className={`font-black text-xl leading-none ${
-                  profile?.acceptance_rate == null ? 'text-zinc-500'
-                  : profile.acceptance_rate >= 80 ? 'text-green-400'
-                  : profile.acceptance_rate >= 60 ? 'text-amber-400'
-                  : 'text-red-400'
-                }`}>
-                  {profile?.acceptance_rate != null ? `${Math.round(profile.acceptance_rate)}%` : '—'}
-                </p>
-                <p className="text-[10px] text-zinc-600 mt-1.5 font-bold uppercase tracking-wide">Acceptance Rate</p>
+          <SectionHeader label="Performance" open={performanceOpen} onToggle={() => setPerformanceOpen((o) => !o)} />
+          <div className={`overflow-hidden transition-all duration-300 ease-in-out ${performanceOpen ? 'max-h-[300px] opacity-100' : 'max-h-0 opacity-0'}`}>
+            <div className="bg-[#141414] rounded-2xl border border-white/5 overflow-hidden">
+              <div className="grid grid-cols-2 divide-x divide-white/5">
+                <div className="py-4 text-center">
+                  <p className={`font-black text-xl leading-none ${
+                    profile?.acceptance_rate == null ? 'text-zinc-500'
+                    : profile.acceptance_rate >= 80 ? 'text-green-400'
+                    : profile.acceptance_rate >= 60 ? 'text-amber-400'
+                    : 'text-red-400'
+                  }`}>
+                    {profile?.acceptance_rate != null ? `${Math.round(profile.acceptance_rate)}%` : '—'}
+                  </p>
+                  <p className="text-[10px] text-zinc-600 mt-1.5 font-bold uppercase tracking-wide">Acceptance</p>
+                </div>
+                <div className="py-4 text-center">
+                  <p className={`font-black text-xl leading-none ${
+                    completionRate == null ? 'text-zinc-500'
+                    : completionRate >= 90 ? 'text-green-400'
+                    : completionRate >= 70 ? 'text-amber-400'
+                    : 'text-red-400'
+                  }`}>
+                    {completionRate != null ? `${completionRate}%` : '—'}
+                  </p>
+                  <p className="text-[10px] text-zinc-600 mt-1.5 font-bold uppercase tracking-wide">Completion</p>
+                </div>
               </div>
-              <div className="py-4 text-center">
-                <p className={`font-black text-xl leading-none ${
-                  completionRate == null ? 'text-zinc-500'
-                  : completionRate >= 90 ? 'text-green-400'
-                  : completionRate >= 70 ? 'text-amber-400'
-                  : 'text-red-400'
-                }`}>
-                  {completionRate != null ? `${completionRate}%` : '—'}
-                </p>
-                <p className="text-[10px] text-zinc-600 mt-1.5 font-bold uppercase tracking-wide">Completion Rate</p>
-              </div>
-            </div>
-            <div className="h-px bg-white/5" />
-            <div className="grid grid-cols-2 divide-x divide-white/5">
-              <div className="py-4 text-center">
-                <p className={`font-black text-xl leading-none ${
-                  profile?.on_time_delivery_rate == null ? 'text-zinc-500'
-                  : profile.on_time_delivery_rate >= 85 ? 'text-green-400'
-                  : profile.on_time_delivery_rate >= 65 ? 'text-amber-400'
-                  : 'text-red-400'
-                }`}>
-                  {profile?.on_time_delivery_rate != null ? `${Math.round(profile.on_time_delivery_rate)}%` : '—'}
-                </p>
-                <p className="text-[10px] text-zinc-600 mt-1.5 font-bold uppercase tracking-wide">On-Time Delivery</p>
-              </div>
-              <div className="py-4 text-center">
-                <p className={`font-black text-xl leading-none ${
-                  (profile?.issues_reported ?? 0) === 0 ? 'text-green-400'
-                  : (profile?.issues_reported ?? 0) <= 3 ? 'text-amber-400'
-                  : 'text-red-400'
-                }`}>
-                  {profile?.issues_reported ?? 0}
-                </p>
-                <p className="text-[10px] text-zinc-600 mt-1.5 font-bold uppercase tracking-wide">Issues Reported</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ── Lifetime Highlights ───────────────────────────────────────────── */}
-        <div>
-          <SectionLabel label="Lifetime Highlights" />
-          <div className="bg-[#141414] rounded-2xl border border-white/5 overflow-hidden">
-            <div className="grid grid-cols-2 divide-x divide-white/5 py-5">
-              <div className="text-center px-3">
-                <p className="font-black text-white text-3xl leading-none">{profile?.total_deliveries ?? 0}</p>
-                <p className="text-xs text-zinc-500 mt-2 font-semibold">Orders Delivered</p>
-              </div>
-              <div className="text-center px-3">
-                <p className="font-black text-white text-xl leading-none">{memberSince ?? '—'}</p>
-                <p className="text-xs text-zinc-500 mt-2 font-semibold">Time With Us</p>
+              <div className="h-px bg-white/5" />
+              <div className="grid grid-cols-2 divide-x divide-white/5">
+                <div className="py-4 text-center">
+                  <p className={`font-black text-xl leading-none ${
+                    profile?.on_time_delivery_rate == null ? 'text-zinc-500'
+                    : profile.on_time_delivery_rate >= 85 ? 'text-green-400'
+                    : profile.on_time_delivery_rate >= 65 ? 'text-amber-400'
+                    : 'text-red-400'
+                  }`}>
+                    {profile?.on_time_delivery_rate != null ? `${Math.round(profile.on_time_delivery_rate)}%` : '—'}
+                  </p>
+                  <p className="text-[10px] text-zinc-600 mt-1.5 font-bold uppercase tracking-wide">On-Time</p>
+                </div>
+                <div className="py-4 text-center">
+                  <p className={`font-black text-xl leading-none ${
+                    (profile?.issues_reported ?? 0) === 0 ? 'text-green-400'
+                    : (profile?.issues_reported ?? 0) <= 3 ? 'text-amber-400'
+                    : 'text-red-400'
+                  }`}>
+                    {profile?.issues_reported ?? 0}
+                  </p>
+                  <p className="text-[10px] text-zinc-600 mt-1.5 font-bold uppercase tracking-wide">Issues</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* ── Delivery ─────────────────────────────────────────────────────── */}
+        {/* ── Lifetime Highlights (collapsible) ────────────────────────────── */}
         <div>
-          <SectionLabel label="Delivery" />
-          <div className="bg-[#141414] rounded-2xl border border-white/5 divide-y divide-white/5">
-            <SettingRow
-              icon={TrendingUp}
-              label="Earnings & Payouts"
-              sublabel={completionRate !== null ? `${completionRate}% completion rate` : undefined}
-              onClick={() => router.push('/earnings')}
-            />
-            <SettingRow
-              icon={Package}
-              label="Delivery History"
-              onClick={() => router.push('/history')}
-            />
-            <SettingRow
-              icon={MapPin}
-              label="GPS Tracking"
-              onClick={() => router.push('/tracking')}
-            />
-            <SettingRow
-              icon={FileText}
-              label="Documents & KYC"
-              sublabel={kyc.label}
-              onClick={() => router.push('/documents')}
-            />
+          <SectionHeader label="Lifetime Highlights" open={highlightsOpen} onToggle={() => setHighlightsOpen((o) => !o)} />
+          <div className={`overflow-hidden transition-all duration-300 ease-in-out ${highlightsOpen ? 'max-h-[160px] opacity-100' : 'max-h-0 opacity-0'}`}>
+            <div className="bg-[#141414] rounded-2xl border border-white/5 overflow-hidden">
+              <div className="grid grid-cols-2 divide-x divide-white/5 py-5">
+                <div className="text-center px-3">
+                  <p className="font-black text-white text-3xl leading-none">{profile?.total_deliveries ?? 0}</p>
+                  <p className="text-xs text-zinc-500 mt-2 font-semibold">Orders Delivered</p>
+                </div>
+                <div className="text-center px-3">
+                  <p className="font-black text-white text-xl leading-none">{memberSince ?? '—'}</p>
+                  <p className="text-xs text-zinc-500 mt-2 font-semibold">Time With Us</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Delivery (collapsible) ────────────────────────────────────────── */}
+        <div>
+          <SectionHeader label="Delivery" open={deliveryOpen} onToggle={() => setDeliveryOpen((o) => !o)} />
+          <div className={`overflow-hidden transition-all duration-300 ease-in-out ${deliveryOpen ? 'max-h-[400px] opacity-100' : 'max-h-0 opacity-0'}`}>
+            <div className="bg-[#141414] rounded-2xl border border-white/5 divide-y divide-white/5">
+              <SettingRow
+                icon={TrendingUp}
+                label="Earnings & Payouts"
+                sublabel={completionRate !== null ? `${completionRate}% completion rate` : undefined}
+                onClick={() => router.push('/earnings')}
+              />
+              <SettingRow
+                icon={Package}
+                label="Delivery History"
+                onClick={() => router.push('/history')}
+              />
+              <SettingRow
+                icon={MapPin}
+                label="GPS Tracking"
+                onClick={() => router.push('/tracking')}
+              />
+              <SettingRow
+                icon={FileText}
+                label="Documents & KYC"
+                sublabel={kyc.label}
+                onClick={() => router.push('/documents')}
+              />
+            </div>
           </div>
         </div>
 
@@ -613,8 +622,6 @@ export default function AccountPage() {
           <SectionHeader label="Preferences" open={prefsOpen} onToggle={() => setPrefsOpen((o) => !o)} />
           <div className={`overflow-hidden transition-all duration-300 ease-in-out ${prefsOpen ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'}`}>
             <div className="bg-[#141414] rounded-2xl border border-white/5 divide-y divide-white/5">
-
-              {/* Navigation provider */}
               <div className="px-4 py-3.5">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-8 h-8 rounded-xl bg-[#1E1E1E] flex items-center justify-center flex-shrink-0">
@@ -643,7 +650,6 @@ export default function AccountPage() {
                   ))}
                 </div>
               </div>
-
               <SettingRow
                 icon={Bell}
                 label="Push Notifications"
