@@ -18,8 +18,9 @@ type HomeData = {
     full_name: string; avg_rating: number; total_deliveries: number; is_active: boolean
     kyc_status: string; avatar_url: string | null
     acceptance_rate: number | null
-    avg_wait_at_maker_mins: number | null
-    avg_delivery_mins: number | null
+    completion_rate: number | null
+    on_time_delivery_rate: number | null
+    issues_reported: number
   }
   todayEarnings: number
   todayDeliveries: number
@@ -91,7 +92,7 @@ export default function HomePage() {
       const weekStart = new Date(); weekStart.setDate(weekStart.getDate() - weekStart.getDay()); weekStart.setHours(0, 0, 0, 0)
 
       const [profileRes, ordersRes, activeRes] = await Promise.all([
-        supabase.from('driver_profiles').select('full_name, avg_rating, total_deliveries, is_active, kyc_status, avatar_url, acceptance_rate, avg_wait_at_maker_mins, avg_delivery_mins').eq('id', user.id).single(),
+        supabase.from('driver_profiles').select('full_name, avg_rating, total_deliveries, is_active, kyc_status, avatar_url, acceptance_rate, completion_rate, on_time_delivery_rate, issues_reported').eq('id', user.id).single(),
         supabase.from('orders').select('driver_payout, created_at').eq('nexter_id', user.id).eq('status', 'delivered').gte('created_at', weekStart.toISOString()),
         supabase.from('orders').select('id, status, food_maker:food_makers(display_name)').eq('nexter_id', user.id).in('status', ['driver_assigned', 'arrived_at_maker', 'picked_up', 'on_the_way', 'arrived_at_customer']).maybeSingle(),
       ])
@@ -303,28 +304,32 @@ export default function HomePage() {
             </button>
           </div>
 
-          {/* Metrics strip — directly below GO button */}
+          {/* Performance metrics — directly below GO button */}
           {!loading && (
-            <div className="flex items-stretch bg-[#141414]/95 border border-white/8 rounded-3xl overflow-hidden backdrop-blur-sm mb-4">
-              <div className="flex-1 py-3.5 text-center">
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              <div className="bg-[#141414]/95 border border-white/8 rounded-2xl py-3.5 text-center backdrop-blur-sm">
                 <p className="font-black text-white text-xl leading-none">
                   {data?.profile?.acceptance_rate != null ? `${Math.round(data.profile.acceptance_rate)}%` : '—'}
                 </p>
-                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Accepted</p>
+                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Acceptance Rate</p>
               </div>
-              <div className="w-px bg-white/8" />
-              <div className="flex-1 py-3.5 text-center">
+              <div className="bg-[#141414]/95 border border-white/8 rounded-2xl py-3.5 text-center backdrop-blur-sm">
                 <p className="font-black text-white text-xl leading-none">
-                  {data?.profile?.avg_wait_at_maker_mins != null ? `${data.profile.avg_wait_at_maker_mins}m` : '—'}
+                  {data?.profile?.completion_rate != null ? `${Math.round(data.profile.completion_rate)}%` : '—'}
                 </p>
-                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Arrival</p>
+                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Completion Rate</p>
               </div>
-              <div className="w-px bg-white/8" />
-              <div className="flex-1 py-3.5 text-center">
+              <div className="bg-[#141414]/95 border border-white/8 rounded-2xl py-3.5 text-center backdrop-blur-sm">
                 <p className="font-black text-white text-xl leading-none">
-                  {data?.profile?.avg_delivery_mins != null ? `${data.profile.avg_delivery_mins}m` : '—'}
+                  {data?.profile?.on_time_delivery_rate != null ? `${Math.round(data.profile.on_time_delivery_rate)}%` : '—'}
                 </p>
-                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Dropoff</p>
+                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">On-Time Delivery</p>
+              </div>
+              <div className="bg-[#141414]/95 border border-white/8 rounded-2xl py-3.5 text-center backdrop-blur-sm">
+                <p className="font-black text-white text-xl leading-none">
+                  {data?.profile?.issues_reported ?? 0}
+                </p>
+                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Issues Reported</p>
               </div>
             </div>
           )}
@@ -513,27 +518,31 @@ export default function HomePage() {
                 </span>
               )}
             </button>
-            {/* Metrics strip — directly below GoOff button */}
-            <div className="w-full flex items-stretch bg-[#141414]/95 border border-white/8 rounded-3xl overflow-hidden backdrop-blur-sm">
-              <div className="flex-1 py-3.5 text-center">
+            {/* Performance metrics — directly below GoOff button */}
+            <div className="w-full grid grid-cols-2 gap-2">
+              <div className="bg-[#131313]/95 border border-white/8 rounded-2xl py-3.5 text-center backdrop-blur-sm">
                 <p className="font-black text-white text-xl leading-none">
                   {data?.profile?.acceptance_rate != null ? `${Math.round(data.profile.acceptance_rate)}%` : '—'}
                 </p>
-                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Accepted</p>
+                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Acceptance Rate</p>
               </div>
-              <div className="w-px bg-white/8" />
-              <div className="flex-1 py-3.5 text-center">
+              <div className="bg-[#131313]/95 border border-white/8 rounded-2xl py-3.5 text-center backdrop-blur-sm">
                 <p className="font-black text-white text-xl leading-none">
-                  {data?.profile?.avg_wait_at_maker_mins != null ? `${data.profile.avg_wait_at_maker_mins}m` : '—'}
+                  {data?.profile?.completion_rate != null ? `${Math.round(data.profile.completion_rate)}%` : '—'}
                 </p>
-                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Arrival</p>
+                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Completion Rate</p>
               </div>
-              <div className="w-px bg-white/8" />
-              <div className="flex-1 py-3.5 text-center">
+              <div className="bg-[#131313]/95 border border-white/8 rounded-2xl py-3.5 text-center backdrop-blur-sm">
                 <p className="font-black text-white text-xl leading-none">
-                  {data?.profile?.avg_delivery_mins != null ? `${data.profile.avg_delivery_mins}m` : '—'}
+                  {data?.profile?.on_time_delivery_rate != null ? `${Math.round(data.profile.on_time_delivery_rate)}%` : '—'}
                 </p>
-                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Dropoff</p>
+                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">On-Time Delivery</p>
+              </div>
+              <div className="bg-[#131313]/95 border border-white/8 rounded-2xl py-3.5 text-center backdrop-blur-sm">
+                <p className="font-black text-white text-xl leading-none">
+                  {data?.profile?.issues_reported ?? 0}
+                </p>
+                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Issues Reported</p>
               </div>
             </div>
           </div>

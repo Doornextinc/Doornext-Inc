@@ -27,8 +27,10 @@ type DriverProfile = {
   total_deliveries: number
   avg_rating: number | null
   acceptance_rate: number | null
-  avg_wait_at_maker_mins: number | null
-  avg_delivery_mins: number | null
+  completion_rate: number | null
+  on_time_delivery_rate: number | null
+  issues_reported: number
+  created_at: string | null
 }
 
 type NavProvider = 'google' | 'apple' | 'waze'
@@ -181,7 +183,7 @@ export default function AccountPage() {
       const [profileRes, ordersRes, earningsRes] = await Promise.all([
         supabase
           .from('driver_profiles')
-          .select('id, full_name, phone, avatar_url, vehicle_type, is_active, kyc_status, total_deliveries, avg_rating, acceptance_rate, avg_wait_at_maker_mins, avg_delivery_mins')
+          .select('id, full_name, phone, avatar_url, vehicle_type, is_active, kyc_status, total_deliveries, avg_rating, acceptance_rate, completion_rate, on_time_delivery_rate, issues_reported, created_at')
           .eq('id', userId)
           .single(),
         supabase
@@ -347,6 +349,15 @@ export default function AccountPage() {
   const kyc       = KYC_CONFIG[profile?.kyc_status ?? 'not_submitted'] ?? KYC_CONFIG.not_submitted
   const KycIcon   = kyc.icon
 
+  const memberSince = (() => {
+    if (!profile?.created_at) return null
+    const months = Math.floor((Date.now() - new Date(profile.created_at).getTime()) / (1000 * 60 * 60 * 24 * 30.44))
+    if (months < 1) return 'Less than a month'
+    if (months < 12) return `${months} month${months !== 1 ? 's' : ''}`
+    const yrs = Math.floor(months / 12); const rem = months % 12
+    return rem === 0 ? `${yrs} yr${yrs !== 1 ? 's' : ''}` : `${yrs}y ${rem}m`
+  })()
+
   const navLabels: Record<NavProvider, string> = {
     google: 'Google Maps',
     apple: 'Apple Maps',
@@ -470,30 +481,6 @@ export default function AccountPage() {
               <p className="text-[10px] text-zinc-600 mt-1">Earned</p>
             </div>
           </div>
-          <div className="h-px bg-white/5" />
-          <div className="grid grid-cols-3 divide-x divide-white/5 py-3">
-            <div className="text-center px-2">
-              <div className="flex items-center justify-center mb-1"><Check size={13} className="text-zinc-600" /></div>
-              <p className="font-black text-white text-lg leading-none">
-                {profile?.acceptance_rate != null ? `${Math.round(profile.acceptance_rate)}%` : '—'}
-              </p>
-              <p className="text-[10px] text-zinc-600 mt-1">Accepted</p>
-            </div>
-            <div className="text-center px-2">
-              <div className="flex items-center justify-center mb-1"><MapPin size={13} className="text-zinc-600" /></div>
-              <p className="font-black text-white text-lg leading-none">
-                {profile?.avg_wait_at_maker_mins != null ? `${profile.avg_wait_at_maker_mins}m` : '—'}
-              </p>
-              <p className="text-[10px] text-zinc-600 mt-1">Arrival</p>
-            </div>
-            <div className="text-center px-2">
-              <div className="flex items-center justify-center mb-1"><Clock size={13} className="text-zinc-600" /></div>
-              <p className="font-black text-white text-lg leading-none">
-                {profile?.avg_delivery_mins != null ? `${profile.avg_delivery_mins}m` : '—'}
-              </p>
-              <p className="text-[10px] text-zinc-600 mt-1">Dropoff</p>
-            </div>
-          </div>
         </div>
 
         {/* ── Status ───────────────────────────────────────────────────────── */}
@@ -518,6 +505,80 @@ export default function AccountPage() {
                 </div>
               }
             />
+          </div>
+        </div>
+
+        {/* ── Performance ──────────────────────────────────────────────────── */}
+        <div>
+          <SectionLabel label="Performance" />
+          <div className="bg-[#141414] rounded-2xl border border-white/5 overflow-hidden">
+            <div className="grid grid-cols-2 divide-x divide-white/5">
+              <div className="py-4 text-center">
+                <p className={`font-black text-xl leading-none ${
+                  profile?.acceptance_rate == null ? 'text-zinc-500'
+                  : profile.acceptance_rate >= 80 ? 'text-green-400'
+                  : profile.acceptance_rate >= 60 ? 'text-amber-400'
+                  : 'text-red-400'
+                }`}>
+                  {profile?.acceptance_rate != null ? `${Math.round(profile.acceptance_rate)}%` : '—'}
+                </p>
+                <p className="text-[10px] text-zinc-600 mt-1.5 font-bold uppercase tracking-wide">Acceptance Rate</p>
+              </div>
+              <div className="py-4 text-center">
+                <p className={`font-black text-xl leading-none ${
+                  (completionRate ?? profile?.completion_rate) == null ? 'text-zinc-500'
+                  : (completionRate ?? profile?.completion_rate ?? 0) >= 90 ? 'text-green-400'
+                  : (completionRate ?? profile?.completion_rate ?? 0) >= 70 ? 'text-amber-400'
+                  : 'text-red-400'
+                }`}>
+                  {completionRate != null ? `${completionRate}%`
+                    : profile?.completion_rate != null ? `${Math.round(profile.completion_rate)}%`
+                    : '—'}
+                </p>
+                <p className="text-[10px] text-zinc-600 mt-1.5 font-bold uppercase tracking-wide">Completion Rate</p>
+              </div>
+            </div>
+            <div className="h-px bg-white/5" />
+            <div className="grid grid-cols-2 divide-x divide-white/5">
+              <div className="py-4 text-center">
+                <p className={`font-black text-xl leading-none ${
+                  profile?.on_time_delivery_rate == null ? 'text-zinc-500'
+                  : profile.on_time_delivery_rate >= 85 ? 'text-green-400'
+                  : profile.on_time_delivery_rate >= 65 ? 'text-amber-400'
+                  : 'text-red-400'
+                }`}>
+                  {profile?.on_time_delivery_rate != null ? `${Math.round(profile.on_time_delivery_rate)}%` : '—'}
+                </p>
+                <p className="text-[10px] text-zinc-600 mt-1.5 font-bold uppercase tracking-wide">On-Time Delivery</p>
+              </div>
+              <div className="py-4 text-center">
+                <p className={`font-black text-xl leading-none ${
+                  (profile?.issues_reported ?? 0) === 0 ? 'text-green-400'
+                  : (profile?.issues_reported ?? 0) <= 3 ? 'text-amber-400'
+                  : 'text-red-400'
+                }`}>
+                  {profile?.issues_reported ?? 0}
+                </p>
+                <p className="text-[10px] text-zinc-600 mt-1.5 font-bold uppercase tracking-wide">Issues Reported</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Lifetime Highlights ───────────────────────────────────────────── */}
+        <div>
+          <SectionLabel label="Lifetime Highlights" />
+          <div className="bg-[#141414] rounded-2xl border border-white/5 overflow-hidden">
+            <div className="grid grid-cols-2 divide-x divide-white/5 py-5">
+              <div className="text-center px-3">
+                <p className="font-black text-white text-3xl leading-none">{profile?.total_deliveries ?? 0}</p>
+                <p className="text-xs text-zinc-500 mt-2 font-semibold">Orders Delivered</p>
+              </div>
+              <div className="text-center px-3">
+                <p className="font-black text-white text-xl leading-none">{memberSince ?? '—'}</p>
+                <p className="text-xs text-zinc-500 mt-2 font-semibold">Time With Us</p>
+              </div>
+            </div>
           </div>
         </div>
 
