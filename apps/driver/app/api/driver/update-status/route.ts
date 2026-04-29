@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
   const { data: order, error: orderErr } = await admin
     .from('orders')
     .select(`
-      status, nexter_id, customer_id, maker_id, proof_photo_path,
+      status, nexter_id, customer_id, maker_id,
       subtotal, delivery_fee, service_fee, small_order_fee,
       surge_fee, tip_amount, driver_payout, platform_fee
     `)
@@ -91,11 +91,18 @@ export async function POST(req: NextRequest) {
       .maybeSingle()
     const requireProof = proofSetting?.value === 'true'
 
-    if (requireProof && !order.proof_photo_path) {
-      return NextResponse.json(
-        { error: 'A proof photo is required before marking as delivered.' },
-        { status: 422 }
-      )
+    if (requireProof) {
+      const { data: proofRow } = await admin
+        .from('orders')
+        .select('proof_photo_path')
+        .eq('id', orderId)
+        .maybeSingle()
+      if (!proofRow?.proof_photo_path) {
+        return NextResponse.json(
+          { error: 'A proof photo is required before marking as delivered.' },
+          { status: 422 }
+        )
+      }
     }
 
     // Soft GPS audit — advisory only, never blocks delivery
