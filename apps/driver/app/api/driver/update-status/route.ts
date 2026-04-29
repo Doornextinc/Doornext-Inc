@@ -117,6 +117,8 @@ export async function POST(req: NextRequest) {
   // ── Build the status update payload ──────────────────────────────────────
   const now = new Date().toISOString()
   const updatePayload: Record<string, unknown> = { status, updated_at: now }
+  if (status === 'arrived_at_maker') updatePayload.arrived_at_maker_at = now
+  if (status === 'on_the_way') updatePayload.on_the_way_at = now
   if (status === 'delivered') {
     if (lat && lng) {
       updatePayload.delivery_lat = lat
@@ -206,6 +208,39 @@ export async function POST(req: NextRequest) {
           .eq('id', user.id),
         admin.rpc('recompute_driver_completion_rate', { driver_id: user.id }),
       ])
+
+      // Recompute avg timing metrics from all delivered orders with timestamps
+      try {
+        const { data: timingRows } = await admin
+          .from('orders')
+          .select('arrived_at_maker_at, on_the_way_at, delivered_at')
+          .eq('nexter_id', user.id)
+          .eq('status', 'delivered')
+          .not('arrived_at_maker_at', 'is', null)
+          .not('on_the_way_at', 'is', null)
+          .not('delivered_at', 'is', null)
+
+        if (timingRows && timingRows.length > 0) {
+          const waitMins = timingRows
+            .map(r => (new Date(r.on_the_way_at).getTime() - new Date(r.arrived_at_maker_at).getTime()) / 60000)
+            .filter(v => v > 0 && v < 120)
+          const delivMins = timingRows
+            .map(r => (new Date(r.delivered_at).getTime() - new Date(r.on_the_way_at).getTime()) / 60000)
+            .filter(v => v > 0 && v < 180)
+
+          const metricsUpdate: Record<string, number> = {}
+          if (waitMins.length > 0)
+            metricsUpdate.avg_wait_at_maker_mins = Math.round(waitMins.reduce((s, v) => s + v, 0) / waitMins.length * 10) / 10
+          if (delivMins.length > 0)
+            metricsUpdate.avg_delivery_mins = Math.round(delivMins.reduce((s, v) => s + v, 0) / delivMins.length * 10) / 10
+
+          if (Object.keys(metricsUpdate).length > 0) {
+            await admin.from('driver_profiles').update(metricsUpdate).eq('id', user.id)
+          }
+        }
+      } catch {
+        // Timing columns may not exist yet — non-blocking
+      }
     } catch (err) {
       // Settlement failure is non-blocking — order is already marked delivered.
       // Log to Sentry for ops review; a reconciliation job can recover these.

@@ -27,6 +27,8 @@ type DriverProfile = {
   total_deliveries: number
   avg_rating: number | null
   acceptance_rate: number | null
+  avg_wait_at_maker_mins: number | null
+  avg_delivery_mins: number | null
 }
 
 type NavProvider = 'google' | 'apple' | 'waze'
@@ -179,7 +181,7 @@ export default function AccountPage() {
       const [profileRes, ordersRes, earningsRes] = await Promise.all([
         supabase
           .from('driver_profiles')
-          .select('id, full_name, phone, avatar_url, vehicle_type, is_active, kyc_status, total_deliveries, avg_rating, acceptance_rate')
+          .select('id, full_name, phone, avatar_url, vehicle_type, is_active, kyc_status, total_deliveries, avg_rating, acceptance_rate, avg_wait_at_maker_mins, avg_delivery_mins')
           .eq('id', userId)
           .single(),
         supabase
@@ -466,6 +468,30 @@ export default function AccountPage() {
               <div className="flex items-center justify-center mb-1"><TrendingUp size={13} className="text-zinc-600" /></div>
               <p className="font-black text-white text-lg leading-none">{totalEarnings !== null ? `$${totalEarnings.toFixed(0)}` : '—'}</p>
               <p className="text-[10px] text-zinc-600 mt-1">Earned</p>
+            </div>
+          </div>
+          <div className="h-px bg-white/5" />
+          <div className="grid grid-cols-3 divide-x divide-white/5 py-3">
+            <div className="text-center px-2">
+              <div className="flex items-center justify-center mb-1"><Check size={13} className="text-zinc-600" /></div>
+              <p className="font-black text-white text-lg leading-none">
+                {profile?.acceptance_rate != null ? `${Math.round(profile.acceptance_rate)}%` : '—'}
+              </p>
+              <p className="text-[10px] text-zinc-600 mt-1">Accepted</p>
+            </div>
+            <div className="text-center px-2">
+              <div className="flex items-center justify-center mb-1"><MapPin size={13} className="text-zinc-600" /></div>
+              <p className="font-black text-white text-lg leading-none">
+                {profile?.avg_wait_at_maker_mins != null ? `${profile.avg_wait_at_maker_mins}m` : '—'}
+              </p>
+              <p className="text-[10px] text-zinc-600 mt-1">Arrival</p>
+            </div>
+            <div className="text-center px-2">
+              <div className="flex items-center justify-center mb-1"><Clock size={13} className="text-zinc-600" /></div>
+              <p className="font-black text-white text-lg leading-none">
+                {profile?.avg_delivery_mins != null ? `${profile.avg_delivery_mins}m` : '—'}
+              </p>
+              <p className="text-[10px] text-zinc-600 mt-1">Dropoff</p>
             </div>
           </div>
         </div>

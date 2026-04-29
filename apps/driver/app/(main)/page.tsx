@@ -14,7 +14,13 @@ import { playWithHaptic, initAudio } from '@/lib/notification-sounds'
 const LiveMap = dynamic(() => import('@/components/live-map').then(m => m.LiveMap), { ssr: false })
 
 type HomeData = {
-  profile: { full_name: string; avg_rating: number; total_deliveries: number; is_active: boolean; kyc_status: string; avatar_url: string | null }
+  profile: {
+    full_name: string; avg_rating: number; total_deliveries: number; is_active: boolean
+    kyc_status: string; avatar_url: string | null
+    acceptance_rate: number | null
+    avg_wait_at_maker_mins: number | null
+    avg_delivery_mins: number | null
+  }
   todayEarnings: number
   todayDeliveries: number
   weekEarnings: number
@@ -85,7 +91,7 @@ export default function HomePage() {
       const weekStart = new Date(); weekStart.setDate(weekStart.getDate() - weekStart.getDay()); weekStart.setHours(0, 0, 0, 0)
 
       const [profileRes, ordersRes, activeRes] = await Promise.all([
-        supabase.from('driver_profiles').select('full_name, avg_rating, total_deliveries, is_active, kyc_status, avatar_url').eq('id', user.id).single(),
+        supabase.from('driver_profiles').select('full_name, avg_rating, total_deliveries, is_active, kyc_status, avatar_url, acceptance_rate, avg_wait_at_maker_mins, avg_delivery_mins').eq('id', user.id).single(),
         supabase.from('orders').select('driver_payout, created_at').eq('nexter_id', user.id).eq('status', 'delivered').gte('created_at', weekStart.toISOString()),
         supabase.from('orders').select('id, status, food_maker:food_makers(display_name)').eq('nexter_id', user.id).in('status', ['driver_assigned', 'arrived_at_maker', 'picked_up', 'on_the_way', 'arrived_at_customer']).maybeSingle(),
       ])
@@ -299,20 +305,46 @@ export default function HomePage() {
 
           {/* Stats strip */}
           {!loading && (
-            <div className="flex items-stretch bg-[#141414]/95 border border-white/8 rounded-3xl overflow-hidden backdrop-blur-sm">
-              <div className="flex-1 py-4 text-center">
-                <p className="font-black text-white text-2xl leading-none">${(data?.todayEarnings ?? 0).toFixed(2)}</p>
-                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Today</p>
+            <div className="space-y-2">
+              {/* Today / Trips / Rating */}
+              <div className="flex items-stretch bg-[#141414]/95 border border-white/8 rounded-3xl overflow-hidden backdrop-blur-sm">
+                <div className="flex-1 py-4 text-center">
+                  <p className="font-black text-white text-2xl leading-none">${(data?.todayEarnings ?? 0).toFixed(2)}</p>
+                  <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Today</p>
+                </div>
+                <div className="w-px bg-white/8" />
+                <div className="flex-1 py-4 text-center">
+                  <p className="font-black text-white text-2xl leading-none">{data?.todayDeliveries ?? 0}</p>
+                  <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Trips</p>
+                </div>
+                <div className="w-px bg-white/8" />
+                <div className="flex-1 py-4 text-center">
+                  <p className="font-black text-white text-2xl leading-none">{data?.profile?.avg_rating != null ? data.profile.avg_rating.toFixed(1) : '—'}</p>
+                  <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Rating</p>
+                </div>
               </div>
-              <div className="w-px bg-white/8" />
-              <div className="flex-1 py-4 text-center">
-                <p className="font-black text-white text-2xl leading-none">{data?.todayDeliveries ?? 0}</p>
-                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Trips</p>
-              </div>
-              <div className="w-px bg-white/8" />
-              <div className="flex-1 py-4 text-center">
-                <p className="font-black text-white text-2xl leading-none">{data?.profile?.avg_rating != null ? data.profile.avg_rating.toFixed(1) : '—'}</p>
-                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Rating</p>
+              {/* Acceptance / Pickup wait / Delivery time */}
+              <div className="flex items-stretch bg-[#141414]/95 border border-white/8 rounded-3xl overflow-hidden backdrop-blur-sm">
+                <div className="flex-1 py-3.5 text-center">
+                  <p className="font-black text-white text-xl leading-none">
+                    {data?.profile?.acceptance_rate != null ? `${Math.round(data.profile.acceptance_rate)}%` : '—'}
+                  </p>
+                  <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Accepted</p>
+                </div>
+                <div className="w-px bg-white/8" />
+                <div className="flex-1 py-3.5 text-center">
+                  <p className="font-black text-white text-xl leading-none">
+                    {data?.profile?.avg_wait_at_maker_mins != null ? `${data.profile.avg_wait_at_maker_mins}m` : '—'}
+                  </p>
+                  <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Arrival</p>
+                </div>
+                <div className="w-px bg-white/8" />
+                <div className="flex-1 py-3.5 text-center">
+                  <p className="font-black text-white text-xl leading-none">
+                    {data?.profile?.avg_delivery_mins != null ? `${data.profile.avg_delivery_mins}m` : '—'}
+                  </p>
+                  <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Dropoff</p>
+                </div>
               </div>
             </div>
           )}
@@ -341,20 +373,42 @@ export default function HomePage() {
             </Link>
           )}
 
-          {/* Stats row */}
-          <div className="grid grid-cols-3 gap-2.5">
-            <div className="bg-[#131313]/95 border border-white/8 rounded-2xl px-3 py-4 text-center backdrop-blur-sm">
-              <p className="font-black text-white text-xl leading-none">${(data?.todayEarnings ?? 0).toFixed(2)}</p>
-              <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Today</p>
+          {/* Stats rows */}
+          <div className="space-y-2">
+            <div className="grid grid-cols-3 gap-2.5">
+              <div className="bg-[#131313]/95 border border-white/8 rounded-2xl px-3 py-4 text-center backdrop-blur-sm">
+                <p className="font-black text-white text-xl leading-none">${(data?.todayEarnings ?? 0).toFixed(2)}</p>
+                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Today</p>
+              </div>
+              <div className="bg-[#131313]/95 border border-white/8 rounded-2xl px-3 py-4 text-center backdrop-blur-sm">
+                <p className="font-black text-white text-xl leading-none">{data?.todayDeliveries ?? 0}</p>
+                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Trips</p>
+              </div>
+              <Link href="/earnings" className="bg-[#131313]/95 border border-white/8 rounded-2xl px-3 py-4 text-center backdrop-blur-sm">
+                <p className="font-black text-white text-xl leading-none">{data?.profile?.avg_rating != null ? data.profile.avg_rating.toFixed(1) : '—'}</p>
+                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Rating</p>
+              </Link>
             </div>
-            <div className="bg-[#131313]/95 border border-white/8 rounded-2xl px-3 py-4 text-center backdrop-blur-sm">
-              <p className="font-black text-white text-xl leading-none">{data?.todayDeliveries ?? 0}</p>
-              <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Trips</p>
+            <div className="grid grid-cols-3 gap-2.5">
+              <div className="bg-[#131313]/95 border border-white/8 rounded-2xl px-3 py-3.5 text-center backdrop-blur-sm">
+                <p className="font-black text-white text-lg leading-none">
+                  {data?.profile?.acceptance_rate != null ? `${Math.round(data.profile.acceptance_rate)}%` : '—'}
+                </p>
+                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Accepted</p>
+              </div>
+              <div className="bg-[#131313]/95 border border-white/8 rounded-2xl px-3 py-3.5 text-center backdrop-blur-sm">
+                <p className="font-black text-white text-lg leading-none">
+                  {data?.profile?.avg_wait_at_maker_mins != null ? `${data.profile.avg_wait_at_maker_mins}m` : '—'}
+                </p>
+                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Arrival</p>
+              </div>
+              <div className="bg-[#131313]/95 border border-white/8 rounded-2xl px-3 py-3.5 text-center backdrop-blur-sm">
+                <p className="font-black text-white text-lg leading-none">
+                  {data?.profile?.avg_delivery_mins != null ? `${data.profile.avg_delivery_mins}m` : '—'}
+                </p>
+                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Dropoff</p>
+              </div>
             </div>
-            <Link href="/earnings" className="bg-[#131313]/95 border border-white/8 rounded-2xl px-3 py-4 text-center backdrop-blur-sm">
-              <p className="font-black text-white text-xl leading-none">{data?.profile?.avg_rating != null ? data.profile.avg_rating.toFixed(1) : '—'}</p>
-              <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Rating</p>
-            </Link>
           </div>
 
           {/* ── Delivery request cards ── */}
