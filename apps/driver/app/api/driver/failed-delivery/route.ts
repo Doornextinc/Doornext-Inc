@@ -29,8 +29,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'orderId and reason required' }, { status: 400 })
   }
 
+  // Use service role for the order read — anon client is subject to RLS policies
+  // that may block the read when querying by id alone. Ownership is checked below.
+  const admin = createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
   // Fetch order — include payment fields needed for refund and financial zeroing
-  const { data: order } = await supabase
+  const { data: order } = await admin
     .from('orders')
     .select('id, status, nexter_id, customer_id, maker_id, total, payment_method, stripe_payment_intent_id')
     .eq('id', orderId)
@@ -46,11 +53,6 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     )
   }
-
-  const admin = createServiceClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
 
   const shortId = orderId.slice(-6).toUpperCase()
 

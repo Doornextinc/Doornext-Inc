@@ -71,15 +71,15 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // ── Delivery gate: proof photo + GPS ─────────────────────────────────────
+  // ── Delivery gate: GPS audit only (proof photo is optional) ─────────────
   if (status === 'delivered') {
-    // Check if proof photo is required (default: true in production)
+    // Check if proof photo is required via admin settings (default: false — photo is optional in UI)
     const { data: proofSetting } = await admin
-      .from('app_settings')
+      .from('settings')
       .select('value')
       .eq('key', 'require_delivery_proof')
       .maybeSingle()
-    const requireProof = proofSetting ? proofSetting.value !== 'false' : true
+    const requireProof = proofSetting?.value === 'true'
 
     if (requireProof && !order.proof_photo_path) {
       return NextResponse.json(
@@ -88,8 +88,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Soft GPS audit: log to Sentry if driver reports no location.
-    // We store whatever they send — GPS is advisory (tunnels / bad signal are real).
+    // Soft GPS audit — advisory only, never blocks delivery
     if (!lat || !lng) {
       Sentry.captureMessage('Delivered without GPS coordinates', {
         level: 'warning',

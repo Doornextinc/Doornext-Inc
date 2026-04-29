@@ -317,20 +317,29 @@ export default function ActiveDeliveryPage() {
     if (!hasHydrated) return
     if (!userId && !authReady) return
     if (!userId) { router.push('/login'); return }
-    const supabase = createClient()
 
-    const { data } = await supabase
-      .from('orders')
-      .select(`*, payment_method, dropoff_note, order_items(quantity, unit_price, menu_items(name)), food_maker:food_makers(display_name, lat, lng), customer:users!orders_customer_id_fkey(full_name, phone)`)
-      .eq('nexter_id', userId)
-      .in('status', ACTIVE_STATUSES)
-      .order('updated_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-
-    if (data) { setOrder(data as ActiveOrder); setActiveOrder(data.id) }
-    else setActiveOrder(null)
-    setLoading(false)
+    try {
+      const res = await fetch('/api/driver/active-order')
+      if (res.status === 401) { router.push('/login'); return }
+      if (!res.ok) {
+        // On transient server errors, don't clear the order — keep showing
+        // whatever was loaded before so the driver isn't kicked out mid-delivery.
+        setLoading(false)
+        return
+      }
+      const { order } = await res.json()
+      if (order) {
+        setOrder(order as ActiveOrder)
+        setActiveOrder(order.id)
+      } else {
+        setOrder(null)
+        setActiveOrder(null)
+      }
+    } catch {
+      // Network error — same: don't clear, just stop loading
+    } finally {
+      setLoading(false)
+    }
   }, [router, setActiveOrder, userId, authReady, hasHydrated])
 
   useEffect(() => { loadActiveOrder() }, [loadActiveOrder])
@@ -347,11 +356,16 @@ export default function ActiveDeliveryPage() {
         { event: 'UPDATE', schema: 'public', table: 'orders', filter: `id=eq.${order.id}` },
         (payload) => {
           const newStatus = payload.new.status as string
-          setOrder((prev) => prev ? { ...prev, status: newStatus } : prev)
-          // Maker confirmed the pickup PIN — alert the driver
+          // Patch status locally for instant UI response, then re-fetch for full data
+          setOrder((prev) => prev ? { ...prev, status: newStatus, updated_at: payload.new.updated_at ?? prev.updated_at } : prev)
           if (newStatus === 'picked_up') {
             playWithHaptic('order_ready')
           }
+          // Re-fetch full order in background so all fields stay in sync
+          fetch('/api/driver/active-order')
+            .then(r => r.ok ? r.json() : null)
+            .then(json => { if (json?.order) setOrder(json.order as ActiveOrder) })
+            .catch(() => {})
         }
       )
       .subscribe()
@@ -452,11 +466,6 @@ export default function ActiveDeliveryPage() {
       }
 
       if (newStatus === 'delivered') {
-        // Fire-and-forget complete-delivery (fee settlement); errors are non-fatal
-        fetch('/api/driver/complete-delivery', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ orderId: order.id }),
-        }).catch(() => {/* non-fatal */})
         playWithHaptic('delivery_done')
         setDeliveredOrder(order)
         setActiveOrder(null)
