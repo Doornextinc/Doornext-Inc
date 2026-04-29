@@ -119,24 +119,23 @@ export async function POST(req: NextRequest) {
   // Fire-and-forget — stat failure must never block the accept response.
   void (admin.rpc('increment_driver_accepted', { driver_id: user.id }) as unknown as Promise<unknown>).catch(() => {}) // non-fatal
 
-  // Add driver to the order's Stream Chat channel so all three parties can communicate
+  // Add driver to Stream Chat channel — fire-and-forget so it never delays the response
   const streamApiKey = process.env.NEXT_PUBLIC_STREAM_API_KEY
   const streamSecret = process.env.STREAM_API_SECRET
   const isUnconfigured = (v?: string) =>
     !v || v.startsWith('your-') || v.includes('placeholder') || v.length < 8
   if (!isUnconfigured(streamApiKey) && !isUnconfigured(streamSecret)) {
-    try {
-      const stream = StreamChat.getInstance(streamApiKey!, streamSecret!)
-      // Upsert driver so they exist in Stream
-      await stream.upsertUser({ id: user.id, role: 'user' })
-      // Create or get the order channel and add the driver as a member
-      const channel = stream.channel('messaging', `order-${orderId}`)
-      await channel.create()
-      await channel.addMembers([user.id])
-    } catch (e) {
-      // Non-fatal — chat will still work once customer or maker creates the channel
-      console.error('Stream channel member add failed:', e)
-    }
+    void (async () => {
+      try {
+        const stream = StreamChat.getInstance(streamApiKey!, streamSecret!)
+        await stream.upsertUser({ id: user.id, role: 'user' })
+        const channel = stream.channel('messaging', `order-${orderId}`)
+        await channel.create()
+        await channel.addMembers([user.id])
+      } catch (e) {
+        console.error('Stream channel member add failed:', e)
+      }
+    })()
   }
 
   return NextResponse.json({ success: true, orderId })

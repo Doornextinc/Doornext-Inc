@@ -275,8 +275,11 @@ export default function ActiveDeliveryPage() {
   const userId = useDriverStore((s) => s.userId)
   const hasHydrated = useDriverStore((s) => s._hasHydrated)
   const authReady = useDriverStore((s) => s.authReady)
+  const storeActiveOrderId = useDriverStore((s) => s.activeOrderId)
   const [order, setOrder] = useState<ActiveOrder | null>(null)
   const [loading, setLoading] = useState(true)
+  const [retryCount, setRetryCount] = useState(0)
+  const MAX_RETRIES = 3
   const [updating, setUpdating] = useState(false)
   const [updateError, setUpdateError] = useState<string | null>(null)
   const [elapsed, setElapsed] = useState(0)
@@ -343,6 +346,19 @@ export default function ActiveDeliveryPage() {
   }, [router, setActiveOrder, userId, authReady, hasHydrated])
 
   useEffect(() => { loadActiveOrder() }, [loadActiveOrder])
+
+  // Retry if we expect an order (activeOrderId in store) but none came back yet —
+  // handles the race where accept-order returns before the DB write is visible.
+  useEffect(() => {
+    if (!loading && !order && storeActiveOrderId && retryCount < MAX_RETRIES) {
+      const t = setTimeout(() => {
+        setLoading(true)
+        setRetryCount(c => c + 1)
+        loadActiveOrder()
+      }, 700)
+      return () => clearTimeout(t)
+    }
+  }, [loading, order, storeActiveOrderId, retryCount, loadActiveOrder])
 
   // Real-time: detect when maker confirms pickup PIN (status → picked_up)
   // or any other external order status change.
@@ -506,6 +522,17 @@ export default function ActiveDeliveryPage() {
   }
 
   /* ── No active order ── */
+  if (!order && storeActiveOrderId && retryCount < MAX_RETRIES) {
+    return (
+      <div className="flex flex-col min-h-full">
+        <AppHeader title="Active Delivery" />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="w-10 h-10 border-[3px] border-[#FF7A50] border-t-transparent rounded-full animate-spin" />
+        </div>
+      </div>
+    )
+  }
+
   if (!order) {
     return (
       <div className="flex flex-col min-h-full">
