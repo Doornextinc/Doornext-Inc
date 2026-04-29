@@ -41,8 +41,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'orderId and status required' }, { status: 400 })
   }
 
+  // Use admin client for the order read — the anon client is bound by RLS policies
+  // that may only allow row access when filtering by nexter_id. We do our own
+  // ownership check below so bypassing RLS here is safe.
+  const admin = createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
   // Fetch order with fee columns + proof path so we can validate at delivery time
-  const { data: order } = await supabase
+  const { data: order } = await admin
     .from('orders')
     .select(`
       status, nexter_id, customer_id, maker_id, proof_photo_path,
@@ -62,11 +70,6 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     )
   }
-
-  const admin = createServiceClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
 
   // ── Delivery gate: proof photo + GPS ─────────────────────────────────────
   if (status === 'delivered') {
