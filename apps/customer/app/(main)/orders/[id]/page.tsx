@@ -64,9 +64,12 @@ export default function OrderTrackingPage() {
   const [tipDone, setTipDone] = useState(false)
   const [showReview, setShowReview] = useState(false)
   const [rating, setRating] = useState(0)
+  const [foodQuality, setFoodQuality] = useState<string | null>(null)
+  const [packagingQuality, setPackagingQuality] = useState<string | null>(null)
   const [reviewText, setReviewText] = useState('')
   const [submittingReview, setSubmittingReview] = useState(false)
   const [reviewSubmitted, setReviewSubmitted] = useState(false)
+  const reviewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [cancelling, setCancelling] = useState(false)
   const [cancelError, setCancelError] = useState<string | null>(null)
@@ -149,10 +152,13 @@ export default function OrderTrackingPage() {
         const alreadyTipped = (data.tip_amount ?? 0) > 0
         setTipDone(alreadyTipped)
         if (data.status === 'delivered') {
-          if (!alreadyTipped) {
-            setTimeout(() => setShowTip(true), 1000)
-          } else if (!alreadyReviewed) {
-            setTimeout(() => setShowReview(true), 1000)
+          if (!alreadyTipped) setTimeout(() => setShowTip(true), 1000)
+          if (!alreadyReviewed) {
+            // Show review 2 min after delivery. If already 2+ min have passed
+            // since updated_at, show after a short delay instead.
+            const deliveredMs = data.updated_at ? Date.now() - new Date(data.updated_at).getTime() : 0
+            const remaining = Math.max(0, 2 * 60 * 1000 - deliveredMs)
+            reviewTimerRef.current = setTimeout(() => setShowReview(true), remaining + 1000)
           }
         }
       }
@@ -167,12 +173,16 @@ export default function OrderTrackingPage() {
     loadOrder()
   }, [loadOrder])
 
-  // Show tip / review modals when delivered via realtime
+  // Show tip immediately + schedule review 2 min later when delivered via realtime
   useEffect(() => {
-    if (realtimeStatus === 'delivered' && !tipDone) {
-      setTimeout(() => setShowTip(true), 1500)
+    if (realtimeStatus !== 'delivered') return
+    if (!tipDone) setTimeout(() => setShowTip(true), 1500)
+    if (!reviewSubmitted) {
+      if (reviewTimerRef.current) clearTimeout(reviewTimerRef.current)
+      reviewTimerRef.current = setTimeout(() => setShowReview(true), 2 * 60 * 1000 + 1500)
     }
-  }, [realtimeStatus, tipDone])
+    return () => { if (reviewTimerRef.current) clearTimeout(reviewTimerRef.current) }
+  }, [realtimeStatus, tipDone, reviewSubmitted]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const cancelOrder = async () => {
     setCancelling(true)
@@ -211,7 +221,6 @@ export default function OrderTrackingPage() {
       setTipSubmitting(false)
       setTipDone(true)
       setShowTip(false)
-      if (!reviewSubmitted) setTimeout(() => setShowReview(true), 500)
     }
   }
 
@@ -229,6 +238,8 @@ export default function OrderTrackingPage() {
         maker_id: order.maker_id,
         rating,
         body: reviewText.trim() || null,
+        food_quality: foodQuality,
+        packaging_quality: packagingQuality,
       }, { onConflict: 'order_id,customer_id' })
 
       setReviewSubmitted(true)
@@ -531,9 +542,9 @@ export default function OrderTrackingPage() {
 
       {/* Tip Modal */}
       {showTip && !tipDone && order && (
-        <div className="fixed inset-0 z-50 flex items-end">
+        <div className="fixed inset-0 z-[60] flex items-end">
           <div className="absolute inset-0 bg-black/40" />
-          <div className="relative w-full max-w-[430px] mx-auto bg-white rounded-t-3xl p-6 pb-10">
+          <div className="relative w-full max-w-[430px] mx-auto bg-white rounded-t-3xl p-6 pb-[88px]">
             <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-6" />
             <div className="text-center mb-5">
               <span className="text-4xl">🛵</span>
@@ -567,9 +578,9 @@ export default function OrderTrackingPage() {
 
       {/* Cancel Confirmation Modal */}
       {showCancelConfirm && (
-        <div className="fixed inset-0 z-50 flex items-end">
+        <div className="fixed inset-0 z-[60] flex items-end">
           <div className="absolute inset-0 bg-black/50" onClick={() => !cancelling && setShowCancelConfirm(false)} />
-          <div className="relative w-full max-w-[430px] mx-auto bg-white rounded-t-3xl p-6 pb-10">
+          <div className="relative w-full max-w-[430px] mx-auto bg-white rounded-t-3xl p-6 pb-[88px]">
             <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-6" />
             <div className="text-center mb-6">
               <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
@@ -638,40 +649,99 @@ export default function OrderTrackingPage() {
 
       {/* Review Modal */}
       {showReview && !reviewSubmitted && (
-        <div className="fixed inset-0 z-50 flex items-end">
+        <div className="fixed inset-0 z-[60] flex items-end">
           <div className="absolute inset-0 bg-black/40" onClick={() => setShowReview(false)} />
-          <div className="relative w-full max-w-[430px] mx-auto bg-white rounded-t-3xl p-6 pb-10">
-            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-6" />
-            <div className="text-center mb-6">
-              <span className="text-5xl">🎉</span>
-              <h2 className="text-xl font-black text-gray-900 mt-3">Order Delivered!</h2>
-              <p className="text-gray-500 text-sm mt-1">
-                How was {order.food_maker.display_name}?
-              </p>
+          <div className="relative w-full max-w-[430px] mx-auto bg-white rounded-t-3xl pb-[88px] overflow-hidden">
+            {/* Scrollable content */}
+            <div className="max-h-[80svh] overflow-y-auto px-6 pt-6">
+              <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5" />
+
+              {/* Header */}
+              <div className="text-center mb-5">
+                <span className="text-4xl">🎉</span>
+                <h2 className="text-xl font-black text-gray-900 mt-2">How was your order?</h2>
+                <p className="text-gray-400 text-sm mt-1">{order.food_maker.display_name}</p>
+              </div>
+
+              {/* Overall rating */}
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Overall</p>
+              <div className="flex justify-center gap-3 mb-5">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <button key={i} onClick={() => setRating(i)} className="transition-transform active:scale-110">
+                    <Star
+                      size={38}
+                      className={i <= rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'}
+                    />
+                  </button>
+                ))}
+              </div>
+
+              {/* Food quality */}
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Food quality</p>
+              <div className="grid grid-cols-4 gap-2 mb-5">
+                {[
+                  { label: 'Poor',      emoji: '😞', value: 'poor'      },
+                  { label: 'Okay',      emoji: '😐', value: 'okay'      },
+                  { label: 'Good',      emoji: '😊', value: 'good'      },
+                  { label: 'Amazing',   emoji: '🤩', value: 'amazing'   },
+                ].map(({ label, emoji, value }) => (
+                  <button
+                    key={value}
+                    onClick={() => setFoodQuality(foodQuality === value ? null : value)}
+                    className={`flex flex-col items-center py-2.5 rounded-xl border text-xs font-semibold transition-colors ${
+                      foodQuality === value
+                        ? 'bg-[#FF6B35]/10 border-[#FF6B35] text-[#FF6B35]'
+                        : 'bg-gray-50 border-gray-200 text-gray-500'
+                    }`}
+                  >
+                    <span className="text-xl mb-1">{emoji}</span>
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Packaging */}
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Packaging</p>
+              <div className="grid grid-cols-3 gap-2 mb-5">
+                {[
+                  { label: 'Damaged',  emoji: '📦💔', value: 'damaged'  },
+                  { label: 'Fine',     emoji: '📦',   value: 'fine'     },
+                  { label: 'Perfect',  emoji: '💯',   value: 'perfect'  },
+                ].map(({ label, emoji, value }) => (
+                  <button
+                    key={value}
+                    onClick={() => setPackagingQuality(packagingQuality === value ? null : value)}
+                    className={`flex flex-col items-center py-2.5 rounded-xl border text-xs font-semibold transition-colors ${
+                      packagingQuality === value
+                        ? 'bg-[#FF6B35]/10 border-[#FF6B35] text-[#FF6B35]'
+                        : 'bg-gray-50 border-gray-200 text-gray-500'
+                    }`}
+                  >
+                    <span className="text-xl mb-1">{emoji}</span>
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Text */}
+              <textarea
+                value={reviewText}
+                onChange={(e) => setReviewText(e.target.value)}
+                placeholder="Tell others what you loved (or didn't) about this meal..."
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm resize-none focus:border-[#FF6B35] focus:outline-none transition-all mb-4"
+                rows={3}
+              />
+
+              <Button fullWidth size="lg" loading={submittingReview} onClick={submitReview} disabled={rating === 0}>
+                Submit Review
+              </Button>
+              <button
+                onClick={() => { setShowReview(false); router.push('/orders') }}
+                className="w-full text-center text-sm text-gray-400 mt-3 mb-2"
+              >
+                Skip for now
+              </button>
             </div>
-            <div className="flex justify-center gap-2 mb-6">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <button key={i} onClick={() => setRating(i)} className="transition-transform active:scale-110">
-                  <Star
-                    size={36}
-                    className={i <= rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'}
-                  />
-                </button>
-              ))}
-            </div>
-            <textarea
-              value={reviewText}
-              onChange={(e) => setReviewText(e.target.value)}
-              placeholder="Tell others what you loved about this meal..."
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm resize-none focus:border-[#FF6B35] transition-all mb-4"
-              rows={3}
-            />
-            <Button fullWidth size="lg" loading={submittingReview} onClick={submitReview} disabled={rating === 0}>
-              Submit Review
-            </Button>
-            <button onClick={() => { setShowReview(false); router.push('/orders') }} className="w-full text-center text-sm text-gray-400 mt-3">
-              Skip for now
-            </button>
           </div>
         </div>
       )}
