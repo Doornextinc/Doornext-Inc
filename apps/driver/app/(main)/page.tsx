@@ -91,10 +91,11 @@ export default function HomePage() {
       const today = new Date(); today.setHours(0, 0, 0, 0)
       const weekStart = new Date(); weekStart.setDate(weekStart.getDate() - weekStart.getDay()); weekStart.setHours(0, 0, 0, 0)
 
-      const [profileRes, ordersRes, activeRes] = await Promise.all([
-        supabase.from('driver_profiles').select('full_name, avg_rating, total_deliveries, is_active, kyc_status, avatar_url, acceptance_rate, completion_rate, on_time_delivery_rate, issues_reported').eq('id', user.id).single(),
+      const [profileRes, ordersRes, activeRes, completionRes] = await Promise.all([
+        supabase.from('driver_profiles').select('full_name, avg_rating, total_deliveries, is_active, kyc_status, avatar_url, acceptance_rate, on_time_delivery_rate, issues_reported').eq('id', user.id).single(),
         supabase.from('orders').select('driver_payout, created_at').eq('nexter_id', user.id).eq('status', 'delivered').gte('created_at', weekStart.toISOString()),
         supabase.from('orders').select('id, status, food_maker:food_makers(display_name)').eq('nexter_id', user.id).in('status', ['driver_assigned', 'arrived_at_maker', 'picked_up', 'on_the_way', 'arrived_at_customer']).maybeSingle(),
+        supabase.from('orders').select('status').eq('nexter_id', user.id).in('status', ['delivered', 'failed_delivery']),
       ])
 
       const allDeliveries = ordersRes.data ?? []
@@ -102,11 +103,16 @@ export default function HomePage() {
       const todayEarnings = todayDeliveries.reduce((s: number, d: { driver_payout: number }) => s + (d.driver_payout ?? 0), 0)
       const weekEarnings = allDeliveries.reduce((s: number, d: { driver_payout: number }) => s + (d.driver_payout ?? 0), 0)
 
+      const completionOrders = completionRes.data ?? []
+      const computedCompletionRate = completionOrders.length > 0
+        ? Math.round((completionOrders.filter(o => o.status === 'delivered').length / completionOrders.length) * 100)
+        : null
+
       if (profileRes.data?.is_active !== undefined) setOnline(profileRes.data.is_active)
       if (activeRes.data) setActiveOrder(activeRes.data.id)
 
       setData({
-        profile: profileRes.data as unknown as HomeData['profile'],
+        profile: { ...(profileRes.data as unknown as HomeData['profile']), completion_rate: computedCompletionRate },
         todayEarnings,
         todayDeliveries: todayDeliveries.length,
         weekEarnings,

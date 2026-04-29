@@ -27,7 +27,6 @@ type DriverProfile = {
   total_deliveries: number
   avg_rating: number | null
   acceptance_rate: number | null
-  completion_rate: number | null
   on_time_delivery_rate: number | null
   issues_reported: number
   created_at: string | null
@@ -183,7 +182,7 @@ export default function AccountPage() {
       const [profileRes, ordersRes, earningsRes] = await Promise.all([
         supabase
           .from('driver_profiles')
-          .select('id, full_name, phone, avatar_url, vehicle_type, is_active, kyc_status, total_deliveries, avg_rating, acceptance_rate, completion_rate, on_time_delivery_rate, issues_reported, created_at')
+          .select('id, full_name, phone, avatar_url, vehicle_type, is_active, kyc_status, total_deliveries, avg_rating, acceptance_rate, on_time_delivery_rate, issues_reported, created_at')
           .eq('id', userId)
           .single(),
         supabase
@@ -526,14 +525,12 @@ export default function AccountPage() {
               </div>
               <div className="py-4 text-center">
                 <p className={`font-black text-xl leading-none ${
-                  (completionRate ?? profile?.completion_rate) == null ? 'text-zinc-500'
-                  : (completionRate ?? profile?.completion_rate ?? 0) >= 90 ? 'text-green-400'
-                  : (completionRate ?? profile?.completion_rate ?? 0) >= 70 ? 'text-amber-400'
+                  completionRate == null ? 'text-zinc-500'
+                  : completionRate >= 90 ? 'text-green-400'
+                  : completionRate >= 70 ? 'text-amber-400'
                   : 'text-red-400'
                 }`}>
-                  {completionRate != null ? `${completionRate}%`
-                    : profile?.completion_rate != null ? `${Math.round(profile.completion_rate)}%`
-                    : '—'}
+                  {completionRate != null ? `${completionRate}%` : '—'}
                 </p>
                 <p className="text-[10px] text-zinc-600 mt-1.5 font-bold uppercase tracking-wide">Completion Rate</p>
               </div>
