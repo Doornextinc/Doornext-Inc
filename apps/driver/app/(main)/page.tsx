@@ -30,6 +30,7 @@ type HomeData = {
 
 type AvailableOrder = {
   id: string
+  status: string
   total: number
   delivery_fee: number
   driver_payout: number
@@ -148,8 +149,8 @@ export default function HomePage() {
     const supabase = createClient()
     const { data } = await supabase
       .from('orders')
-      .select('id, total, delivery_fee, driver_payout, tip_amount, created_at, food_maker:food_makers(display_name, lat, lng)')
-      .eq('status', 'ready')
+      .select('id, status, total, delivery_fee, driver_payout, tip_amount, created_at, food_maker:food_makers(display_name, lat, lng)')
+      .in('status', ['preparing', 'ready'])
       .is('nexter_id', null)
       .order('created_at', { ascending: true })
       .limit(10)
@@ -170,6 +171,7 @@ export default function HomePage() {
     const supabase = createClient()
     const ch = supabase.channel('home-orders')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders', filter: 'status=eq.ready' }, loadOrders)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders', filter: 'status=eq.preparing' }, loadOrders)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, loadOrders)
       .subscribe()
     return () => { supabase.removeChannel(ch) }
@@ -478,8 +480,19 @@ export default function HomePage() {
                         <p className="font-black text-white text-base leading-tight truncate">
                           {order.food_maker?.display_name ?? 'Restaurant'}
                         </p>
-                        {/* Time ago chip */}
-                        <div className="flex items-center gap-1 mt-1.5">
+                        {/* Status + time ago */}
+                        <div className="flex items-center gap-2 mt-1.5">
+                          {order.status === 'preparing' ? (
+                            <span className="flex items-center gap-1 bg-amber-500/15 border border-amber-500/30 rounded-full px-2 py-0.5 text-[10px] font-black text-amber-400 uppercase tracking-wide">
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse inline-block" />
+                              Preparing
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1 bg-green-500/15 border border-green-500/30 rounded-full px-2 py-0.5 text-[10px] font-black text-green-400 uppercase tracking-wide">
+                              <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />
+                              Ready
+                            </span>
+                          )}
                           <Clock size={11} className="text-zinc-500 flex-shrink-0" />
                           <span className="text-zinc-500 text-xs font-semibold">{timeAgo(order.created_at)}</span>
                         </div>

@@ -44,9 +44,11 @@ export async function POST(req: NextRequest) {
   // to confirm the handoff. This PIN is mandatory — neither party can bypass it.
   const pickup_pin = String(1000 + (crypto.getRandomValues(new Uint32Array(1))[0] % 9000))
 
-  // Atomic accept: update only if still unassigned and ready.
+  // Atomic accept: update only if still unassigned and in an acceptable status.
+  // Drivers can accept orders that are either being prepared or already ready —
+  // this lets them head over while the food is still cooking.
   // Use count instead of select().single() — after updating status to
-  // 'driver_assigned' the row no longer matches status='ready', so
+  // 'driver_assigned' the row no longer matches the filter, so
   // select().single() always returns PGRST116 even on success.
   const { error, count } = await admin
     .from('orders')
@@ -58,7 +60,7 @@ export async function POST(req: NextRequest) {
       updated_at: new Date().toISOString(),
     }, { count: 'exact' })
     .eq('id', orderId)
-    .eq('status', 'ready')
+    .in('status', ['preparing', 'ready'])
     .is('nexter_id', null)
 
   if (error) {
