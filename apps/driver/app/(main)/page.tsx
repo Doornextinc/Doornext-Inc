@@ -286,7 +286,7 @@ export default function HomePage() {
           </div>
 
           {/* Round GO button */}
-          <div className="flex justify-center mb-7">
+          <div className="flex justify-center mb-5">
             <button
               onClick={toggleOnline}
               disabled={toggling}
@@ -303,48 +303,48 @@ export default function HomePage() {
             </button>
           </div>
 
-          {/* Stats strip */}
+          {/* Metrics strip — directly below GO button */}
           {!loading && (
-            <div className="space-y-2">
-              {/* Today / Trips / Rating */}
-              <div className="flex items-stretch bg-[#141414]/95 border border-white/8 rounded-3xl overflow-hidden backdrop-blur-sm">
-                <div className="flex-1 py-4 text-center">
-                  <p className="font-black text-white text-2xl leading-none">${(data?.todayEarnings ?? 0).toFixed(2)}</p>
-                  <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Today</p>
-                </div>
-                <div className="w-px bg-white/8" />
-                <div className="flex-1 py-4 text-center">
-                  <p className="font-black text-white text-2xl leading-none">{data?.todayDeliveries ?? 0}</p>
-                  <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Trips</p>
-                </div>
-                <div className="w-px bg-white/8" />
-                <div className="flex-1 py-4 text-center">
-                  <p className="font-black text-white text-2xl leading-none">{data?.profile?.avg_rating != null ? data.profile.avg_rating.toFixed(1) : '—'}</p>
-                  <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Rating</p>
-                </div>
+            <div className="flex items-stretch bg-[#141414]/95 border border-white/8 rounded-3xl overflow-hidden backdrop-blur-sm mb-4">
+              <div className="flex-1 py-3.5 text-center">
+                <p className="font-black text-white text-xl leading-none">
+                  {data?.profile?.acceptance_rate != null ? `${Math.round(data.profile.acceptance_rate)}%` : '—'}
+                </p>
+                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Accepted</p>
               </div>
-              {/* Acceptance / Pickup wait / Delivery time */}
-              <div className="flex items-stretch bg-[#141414]/95 border border-white/8 rounded-3xl overflow-hidden backdrop-blur-sm">
-                <div className="flex-1 py-3.5 text-center">
-                  <p className="font-black text-white text-xl leading-none">
-                    {data?.profile?.acceptance_rate != null ? `${Math.round(data.profile.acceptance_rate)}%` : '—'}
-                  </p>
-                  <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Accepted</p>
-                </div>
-                <div className="w-px bg-white/8" />
-                <div className="flex-1 py-3.5 text-center">
-                  <p className="font-black text-white text-xl leading-none">
-                    {data?.profile?.avg_wait_at_maker_mins != null ? `${data.profile.avg_wait_at_maker_mins}m` : '—'}
-                  </p>
-                  <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Arrival</p>
-                </div>
-                <div className="w-px bg-white/8" />
-                <div className="flex-1 py-3.5 text-center">
-                  <p className="font-black text-white text-xl leading-none">
-                    {data?.profile?.avg_delivery_mins != null ? `${data.profile.avg_delivery_mins}m` : '—'}
-                  </p>
-                  <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Dropoff</p>
-                </div>
+              <div className="w-px bg-white/8" />
+              <div className="flex-1 py-3.5 text-center">
+                <p className="font-black text-white text-xl leading-none">
+                  {data?.profile?.avg_wait_at_maker_mins != null ? `${data.profile.avg_wait_at_maker_mins}m` : '—'}
+                </p>
+                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Arrival</p>
+              </div>
+              <div className="w-px bg-white/8" />
+              <div className="flex-1 py-3.5 text-center">
+                <p className="font-black text-white text-xl leading-none">
+                  {data?.profile?.avg_delivery_mins != null ? `${data.profile.avg_delivery_mins}m` : '—'}
+                </p>
+                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Dropoff</p>
+              </div>
+            </div>
+          )}
+
+          {/* Today / Trips / Rating strip */}
+          {!loading && (
+            <div className="flex items-stretch bg-[#141414]/95 border border-white/8 rounded-3xl overflow-hidden backdrop-blur-sm">
+              <div className="flex-1 py-4 text-center">
+                <p className="font-black text-white text-2xl leading-none">${(data?.todayEarnings ?? 0).toFixed(2)}</p>
+                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Today</p>
+              </div>
+              <div className="w-px bg-white/8" />
+              <div className="flex-1 py-4 text-center">
+                <p className="font-black text-white text-2xl leading-none">{data?.todayDeliveries ?? 0}</p>
+                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Trips</p>
+              </div>
+              <div className="w-px bg-white/8" />
+              <div className="flex-1 py-4 text-center">
+                <p className="font-black text-white text-2xl leading-none">{data?.profile?.avg_rating != null ? data.profile.avg_rating.toFixed(1) : '—'}</p>
+                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Rating</p>
               </div>
             </div>
           )}
@@ -373,42 +373,20 @@ export default function HomePage() {
             </Link>
           )}
 
-          {/* Stats rows */}
-          <div className="space-y-2">
-            <div className="grid grid-cols-3 gap-2.5">
-              <div className="bg-[#131313]/95 border border-white/8 rounded-2xl px-3 py-4 text-center backdrop-blur-sm">
-                <p className="font-black text-white text-xl leading-none">${(data?.todayEarnings ?? 0).toFixed(2)}</p>
-                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Today</p>
-              </div>
-              <div className="bg-[#131313]/95 border border-white/8 rounded-2xl px-3 py-4 text-center backdrop-blur-sm">
-                <p className="font-black text-white text-xl leading-none">{data?.todayDeliveries ?? 0}</p>
-                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Trips</p>
-              </div>
-              <Link href="/earnings" className="bg-[#131313]/95 border border-white/8 rounded-2xl px-3 py-4 text-center backdrop-blur-sm">
-                <p className="font-black text-white text-xl leading-none">{data?.profile?.avg_rating != null ? data.profile.avg_rating.toFixed(1) : '—'}</p>
-                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Rating</p>
-              </Link>
+          {/* Stats row — Today / Trips / Rating */}
+          <div className="grid grid-cols-3 gap-2.5">
+            <div className="bg-[#131313]/95 border border-white/8 rounded-2xl px-3 py-4 text-center backdrop-blur-sm">
+              <p className="font-black text-white text-xl leading-none">${(data?.todayEarnings ?? 0).toFixed(2)}</p>
+              <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Today</p>
             </div>
-            <div className="grid grid-cols-3 gap-2.5">
-              <div className="bg-[#131313]/95 border border-white/8 rounded-2xl px-3 py-3.5 text-center backdrop-blur-sm">
-                <p className="font-black text-white text-lg leading-none">
-                  {data?.profile?.acceptance_rate != null ? `${Math.round(data.profile.acceptance_rate)}%` : '—'}
-                </p>
-                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Accepted</p>
-              </div>
-              <div className="bg-[#131313]/95 border border-white/8 rounded-2xl px-3 py-3.5 text-center backdrop-blur-sm">
-                <p className="font-black text-white text-lg leading-none">
-                  {data?.profile?.avg_wait_at_maker_mins != null ? `${data.profile.avg_wait_at_maker_mins}m` : '—'}
-                </p>
-                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Arrival</p>
-              </div>
-              <div className="bg-[#131313]/95 border border-white/8 rounded-2xl px-3 py-3.5 text-center backdrop-blur-sm">
-                <p className="font-black text-white text-lg leading-none">
-                  {data?.profile?.avg_delivery_mins != null ? `${data.profile.avg_delivery_mins}m` : '—'}
-                </p>
-                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Dropoff</p>
-              </div>
+            <div className="bg-[#131313]/95 border border-white/8 rounded-2xl px-3 py-4 text-center backdrop-blur-sm">
+              <p className="font-black text-white text-xl leading-none">{data?.todayDeliveries ?? 0}</p>
+              <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Trips</p>
             </div>
+            <Link href="/earnings" className="bg-[#131313]/95 border border-white/8 rounded-2xl px-3 py-4 text-center backdrop-blur-sm">
+              <p className="font-black text-white text-xl leading-none">{data?.profile?.avg_rating != null ? data.profile.avg_rating.toFixed(1) : '—'}</p>
+              <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Rating</p>
+            </Link>
           </div>
 
           {/* ── Delivery request cards ── */}
@@ -507,7 +485,7 @@ export default function HomePage() {
             </div>
           )}
 
-          {/* Accepting orders label + Go Off button */}
+          {/* Accepting orders label + Go Off button + metrics */}
           <div className="flex flex-col items-center gap-3 pt-1">
             <div className="flex items-center gap-2">
               <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
@@ -535,6 +513,29 @@ export default function HomePage() {
                 </span>
               )}
             </button>
+            {/* Metrics strip — directly below GoOff button */}
+            <div className="w-full flex items-stretch bg-[#141414]/95 border border-white/8 rounded-3xl overflow-hidden backdrop-blur-sm">
+              <div className="flex-1 py-3.5 text-center">
+                <p className="font-black text-white text-xl leading-none">
+                  {data?.profile?.acceptance_rate != null ? `${Math.round(data.profile.acceptance_rate)}%` : '—'}
+                </p>
+                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Accepted</p>
+              </div>
+              <div className="w-px bg-white/8" />
+              <div className="flex-1 py-3.5 text-center">
+                <p className="font-black text-white text-xl leading-none">
+                  {data?.profile?.avg_wait_at_maker_mins != null ? `${data.profile.avg_wait_at_maker_mins}m` : '—'}
+                </p>
+                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Arrival</p>
+              </div>
+              <div className="w-px bg-white/8" />
+              <div className="flex-1 py-3.5 text-center">
+                <p className="font-black text-white text-xl leading-none">
+                  {data?.profile?.avg_delivery_mins != null ? `${data.profile.avg_delivery_mins}m` : '—'}
+                </p>
+                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Dropoff</p>
+              </div>
+            </div>
           </div>
         </div>
       )}
