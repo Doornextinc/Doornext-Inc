@@ -45,6 +45,14 @@ const STATUS_STEPS: { key: OrderStatus; label: string }[] = [
   { key: 'delivered',        label: 'Delivered'  },
 ]
 
+// Statuses that fall between steps (driver lifecycle after the maker's control ends).
+// Maps each to the step index of the last completed step so the stepper renders correctly.
+const BETWEEN_STEP_INDEX: Partial<Record<string, number>> = {
+  driver_assigned:    3, // driver accepted but not yet at restaurant — "Ready" is the last done step
+  on_the_way:         5, // driver picked up and en route — "Picked up" is the last done step
+  arrived_at_customer: 5,
+}
+
 const NEXT_STATUS: Partial<Record<OrderStatus, OrderStatus>> = {
   pending:   'confirmed',
   confirmed: 'preparing',
@@ -317,7 +325,10 @@ export default function OrderDetailPage() {
   const nextStep = NEXT_STATUS[order.status]
   const action = ACTION_CONFIG[order.status]
   const banner = STATE_BANNER[order.status]
-  const stepIndex = STATUS_STEPS.findIndex((s) => s.key === order.status)
+  const stepIndex = (() => {
+    const idx = STATUS_STEPS.findIndex((s) => s.key === order.status)
+    return idx !== -1 ? idx : (BETWEEN_STEP_INDEX[order.status] ?? -1)
+  })()
   const elapsedFromUpdate = elapsedMins(order.updated_at ?? order.created_at)
 
   // For pending, elapsed from creation; for others, from last update

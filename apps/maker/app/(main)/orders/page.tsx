@@ -56,8 +56,10 @@ export default function OrdersPage() {
   }, [])
 
   useEffect(() => {
+    const supabase = createClient()
+    let ch: ReturnType<typeof supabase.channel> | null = null
+
     async function init() {
-      const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
       const { data: maker } = await supabase
@@ -66,18 +68,17 @@ export default function OrdersPage() {
       makerIdRef.current = maker.id
       await loadOrders(maker.id)
 
-      // Real-time subscription for new / updated orders
-      const ch = supabase
+      ch = supabase
         .channel('maker-orders-rt')
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders', filter: `maker_id=eq.${maker.id}` },
           () => loadOrders(maker.id, true))
         .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `maker_id=eq.${maker.id}` },
           () => loadOrders(maker.id, false))
         .subscribe()
-
-      return () => { supabase.removeChannel(ch) }
     }
     init()
+
+    return () => { if (ch) supabase.removeChannel(ch) }
   }, [router, loadOrders])
 
   const filter = FILTER_TABS[activeTab]
