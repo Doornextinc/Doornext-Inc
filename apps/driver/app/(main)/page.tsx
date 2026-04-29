@@ -62,6 +62,8 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
   const [toggling, setToggling] = useState(false)
+  const [transitioning, setTransitioning] = useState(false)
+  const [transitionTarget, setTransitionTarget] = useState(false)
   const [lat, setLat] = useState(DEFAULT_LAT)
   const [lng, setLng] = useState(DEFAULT_LNG)
   const watchIdRef = useRef<number | null>(null)
@@ -200,23 +202,26 @@ export default function HomePage() {
   }
 
   const toggleOnline = async () => {
+    if (toggling || transitioning) return
     const newStatus = !isOnline
-    setOnline(newStatus) // optimistic
+    setTransitionTarget(newStatus)
+    setTransitioning(true)
     setToggling(true)
     try {
-      const res = await fetch('/api/driver/set-online', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ online: newStatus }),
-      })
-      if (!res.ok) {
-        setOnline(!newStatus) // revert on failure
-      } else {
+      const [res] = await Promise.all([
+        fetch('/api/driver/set-online', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ online: newStatus }),
+        }),
+        new Promise<void>(resolve => setTimeout(resolve, 3000)),
+      ])
+      if (res.ok) {
+        setOnline(newStatus)
         setData(prev => prev ? { ...prev, profile: { ...prev.profile, is_active: newStatus } } : prev)
       }
-    } catch {
-      setOnline(!newStatus) // revert on network error
-    } finally {
+    } catch { /* network error — stay in current state */ } finally {
+      setTransitioning(false)
       setToggling(false)
     }
   }
@@ -230,6 +235,57 @@ export default function HomePage() {
 
       {/* Live map — interactive (pan / zoom enabled) */}
       <LiveMap lat={lat} lng={lng} isOnline={isOnline} />
+
+      {/* ── Online/Offline transition splash ── */}
+      {transitioning && (
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#080808]/95 backdrop-blur-sm">
+          <style>{`
+            @keyframes ringFill {
+              from { stroke-dashoffset: 427.3; }
+              to   { stroke-dashoffset: 0; }
+            }
+          `}</style>
+
+          {/* Circular progress button */}
+          <div className="relative flex items-center justify-center" style={{ width: 160, height: 160 }}>
+            <svg className="absolute inset-0 -rotate-90" width="160" height="160" viewBox="0 0 160 160">
+              <circle cx="80" cy="80" r="68" fill="none" stroke="#1a1a1a" strokeWidth="4" />
+              <circle
+                cx="80" cy="80" r="68" fill="none"
+                stroke={transitionTarget ? '#4ade80' : '#FF7A50'}
+                strokeWidth="4"
+                strokeLinecap="round"
+                strokeDasharray="427.3"
+                style={{ strokeDashoffset: 427.3, animation: 'ringFill 3s linear forwards' }}
+              />
+            </svg>
+            <div
+              className="w-28 h-28 rounded-full flex flex-col items-center justify-center"
+              style={{
+                background: 'linear-gradient(145deg, #1e1e1e, #141414)',
+                boxShadow: '0 0 0 5px #1c1c1c, 0 0 0 9px #222',
+              }}
+            >
+              <span className="absolute inset-0 rounded-full border border-white/10 w-28 h-28 m-auto" style={{ width: 112, height: 112, borderRadius: 9999 }} />
+              {transitionTarget ? (
+                <span className="text-white font-black text-2xl tracking-wide">Go</span>
+              ) : (
+                <span className="flex flex-col items-center leading-none">
+                  <span className="text-white font-black text-xl tracking-widest">Go</span>
+                  <span className="text-white font-black text-xl tracking-widest">Off</span>
+                </span>
+              )}
+            </div>
+          </div>
+
+          <p className="text-white font-black text-xl mt-8 tracking-tight">
+            {transitionTarget ? 'Going Online…' : 'Going Offline…'}
+          </p>
+          <p className="text-zinc-500 text-sm mt-2">
+            {transitionTarget ? 'Connecting to nearby orders' : 'Wrapping up your session'}
+          </p>
+        </div>
+      )}
 
       {/* Floating sticky header */}
       <div className="relative z-10">
