@@ -49,8 +49,9 @@ export async function POST(req: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  // Fetch order with fee columns + proof path so we can validate at delivery time
-  const { data: order } = await admin
+  // Fetch order — filter by both id AND nexter_id so the ownership check
+  // is enforced in SQL (maybeSingle returns null gracefully on zero rows).
+  const { data: order, error: orderErr } = await admin
     .from('orders')
     .select(`
       status, nexter_id, customer_id, maker_id, proof_photo_path,
@@ -58,9 +59,18 @@ export async function POST(req: NextRequest) {
       surge_fee, tip_amount, driver_payout, platform_fee
     `)
     .eq('id', orderId)
-    .single()
+    .eq('nexter_id', user.id)
+    .maybeSingle()
 
-  if (!order || order.nexter_id !== user.id) {
+  if (orderErr) {
+    Sentry.captureException(orderErr, { extra: { orderId, userId: user.id, context: 'update-status-order-lookup' } })
+    return NextResponse.json({ error: 'Failed to look up order' }, { status: 500 })
+  }
+  if (!order) {
+    Sentry.captureMessage('update-status: order not found for driver', {
+      level: 'warning',
+      extra: { orderId, userId: user.id },
+    })
     return NextResponse.json({ error: 'Order not found or not assigned to you' }, { status: 404 })
   }
 
