@@ -121,7 +121,7 @@ export async function POST(req: NextRequest) {
         if (makerProfile?.user_id) {
           makerUserId = makerProfile.user_id
           notifyUser(admin, {
-            userId: makerUserId,
+            userId: makerProfile.user_id,
             type: 'driver_heading_to_maker',
             title: '🛵 Driver is on the way!',
             body: `A driver has accepted order #${shortId} and is heading to your kitchen.`,
