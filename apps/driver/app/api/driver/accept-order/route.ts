@@ -85,16 +85,26 @@ export async function POST(req: NextRequest) {
     try {
       const shortId = orderId.slice(-6).toUpperCase()
 
-      // Fetch order for notification data
-      const { data: order } = await admin
-        .from('orders')
-        .select('customer_id, maker_id')
-        .eq('id', orderId)
-        .single()
+      // Fetch order + all party profiles in parallel
+      const [{ data: order }, { data: driverProfile }] = await Promise.all([
+        admin
+          .from('orders')
+          .select('customer_id, maker_id')
+          .eq('id', orderId)
+          .single(),
+        admin
+          .from('users')
+          .select('full_name, avatar_url')
+          .eq('id', user.id)
+          .single(),
+      ])
 
-      if (order?.customer_id) {
+      let customerUserId: string | null = order?.customer_id ?? null
+      let makerUserId: string | null = null
+
+      if (customerUserId) {
         await notifyUser(admin, {
-          userId: order.customer_id,
+          userId: customerUserId,
           type: 'order_driver_assigned',
           title: 'Driver Assigned! 🛵',
           body: `A driver has accepted your order #${shortId} and is heading to the restaurant.`,
@@ -109,13 +119,51 @@ export async function POST(req: NextRequest) {
           .eq('id', order.maker_id)
           .single()
         if (makerProfile?.user_id) {
+          makerUserId = makerProfile.user_id
           notifyUser(admin, {
-            userId: makerProfile.user_id,
+            userId: makerUserId,
             type: 'driver_heading_to_maker',
             title: '🛵 Driver is on the way!',
             body: `A driver has accepted order #${shortId} and is heading to your kitchen.`,
             data: { order_id: orderId },
           })
+        }
+      }
+
+      // Stream Chat: create channel and add all three parties as members
+      const streamApiKey = process.env.NEXT_PUBLIC_STREAM_API_KEY
+      const streamSecret = process.env.STREAM_API_SECRET
+      const isUnconfigured = (v?: string) =>
+        !v || v.startsWith('your-') || v.includes('placeholder') || v.length < 8
+
+      if (!isUnconfigured(streamApiKey) && !isUnconfigured(streamSecret)) {
+        try {
+          const stream = StreamChat.getInstance(streamApiKey!, streamSecret!)
+
+          // Upsert all known members so Stream has their profiles
+          const usersToUpsert = [
+            { id: user.id, name: driverProfile?.full_name ?? 'Driver', image: driverProfile?.avatar_url ?? undefined, role: 'user' as const },
+          ]
+          if (customerUserId) {
+            const { data: cp } = await admin.from('users').select('full_name, avatar_url').eq('id', customerUserId).single()
+            usersToUpsert.push({ id: customerUserId, name: cp?.full_name ?? 'Customer', image: cp?.avatar_url ?? undefined, role: 'user' as const })
+          }
+          if (makerUserId) {
+            const { data: mp } = await admin.from('users').select('full_name, avatar_url').eq('id', makerUserId).single()
+            usersToUpsert.push({ id: makerUserId, name: mp?.full_name ?? 'Maker', image: mp?.avatar_url ?? undefined, role: 'user' as const })
+          }
+
+          await stream.upsertUsers(usersToUpsert)
+
+          const memberIds = [user.id, ...(customerUserId ? [customerUserId] : []), ...(makerUserId ? [makerUserId] : [])]
+          const channel = stream.channel('messaging', `order-${orderId}`, {
+            name: `Order #${shortId}`,
+            members: memberIds,
+            created_by_id: user.id,
+          })
+          await channel.create()
+        } catch (e) {
+          Sentry.captureException(e, { extra: { orderId, context: 'accept-order-stream' } })
         }
       }
     } catch (e) {
@@ -125,25 +173,6 @@ export async function POST(req: NextRequest) {
 
   // Reliability stat — fire-and-forget
   void (admin.rpc('increment_driver_accepted', { driver_id: user.id }) as unknown as Promise<unknown>).catch(() => {})
-
-  // Stream Chat member add — fire-and-forget
-  const streamApiKey = process.env.NEXT_PUBLIC_STREAM_API_KEY
-  const streamSecret = process.env.STREAM_API_SECRET
-  const isUnconfigured = (v?: string) =>
-    !v || v.startsWith('your-') || v.includes('placeholder') || v.length < 8
-  if (!isUnconfigured(streamApiKey) && !isUnconfigured(streamSecret)) {
-    void (async () => {
-      try {
-        const stream = StreamChat.getInstance(streamApiKey!, streamSecret!)
-        await stream.upsertUser({ id: user.id, role: 'user' })
-        const channel = stream.channel('messaging', `order-${orderId}`)
-        await channel.create()
-        await channel.addMembers([user.id])
-      } catch (e) {
-        console.error('Stream channel member add failed:', e)
-      }
-    })()
-  }
 
   return NextResponse.json({ success: true, orderId })
 }
