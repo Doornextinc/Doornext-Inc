@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Bell, ChevronLeft, MessageCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { useDriverStore } from '@/store/driver-store'
 
 interface AppHeaderProps {
   /** Custom greeting title (home page only) */
@@ -20,6 +21,8 @@ export function AppHeader({ greeting, title, showBack, backHref }: AppHeaderProp
   const router = useRouter()
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [initials, setInitials] = useState('D')
+  const [unreadNotifs, setUnreadNotifs] = useState(0)
+  const userId = useDriverStore(s => s.userId)
 
   useEffect(() => {
     const supabase = createClient()
@@ -45,6 +48,36 @@ export function AppHeader({ greeting, title, showBack, backHref }: AppHeaderProp
       }
     })
   }, [])
+
+  useEffect(() => {
+    if (!userId) return
+    const supabase = createClient()
+
+    supabase
+      .from('notifications')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('read', false)
+      .then(({ count }) => setUnreadNotifs(count ?? 0))
+
+    const channel = supabase
+      .channel('driver-header-notifs')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` },
+        () => {
+          supabase
+            .from('notifications')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', userId)
+            .eq('read', false)
+            .then(({ count }) => setUnreadNotifs(count ?? 0))
+        }
+      )
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [userId])
 
   return (
     <header className="sticky top-0 z-40 bg-[#0A0A0A] border-b border-white/8" style={{ boxShadow: '0 1px 0 rgba(255,255,255,0.04), 0 4px 20px rgba(0,0,0,0.4)' }}>
@@ -78,9 +111,12 @@ export function AppHeader({ greeting, title, showBack, backHref }: AppHeaderProp
               <MessageCircle size={18} className="text-zinc-300" />
             </div>
           </Link>
-          <Link href="/messages">
+          <Link href="/notifications">
             <div className="relative w-10 h-10 rounded-2xl bg-[#161616] border border-white/8 flex items-center justify-center active:scale-95 transition-transform">
               <Bell size={18} className="text-zinc-300" />
+              {unreadNotifs > 0 && (
+                <span className="absolute top-1.5 right-1.5 min-w-[8px] h-2 bg-[#FF7A50] rounded-full border border-[#161616]" />
+              )}
             </div>
           </Link>
           <Link href="/profile">
