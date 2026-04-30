@@ -157,7 +157,6 @@ export async function POST(req: NextRequest) {
 
           const memberIds = [user.id, ...(customerUserId ? [customerUserId] : []), ...(makerUserId ? [makerUserId] : [])]
           const channel = stream.channel('messaging', `order-${orderId}`, {
-            name: `Order #${shortId}`,
             members: memberIds,
             created_by_id: user.id,
           })
