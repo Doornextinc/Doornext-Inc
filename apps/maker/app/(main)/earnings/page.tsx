@@ -13,6 +13,7 @@ type OrderRow = {
   platform_commission: number
   created_at: string
 }
+type Withdrawal = { id: string; amount: number; status: string; method: string; created_at: string }
 type Period = 'today' | 'week' | 'month' | 'all'
 
 const PERIOD_LABELS: Record<Period, string> = {
@@ -51,11 +52,13 @@ export default function EarningsPage() {
 
   // Cash out state
   const [showCashOut, setShowCashOut] = useState(false)
+  const [cashOutAmount, setCashOutAmount] = useState('')
   const [cashOutMethod, setCashOutMethod] = useState<'bank_transfer' | 'stripe'>('bank_transfer')
   const [cashOutLoading, setCashOutLoading] = useState(false)
   const [cashOutError, setCashOutError] = useState<string | null>(null)
   const [cashOutSuccess, setCashOutSuccess] = useState(false)
   const [availableCashOut, setAvailableCashOut] = useState(0)
+  const [pendingWithdrawal, setPendingWithdrawal] = useState<Withdrawal | null>(null)
 
   const load = useCallback(async () => {
     setError(null)
@@ -86,9 +89,10 @@ export default function EarningsPage() {
         .limit(500),
       supabase
         .from('withdrawals')
-        .select('amount')
+        .select('id, amount, status, method, created_at')
         .eq('user_id', userId)
-        .in('status', ['pending', 'approved', 'paid']),
+        .in('status', ['pending', 'approved', 'paid'])
+        .order('created_at', { ascending: false }),
     ])
 
     // Merge: prefer maker_earnings rows; fall back to orders rows for unrecorded ones
@@ -118,9 +122,11 @@ export default function EarningsPage() {
     const allOrders = Array.from(earningsByOrderId.values())
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
+    const allWithdrawals = (withdrawalsRes.data ?? []) as Withdrawal[]
     const totalEarned = allOrders.reduce((s, o) => s + o.maker_payout, 0)
-    const totalWithdrawn = (withdrawalsRes.data ?? []).reduce((s, w) => s + w.amount, 0)
+    const totalWithdrawn = allWithdrawals.reduce((s, w) => s + w.amount, 0)
     setAvailableCashOut(Math.max(0, Math.round((totalEarned - totalWithdrawn) * 100) / 100))
+    setPendingWithdrawal(allWithdrawals.find(w => w.status === 'pending') ?? null)
     setOrders(allOrders)
     setLoading(false)
   }, [router])
@@ -159,12 +165,15 @@ export default function EarningsPage() {
 
   /* ─── cash out handler ─── */
   const submitCashOut = async () => {
+    const amt = Math.round(parseFloat(cashOutAmount) * 100) / 100
+    if (!amt || amt < 1) { setCashOutError('Minimum withdrawal is $1.00'); return }
+    if (amt > availableCashOut) { setCashOutError(`Maximum is $${availableCashOut.toFixed(2)}`); return }
     setCashOutLoading(true)
     setCashOutError(null)
     const res = await fetch('/api/maker/request-withdrawal', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount: availableCashOut, method: cashOutMethod }),
+      body: JSON.stringify({ amount: amt, method: cashOutMethod }),
     })
     const data = await res.json()
     if (!res.ok) {
@@ -298,20 +307,54 @@ export default function EarningsPage() {
                   <p className="text-green-700 font-bold text-sm">✓ Withdrawal request submitted!</p>
                   <p className="text-gray-400 text-xs mt-1">Admin will process within 1–2 business days</p>
                 </div>
+              ) : pendingWithdrawal ? (
+                <div className="w-full bg-yellow-50 border border-yellow-200 rounded-2xl px-4 py-3.5 flex items-center gap-3">
+                  <span className="text-xl flex-shrink-0">⏳</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-yellow-600">Pending Withdrawal</p>
+                    <p className="text-sm font-black text-gray-900 mt-0.5">${Number(pendingWithdrawal.amount).toFixed(2)}</p>
+                    <p className="text-[10px] text-gray-400 mt-0.5">
+                      {pendingWithdrawal.method.replace('_', ' ')} · Submitted {new Date(pendingWithdrawal.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </p>
+                  </div>
+                </div>
               ) : showCashOut ? (
                 <div className="space-y-3">
-                  <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider">Payout method</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {([['bank_transfer', 'Bank Transfer'], ['stripe', 'Stripe']] as const).map(([val, label]) => (
-                      <button key={val} onClick={() => setCashOutMethod(val)}
-                        className={`py-2.5 rounded-xl text-xs font-bold border transition-colors ${
-                          cashOutMethod === val
-                            ? 'border-[#FF6B35] bg-orange-50 text-[#FF6B35]'
-                            : 'border-gray-200 text-gray-400'
-                        }`}>
-                        {label}
+                  <div>
+                    <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-1.5">Amount</p>
+                    <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-4 h-11 gap-1">
+                      <span className="text-gray-400 font-bold text-sm">$</span>
+                      <input
+                        type="number"
+                        min="1"
+                        max={availableCashOut}
+                        step="0.01"
+                        value={cashOutAmount}
+                        onChange={e => setCashOutAmount(e.target.value)}
+                        className="flex-1 bg-transparent text-gray-900 font-bold text-sm focus:outline-none"
+                      />
+                      <button
+                        onClick={() => setCashOutAmount(availableCashOut.toFixed(2))}
+                        className="text-[10px] font-black text-[#FF6B35] uppercase tracking-wide"
+                      >
+                        Max
                       </button>
-                    ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-1.5">Payout method</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {([['bank_transfer', 'Bank Transfer'], ['stripe', 'Stripe']] as const).map(([val, label]) => (
+                        <button key={val} onClick={() => setCashOutMethod(val)}
+                          className={`py-2.5 rounded-xl text-xs font-bold border transition-colors ${
+                            cashOutMethod === val
+                              ? 'border-[#FF6B35] bg-orange-50 text-[#FF6B35]'
+                              : 'border-gray-200 text-gray-400'
+                          }`}>
+                          {label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                   {cashOutError && <p className="text-xs text-red-500">{cashOutError}</p>}
                   <div className="flex gap-2">
@@ -321,14 +364,16 @@ export default function EarningsPage() {
                     </button>
                     <button disabled={cashOutLoading} onClick={submitCashOut}
                       className="flex-1 py-3 rounded-2xl bg-[#FF6B35] text-white text-sm font-black disabled:opacity-50 active:scale-[0.98] transition-all">
-                      {cashOutLoading ? 'Submitting…' : `Request $${availableCashOut.toFixed(2)}`}
+                      {cashOutLoading ? 'Submitting…' : `Request $${parseFloat(cashOutAmount || '0').toFixed(2)}`}
                     </button>
                   </div>
                 </div>
               ) : (
-                <button disabled={availableCashOut <= 0} onClick={() => setShowCashOut(true)}
+                <button
+                  disabled={availableCashOut < 1}
+                  onClick={() => { setShowCashOut(true); setCashOutAmount(availableCashOut.toFixed(2)) }}
                   className="w-full bg-gray-50 disabled:text-gray-300 disabled:cursor-not-allowed border border-gray-200 text-[#FF6B35] font-black text-sm py-2.5 rounded-xl active:scale-[0.98] transition-all">
-                  {availableCashOut > 0 ? `Cash Out $${availableCashOut.toFixed(2)}` : 'Nothing to Cash Out'}
+                  {availableCashOut >= 1 ? `Cash Out $${availableCashOut.toFixed(2)}` : 'Nothing to Cash Out'}
                 </button>
               )}
             </div>

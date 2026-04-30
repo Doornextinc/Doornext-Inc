@@ -32,6 +32,7 @@ export async function PATCH(
       status,
       payout_ref: payout_ref ?? null,
       notes: notes ?? null,
+      reviewed_by: adminId,
       reviewed_at: new Date().toISOString(),
     })
     .eq('id', id)

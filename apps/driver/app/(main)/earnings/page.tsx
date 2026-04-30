@@ -9,6 +9,7 @@ import { AppHeader } from '@/components/layout/app-header'
 
 /* ─── types ─── */
 type Delivery = { id: string; driver_payout: number; tip_amount: number; created_at: string }
+type Withdrawal = { id: string; amount: number; status: string; method: string; created_at: string }
 type Period = 'today' | 'week' | 'month' | 'all'
 type Mission = {
   id: string; icon: string; title: string; description: string | null
@@ -49,10 +50,12 @@ export default function EarningsPage() {
   const [profile, setProfile] = useState<{ total_deliveries: number; avg_rating: number } | null>(null)
   const [missions, setMissions] = useState<Mission[]>([])
   const [withdrawnAmount, setWithdrawnAmount] = useState(0)
+  const [pendingWithdrawal, setPendingWithdrawal] = useState<Withdrawal | null>(null)
   const [loading, setLoading] = useState(true)
   const [period, setPeriod] = useState<Period>('week')
   const [expandedDay, setExpandedDay] = useState<number | null>(null)
   const [showCashOut, setShowCashOut] = useState(false)
+  const [cashOutAmount, setCashOutAmount] = useState('')
   const [cashOutMethod, setCashOutMethod] = useState<'bank_transfer' | 'stripe'>('bank_transfer')
   const [cashOutLoading, setCashOutLoading] = useState(false)
   const [cashOutError, setCashOutError] = useState<string | null>(null)
@@ -72,12 +75,14 @@ export default function EarningsPage() {
         supabase.from('driver_profiles').select('total_deliveries, avg_rating').eq('id', userId).single(),
         supabase.from('driver_missions').select('id, icon, title, description, reward_amount, target_value, mission_type, period').eq('is_active', true).order('created_at'),
         // Sum withdrawals that have been requested or paid out (excluding rejected)
-        supabase.from('withdrawals').select('amount, status').eq('user_id', userId).in('status', ['pending', 'approved', 'paid']),
+        supabase.from('withdrawals').select('id, amount, status, method, created_at').eq('user_id', userId).in('status', ['pending', 'approved', 'paid']).order('created_at', { ascending: false }),
       ])
       setDeliveries(ordersRes.data ?? [])
       setProfile(profileRes.data)
       setMissions(missionsRes.data ?? [])
-      setWithdrawnAmount((withdrawalsRes.data ?? []).reduce((s, w) => s + (w.amount ?? 0), 0))
+      const allWithdrawals = (withdrawalsRes.data ?? []) as Withdrawal[]
+      setPendingWithdrawal(allWithdrawals.find(w => w.status === 'pending') ?? null)
+      setWithdrawnAmount(allWithdrawals.reduce((s, w) => s + (w.amount ?? 0), 0))
       setLoading(false)
     }
     load()
@@ -199,17 +204,51 @@ export default function EarningsPage() {
                 <p className="text-green-400 font-bold text-sm">✓ Withdrawal request submitted!</p>
                 <p className="text-zinc-600 text-xs mt-1">Admin will process within 1–2 business days</p>
               </div>
+            ) : pendingWithdrawal ? (
+              <div className="w-full bg-[#1A1A1A] border border-yellow-500/20 rounded-2xl px-4 py-3.5 flex items-center gap-3">
+                <span className="text-xl flex-shrink-0">⏳</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold text-yellow-400">Pending Withdrawal</p>
+                  <p className="text-sm font-black text-white mt-0.5">${Number(pendingWithdrawal.amount).toFixed(2)}</p>
+                  <p className="text-[10px] text-zinc-600 mt-0.5">
+                    {pendingWithdrawal.method.replace('_', ' ')} · Submitted {new Date(pendingWithdrawal.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  </p>
+                </div>
+              </div>
             ) : showCashOut ? (
               <div className="space-y-3">
-                <p className="text-xs text-zinc-500 font-semibold uppercase tracking-wider">Payout method</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {([['bank_transfer', 'Bank Transfer'], ['stripe', 'Stripe']] as const).map(([val, label]) => (
-                    <button key={val} onClick={() => setCashOutMethod(val)}
-                      className={`py-2.5 rounded-xl text-xs font-bold border transition-colors ${
-                        cashOutMethod === val ? 'border-[#FF7A50] bg-[#FF7A50]/10 text-[#FF7A50]' : 'border-white/10 text-zinc-500'
-                      }`}
-                    >{label}</button>
-                  ))}
+                <div>
+                  <p className="text-xs text-zinc-500 font-semibold uppercase tracking-wider mb-1.5">Amount</p>
+                  <div className="flex items-center bg-[#1A1A1A] border border-white/10 rounded-xl px-4 h-11 gap-1">
+                    <span className="text-zinc-400 font-bold text-sm">$</span>
+                    <input
+                      type="number"
+                      min="1"
+                      max={availableCashOut}
+                      step="0.01"
+                      value={cashOutAmount}
+                      onChange={e => setCashOutAmount(e.target.value)}
+                      className="flex-1 bg-transparent text-white font-bold text-sm focus:outline-none"
+                    />
+                    <button
+                      onClick={() => setCashOutAmount(availableCashOut.toFixed(2))}
+                      className="text-[10px] font-black text-[#FF7A50] uppercase tracking-wide"
+                    >
+                      Max
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs text-zinc-500 font-semibold uppercase tracking-wider mb-1.5">Payout method</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {([['bank_transfer', 'Bank Transfer'], ['stripe', 'Stripe']] as const).map(([val, label]) => (
+                      <button key={val} onClick={() => setCashOutMethod(val)}
+                        className={`py-2.5 rounded-xl text-xs font-bold border transition-colors ${
+                          cashOutMethod === val ? 'border-[#FF7A50] bg-[#FF7A50]/10 text-[#FF7A50]' : 'border-white/10 text-zinc-500'
+                        }`}
+                      >{label}</button>
+                    ))}
+                  </div>
                 </div>
                 {cashOutError && <p className="text-xs text-red-400">{cashOutError}</p>}
                 <div className="flex gap-2">
@@ -220,10 +259,13 @@ export default function EarningsPage() {
                   <button
                     disabled={cashOutLoading}
                     onClick={async () => {
+                      const amt = Math.round(parseFloat(cashOutAmount) * 100) / 100
+                      if (!amt || amt < 1) { setCashOutError('Minimum withdrawal is $1.00'); return }
+                      if (amt > availableCashOut) { setCashOutError(`Maximum is $${availableCashOut.toFixed(2)}`); return }
                       setCashOutLoading(true); setCashOutError(null)
                       const res = await fetch('/api/driver/request-withdrawal', {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ amount: availableCashOut, method: cashOutMethod }),
+                        body: JSON.stringify({ amount: amt, method: cashOutMethod }),
                       })
                       const data = await res.json()
                       if (!res.ok) { setCashOutError(data.error ?? 'Failed to submit request'); setCashOutLoading(false); return }
@@ -231,17 +273,17 @@ export default function EarningsPage() {
                     }}
                     className="flex-1 py-3 rounded-2xl bg-[#FF7A50] text-white text-sm font-black disabled:opacity-50"
                   >
-                    {cashOutLoading ? 'Submitting…' : `Request $${availableCashOut.toFixed(2)}`}
+                    {cashOutLoading ? 'Submitting…' : `Request $${parseFloat(cashOutAmount || '0').toFixed(2)}`}
                   </button>
                 </div>
               </div>
             ) : (
               <button
-                disabled={availableCashOut <= 0}
-                onClick={() => setShowCashOut(true)}
+                disabled={availableCashOut < 1}
+                onClick={() => { setShowCashOut(true); setCashOutAmount(availableCashOut.toFixed(2)) }}
                 className="w-full bg-[#1A1A1A] disabled:bg-[#111] disabled:text-zinc-700 border border-white/8 text-[#FF7A50] font-black text-sm py-2.5 rounded-xl active:scale-[0.98] transition-all"
               >
-                {availableCashOut > 0 ? `Cash Out $${availableCashOut.toFixed(2)}` : 'Nothing to Cash Out'}
+                {availableCashOut >= 1 ? `Cash Out $${availableCashOut.toFixed(2)}` : 'Nothing to Cash Out'}
               </button>
             )}
           </div>
