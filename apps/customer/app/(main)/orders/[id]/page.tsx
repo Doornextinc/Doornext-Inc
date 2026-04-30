@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { AlertTriangle, CheckCircle, Circle, Clock, MapPin, MessageCircle, Star, XCircle } from 'lucide-react'
 import { BackBar } from '@/components/layout/top-bar'
 import { Button } from '@/components/ui/button'
-import { cn, ORDER_STATUS_LABELS } from '@/lib/utils'
+import { cn, ORDER_STATUS_LABELS, haversineDistance, estimateMinutes, formatEta, arrivalTimeStr } from '@/lib/utils'
+import { useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useOrderTracking } from '@/hooks/useOrderTracking'
 import { OrderClaimDialog } from '@/components/OrderClaimDialog'
@@ -38,7 +39,7 @@ const STATUS_MESSAGES: Partial<Record<OrderStatus, string>> = {
 }
 
 interface FullOrder extends Omit<Order, 'food_maker'> {
-  food_maker: { id: string; display_name: string; lat: number; lng: number }
+  food_maker: { id: string; display_name: string; lat: number; lng: number; prep_time_mins: number }
   order_items: Array<OrderItem & { menu_item: { name: string; price: number } }>
   nexter?: { full_name: string; avatar_url: string | null } | null
   payment_method?: 'card' | 'cash'
@@ -117,7 +118,7 @@ export default function OrderTrackingPage() {
         .select(`
           *,
           payment_method,
-          food_maker:food_makers(id, display_name, lat, lng),
+          food_maker:food_makers(id, display_name, lat, lng, prep_time_mins),
           order_items(*, menu_item:menu_items(name, price)),
           nexter:users!orders_nexter_id_fkey(full_name, avatar_url)
         `)
@@ -256,6 +257,50 @@ export default function OrderTrackingPage() {
 
   type DeliveryAddr = { street?: string; city?: string; state?: string; lat?: number; lng?: number } | null
   const deliveryAddr = order?.delivery_address as DeliveryAddr
+
+  // ── ETA calculation ─────────────────────────────────────────────────────────
+  const etaInfo = useMemo(() => {
+    if (!order) return null
+    const cLat = deliveryAddr?.lat
+    const cLng = deliveryAddr?.lng
+    const mLat = order.food_maker?.lat
+    const mLng = order.food_maker?.lng
+
+    // Prep stage: estimate remaining cook time based on prep_time_mins + when preparing started
+    if (currentStatus === 'preparing' && order.food_maker?.prep_time_mins) {
+      const prepMins = order.food_maker.prep_time_mins
+      const startedMs = order.updated_at ? new Date(order.updated_at).getTime() : Date.now()
+      const elapsedMins = (Date.now() - startedMs) / 60_000
+      const remaining = Math.max(0, Math.ceil(prepMins - elapsedMins))
+      return remaining < 2
+        ? { label: 'Almost ready!', arrival: null }
+        : { label: `~${remaining} min`, arrival: arrivalTimeStr(remaining) }
+    }
+
+    // Driver assigned / at maker: show transit time from restaurant to customer
+    if ((currentStatus === 'driver_assigned' || currentStatus === 'arrived_at_maker') && mLat && mLng && cLat && cLng) {
+      const mins = estimateMinutes(haversineDistance(mLat, mLng, cLat, cLng))
+      return { label: `~${formatEta(mins)} away`, arrival: arrivalTimeStr(mins) }
+    }
+
+    // Picked up or on the way: use live driver location if available, else fallback to maker
+    if (currentStatus === 'picked_up' || currentStatus === 'on_the_way') {
+      if (cLat && cLng) {
+        const dLat = nexterLocation?.lat ?? mLat
+        const dLng = nexterLocation?.lng ?? mLng
+        if (dLat && dLng) {
+          const mins = estimateMinutes(haversineDistance(dLat, dLng, cLat, cLng))
+          return { label: `~${formatEta(mins)} away`, arrival: arrivalTimeStr(mins) }
+        }
+      }
+    }
+
+    if (currentStatus === 'arrived_at_customer') {
+      return { label: 'Driver at your door!', arrival: null }
+    }
+
+    return null
+  }, [currentStatus, order, deliveryAddr, nexterLocation])
   const hasMapCoords =
     order?.food_maker?.lat &&
     order?.food_maker?.lng &&
@@ -333,10 +378,17 @@ export default function OrderTrackingPage() {
             </div>
           </div>
         )}
-        {/* Route label */}
+        {/* Route label + live ETA pill */}
         {hasMapCoords && (
-          <div className="absolute bottom-2 left-2 bg-black/70 backdrop-blur-sm rounded-lg px-2.5 py-1 text-xs font-semibold text-white shadow-sm pointer-events-none">
-            {nexterLocation ? '🛵 Driver en route' : '🍳 Kitchen → 📍 You'}
+          <div className="absolute bottom-2 left-2 right-2 flex items-end justify-between pointer-events-none">
+            <div className="bg-black/70 backdrop-blur-sm rounded-lg px-2.5 py-1 text-xs font-semibold text-white shadow-sm">
+              {nexterLocation ? '🛵 Driver en route' : '🍳 Kitchen → 📍 You'}
+            </div>
+            {etaInfo && (currentStatus === 'on_the_way' || currentStatus === 'picked_up') && (
+              <div className="bg-[#FF6B35] rounded-lg px-2.5 py-1 text-xs font-black text-white shadow-sm">
+                {etaInfo.label}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -344,7 +396,7 @@ export default function OrderTrackingPage() {
       {/* Status Card */}
       <div className="bg-white mx-4 -mt-4 rounded-2xl shadow-sm border border-gray-100 p-4">
         <div className="flex items-start justify-between">
-          <div>
+          <div className="flex-1 min-w-0 pr-2">
             <p className="text-xs font-semibold text-[#FF6B35] uppercase tracking-wide">
               {ORDER_STATUS_LABELS[currentStatus]}
             </p>
@@ -353,12 +405,33 @@ export default function OrderTrackingPage() {
             </p>
           </div>
           {order.status !== 'delivered' && order.status !== 'cancelled' && (
-            <div className="flex items-center gap-1 bg-orange-50 px-2.5 py-1.5 rounded-xl">
+            <div className="flex items-center gap-1 bg-orange-50 px-2.5 py-1.5 rounded-xl flex-shrink-0">
               <Clock size={13} className="text-[#FF6B35]" />
               <span className="text-xs font-bold text-[#FF6B35]">Live</span>
             </div>
           )}
         </div>
+
+        {/* ETA row */}
+        {etaInfo && (
+          <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-full bg-orange-50 flex items-center justify-center flex-shrink-0">
+                <Clock size={13} className="text-[#FF6B35]" />
+              </div>
+              <div>
+                <p className="text-xs text-gray-400 font-medium leading-none mb-0.5">Estimated delivery</p>
+                <p className="text-base font-black text-gray-900 leading-none">{etaInfo.label}</p>
+              </div>
+            </div>
+            {etaInfo.arrival && (
+              <div className="text-right">
+                <p className="text-xs text-gray-400 font-medium leading-none mb-0.5">Arrives by</p>
+                <p className="text-base font-black text-[#FF6B35] leading-none">{etaInfo.arrival}</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="flex-1 px-4 py-4 space-y-4">

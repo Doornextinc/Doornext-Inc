@@ -8,8 +8,9 @@ import type { OrderStatus } from '@doornext/shared/types'
 import {
   MapPin, Phone, CheckCircle, Navigation, Package,
   ChevronDown, ChevronUp, Banknote, ArrowRight, Clock, Star, AlertTriangle, X, MessageCircle,
-  ChevronRight, Camera, RotateCcw, MessageSquare,
+  ChevronRight, Camera, RotateCcw, MessageSquare, Timer,
 } from 'lucide-react'
+import { haversineDistance, estimateMinutes, formatEta, arrivalTimeStr, formatDistance } from '@doornext/shared/utils'
 import { AppHeader } from '@/components/layout/app-header'
 import { playWithHaptic } from '@/lib/notification-sounds'
 
@@ -20,7 +21,7 @@ type ActiveOrder = {
   pickup_pin: string | null
   pin_attempts: number
   dropoff_note: string | null
-  delivery_address: { street?: string; city?: string; state?: string; zip?: string; label?: string } | null
+  delivery_address: { street?: string; city?: string; state?: string; zip?: string; label?: string; lat?: number; lng?: number } | null
   food_maker: { display_name: string; lat: number; lng: number } | null
   customer: { full_name: string; phone: string | null } | null
   order_items: OrderItem[]
@@ -276,10 +277,12 @@ export default function ActiveDeliveryPage() {
   const hasHydrated = useDriverStore((s) => s._hasHydrated)
   const authReady = useDriverStore((s) => s.authReady)
   const storeActiveOrderId = useDriverStore((s) => s.activeOrderId)
+  const driverLat = useDriverStore((s) => s.currentLat)
+  const driverLng = useDriverStore((s) => s.currentLng)
   const [order, setOrder] = useState<ActiveOrder | null>(null)
   const [loading, setLoading] = useState(true)
   const [retryCount, setRetryCount] = useState(0)
-  const MAX_RETRIES = 3
+  const MAX_RETRIES = 6
   const [updating, setUpdating] = useState(false)
   const [updateError, setUpdateError] = useState<string | null>(null)
   const [elapsed, setElapsed] = useState(0)
@@ -355,7 +358,7 @@ export default function ActiveDeliveryPage() {
         setLoading(true)
         setRetryCount(c => c + 1)
         loadActiveOrder()
-      }, 700)
+      }, 500)
       return () => clearTimeout(t)
     }
   }, [loading, order, storeActiveOrderId, retryCount, loadActiveOrder])
@@ -568,6 +571,24 @@ export default function ActiveDeliveryPage() {
   const isPickupPhase = isHeadingToMaker || isAtMaker || isPickedUp
   const isDropoffPhase = isHeadingToCustomer || isAtCustomer
 
+  // ── ETA calculations (updates every 10 s via broadcastLocation → store) ──
+  const makerLat = order.food_maker?.lat
+  const makerLng = order.food_maker?.lng
+  const custLat  = addr?.lat
+  const custLng  = addr?.lng
+
+  const toMakerKm = (driverLat && driverLng && makerLat && makerLng)
+    ? haversineDistance(driverLat, driverLng, makerLat, makerLng) : null
+  const toCustomerKm = (driverLat && driverLng && custLat && custLng)
+    ? haversineDistance(driverLat, driverLng, custLat, custLng) : null
+  // Fallback: restaurant → customer for when we have no live driver location yet
+  const makerToCustomerKm = (makerLat && makerLng && custLat && custLng)
+    ? haversineDistance(makerLat, makerLng, custLat, custLng) : null
+
+  const pickupEtaMins   = toMakerKm   != null ? estimateMinutes(toMakerKm)   : null
+  const dropoffEtaMins  = toCustomerKm != null ? estimateMinutes(toCustomerKm)
+                        : makerToCustomerKm   != null ? estimateMinutes(makerToCustomerKm) : null
+
   return (
     <div className="flex flex-col min-h-full pb-[144px]">
       <AppHeader title="Active Delivery" />
@@ -653,6 +674,26 @@ export default function ActiveDeliveryPage() {
             </a>
           </div>
 
+          {/* ETA strip */}
+          {pickupEtaMins != null && (
+            <div className="mx-4 mb-3 grid grid-cols-3 gap-2">
+              <div className="bg-[#141414] border border-white/5 rounded-2xl py-3 text-center">
+                <p className="font-black text-[#FF7A50] text-lg leading-none">{formatEta(pickupEtaMins)}</p>
+                <p className="text-[10px] text-zinc-500 mt-1 font-semibold">To Pickup</p>
+              </div>
+              <div className="bg-[#141414] border border-white/5 rounded-2xl py-3 text-center">
+                <p className="font-black text-white text-lg leading-none">
+                  {toMakerKm != null ? formatDistance(toMakerKm) : '—'}
+                </p>
+                <p className="text-[10px] text-zinc-500 mt-1 font-semibold">Distance</p>
+              </div>
+              <div className="bg-[#141414] border border-white/5 rounded-2xl py-3 text-center">
+                <p className="font-black text-zinc-300 text-lg leading-none">{arrivalTimeStr(pickupEtaMins)}</p>
+                <p className="text-[10px] text-zinc-500 mt-1 font-semibold">Arrives by</p>
+              </div>
+            </div>
+          )}
+
           {addr && (
             <div className="mx-4 mb-3 bg-[#141414] rounded-2xl border border-white/5 px-4 py-3.5">
               <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wide mb-1.5">Delivering to</p>
@@ -694,12 +735,16 @@ export default function ActiveDeliveryPage() {
             </div>
           </div>
 
-          {/* Waiting state */}
+          {/* Waiting state + elapsed timer */}
           <div className="mx-4 mb-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl px-4 py-3.5 flex items-center gap-3">
             <div className="w-4 h-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin flex-shrink-0" />
-            <div>
+            <div className="flex-1 min-w-0">
               <p className="text-sm font-black text-amber-300">Waiting for maker to confirm</p>
               <p className="text-xs text-amber-400/70 mt-0.5">Your screen will update automatically once they enter the PIN</p>
+            </div>
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <Timer size={11} className="text-amber-400" />
+              <span className="text-amber-300 font-black text-sm tabular-nums">{formatElapsed(elapsed)}</span>
             </div>
           </div>
 
@@ -765,12 +810,32 @@ export default function ActiveDeliveryPage() {
           <div className="mx-4 mb-3 bg-green-500/10 border border-green-500/20 rounded-2xl px-4 py-3.5">
             <div className="flex items-center gap-2">
               <CheckCircle size={16} className="text-green-400 flex-shrink-0" />
-              <div>
+              <div className="flex-1 min-w-0">
                 <p className="text-sm font-black text-green-300">Order picked up from {order.food_maker?.display_name}</p>
                 <p className="text-xs text-green-400/70 mt-0.5">Now head to the customer</p>
               </div>
             </div>
           </div>
+
+          {/* ETA to customer */}
+          {dropoffEtaMins != null && (
+            <div className="mx-4 mb-3 grid grid-cols-3 gap-2">
+              <div className="bg-[#141414] border border-white/5 rounded-2xl py-3 text-center">
+                <p className="font-black text-[#FF7A50] text-lg leading-none">{formatEta(dropoffEtaMins)}</p>
+                <p className="text-[10px] text-zinc-500 mt-1 font-semibold">To Customer</p>
+              </div>
+              <div className="bg-[#141414] border border-white/5 rounded-2xl py-3 text-center">
+                <p className="font-black text-white text-lg leading-none">
+                  {toCustomerKm != null ? formatDistance(toCustomerKm) : makerToCustomerKm != null ? formatDistance(makerToCustomerKm) : '—'}
+                </p>
+                <p className="text-[10px] text-zinc-500 mt-1 font-semibold">Distance</p>
+              </div>
+              <div className="bg-[#141414] border border-white/5 rounded-2xl py-3 text-center">
+                <p className="font-black text-zinc-300 text-lg leading-none">{arrivalTimeStr(dropoffEtaMins)}</p>
+                <p className="text-[10px] text-zinc-500 mt-1 font-semibold">Arrives by</p>
+              </div>
+            </div>
+          )}
 
           {order.dropoff_note && (
             <div className="mx-4 mb-3 bg-[#FF7A50]/10 border border-[#FF7A50]/30 rounded-2xl px-4 py-3.5">
@@ -809,6 +874,26 @@ export default function ActiveDeliveryPage() {
       {/* ── Stage: On the Way to Customer ── */}
       {isHeadingToCustomer && (
         <>
+          {/* Live ETA strip — updates every 10 s via driver GPS */}
+          {dropoffEtaMins != null && (
+            <div className="mx-4 mb-3 grid grid-cols-3 gap-2">
+              <div className="bg-[#141414] border border-[#FF7A50]/20 rounded-2xl py-3 text-center">
+                <p className="font-black text-[#FF7A50] text-lg leading-none">{formatEta(dropoffEtaMins)}</p>
+                <p className="text-[10px] text-zinc-500 mt-1 font-semibold">ETA</p>
+              </div>
+              <div className="bg-[#141414] border border-white/5 rounded-2xl py-3 text-center">
+                <p className="font-black text-white text-lg leading-none">
+                  {toCustomerKm != null ? formatDistance(toCustomerKm) : '—'}
+                </p>
+                <p className="text-[10px] text-zinc-500 mt-1 font-semibold">Remaining</p>
+              </div>
+              <div className="bg-[#141414] border border-white/5 rounded-2xl py-3 text-center">
+                <p className="font-black text-zinc-300 text-lg leading-none">{arrivalTimeStr(dropoffEtaMins)}</p>
+                <p className="text-[10px] text-zinc-500 mt-1 font-semibold">Arrives by</p>
+              </div>
+            </div>
+          )}
+
           <div className="mx-4 mb-3 bg-[#141414] rounded-2xl border border-white/5 overflow-hidden">
             <div className="px-4 pt-4 pb-3">
               <p className="text-[11px] font-black text-[#FF7A50] uppercase tracking-wider mb-1">Delivering to</p>
@@ -903,9 +988,15 @@ export default function ActiveDeliveryPage() {
       {/* ── Stage: Arrived at Customer ── */}
       {isAtCustomer && (
         <>
-          <div className="mx-4 mb-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl px-4 py-3.5">
-            <p className="text-sm font-black text-amber-300">You've arrived at the customer</p>
-            <p className="text-xs text-amber-400/70 mt-0.5">Hand over the order and confirm delivery</p>
+          <div className="mx-4 mb-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl px-4 py-3.5 flex items-center gap-3">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-black text-amber-300">You've arrived at the customer</p>
+              <p className="text-xs text-amber-400/70 mt-0.5">Hand over the order and confirm delivery</p>
+            </div>
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <Timer size={11} className="text-amber-400" />
+              <span className="text-amber-300 font-black text-sm tabular-nums">{formatElapsed(elapsed)}</span>
+            </div>
           </div>
 
           {order.dropoff_note && (

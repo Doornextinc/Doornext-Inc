@@ -43,6 +43,23 @@ export function haversineDistance(
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
+export function estimateMinutes(distanceKm: number): number {
+  return Math.max(1, Math.round((distanceKm / 22) * 60 + 1.5))
+}
+
+export function formatEta(minutes: number): string {
+  if (minutes < 2) return '< 2 min'
+  if (minutes < 60) return `${minutes} min`
+  const h = Math.floor(minutes / 60)
+  const m = minutes % 60
+  return m === 0 ? `${h}h` : `${h}h ${m}m`
+}
+
+export function arrivalTimeStr(minutesFromNow: number): string {
+  const d = new Date(Date.now() + minutesFromNow * 60_000)
+  return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+}
+
 export const ORDER_STATUS_LABELS: Record<string, string> = {
   awaiting_payment: 'Awaiting Payment',
   pending: 'Order Placed',

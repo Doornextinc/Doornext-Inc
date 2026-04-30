@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useDriverStore } from '@/store/driver-store'
 import { AppHeader } from '@/components/layout/app-header'
 import { ChevronRight, AlertTriangle, MapPin, Clock } from 'lucide-react'
-import { haversineDistance, formatDistance, formatPriceDollars } from '@doornext/shared/utils'
+import { haversineDistance, formatDistance, formatPriceDollars, estimateMinutes, formatEta } from '@doornext/shared/utils'
 import { playWithHaptic, initAudio } from '@/lib/notification-sounds'
 
 const LiveMap = dynamic(() => import('@/components/live-map').then(m => m.LiveMap), { ssr: false })
@@ -178,8 +178,15 @@ export default function HomePage() {
   }, [isOnline, loadOrders])
 
   const handleAccept = async (orderId: string) => {
+    if (accepting) return
     setAccepting(orderId)
     setOrders(prev => prev.filter(o => o.id !== orderId))
+
+    // Optimistic: navigate immediately so the driver sees instant feedback.
+    // The active page will retry fetching the order while the API finishes.
+    setActiveOrder(orderId)
+    router.push('/active')
+
     try {
       const res = await fetch('/api/driver/accept-order', {
         method: 'POST',
@@ -188,16 +195,16 @@ export default function HomePage() {
       })
       if (res.ok) {
         playWithHaptic('order_accepted')
-        setActiveOrder(orderId)
-        router.push('/active')
       } else {
+        // Accept failed — revert and return to home
+        setActiveOrder(null)
         loadOrders()
-        const d = await res.json().catch(() => ({}))
-        alert(d.error ?? 'Order no longer available')
+        router.replace('/')
       }
     } catch {
+      setActiveOrder(null)
       loadOrders()
-      alert('Network error')
+      router.replace('/')
     } finally {
       setAccepting(null)
     }
@@ -523,6 +530,11 @@ export default function HomePage() {
                         {distanceM != null && (
                           <span className="text-zinc-500 text-xs font-semibold flex-shrink-0">
                             {formatDistance(distanceM)}
+                          </span>
+                        )}
+                        {distanceM != null && (
+                          <span className="bg-[#FF7A50]/15 text-[#FF7A50] text-[10px] font-black px-1.5 py-0.5 rounded-full flex-shrink-0">
+                            ~{formatEta(estimateMinutes(distanceM))}
                           </span>
                         )}
                       </div>

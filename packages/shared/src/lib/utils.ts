@@ -43,6 +43,33 @@ export function haversineDistance(
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
+/**
+ * Estimate travel time in minutes for a given straight-line distance.
+ * Uses urban speeds with a small buffer for real-world conditions.
+ */
+export function estimateMinutes(
+  distanceKm: number,
+  vehicleType: 'car' | 'bike' | 'foot' | null = null,
+): number {
+  const speedKmh = vehicleType === 'foot' ? 4 : vehicleType === 'bike' ? 14 : 22
+  return Math.max(1, Math.round((distanceKm / speedKmh) * 60 + 1.5))
+}
+
+/** Format an ETA as a friendly string: "3 min", "1h 5m" */
+export function formatEta(minutes: number): string {
+  if (minutes < 2) return '< 2 min'
+  if (minutes < 60) return `${minutes} min`
+  const h = Math.floor(minutes / 60)
+  const m = minutes % 60
+  return m === 0 ? `${h}h` : `${h}h ${m}m`
+}
+
+/** Format an arrival clock time: "Arrives by 6:35 PM" */
+export function arrivalTimeStr(minutesFromNow: number): string {
+  const d = new Date(Date.now() + minutesFromNow * 60_000)
+  return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+}
+
 export const ORDER_STATUS_LABELS: Record<string, string> = {
   pending: 'Order Placed',
   confirmed: 'Confirmed',

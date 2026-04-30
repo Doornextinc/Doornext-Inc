@@ -79,49 +79,54 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // Fetch the accepted order for notification data
-  const { data: order } = await admin
-    .from('orders')
-    .select('customer_id, maker_id')
-    .eq('id', orderId)
-    .single()
+  // All side-effects below are fire-and-forget — nothing must block the response.
+  // The driver's app navigates to the active page as soon as this 200 lands.
+  void (async () => {
+    try {
+      const shortId = orderId.slice(-6).toUpperCase()
 
-  const shortId = orderId.slice(-6).toUpperCase()
+      // Fetch order for notification data
+      const { data: order } = await admin
+        .from('orders')
+        .select('customer_id, maker_id')
+        .eq('id', orderId)
+        .single()
 
-  if (order?.customer_id) {
-    await notifyUser(admin, {
-      userId: order.customer_id,
-      type: 'order_driver_assigned',
-      title: 'Driver Assigned! 🛵',
-      body: `A driver has accepted your order #${shortId} and is heading to the restaurant.`,
-      data: { order_id: orderId },
-    })
-  }
+      if (order?.customer_id) {
+        await notifyUser(admin, {
+          userId: order.customer_id,
+          type: 'order_driver_assigned',
+          title: 'Driver Assigned! 🛵',
+          body: `A driver has accepted your order #${shortId} and is heading to the restaurant.`,
+          data: { order_id: orderId },
+        })
+      }
 
-  // Notify the maker that a driver is on the way to pick up the order
-  if (order?.maker_id) {
-    const { data: makerProfile } = await admin
-      .from('food_makers')
-      .select('user_id')
-      .eq('id', order.maker_id)
-      .single()
-    if (makerProfile?.user_id) {
-      notifyUser(admin, {
-        userId: makerProfile.user_id,
-        type: 'driver_heading_to_maker',
-        title: '🛵 Driver is on the way!',
-        body: `A driver has accepted order #${shortId} and is heading to your kitchen.`,
-        data: { order_id: orderId },
-      })
+      if (order?.maker_id) {
+        const { data: makerProfile } = await admin
+          .from('food_makers')
+          .select('user_id')
+          .eq('id', order.maker_id)
+          .single()
+        if (makerProfile?.user_id) {
+          notifyUser(admin, {
+            userId: makerProfile.user_id,
+            type: 'driver_heading_to_maker',
+            title: '🛵 Driver is on the way!',
+            body: `A driver has accepted order #${shortId} and is heading to your kitchen.`,
+            data: { order_id: orderId },
+          })
+        }
+      }
+    } catch (e) {
+      Sentry.captureException(e, { extra: { orderId, context: 'accept-order-notifications' } })
     }
-  }
+  })()
 
-  // ── Reliability tracking ──────────────────────────────────────────────────
-  // Atomically increment total_accepted and recompute acceptance_rate.
-  // Fire-and-forget — stat failure must never block the accept response.
-  void (admin.rpc('increment_driver_accepted', { driver_id: user.id }) as unknown as Promise<unknown>).catch(() => {}) // non-fatal
+  // Reliability stat — fire-and-forget
+  void (admin.rpc('increment_driver_accepted', { driver_id: user.id }) as unknown as Promise<unknown>).catch(() => {})
 
-  // Add driver to Stream Chat channel — fire-and-forget so it never delays the response
+  // Stream Chat member add — fire-and-forget
   const streamApiKey = process.env.NEXT_PUBLIC_STREAM_API_KEY
   const streamSecret = process.env.STREAM_API_SECRET
   const isUnconfigured = (v?: string) =>
