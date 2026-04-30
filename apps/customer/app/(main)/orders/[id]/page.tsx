@@ -7,7 +7,6 @@ import { AlertTriangle, CheckCircle, Circle, Clock, MapPin, MessageCircle, Star,
 import { BackBar } from '@/components/layout/top-bar'
 import { Button } from '@/components/ui/button'
 import { cn, ORDER_STATUS_LABELS, haversineDistance, estimateMinutes, formatEta, arrivalTimeStr } from '@/lib/utils'
-import { useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useOrderTracking } from '@/hooks/useOrderTracking'
 import { OrderClaimDialog } from '@/components/OrderClaimDialog'
