@@ -16,14 +16,7 @@
 --    back to ready so dispatching can retry.
 -- ============================================================
 
--- 1. Migrate setting to the correct table
-INSERT INTO public.settings (key, value)
-SELECT 'stale_driver_grace_seconds', value
-FROM   public.app_settings
-WHERE  key = 'stale_driver_grace_seconds'
-ON CONFLICT (key) DO NOTHING;
-
--- Insert default if neither table had it
+-- 1. Ensure the grace period setting exists in the settings table
 INSERT INTO public.settings (key, value)
 VALUES ('stale_driver_grace_seconds', '90')
 ON CONFLICT (key) DO NOTHING;
