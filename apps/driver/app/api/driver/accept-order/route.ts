@@ -39,16 +39,13 @@ export async function POST(req: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  // Verify driver is active and approved — inactive/suspended drivers cannot accept orders
+  // Verify driver is approved — unverified drivers cannot accept orders
   const { data: driverStatus } = await admin
     .from('driver_profiles')
-    .select('is_active, kyc_status')
-    .eq('user_id', user.id)
+    .select('kyc_status')
+    .eq('id', user.id)
     .single()
-  if (!driverStatus?.is_active) {
-    return NextResponse.json({ error: 'Driver account is not active' }, { status: 403 })
-  }
-  if (driverStatus.kyc_status !== 'approved') {
+  if (driverStatus?.kyc_status !== 'approved') {
     return NextResponse.json({ error: 'Driver verification is not complete' }, { status: 403 })
   }
 

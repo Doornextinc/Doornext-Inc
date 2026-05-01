@@ -116,32 +116,32 @@ export async function POST(req: NextRequest) {
 
   // ── Driver notifications ──────────────────────────────────────────────────
 
-  // Get all currently online drivers — select user_id (FK to users) not id (profile PK)
+  // driver_profiles.id = auth user UUID (PK references auth.users)
   const { data: onlineDrivers } = await admin
     .from('driver_profiles')
-    .select('user_id')
+    .select('id')
     .eq('is_active', true)
 
   if (onlineDrivers && onlineDrivers.length > 0) {
-    const driverUserIds = onlineDrivers.map((d: { user_id: string }) => d.user_id)
+    const driverIds = onlineDrivers.map((d: { id: string }) => d.id)
 
     if (status === 'preparing') {
       // Notify nearby drivers (≤8km) so they can head toward the area
       const { data: locations } = await admin
         .from('nexter_locations')
         .select('nexter_id, lat, lng')
-        .in('nexter_id', driverUserIds)
+        .in('nexter_id', driverIds)
 
-      const nearbyUserIds: string[] = []
+      const nearbyIds: string[] = []
 
       if (locations && maker.lat && maker.lng) {
         for (const loc of locations) {
           const dist = haversineKm(maker.lat, maker.lng, loc.lat, loc.lng)
-          if (dist <= 8) nearbyUserIds.push(loc.nexter_id)
+          if (dist <= 8) nearbyIds.push(loc.nexter_id)
         }
       }
 
-      const targetIds = nearbyUserIds.length > 0 ? nearbyUserIds : driverUserIds
+      const targetIds = nearbyIds.length > 0 ? nearbyIds : driverIds
 
       // Fire in background — DB insert + push per driver
       void Promise.allSettled(
@@ -160,7 +160,7 @@ export async function POST(req: NextRequest) {
     if (status === 'ready') {
       // Order is ready for pickup — notify all online drivers with push
       void Promise.allSettled(
-        driverUserIds.map((userId: string) =>
+        driverIds.map((userId: string) =>
           notifyUser(admin, {
             userId,
             type: 'order_available',
