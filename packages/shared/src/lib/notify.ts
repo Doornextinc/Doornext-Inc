@@ -11,7 +11,6 @@
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js'
-import * as Sentry from '@sentry/nextjs'
 
 interface NotifyOpts {
   userId: string
@@ -41,12 +40,10 @@ export async function notifyUser(
       data: data ?? {},
     })
     if (error) {
-      Sentry.captureException(new Error(`notifyUser DB insert failed: ${error.message}`), {
-        extra: { userId, type },
-      })
+      console.error(`notifyUser DB insert failed [${type}] user=${userId}:`, error.message)
     }
   } catch (err) {
-    Sentry.captureException(err, { extra: { userId, type, context: 'notifyUser-db' } })
+    console.error(`notifyUser DB insert threw [${type}] user=${userId}:`, err)
   }
 
   // 2. Push to device — best-effort, fire-and-forget
