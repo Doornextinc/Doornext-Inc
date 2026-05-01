@@ -286,12 +286,16 @@ export function snapshotFees(order: OrderFeeSnapshot): FeeSnapshot {
   const commPct = order.platform_fee_pct ?? 5
   const platformCommission = r(order.subtotal * (commPct / 100))
   const makerPayout = r(order.subtotal - platformCommission)
+  // Platform net = everything the customer pays minus driver payout minus maker payout.
+  // Equivalent to: service_fee + small_order_fee + surge_fee + commission + delivery_fee - driver_payout
+  // (delivery surplus goes to platform; delivery subsidy comes out of platform — handled by the sign)
   const platformFee = r(
     order.service_fee +
     (order.small_order_fee ?? 0) +
     (order.surge_fee ?? 0) +
-    platformCommission -
-    Math.max(0, order.driver_payout - order.delivery_fee) // subtract delivery subsidy
+    platformCommission +
+    order.delivery_fee -
+    order.driver_payout
   )
   return {
     driverPayout: r(order.driver_payout + order.tip_amount),

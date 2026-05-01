@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
   // Verify ownership and fetch all stored fees from DB — never trust client-submitted amounts
   const { data: order } = await admin
     .from('orders')
-    .select('customer_id, stripe_payment_intent_id, subtotal, delivery_fee, platform_fee, service_fee, small_order_fee, surge_fee')
+    .select('customer_id, stripe_payment_intent_id, subtotal, delivery_fee, service_fee, small_order_fee, surge_fee')
     .eq('id', orderId)
     .single()
   if (!order || order.customer_id !== user.id) {
@@ -54,7 +54,6 @@ export async function POST(req: NextRequest) {
   const tip = Math.round(dbSubtotal * tipPct * 100) / 100
   const total = dbSubtotal
     + (order.delivery_fee as number)
-    + (order.platform_fee as number)
     + ((order.service_fee as number) ?? 0)
     + ((order.small_order_fee as number) ?? 0)
     + ((order.surge_fee as number) ?? 0)

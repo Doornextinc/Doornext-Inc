@@ -47,16 +47,27 @@ export async function POST(req: NextRequest) {
   // then atomically record the tip via DB RPC.
   // For cash orders: just call the RPC directly.
 
-  // We need payment_method to decide the path — do a minimal fetch.
+  // Fetch order meta AND eligibility in one query — verify ownership and check tip eligibility
+  // BEFORE any Stripe charge to avoid charging then failing to record.
   const { data: orderMeta } = await admin
     .from('orders')
-    .select('customer_id, payment_method')
+    .select('customer_id, payment_method, status, tip_amount')
     .eq('id', orderId)
     .single()
 
   if (!orderMeta || orderMeta.customer_id !== user.id) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
+
+  // Pre-flight eligibility check: order must be delivered and tip not yet set
+  if (orderMeta.status !== 'delivered') {
+    return NextResponse.json({ error: 'Order is not eligible for a tip' }, { status: 409 })
+  }
+  if (orderMeta.tip_amount !== null && orderMeta.tip_amount !== 0) {
+    return NextResponse.json({ error: 'Tip already submitted' }, { status: 409 })
+  }
+
+  let stripePaymentIntentId: string | undefined
 
   if (orderMeta.payment_method === 'card') {
     // Fetch stripe_customer_id from users table
@@ -86,7 +97,7 @@ export async function POST(req: NextRequest) {
 
       // Idempotency key: orderId + '-tip' ensures at most one charge per order,
       // even if two concurrent requests race through this path.
-      await stripe.paymentIntents.create(
+      const pi = await stripe.paymentIntents.create(
         {
           amount:         Math.round(tipAmount * 100),
           currency:       'usd',
@@ -98,6 +109,7 @@ export async function POST(req: NextRequest) {
         },
         { idempotencyKey: `${orderId}-tip` }
       )
+      stripePaymentIntentId = pi.id
     } catch (err) {
       Sentry.captureException(err, { extra: { orderId, context: 'tip-charge' } })
       console.error('Tip charge error:', err)
@@ -113,14 +125,20 @@ export async function POST(req: NextRequest) {
     p_tip_amount:  tipAmount,
   })
 
-  if (rpcError) {
-    Sentry.captureException(rpcError, { extra: { orderId, context: 'submit-tip-rpc' } })
-    console.error('submit_tip RPC error:', rpcError)
-    return NextResponse.json({ error: 'Failed to record tip' }, { status: 500 })
-  }
-
-  // Empty result = tip was already recorded (duplicate request) or order not eligible
-  if (!rows || rows.length === 0) {
+  if (rpcError || !rows || rows.length === 0) {
+    // RPC failed or CAS lost the race — refund the Stripe charge to avoid phantom charge
+    if (stripePaymentIntentId && orderMeta.payment_method === 'card') {
+      const stripe = new Stripe(stripeKey)
+      await stripe.refunds.create({ payment_intent: stripePaymentIntentId }).catch((refundErr) => {
+        Sentry.captureException(refundErr, { extra: { orderId, context: 'tip-refund-on-rpc-failure' } })
+        console.error('CRITICAL: tip refund failed after RPC failure:', refundErr)
+      })
+    }
+    if (rpcError) {
+      Sentry.captureException(rpcError, { extra: { orderId, context: 'submit-tip-rpc' } })
+      console.error('submit_tip RPC error:', rpcError)
+      return NextResponse.json({ error: 'Failed to record tip' }, { status: 500 })
+    }
     return NextResponse.json({ error: 'Tip already submitted or order not eligible' }, { status: 409 })
   }
 

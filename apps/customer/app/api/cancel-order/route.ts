@@ -104,19 +104,30 @@ export async function POST(req: NextRequest) {
 
   try {
     const stripe = new Stripe(stripeKey)
-    await stripe.refunds.create({ payment_intent: order.stripe_payment_intent_id })
+
+    if (order.status === 'awaiting_payment') {
+      // PaymentIntent not yet captured — void it rather than refund
+      await stripe.paymentIntents.cancel(order.stripe_payment_intent_id)
+    } else {
+      // Payment was captured (confirmed) — issue a full refund
+      await stripe.refunds.create({ payment_intent: order.stripe_payment_intent_id })
+    }
 
     await admin
       .from('orders')
       .update({ status: 'cancelled', updated_at: new Date().toISOString() })
       .eq('id', orderId)
 
+    const refundNote = order.status === 'awaiting_payment'
+      ? 'No charge was made.'
+      : `Your full refund of $${order.total.toFixed(2)} will appear in 3–5 business days.`
+
     // Notify customer (DB + push)
     await notifyUser(admin, {
       userId: user.id,
       type: 'order_cancelled',
-      title: 'Order Cancelled — Full Refund',
-      body: `Your order #${shortId} has been cancelled. Your full refund of $${order.total.toFixed(2)} will appear in 3–5 business days.`,
+      title: order.status === 'awaiting_payment' ? 'Order Cancelled' : 'Order Cancelled — Full Refund',
+      body: `Your order #${shortId} has been cancelled. ${refundNote}`,
       data: { order_id: orderId },
     })
 

@@ -65,12 +65,13 @@ export async function POST(req: NextRequest) {
           break
         }
 
-        // Update order status to confirmed
+        // Only confirm orders still awaiting payment — prevents re-confirming a cancelled order
         const { data: updatedOrder, error } = await supabase
           .from('orders')
           .update({ status: 'confirmed', updated_at: new Date().toISOString() })
           .eq('id', orderId)
           .eq('stripe_payment_intent_id', pi.id)
+          .eq('status', 'awaiting_payment')
           .select('maker_id')
           .single()
 
@@ -121,11 +122,13 @@ export async function POST(req: NextRequest) {
         const orderId = pi.metadata?.order_id
 
         if (orderId) {
+          // Only cancel orders still awaiting payment — don't clobber confirmed/in-progress orders
           await supabase
             .from('orders')
             .update({ status: 'cancelled', updated_at: new Date().toISOString() })
             .eq('id', orderId)
             .eq('stripe_payment_intent_id', pi.id)
+            .eq('status', 'awaiting_payment')
 
           const customerId = pi.metadata?.customer_id
           if (customerId) {
@@ -145,10 +148,13 @@ export async function POST(req: NextRequest) {
         const charge = event.data.object as Stripe.Charge
         const piId = charge.payment_intent as string
         if (piId) {
+          // Only cancel pre-delivery orders — tip refunds and post-delivery refunds must not
+          // clobber 'delivered' or 'failed_delivery' with 'cancelled'
           await supabase
             .from('orders')
             .update({ status: 'cancelled', updated_at: new Date().toISOString() })
             .eq('stripe_payment_intent_id', piId)
+            .in('status', ['awaiting_payment', 'confirmed', 'accepted'])
         }
         break
       }

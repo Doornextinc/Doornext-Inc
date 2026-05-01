@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
-import { PLATFORM_FEE_PCT } from '@/lib/constants'
 import { calculatePricing } from '@doornext/shared/pricing'
 import { notifyUser } from '@/lib/push-server'
 import * as Sentry from '@sentry/nextjs'
@@ -115,7 +114,8 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    const platformFee = subtotal * PLATFORM_FEE_PCT
+    const commPct = safeFloat(settingsMap.platform_commission_pct, 5) / 100
+    const platformFee = subtotal * commPct
     const total = subtotal + pricing.deliveryFee + pricing.smallOrderFee + pricing.surgeFee + pricing.serviceFee
 
     const { data: order, error: orderError } = await serviceSupabase
@@ -135,7 +135,7 @@ export async function POST(req: NextRequest) {
         total:            Math.round(total * 100) / 100,
         is_priority:      is_priority ?? false,
         driver_payout:    pricing.driverTotal,
-        maker_payout:     Math.round(subtotal * (1 - safeFloat(settingsMap.platform_commission_pct, 5) / 100) * 100) / 100,
+        maker_payout:     Math.round(subtotal * (1 - commPct) * 100) / 100,
         delivery_address: delivery_address ?? { street: 'N/A', city: 'N/A', state: 'NY', zip: '00000' },
         dropoff_note:     typeof dropoff_note === 'string' ? dropoff_note.trim() : null,
         stripe_payment_intent_id: null,

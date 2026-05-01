@@ -39,6 +39,19 @@ export async function POST(req: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
+  // Verify driver is active and approved — inactive/suspended drivers cannot accept orders
+  const { data: driverStatus } = await admin
+    .from('driver_profiles')
+    .select('is_active, kyc_status')
+    .eq('user_id', user.id)
+    .single()
+  if (!driverStatus?.is_active) {
+    return NextResponse.json({ error: 'Driver account is not active' }, { status: 403 })
+  }
+  if (driverStatus.kyc_status !== 'approved') {
+    return NextResponse.json({ error: 'Driver verification is not complete' }, { status: 403 })
+  }
+
   // Generate a cryptographically secure 4-digit pickup confirmation PIN.
   // The driver will show this to the maker, who must enter it on their screen
   // to confirm the handoff. This PIN is mandatory — neither party can bypass it.
