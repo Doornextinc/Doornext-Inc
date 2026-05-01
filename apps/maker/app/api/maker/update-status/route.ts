@@ -116,61 +116,60 @@ export async function POST(req: NextRequest) {
 
   // ── Driver notifications ──────────────────────────────────────────────────
 
-  // Get all currently online drivers with their last known locations
+  // Get all currently online drivers — select user_id (FK to users) not id (profile PK)
   const { data: onlineDrivers } = await admin
     .from('driver_profiles')
-    .select('id')
+    .select('user_id')
     .eq('is_active', true)
 
   if (onlineDrivers && onlineDrivers.length > 0) {
-    const driverIds = onlineDrivers.map((d: { id: string }) => d.id)
+    const driverUserIds = onlineDrivers.map((d: { user_id: string }) => d.user_id)
 
     if (status === 'preparing') {
-      // When preparation starts: notify nearby drivers (≤8km) so they can head toward the area
-      // Get recent driver locations for proximity filtering
+      // Notify nearby drivers (≤8km) so they can head toward the area
       const { data: locations } = await admin
         .from('nexter_locations')
         .select('nexter_id, lat, lng')
-        .in('nexter_id', driverIds)
+        .in('nexter_id', driverUserIds)
 
-      const nearbyDriverIds: string[] = []
+      const nearbyUserIds: string[] = []
 
       if (locations && maker.lat && maker.lng) {
         for (const loc of locations) {
           const dist = haversineKm(maker.lat, maker.lng, loc.lat, loc.lng)
-          if (dist <= 8) nearbyDriverIds.push(loc.nexter_id)
+          if (dist <= 8) nearbyUserIds.push(loc.nexter_id)
         }
       }
 
-      // If no location data available, notify all online drivers
-      const targetIds = nearbyDriverIds.length > 0 ? nearbyDriverIds : driverIds
+      const targetIds = nearbyUserIds.length > 0 ? nearbyUserIds : driverUserIds
 
-      const driverNotifs = targetIds.map((id: string) => ({
-        user_id: id,
-        type: 'order_preparing',
-        title: '🍳 Order being prepared nearby',
-        body: `Order #${shortId} is being cooked at ${makerName}. Get ready — it'll be available for pickup soon!`,
-        data: { order_id: orderId, maker_name: makerName },
-      }))
-
-      admin.from('notifications').insert(driverNotifs).then(({ error: e }) => {
-        if (e) Sentry.captureException(new Error(e.message), { extra: { context: 'notify-drivers-preparing', orderId } })
-      })
+      // Fire in background — DB insert + push per driver
+      void Promise.allSettled(
+        targetIds.map((userId: string) =>
+          notifyUser(admin, {
+            userId,
+            type: 'order_preparing',
+            title: '🍳 Order being prepared nearby',
+            body: `Order #${shortId} is being cooked at ${makerName}. Get ready — it'll be available for pickup soon!`,
+            data: { order_id: orderId, maker_name: makerName },
+          })
+        )
+      )
     }
 
     if (status === 'ready') {
-      // Order is ready for pickup — notify all online drivers immediately
-      const driverNotifs = driverIds.map((id: string) => ({
-        user_id: id,
-        type: 'order_available',
-        title: '📦 New pickup available!',
-        body: `Order #${shortId} is ready at ${makerName}. Tap to accept.`,
-        data: { order_id: orderId, maker_name: makerName },
-      }))
-
-      admin.from('notifications').insert(driverNotifs).then(({ error: e }) => {
-        if (e) Sentry.captureException(new Error(e.message), { extra: { context: 'notify-drivers-ready', orderId } })
-      })
+      // Order is ready for pickup — notify all online drivers with push
+      void Promise.allSettled(
+        driverUserIds.map((userId: string) =>
+          notifyUser(admin, {
+            userId,
+            type: 'order_available',
+            title: '📦 New pickup available!',
+            body: `Order #${shortId} is ready at ${makerName}. Tap to accept.`,
+            data: { order_id: orderId, maker_name: makerName },
+          })
+        )
+      )
     }
   }
 

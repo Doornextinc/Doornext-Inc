@@ -276,6 +276,12 @@ export default function OrderTrackingPage() {
         : { label: `~${remaining} min`, arrival: arrivalTimeStr(remaining) }
     }
 
+    // Order ready but no driver yet: show minimum possible ETA from maker to customer
+    if (currentStatus === 'ready' && mLat && mLng && cLat && cLng) {
+      const mins = estimateMinutes(haversineDistance(mLat, mLng, cLat, cLng))
+      return { label: `~${formatEta(mins)} away`, arrival: arrivalTimeStr(mins) }
+    }
+
     // Driver assigned / at maker: show transit time from restaurant to customer
     if ((currentStatus === 'driver_assigned' || currentStatus === 'arrived_at_maker') && mLat && mLng && cLat && cLng) {
       const mins = estimateMinutes(haversineDistance(mLat, mLng, cLat, cLng))
