@@ -28,6 +28,9 @@ function typeIcon(type: string): string {
     case 'failed_delivery':         return '⚠️'
     case 'new_message':             return '💬'
     case 'payout_sent':             return '💰'
+    case 'withdrawal_approved':     return '✅'
+    case 'withdrawal_rejected':     return '❌'
+    case 'withdrawal_paid':         return '💰'
     default:                        return '🔔'
   }
 }

@@ -25,12 +25,16 @@ export async function POST(req: NextRequest) {
   // Enforce role: only makers may receive a Stream token from this app.
   const { data: profile } = await supabase
     .from('users')
-    .select('full_name, avatar_url, role')
+    .select('full_name, avatar_url, role, account_status')
     .eq('id', user.id)
     .single()
 
   if (profile?.role !== 'maker') {
     return NextResponse.json({ error: 'Forbidden: maker account required' }, { status: 403 })
+  }
+
+  if (profile.account_status === 'banned' || profile.account_status === 'suspended') {
+    return NextResponse.json({ error: 'Account is not active' }, { status: 403 })
   }
 
   const apiKey = process.env.NEXT_PUBLIC_STREAM_API_KEY

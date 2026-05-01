@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
+import { requireDriver } from '@/lib/require-driver'
 
 const adminClient = createAdmin(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -9,9 +9,9 @@ const adminClient = createAdmin(
 )
 
 export async function POST(req: NextRequest) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const auth = await requireDriver(req)
+  if (!auth.ok) return auth.response
+  const { userId } = auth
 
   const {
     fullName, dateOfBirth, ssnLast4, address,
@@ -28,13 +28,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Background check consent is required' }, { status: 400 })
   }
 
+  if (!/^\d{4}$/.test(String(ssnLast4))) {
+    return NextResponse.json({ error: 'ssnLast4 must be exactly 4 digits' }, { status: 400 })
+  }
+
   // NOTE: registration_path is intentionally excluded from this payload.
   // Migration 027 adds the column but hasn't been applied to the database yet.
   // Once you run:
   //   ALTER TABLE driver_documents ADD COLUMN IF NOT EXISTS registration_path text;
   // re-add `registration_path: registrationPath ?? null` to the object below.
   const docPayload = {
-    user_id: user.id,
+    user_id: userId,
     kyc_full_name: fullName,
     kyc_date_of_birth: dateOfBirth,
     kyc_ssn_last4: ssnLast4,
@@ -58,7 +62,7 @@ export async function POST(req: NextRequest) {
   const { error: profileError } = await adminClient
     .from('driver_profiles')
     .update({ kyc_status: 'pending_review' })
-    .eq('id', user.id)
+    .eq('id', userId)
 
   if (profileError) return NextResponse.json({ error: profileError.message }, { status: 500 })
 

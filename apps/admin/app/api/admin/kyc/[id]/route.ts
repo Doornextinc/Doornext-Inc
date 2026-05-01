@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/require-admin'
+import { notifyUser } from '@doornext/shared/notify'
 
 export async function POST(
   request: NextRequest,
@@ -18,7 +19,6 @@ export async function POST(
 
   const kycStatus = action === 'approve' ? 'approved' : 'rejected'
 
-  // Update document with review notes (no status column on driver_documents)
   const { data: doc, error: docError } = await supabase
     .from('driver_documents')
     .update({
@@ -31,7 +31,6 @@ export async function POST(
 
   if (docError) return NextResponse.json({ error: docError.message }, { status: 500 })
 
-  // Update driver profile KYC status via user_id
   const { error: profileError } = await supabase
     .from('driver_profiles')
     .update({ kyc_status: kycStatus })
@@ -47,6 +46,17 @@ export async function POST(
     payload: { document_id: id, notes: notes ?? null, kyc_status: kycStatus },
     ip_address: ip,
   })
+
+  // Notify the driver of the KYC decision
+  notifyUser(supabase, {
+    userId: doc.user_id,
+    type: `kyc_${kycStatus}`,
+    title: action === 'approve' ? '✅ KYC Approved' : '❌ KYC Rejected',
+    body: action === 'approve'
+      ? 'Your identity verification has been approved. You can now start accepting deliveries!'
+      : `Your identity verification was not approved.${notes ? ` Reason: ${notes}` : ' Please contact support for details.'}`,
+    data: { document_id: id },
+  }).catch(() => {})
 
   return NextResponse.json({ success: true })
 }

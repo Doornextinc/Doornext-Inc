@@ -11,6 +11,7 @@
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js'
+import * as Sentry from '@sentry/nextjs'
 
 interface NotifyOpts {
   userId: string
@@ -32,15 +33,20 @@ export async function notifyUser(
 
   // 1. DB insert — always do this first so the in-app bell always works
   try {
-    await adminClient.from('notifications').insert({
+    const { error } = await adminClient.from('notifications').insert({
       user_id: userId,
       type,
       title,
       body,
       data: data ?? {},
     })
-  } catch {
-    // Non-fatal
+    if (error) {
+      Sentry.captureException(new Error(`notifyUser DB insert failed: ${error.message}`), {
+        extra: { userId, type },
+      })
+    }
+  } catch (err) {
+    Sentry.captureException(err, { extra: { userId, type, context: 'notifyUser-db' } })
   }
 
   // 2. Push to device — best-effort, fire-and-forget
@@ -67,8 +73,13 @@ async function sendPushViaInternalEndpoint(
 
     if (!tokens?.length) return
 
+    // Filter null/undefined data values to avoid sending literal "null"/"undefined" strings
     const pushData = data
-      ? Object.fromEntries(Object.entries(data).map(([k, v]) => [k, String(v)]))
+      ? Object.fromEntries(
+          Object.entries(data)
+            .filter(([, v]) => v != null)
+            .map(([k, v]) => [k, String(v)])
+        )
       : {}
 
     await Promise.allSettled(

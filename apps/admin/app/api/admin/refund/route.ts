@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { requireAdmin } from '@/lib/require-admin'
+import { notifyUser } from '@doornext/shared/notify'
 import * as Sentry from '@sentry/nextjs'
 
 export async function POST(req: NextRequest) {
@@ -45,12 +46,12 @@ export async function POST(req: NextRequest) {
       .update({ status: 'cancelled', updated_at: new Date().toISOString() })
       .eq('id', orderId)
 
-    await supabase.from('notifications').insert({
-      user_id: order.customer_id,
-      type:    'order_cancelled',
-      title:   'Order Cancelled by Admin',
-      body:    `Your order #${orderId.slice(-6).toUpperCase()} has been cancelled. No charge was made (cash order).`,
-      data:    { order_id: orderId },
+    await notifyUser(supabase, {
+      userId: order.customer_id,
+      type:   'order_cancelled',
+      title:  'Order Cancelled by Admin',
+      body:   `Your order #${orderId.slice(-6).toUpperCase()} has been cancelled. No charge was made (cash order).`,
+      data:   { order_id: orderId },
     })
 
     await writeAuditLog('order_cancel_cash', { payment_method: 'cash' })
@@ -91,12 +92,12 @@ export async function POST(req: NextRequest) {
       })
       .eq('id', orderId)
 
-    await supabase.from('notifications').insert({
-      user_id: order.customer_id,
-      type:    'order_cancelled',
-      title:   'Order Refunded',
-      body:    `Your order #${orderId.slice(-6).toUpperCase()} has been refunded by admin.`,
-      data:    { order_id: orderId },
+    await notifyUser(supabase, {
+      userId: order.customer_id,
+      type:   'order_cancelled',
+      title:  'Order Refunded',
+      body:   `Your order #${orderId.slice(-6).toUpperCase()} has been refunded by admin.`,
+      data:   { order_id: orderId },
     })
 
     await writeAuditLog('refund', {

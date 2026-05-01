@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
+import { requireDriver } from '@/lib/require-driver'
 
 const admin = createAdmin(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -20,9 +20,9 @@ const ALLOWED_DOC_TYPES = [
 type DocType = (typeof ALLOWED_DOC_TYPES)[number]
 
 export async function POST(req: NextRequest) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const auth = await requireDriver(req)
+  if (!auth.ok) return auth.response
+  const { userId } = auth
 
   const formData = await req.formData()
   const file = formData.get('file') as File | null
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
   }
 
   const ext = file.type === 'application/pdf' ? 'pdf' : file.type.split('/')[1]
-  const storagePath = `${user.id}/${docType}-${Date.now()}.${ext}`
+  const storagePath = `${userId}/${docType}-${Date.now()}.${ext}`
 
   const { error: uploadError } = await admin.storage
     .from('driver-documents')
@@ -57,11 +57,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: uploadError.message }, { status: 500 })
   }
 
-  // Upsert the path into driver_documents
   const { error: upsertError } = await admin
     .from('driver_documents')
     .upsert(
-      { driver_id: user.id, [docType]: storagePath },
+      { driver_id: userId, [docType]: storagePath },
       { onConflict: 'driver_id' }
     )
 

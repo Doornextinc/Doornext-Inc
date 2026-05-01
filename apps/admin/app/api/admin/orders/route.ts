@@ -25,8 +25,8 @@ export async function GET(request: NextRequest) {
   }
 
   if (search) {
-    const term = search.trim().toLowerCase()
-    query = query.or(`id.ilike.%${term}%`)
+    const term = search.trim().toLowerCase().replace(/[,()'"\\]/g, '')
+    if (term) query = query.or(`id.ilike.%${term}%`)
   }
 
   const { data, error } = await query

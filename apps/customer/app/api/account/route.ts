@@ -27,8 +27,10 @@ import { cookies } from 'next/headers'
 import { checkRateLimit } from '@/lib/rate-limit'
 import * as Sentry from '@sentry/nextjs'
 
-// Active order statuses that should be cancelled before deletion
-const CANCELLABLE_STATUSES = ['pending', 'awaiting_payment', 'accepted', 'picked_up']
+// Only cancel orders the maker hasn't started yet — orders further along
+// (driver assigned, picked up, on the way) continue to completion so
+// drivers and makers receive their payouts.
+const CANCELLABLE_STATUSES = ['pending', 'awaiting_payment', 'confirmed']
 
 const ANONYMISED_ADDRESS = {
   street: 'Deleted',

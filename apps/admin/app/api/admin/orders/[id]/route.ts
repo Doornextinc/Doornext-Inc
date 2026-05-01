@@ -14,7 +14,7 @@ export async function PATCH(
 ) {
   const auth = await requireAdmin(request)
   if (!auth.ok) return auth.response
-  const { supabase } = auth
+  const { adminId, ip, supabase } = auth
 
   const { id } = await params
   const body = await request.json()
@@ -24,12 +24,28 @@ export async function PATCH(
     return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
   }
 
+  // Fetch current status for audit trail
+  const { data: current } = await supabase
+    .from('orders')
+    .select('status')
+    .eq('id', id)
+    .single()
+
   const { error } = await supabase
     .from('orders')
     .update({ status, updated_at: new Date().toISOString() })
     .eq('id', id)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  await supabase.from('admin_audit_log').insert({
+    admin_id: adminId,
+    action: 'order_status_update',
+    target_type: 'order',
+    target_id: id,
+    payload: { previous_status: current?.status ?? null, new_status: status },
+    ip_address: ip,
+  })
 
   return NextResponse.json({ success: true })
 }

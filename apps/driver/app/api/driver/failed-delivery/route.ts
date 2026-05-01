@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
       const stripe = new Stripe(stripeKey, { apiVersion: '2026-02-25.clover' })
       const refund = await stripe.refunds.create({
         payment_intent: order.stripe_payment_intent_id,
-        reason: 'fraudulent', // closest standard reason; ops can update via dashboard
+        reason: 'requested_by_customer',
         metadata: { order_id: orderId, failed_delivery_reason: reason },
       })
       refundId = refund.id

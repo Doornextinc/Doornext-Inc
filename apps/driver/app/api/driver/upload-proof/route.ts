@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
+import { requireDriver } from '@/lib/require-driver'
 
 const admin = createAdmin(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -9,9 +9,9 @@ const admin = createAdmin(
 )
 
 export async function POST(req: NextRequest) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const auth = await requireDriver(req)
+  if (!auth.ok) return auth.response
+  const { userId } = auth
 
   const formData = await req.formData()
   const file = formData.get('file') as File | null
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
     .from('orders')
     .select('id')
     .eq('id', orderId)
-    .eq('nexter_id', user.id)
+    .eq('nexter_id', userId)
     .single()
 
   if (orderErr || !order) {
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
   }
 
   const ext = file.type === 'image/webp' ? 'webp' : file.type === 'image/png' ? 'png' : 'jpg'
-  const storagePath = `proof/${orderId}/${user.id}-${Date.now()}.${ext}`
+  const storagePath = `proof/${orderId}/${userId}-${Date.now()}.${ext}`
 
   const { error: uploadError } = await admin.storage
     .from('driver-documents')
@@ -54,14 +54,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: uploadError.message }, { status: 500 })
   }
 
-  // Store the proof photo path on the order record
   const { error: updateError } = await admin
     .from('orders')
     .update({ proof_photo_path: storagePath })
     .eq('id', orderId)
 
   if (updateError) {
-    // Non-fatal: photo was uploaded, just couldn't link it to the order
     console.error('Failed to update order proof_photo_path:', updateError.message)
   }
 

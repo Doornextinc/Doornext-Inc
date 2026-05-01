@@ -19,6 +19,18 @@ export async function POST(
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
+  // Revoke all active sessions — user can't renew tokens after current JWT expires
+  await fetch(
+    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/admin/users/${id}/sessions`,
+    {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+        apikey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      },
+    }
+  ).catch(() => {})
+
   await supabase.from('admin_audit_log').insert({
     admin_id: adminId,
     action: 'user_suspend',

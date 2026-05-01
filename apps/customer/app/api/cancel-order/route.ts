@@ -8,7 +8,7 @@ import { checkRateLimit } from '@/lib/rate-limit'
 import { notifyUser } from '@/lib/push-server'
 
 // Cancellation is only allowed before the maker starts preparing
-const CANCELLABLE_STATUSES = ['pending', 'confirmed']
+const CANCELLABLE_STATUSES = ['pending', 'awaiting_payment', 'confirmed']
 
 export async function POST(req: NextRequest) {
   // Rate limit: 10 cancellations per minute per IP

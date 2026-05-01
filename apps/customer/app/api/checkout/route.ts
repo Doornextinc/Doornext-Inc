@@ -119,9 +119,13 @@ export async function POST(req: NextRequest) {
     // Find or create Stripe Customer so payment methods are saved for future use
     const { data: userProfile } = await serviceSupabase
       .from('users')
-      .select('stripe_customer_id, email')
+      .select('stripe_customer_id, email, account_status')
       .eq('id', user.id)
       .single()
+
+    if (userProfile?.account_status === 'banned' || userProfile?.account_status === 'suspended') {
+      return NextResponse.json({ error: 'Account is not active' }, { status: 403 })
+    }
 
     let stripeCustomerId = userProfile?.stripe_customer_id as string | undefined
     if (!stripeCustomerId) {

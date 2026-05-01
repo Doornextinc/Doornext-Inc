@@ -23,6 +23,9 @@ export async function POST(req: NextRequest) {
   if (lat == null || lng == null) {
     return NextResponse.json({ error: 'Kitchen location is required.' }, { status: 400 })
   }
+  if (typeof lat !== 'number' || typeof lng !== 'number' || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+    return NextResponse.json({ error: 'Invalid kitchen location coordinates.' }, { status: 400 })
+  }
 
   // Create auth user — email_confirm omitted so Supabase sends a verification email
   const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
@@ -38,10 +41,15 @@ export async function POST(req: NextRequest) {
   const userId = authData.user.id
 
   // Upsert public.users with maker role
-  await adminClient.from('users').upsert(
+  const { error: usersError } = await adminClient.from('users').upsert(
     { id: userId, email, full_name: fullName, role: 'maker' },
     { onConflict: 'id' }
   )
+
+  if (usersError) {
+    await adminClient.auth.admin.deleteUser(userId)
+    return NextResponse.json({ error: 'Failed to create user profile. Please try again.' }, { status: 500 })
+  }
 
   // Create food_maker record with kitchen location
   const { error: makerError } = await adminClient.from('food_makers').insert({

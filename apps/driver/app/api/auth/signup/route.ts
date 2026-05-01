@@ -35,13 +35,18 @@ export async function POST(req: NextRequest) {
   const userId = authData.user.id
 
   // Upsert public.users with driver role — pending until KYC approved by admin
-  await adminClient.from('users').upsert(
+  const { error: usersError } = await adminClient.from('users').upsert(
     { id: userId, email, full_name: fullName, role: 'driver', account_status: 'pending' },
     { onConflict: 'id' }
   )
 
+  if (usersError) {
+    await adminClient.auth.admin.deleteUser(userId)
+    return NextResponse.json({ error: 'Failed to create user profile. Please try again.' }, { status: 500 })
+  }
+
   // Create driver profile (kyc_status defaults to 'not_submitted' via migration)
-  await adminClient.from('driver_profiles').upsert(
+  const { error: profileError } = await adminClient.from('driver_profiles').upsert(
     {
       id: userId,
       full_name: fullName,
@@ -53,6 +58,11 @@ export async function POST(req: NextRequest) {
     },
     { onConflict: 'id' }
   )
+
+  if (profileError) {
+    await adminClient.auth.admin.deleteUser(userId)
+    return NextResponse.json({ error: 'Failed to create driver profile. Please try again.' }, { status: 500 })
+  }
 
   return NextResponse.json({ ok: true, emailVerificationRequired: true })
 }

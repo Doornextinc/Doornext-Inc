@@ -36,6 +36,11 @@ function typeIcon(type: string): string {
     case 'pickup_pin_locked':      return '🔒'
     case 'payment_failed':         return '💳'
     case 'new_message':            return '💬'
+    case 'driver_arrived':         return '📍'
+    case 'driver_reassigned':      return '🔄'
+    case 'withdrawal_approved':    return '✅'
+    case 'withdrawal_rejected':    return '❌'
+    case 'withdrawal_paid':        return '💰'
     default:                       return '🔔'
   }
 }

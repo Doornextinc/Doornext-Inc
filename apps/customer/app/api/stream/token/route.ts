@@ -34,9 +34,13 @@ export async function POST(req: NextRequest) {
     // Upsert the user in Stream so they exist
     const profile = await supabase
       .from('users')
-      .select('full_name, avatar_url')
+      .select('full_name, avatar_url, account_status')
       .eq('id', user.id)
       .single()
+
+    if (profile.data?.account_status === 'banned' || profile.data?.account_status === 'suspended') {
+      return NextResponse.json({ error: 'Account is not active' }, { status: 403 })
+    }
 
     await serverClient.upsertUser({
       id: user.id,

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
+import { requireDriver } from '@/lib/require-driver'
 
 const admin = createAdmin(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -11,9 +11,9 @@ const admin = createAdmin(
 const ALLOWED_VEHICLE_TYPES = ['car', 'motorbike', 'bicycle', 'foot']
 
 export async function POST(req: NextRequest) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const auth = await requireDriver(req)
+  if (!auth.ok) return auth.response
+  const { userId } = auth
 
   const body = await req.json().catch(() => null)
   if (!body) return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
   const { error } = await admin
     .from('driver_documents')
     .upsert(
-      { driver_id: user.id, ...update },
+      { driver_id: userId, ...update },
       { onConflict: 'driver_id' }
     )
 

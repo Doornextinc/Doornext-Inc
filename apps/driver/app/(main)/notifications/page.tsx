@@ -32,6 +32,11 @@ function typeIcon(type: string): string {
     case 'failed_delivery':          return '⚠️'
     case 'new_message':              return '💬'
     case 'earnings_updated':         return '💰'
+    case 'withdrawal_approved':      return '✅'
+    case 'withdrawal_rejected':      return '❌'
+    case 'withdrawal_paid':          return '💰'
+    case 'kyc_approved':             return '🪪'
+    case 'kyc_rejected':             return '❌'
     default:                         return '🔔'
   }
 }

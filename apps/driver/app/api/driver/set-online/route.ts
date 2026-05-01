@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { createClient as createAdmin } from '@supabase/supabase-js'
 import * as Sentry from '@sentry/nextjs'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { requireDriver } from '@/lib/require-driver'
+
+const admin = createAdmin(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  { auth: { autoRefreshToken: false, persistSession: false } }
+)
 
 export async function POST(req: NextRequest) {
   // Rate limit: 30 toggles per minute per IP
@@ -11,15 +17,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
   }
 
-  const cookieStore = await cookies()
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { getAll: () => cookieStore.getAll() } }
-  )
-
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const auth = await requireDriver(req)
+  if (!auth.ok) return auth.response
+  const { userId } = auth
 
   const { online } = await req.json()
   if (typeof online !== 'boolean') {
@@ -27,19 +27,19 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { error } = await supabase
+    const { error } = await admin
       .from('driver_profiles')
       .update({ is_active: online })
-      .eq('id', user.id)
+      .eq('id', userId)
 
     if (error) {
-      Sentry.captureException(error, { extra: { userId: user.id, online } })
+      Sentry.captureException(error, { extra: { userId, online } })
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
     return NextResponse.json({ success: true, is_active: online })
   } catch (err) {
-    Sentry.captureException(err, { extra: { userId: user.id, online } })
+    Sentry.captureException(err, { extra: { userId, online } })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

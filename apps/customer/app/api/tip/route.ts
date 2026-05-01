@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
   // We need payment_method to decide the path — do a minimal fetch.
   const { data: orderMeta } = await admin
     .from('orders')
-    .select('customer_id, payment_method, stripe_customer_id')
+    .select('customer_id, payment_method')
     .eq('id', orderId)
     .single()
 
