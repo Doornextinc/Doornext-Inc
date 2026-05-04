@@ -94,10 +94,19 @@ export async function POST(req: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  await admin
+  // CAS guard: only update if status hasn't advanced since we read it.
+  const { count: updateCount } = await admin
     .from('orders')
-    .update({ status, updated_at: new Date().toISOString() })
+    .update({ status, updated_at: new Date().toISOString() }, { count: 'exact' })
     .eq('id', orderId)
+    .eq('status', order.status)
+
+  if (!updateCount || updateCount === 0) {
+    return NextResponse.json(
+      { error: 'Order status changed concurrently. Please refresh and try again.' },
+      { status: 409 }
+    )
+  }
 
   const shortId = orderId.slice(-6).toUpperCase()
   const makerName = maker.display_name ?? 'Your kitchen'
@@ -116,28 +125,28 @@ export async function POST(req: NextRequest) {
 
   // ── Driver notifications ──────────────────────────────────────────────────
 
+  // Single join query: active drivers + their last known location.
   // driver_profiles.id = auth user UUID (PK references auth.users)
   const { data: onlineDrivers } = await admin
     .from('driver_profiles')
-    .select('id')
+    .select('id, nexter_locations(lat, lng)')
     .eq('is_active', true)
 
   if (onlineDrivers && onlineDrivers.length > 0) {
     const driverIds = onlineDrivers.map((d: { id: string }) => d.id)
 
     if (status === 'preparing') {
-      // Notify nearby drivers (≤8km) so they can head toward the area
-      const { data: locations } = await admin
-        .from('nexter_locations')
-        .select('nexter_id, lat, lng')
-        .in('nexter_id', driverIds)
-
+      // Notify nearby drivers (≤8km) so they can head toward the area.
+      // Drivers without a location record fall back to the full online set.
       const nearbyIds: string[] = []
 
-      if (locations && maker.lat && maker.lng) {
-        for (const loc of locations) {
-          const dist = haversineKm(maker.lat, maker.lng, loc.lat, loc.lng)
-          if (dist <= 8) nearbyIds.push(loc.nexter_id)
+      if (maker.lat && maker.lng) {
+        for (const d of onlineDrivers as { id: string; nexter_locations: { lat: number; lng: number } | null }[]) {
+          const loc = d.nexter_locations
+          if (loc) {
+            const dist = haversineKm(maker.lat, maker.lng, loc.lat, loc.lng)
+            if (dist <= 8) nearbyIds.push(d.id)
+          }
         }
       }
 

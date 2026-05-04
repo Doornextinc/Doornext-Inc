@@ -128,14 +128,21 @@ export async function POST(req: NextRequest) {
   }
 
   // ── Update the order status ───────────────────────────────────────────────
-  const { error: updateError } = await admin
+  // CAS guard: only update if status hasn't changed since we read it.
+  // count === 0 means another request (e.g. a retry) already advanced the status.
+  const { error: updateError, count: updateCount } = await admin
     .from('orders')
-    .update(updatePayload)
+    .update(updatePayload, { count: 'exact' })
     .eq('id', orderId)
+    .eq('status', order.status)
+    .eq('nexter_id', user.id)
 
   if (updateError) {
     Sentry.captureException(new Error(`update-status DB error: ${updateError.message}`), { extra: { orderId, status, userId: user.id } })
     return NextResponse.json({ error: 'Failed to update order status. Please try again.' }, { status: 500 })
+  }
+  if (updateCount === 0) {
+    return NextResponse.json({ error: 'Order status changed concurrently. Please refresh and try again.' }, { status: 409 })
   }
 
   // ── Financial settlement — runs atomically with the delivered transition ──

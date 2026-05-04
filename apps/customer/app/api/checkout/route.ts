@@ -128,15 +128,32 @@ export async function POST(req: NextRequest) {
 
     let stripeCustomerId = userProfile?.stripe_customer_id as string | undefined
     if (!stripeCustomerId) {
-      const customer = await stripe.customers.create({
+      // Create the Stripe customer first, then write it atomically only if no other
+      // concurrent request has already done so (first-writer-wins CAS).
+      const newCustomer = await stripe.customers.create({
         email: user.email ?? userProfile?.email ?? undefined,
         metadata: { supabase_user_id: user.id },
       })
-      stripeCustomerId = customer.id
-      await serviceSupabase
+
+      const { count: casCount } = await serviceSupabase
         .from('users')
-        .update({ stripe_customer_id: stripeCustomerId })
+        .update({ stripe_customer_id: newCustomer.id }, { count: 'exact' })
         .eq('id', user.id)
+        .is('stripe_customer_id', null)
+
+      if (!casCount || casCount === 0) {
+        // Another concurrent checkout won the race — delete our orphaned customer
+        // and use the one that was already written.
+        stripe.customers.del(newCustomer.id).catch(() => {})
+        const { data: refreshed } = await serviceSupabase
+          .from('users')
+          .select('stripe_customer_id')
+          .eq('id', user.id)
+          .single()
+        stripeCustomerId = refreshed?.stripe_customer_id ?? undefined
+      } else {
+        stripeCustomerId = newCustomer.id
+      }
     }
 
     const pricing = calculatePricing({
