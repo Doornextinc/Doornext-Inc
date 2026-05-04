@@ -121,6 +121,11 @@ export default function DashboardPage() {
       .from('food_makers').select('*').eq('user_id', user.id).single()
     if (!makerRes.data) { setLoading(false); return }
     const m = makerRes.data
+
+    // Gate: redirect unapproved makers to the appropriate page
+    if (m.approval_status === 'pending') { router.push('/pending'); return }
+    if (m.approval_status === 'rejected') { router.push('/pending'); return }
+
     setMaker(m)
 
     const today = new Date(); today.setHours(0, 0, 0, 0)

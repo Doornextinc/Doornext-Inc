@@ -27,10 +27,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid kitchen location coordinates.' }, { status: 400 })
   }
 
-  // Create auth user — email_confirm omitted so Supabase sends a verification email
+  // email_confirm: false → Supabase sends a verification email; user must confirm before logging in
   const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
     email,
     password,
+    email_confirm: false,
     user_metadata: { full_name: fullName },
   })
 
@@ -51,7 +52,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to create user profile. Please try again.' }, { status: 500 })
   }
 
-  // Create food_maker record with kitchen location
+  // Create food_maker record — starts as 'pending' until admin approves
   const { error: makerError } = await adminClient.from('food_makers').insert({
     user_id: userId,
     display_name: displayName,
@@ -61,6 +62,7 @@ export async function POST(req: NextRequest) {
     is_open: false,
     avg_rating: 0,
     total_reviews: 0,
+    approval_status: 'pending',
   })
 
   if (makerError) {

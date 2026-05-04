@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
 import { loadGoogleMapsScript, parsePlace } from '@/lib/google-maps'
 import { Loader2, ChevronLeft, MapPin, Navigation } from 'lucide-react'
 
@@ -105,9 +104,7 @@ export default function MakerSignupPage() {
       return
     }
 
-    const supabase = createClient()
-    await supabase.auth.signInWithPassword({ email: form.email, password: form.password })
-    router.push('/dashboard')
+    router.push('/check-email?email=' + encodeURIComponent(form.email))
   }
 
   return (

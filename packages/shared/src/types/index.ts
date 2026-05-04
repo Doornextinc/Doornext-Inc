@@ -55,6 +55,8 @@ export interface FoodMaker {
   prep_time_mins: number
   distance_km?: number
   created_at: string
+  approval_status?: 'pending' | 'approved' | 'rejected'
+  rejection_reason?: string | null
 }
 
 export interface MenuItem {
