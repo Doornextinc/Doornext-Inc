@@ -122,9 +122,9 @@ export default function DashboardPage() {
     if (!makerRes.data) { setLoading(false); return }
     const m = makerRes.data
 
-    // Gate: redirect unapproved makers to the appropriate page
-    if (m.approval_status === 'pending') { router.push('/pending'); return }
-    if (m.approval_status === 'rejected') { router.push('/pending'); return }
+    // Gate: redirect makers who haven't completed onboarding or aren't approved
+    if (!m.kyc_status || m.kyc_status === 'not_submitted') { router.push('/onboarding'); return }
+    if (m.approval_status !== 'approved') { router.push('/pending'); return }
 
     setMaker(m)
 

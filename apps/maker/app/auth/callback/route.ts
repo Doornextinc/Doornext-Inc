@@ -26,20 +26,24 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}/login?error=auth_callback_failed`)
   }
 
-  // Route the maker based on their approval status
+  // Route the maker based on KYC and approval status
   const { data: { user } } = await supabase.auth.getUser()
   if (user) {
     const { data: maker } = await supabase
       .from('food_makers')
-      .select('approval_status')
+      .select('kyc_status, approval_status')
       .eq('user_id', user.id)
       .maybeSingle()
 
-    if (maker?.approval_status === 'rejected') {
-      return NextResponse.redirect(`${origin}/rejected`)
-    }
-    if (maker?.approval_status === 'pending') {
-      return NextResponse.redirect(`${origin}/pending`)
+    if (maker) {
+      // KYC not started — send them through the business onboarding flow
+      if (!maker.kyc_status || maker.kyc_status === 'not_submitted') {
+        return NextResponse.redirect(`${origin}/onboarding`)
+      }
+      // KYC done but awaiting admin approval (or rejected)
+      if (maker.approval_status !== 'approved') {
+        return NextResponse.redirect(`${origin}/pending`)
+      }
     }
   }
 

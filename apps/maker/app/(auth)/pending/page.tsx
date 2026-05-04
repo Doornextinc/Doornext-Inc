@@ -8,6 +8,7 @@ export default function PendingApprovalPage() {
   const router = useRouter()
   const [rejectionReason, setRejectionReason] = useState<string | null>(null)
   const [status, setStatus] = useState<'pending' | 'approved' | 'rejected' | null>(null)
+  const [kycStatus, setKycStatus] = useState<string | null>(null)
 
   useEffect(() => {
     const supabase = createClient()
@@ -18,13 +19,20 @@ export default function PendingApprovalPage() {
 
       const { data: maker } = await supabase
         .from('food_makers')
-        .select('approval_status, rejection_reason')
+        .select('approval_status, rejection_reason, kyc_status')
         .eq('user_id', user.id)
         .maybeSingle()
 
       if (!maker) return
 
+      // If KYC not submitted yet, send back to onboarding
+      if (!maker.kyc_status || maker.kyc_status === 'not_submitted') {
+        router.push('/onboarding')
+        return
+      }
+
       setStatus(maker.approval_status as 'pending' | 'approved' | 'rejected')
+      setKycStatus(maker.kyc_status)
       setRejectionReason(maker.rejection_reason ?? null)
 
       if (maker.approval_status === 'approved') {
@@ -81,17 +89,18 @@ export default function PendingApprovalPage() {
         </p>
 
         <div className="bg-white border border-gray-100 rounded-2xl p-5 text-left shadow-sm mb-8">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">What happens next</p>
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">Your progress</p>
           <div className="space-y-3">
             {[
-              { icon: '✅', text: 'Email verified' },
-              { icon: '🔍', text: 'Team reviews your application' },
-              { icon: '📩', text: 'You receive an approval email' },
-              { icon: '🚀', text: 'Start selling on Doornext' },
-            ].map(({ icon, text }, i) => (
+              { icon: '✅', text: 'Email verified', done: true },
+              { icon: kycStatus === 'pending_review' || kycStatus === 'approved' ? '✅' : '📋', text: 'Business info submitted', done: kycStatus === 'pending_review' || kycStatus === 'approved' },
+              { icon: '🔍', text: 'Team reviews your application', done: false },
+              { icon: '📩', text: 'Approval email sent', done: false },
+              { icon: '🚀', text: 'Start selling on Doornext', done: false },
+            ].map(({ icon, text, done }, i) => (
               <div key={i} className="flex items-center gap-3">
                 <span className="text-lg w-7 text-center">{icon}</span>
-                <p className={`text-sm ${i === 0 ? 'text-emerald-600 font-semibold' : 'text-gray-600'}`}>{text}</p>
+                <p className={`text-sm ${done ? 'text-emerald-600 font-semibold' : 'text-gray-500'}`}>{text}</p>
               </div>
             ))}
           </div>
