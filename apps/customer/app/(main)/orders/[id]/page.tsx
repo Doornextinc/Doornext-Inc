@@ -64,6 +64,7 @@ export default function OrderTrackingPage() {
   const [tipDone, setTipDone] = useState(false)
   const [showReview, setShowReview] = useState(false)
   const [rating, setRating] = useState(0)
+  const [driverRating, setDriverRating] = useState(0)
   const [foodQuality, setFoodQuality] = useState<string | null>(null)
   const [packagingQuality, setPackagingQuality] = useState<string | null>(null)
   const [reviewText, setReviewText] = useState('')
@@ -152,13 +153,12 @@ export default function OrderTrackingPage() {
         const alreadyTipped = (data.tip_amount ?? 0) > 0
         setTipDone(alreadyTipped)
         if (data.status === 'delivered') {
-          if (!alreadyTipped) setTimeout(() => setShowTip(true), 1000)
-          if (!alreadyReviewed) {
-            // Show review 2 min after delivery. If already 2+ min have passed
-            // since updated_at, show after a short delay instead.
-            const deliveredMs = data.updated_at ? Date.now() - new Date(data.updated_at).getTime() : 0
-            const remaining = Math.max(0, 2 * 60 * 1000 - deliveredMs)
-            reviewTimerRef.current = setTimeout(() => setShowReview(true), remaining + 1000)
+          if (!alreadyTipped) {
+            // Show tip first, review will be triggered after tip is dismissed
+            setTimeout(() => setShowTip(true), 1000)
+          } else if (!alreadyReviewed) {
+            // Already tipped — show review directly
+            reviewTimerRef.current = setTimeout(() => setShowReview(true), 1500)
           }
         }
       }
@@ -173,16 +173,16 @@ export default function OrderTrackingPage() {
     loadOrder()
   }, [loadOrder])
 
-  // Show tip immediately + schedule review 2 min later when delivered via realtime
+  // When delivery status arrives via realtime: show tip → then review flows from tip close
   useEffect(() => {
     if (realtimeStatus !== 'delivered') return
-    if (!tipDone) setTimeout(() => setShowTip(true), 1500)
-    if (!reviewSubmitted) {
-      if (reviewTimerRef.current) clearTimeout(reviewTimerRef.current)
-      reviewTimerRef.current = setTimeout(() => setShowReview(true), 2 * 60 * 1000 + 1500)
+    if (!tipDone) {
+      setTimeout(() => setShowTip(true), 1500)
+    } else if (!reviewSubmitted) {
+      reviewTimerRef.current = setTimeout(() => setShowReview(true), 1500)
     }
     return () => { if (reviewTimerRef.current) clearTimeout(reviewTimerRef.current) }
-  }, [realtimeStatus, tipDone, reviewSubmitted]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [realtimeStatus]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const cancelOrder = async () => {
     setCancelling(true)
@@ -221,6 +221,10 @@ export default function OrderTrackingPage() {
       setTipSubmitting(false)
       setTipDone(true)
       setShowTip(false)
+      // Show review prompt right after tip is dismissed
+      if (!reviewSubmitted) {
+        reviewTimerRef.current = setTimeout(() => setShowReview(true), 2000)
+      }
     }
   }
 
@@ -236,7 +240,9 @@ export default function OrderTrackingPage() {
         order_id: order.id,
         customer_id: user.id,
         maker_id: order.maker_id,
+        nexter_id: order.nexter_id ?? null,
         rating,
+        driver_rating: driverRating > 0 ? driverRating : null,
         body: reviewText.trim() || null,
         food_quality: foodQuality,
         packaging_quality: packagingQuality,
@@ -800,6 +806,23 @@ export default function OrderTrackingPage() {
                   </button>
                 ))}
               </div>
+
+              {/* Driver rating — only if a driver was assigned */}
+              {order.nexter_id && (
+                <>
+                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Rate your driver</p>
+                  <div className="flex justify-center gap-3 mb-5">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <button key={i} onClick={() => setDriverRating(i)} className="transition-transform active:scale-110">
+                        <Star
+                          size={32}
+                          className={i <= driverRating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
 
               {/* Text */}
               <textarea

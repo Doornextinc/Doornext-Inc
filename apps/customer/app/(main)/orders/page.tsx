@@ -211,9 +211,10 @@ export default function OrdersPage() {
             <h2 className="font-bold text-gray-500 text-[13px] mb-3 uppercase tracking-wide">Past Orders</h2>
             <div className="space-y-3">
               {pastOrders.map((order) => (
-                <div
+                <button
                   key={order.id}
-                  className="bg-white rounded-2xl p-4 border border-gray-100"
+                  onClick={() => router.push(`/orders/${order.id}`)}
+                  className="w-full text-left bg-white rounded-2xl p-4 border border-gray-100 active:bg-gray-50 transition-colors"
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div>
@@ -255,7 +256,7 @@ export default function OrdersPage() {
                       )
                     )}
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           </section>

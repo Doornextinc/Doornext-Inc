@@ -571,6 +571,11 @@ export default function ActiveDeliveryPage() {
   const isPickupPhase = isHeadingToMaker || isAtMaker || isPickedUp
   const isDropoffPhase = isHeadingToCustomer || isAtCustomer
 
+  // Proof photo is required for contactless / leave-at-door drop-offs
+  const LEAVE_AT_DOOR_KEYWORDS = ['leave at door', 'leave at the door', 'contactless', 'no contact', 'door step', 'doorstep', 'leave outside', 'leave by the door']
+  const requiresProof = isAtCustomer && !!order.dropoff_note &&
+    LEAVE_AT_DOOR_KEYWORDS.some(kw => order.dropoff_note!.toLowerCase().includes(kw))
+
   // ── ETA calculations (updates every 10 s via broadcastLocation → store) ──
   const makerLat = order.food_maker?.lat
   const makerLng = order.food_maker?.lng
@@ -1044,7 +1049,14 @@ export default function ActiveDeliveryPage() {
             <div className="px-4 pt-3.5 pb-3">
               <div className="flex items-center justify-between mb-1.5">
                 <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wide">Photo of Delivery</p>
-                <span className="text-[10px] text-zinc-700 font-medium">{proofUploadError ? <span className="text-amber-400">Upload failed — order still completed</span> : 'Optional'}</span>
+                <span className="text-[10px] font-medium">
+                  {proofUploadError
+                    ? <span className="text-amber-400">Upload failed — order still completed</span>
+                    : requiresProof
+                      ? <span className="text-[#FF7A50]">Required</span>
+                      : <span className="text-zinc-700">Optional</span>
+                  }
+                </span>
               </div>
 
               {proofPhotoUrl ? (
@@ -1187,11 +1199,18 @@ export default function ActiveDeliveryPage() {
           )}
 
           {isAtCustomer ? (
-            <SlideToConfirm
-              onConfirm={() => handleStatusUpdate('delivered')}
-              label="Slide to Complete"
-              disabled={updating}
-            />
+            <>
+              {requiresProof && !proofPhoto && (
+                <p className="text-center text-xs font-bold text-[#FF7A50] mb-2">
+                  Take a photo of the drop-off before completing delivery
+                </p>
+              )}
+              <SlideToConfirm
+                onConfirm={() => handleStatusUpdate('delivered')}
+                label="Slide to Complete"
+                disabled={updating || (requiresProof && !proofPhoto)}
+              />
+            </>
           ) : (
             <button
               onClick={() => handleStatusUpdate(nextAction.next)}
