@@ -141,8 +141,8 @@ export async function POST(req: NextRequest) {
       const nearbyIds: string[] = []
 
       if (maker.lat && maker.lng) {
-        for (const d of onlineDrivers as { id: string; nexter_locations: { lat: number; lng: number } | null }[]) {
-          const loc = d.nexter_locations
+        for (const d of onlineDrivers as { id: string; nexter_locations: Array<{ lat: number; lng: number }> }[]) {
+          const loc = d.nexter_locations?.[0]
           if (loc) {
             const dist = haversineKm(maker.lat, maker.lng, loc.lat, loc.lng)
             if (dist <= 8) nearbyIds.push(d.id)
