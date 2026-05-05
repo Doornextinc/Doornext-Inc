@@ -33,24 +33,6 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // ── Firebase Admin (push notifications) ──────────────────────────────────
-  const hasFirebase =
-    process.env.FIREBASE_PROJECT_ID &&
-    process.env.FIREBASE_CLIENT_EMAIL &&
-    process.env.FIREBASE_PRIVATE_KEY
-  if (!hasFirebase) {
-    checks.firebase = { status: 'unconfigured' }
-  } else {
-    try {
-      const { getFirebaseAdmin } = await import('@/lib/firebase-admin')
-      const app = getFirebaseAdmin()
-      if (!app.messaging) throw new Error('Firebase admin messaging unavailable')
-      checks.firebase = { status: 'ok' }
-    } catch (err) {
-      checks.firebase = { status: 'error', detail: String(err) }
-    }
-  }
-
   // ── Stream Chat ───────────────────────────────────────────────────────────
   checks.stream = process.env.STREAM_API_SECRET && process.env.NEXT_PUBLIC_STREAM_API_KEY
     ? { status: 'ok' }
