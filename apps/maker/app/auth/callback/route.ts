@@ -36,12 +36,11 @@ export async function GET(request: Request) {
       .maybeSingle()
 
     if (maker) {
-      // KYC not started — send them through the business onboarding flow
-      if (!maker.kyc_status || maker.kyc_status === 'not_submitted') {
-        return NextResponse.redirect(`${origin}/onboarding`)
-      }
-      // KYC done but awaiting admin approval (or rejected)
+      // Approved makers always go to dashboard — admin approval implies KYC pass.
       if (maker.approval_status !== 'approved') {
+        if (!maker.kyc_status || maker.kyc_status === 'not_submitted') {
+          return NextResponse.redirect(`${origin}/onboarding`)
+        }
         return NextResponse.redirect(`${origin}/pending`)
       }
     }

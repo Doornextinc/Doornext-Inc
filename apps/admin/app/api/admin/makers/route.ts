@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
 
   let query = supabase
     .from('food_makers')
-    .select('id, user_id, display_name, cuisine_tags, avg_rating, total_reviews, is_open, approval_status, rejection_reason, reviewed_at, created_at')
+    .select('id, user_id, display_name, cuisine_tags, avg_rating, total_reviews, is_open, approval_status, kyc_status, rejection_reason, reviewed_at, created_at')
     .order('created_at', { ascending: false })
 
   if (filter) query = query.eq('approval_status', filter)
@@ -39,12 +39,13 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ ok: true })
   }
 
-  // Approve
+  // Approve — also mark kyc_status approved so the maker can access their dashboard
   if (action === 'approve') {
     const { error } = await supabase
       .from('food_makers')
       .update({
         approval_status: 'approved',
+        kyc_status: 'approved',
         rejection_reason: null,
         reviewed_at: new Date().toISOString(),
         reviewed_by: adminId,

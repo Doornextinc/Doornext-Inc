@@ -220,6 +220,7 @@ export default function MakersPage() {
   const [makers, setMakers] = useState<Maker[]>([])
   const [loading, setLoading] = useState(true)
   const [acting, setActing] = useState<string | null>(null)
+  const [confirming, setConfirming] = useState<string | null>(null)
   const [kycTarget, setKycTarget] = useState<Maker | null>(null)
   const [rejectTarget, setRejectTarget] = useState<Maker | null>(null)
   const [rejectReason, setRejectReason] = useState('')
@@ -258,6 +259,18 @@ export default function MakersPage() {
     setRejectReason('')
     await loadMakers(tab)
     setActing(null)
+  }
+
+  const confirmEmail = async (maker: Maker) => {
+    setConfirming(maker.id)
+    const res = await fetch(`/api/admin/users/${maker.user_id}/confirm-email`, { method: 'POST' })
+    if (res.ok) {
+      alert(`Email confirmed for ${maker.display_name}. They can now sign in.`)
+    } else {
+      const { error } = await res.json().catch(() => ({ error: 'Unknown error' }))
+      alert(`Failed: ${error}`)
+    }
+    setConfirming(null)
   }
 
   const toggleOpen = async (maker: Maker) => {
@@ -361,6 +374,18 @@ export default function MakersPage() {
                     </td>
                     <td className="px-5 py-3.5 text-right">
                       <div className="flex items-center justify-end gap-2">
+                        {/* Confirm email — unblocks makers who never received the verification email */}
+                        {(tab === 'pending' || tab === 'approved') && (
+                          <button
+                            onClick={() => confirmEmail(maker)}
+                            disabled={confirming === maker.id}
+                            title="Force-confirm this maker's email so they can sign in"
+                            className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-purple-50 text-purple-600 border border-purple-200 hover:bg-purple-100 transition-colors disabled:opacity-50"
+                          >
+                            {confirming === maker.id ? '…' : 'Confirm Email'}
+                          </button>
+                        )}
+
                         {/* Review KYC always available for pending */}
                         {tab === 'pending' && (
                           <button

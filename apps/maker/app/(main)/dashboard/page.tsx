@@ -122,9 +122,12 @@ export default function DashboardPage() {
     if (!makerRes.data) { setLoading(false); return }
     const m = makerRes.data
 
-    // Gate: redirect makers who haven't completed onboarding or aren't approved
-    if (!m.kyc_status || m.kyc_status === 'not_submitted') { router.push('/onboarding'); return }
-    if (m.approval_status !== 'approved') { router.push('/pending'); return }
+    // Gate: approved makers always go straight to dashboard — admin approval implies KYC pass.
+    // Only send to onboarding/pending if not yet approved.
+    if (m.approval_status !== 'approved') {
+      if (!m.kyc_status || m.kyc_status === 'not_submitted') { router.push('/onboarding'); return }
+      router.push('/pending'); return
+    }
 
     setMaker(m)
 
