@@ -39,8 +39,11 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
 
     const handleVisibilityChange = async () => {
       if (document.visibilityState !== 'visible') return
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
+      // Use getUser() (server-verified) rather than getSession() (localStorage-only).
+      // getSession() can return null if the browser cleared localStorage while a
+      // valid cookie-based session still exists, causing a false logout redirect.
+      const { data: { user: visibilityUser } } = await supabase.auth.getUser()
+      if (!visibilityUser) {
         router.push('/login')
       }
     }
