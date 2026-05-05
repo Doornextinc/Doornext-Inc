@@ -55,6 +55,7 @@ export async function POST(req: NextRequest) {
     admin.from('settings').select('key, value').in('key', [
       'dynamic_base_pay', 'dynamic_per_mile', 'dynamic_per_min_wait',
       'use_dynamic_pricing', 'priority_driver_bonus', 'service_fee_pct',
+      'platform_commission_pct',
     ]),
   ])
 

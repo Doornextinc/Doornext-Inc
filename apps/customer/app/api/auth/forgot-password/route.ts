@@ -39,11 +39,19 @@ export async function POST(req: NextRequest) {
     }
   )
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL
+  if (!appUrl) {
+    if (process.env.NODE_ENV === 'production') {
+      console.error('[forgot-password] NEXT_PUBLIC_APP_URL is not set — password reset links will be broken')
+      return NextResponse.json({ error: 'Server misconfiguration' }, { status: 500 })
+    }
+    // Dev fallback only
+  }
+  const resolvedAppUrl = appUrl ?? 'http://localhost:3000'
 
   // Fire-and-forget — we don't surface Supabase errors to avoid user enumeration
   await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
-    redirectTo: `${appUrl}/reset-password`,
+    redirectTo: `${resolvedAppUrl}/reset-password`,
   })
 
   // Always respond with success regardless of whether the email exists

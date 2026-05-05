@@ -85,9 +85,10 @@ const _hasUpstash =
   !!process.env.UPSTASH_REDIS_REST_TOKEN
 
 if (!_hasUpstash && process.env.NODE_ENV === 'production') {
-  console.warn(
-    '[rate-limit] UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN not set. ' +
-    'Using in-memory fallback — rate limiting is NOT effective across serverless isolates.'
+  throw new Error(
+    '[rate-limit] UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN must be set in production. ' +
+    'In-memory rate limiting is NOT effective across serverless isolates and will not protect against abuse. ' +
+    'Set these env vars to an Upstash Redis instance before deploying.'
   )
 }
 

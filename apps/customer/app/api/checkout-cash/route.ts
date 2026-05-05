@@ -3,7 +3,7 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { calculatePricing } from '@doornext/shared/pricing'
-import { notifyUser } from '@/lib/push-server'
+import { notifyUser } from '@doornext/shared/notify'
 import * as Sentry from '@sentry/nextjs'
 import { checkRateLimit } from '@/lib/rate-limit'
 
@@ -71,6 +71,19 @@ export async function POST(req: NextRequest) {
       if (!dbItem) return NextResponse.json({ error: `Item not found: ${item.id}` }, { status: 400 })
       if (!dbItem.is_available) return NextResponse.json({ error: 'One or more items are no longer available' }, { status: 400 })
       if (dbItem.maker_id !== maker_id) return NextResponse.json({ error: 'Items must belong to the same maker' }, { status: 400 })
+    }
+
+    // Verify maker is approved — service role bypasses RLS so we must check explicitly
+    const { data: makerStatus } = await serviceSupabase
+      .from('food_makers')
+      .select('approval_status, is_open')
+      .eq('id', maker_id)
+      .single()
+    if (!makerStatus || makerStatus.approval_status !== 'approved') {
+      return NextResponse.json({ error: 'This kitchen is not currently available' }, { status: 400 })
+    }
+    if (!makerStatus.is_open) {
+      return NextResponse.json({ error: 'This kitchen is currently closed' }, { status: 400 })
     }
 
     const subtotal = (items as { id: string; quantity: number }[]).reduce((sum, item) => {

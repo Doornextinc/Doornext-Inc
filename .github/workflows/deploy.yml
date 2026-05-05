@@ -1,5 +1,11 @@
 name: Deploy
 
+# Deployment sequence (expand/migrate/contract safe):
+#   1. migrate-database  — additive schema changes applied first
+#   2. deploy-*          — app code deployed against up-to-date schema
+#   3. readiness checks  — deep dependency probes after each deploy
+#   4. notify-failure    — Slack alert on any failure
+
 on:
   push:
     branches: [main]
@@ -25,9 +31,9 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       customer: ${{ steps.filter.outputs.customer }}
-      driver: ${{ steps.filter.outputs.driver }}
-      maker: ${{ steps.filter.outputs.maker }}
-      admin: ${{ steps.filter.outputs.admin }}
+      driver:   ${{ steps.filter.outputs.driver }}
+      maker:    ${{ steps.filter.outputs.maker }}
+      admin:    ${{ steps.filter.outputs.admin }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -61,12 +67,64 @@ jobs:
               - 'pnpm-lock.yaml'
 
   # ──────────────────────────────────────────────────────────
-  # Deploy customer app
+  # STEP 1: Run additive DB migrations BEFORE any app deploys.
+  #
+  # Expand/migrate/contract (EMC) strategy:
+  #   • This job runs additive migrations (new tables, columns,
+  #     indexes, functions) — safe to apply before new code.
+  #   • Destructive/contract migrations (DROP COLUMN, etc.) must
+  #     be applied separately AFTER all apps are updated and the
+  #     old column is no longer referenced in code.
+  #   • Mark contract migrations with a -- CONTRACT: prefix in
+  #     their SQL file and apply them manually via workflow_dispatch.
+  # ──────────────────────────────────────────────────────────
+  migrate-database:
+    name: Run DB Migrations
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Validate migrations (naming + no duplicates)
+        run: |
+          echo "Checking migration file naming convention..."
+          for f in supabase/migrations/*.sql; do
+            filename=$(basename "$f")
+            if ! [[ "$filename" =~ ^[0-9]{3}_[a-z0-9_]+\.sql$ ]]; then
+              echo "ERROR: '$filename' does not follow NNN_description.sql convention"
+              exit 1
+            fi
+          done
+          numbers=$(ls supabase/migrations/*.sql | xargs -I{} basename {} | cut -d_ -f1 | sort)
+          dupes=$(echo "$numbers" | uniq -d)
+          if [ -n "$dupes" ]; then
+            echo "ERROR: Duplicate migration numbers: $dupes"
+            exit 1
+          fi
+          echo "Migrations validated ✓"
+
+      - name: Run migrations
+        run: |
+          supabase db push \
+            --db-url "${{ secrets.SUPABASE_DB_URL }}" \
+            --include-all
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+  # ──────────────────────────────────────────────────────────
+  # STEP 2a: Deploy customer app (after migrations succeed)
   # ──────────────────────────────────────────────────────────
   deploy-customer:
     name: Deploy Customer App
     runs-on: ubuntu-latest
-    needs: detect-changes
+    needs: [detect-changes, migrate-database]
     if: |
       needs.detect-changes.outputs.customer == 'true' ||
       github.event.inputs.app == 'customer' ||
@@ -79,29 +137,40 @@ jobs:
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25
         with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-token:      ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id:     ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_CUSTOMER }}
-          vercel-args: '--prod'
+          vercel-args:       '--prod'
           working-directory: apps/customer
 
-      - name: Health check (post-deploy)
+      - name: Liveness check
         run: |
           sleep 15
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.CUSTOMER_APP_URL }}/api/health")
           if [ "$STATUS" != "200" ]; then
-            echo "Health check failed with status $STATUS"
+            echo "Liveness check failed with status $STATUS"
             exit 1
           fi
-          echo "Customer app health check passed ✓"
+          echo "Customer liveness check passed ✓"
+
+      - name: Readiness check
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.INTERNAL_WEBHOOK_SECRET }}" \
+            "${{ secrets.CUSTOMER_APP_URL }}/api/readiness")
+          if [ "$STATUS" != "200" ]; then
+            echo "Readiness check failed with status $STATUS — deploy may be degraded"
+            exit 1
+          fi
+          echo "Customer readiness check passed ✓"
 
   # ──────────────────────────────────────────────────────────
-  # Deploy driver app
+  # STEP 2b: Deploy driver app
   # ──────────────────────────────────────────────────────────
   deploy-driver:
     name: Deploy Driver App
     runs-on: ubuntu-latest
-    needs: detect-changes
+    needs: [detect-changes, migrate-database]
     if: |
       needs.detect-changes.outputs.driver == 'true' ||
       github.event.inputs.app == 'driver' ||
@@ -114,29 +183,40 @@ jobs:
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25
         with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-token:      ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id:     ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_DRIVER }}
-          vercel-args: '--prod'
+          vercel-args:       '--prod'
           working-directory: apps/driver
 
-      - name: Health check (post-deploy)
+      - name: Liveness check
         run: |
           sleep 15
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.DRIVER_APP_URL }}/api/health")
           if [ "$STATUS" != "200" ]; then
-            echo "Health check failed with status $STATUS"
+            echo "Liveness check failed with status $STATUS"
             exit 1
           fi
-          echo "Driver app health check passed ✓"
+          echo "Driver liveness check passed ✓"
+
+      - name: Readiness check
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.INTERNAL_WEBHOOK_SECRET }}" \
+            "${{ secrets.DRIVER_APP_URL }}/api/readiness")
+          if [ "$STATUS" != "200" ]; then
+            echo "Readiness check failed with status $STATUS"
+            exit 1
+          fi
+          echo "Driver readiness check passed ✓"
 
   # ──────────────────────────────────────────────────────────
-  # Deploy maker app
+  # STEP 2c: Deploy maker app
   # ──────────────────────────────────────────────────────────
   deploy-maker:
     name: Deploy Maker App
     runs-on: ubuntu-latest
-    needs: detect-changes
+    needs: [detect-changes, migrate-database]
     if: |
       needs.detect-changes.outputs.maker == 'true' ||
       github.event.inputs.app == 'maker' ||
@@ -149,29 +229,40 @@ jobs:
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25
         with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-token:      ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id:     ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_MAKER }}
-          vercel-args: '--prod'
+          vercel-args:       '--prod'
           working-directory: apps/maker
 
-      - name: Health check (post-deploy)
+      - name: Liveness check
         run: |
           sleep 15
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.MAKER_APP_URL }}/api/health")
           if [ "$STATUS" != "200" ]; then
-            echo "Health check failed with status $STATUS"
+            echo "Liveness check failed with status $STATUS"
             exit 1
           fi
-          echo "Maker app health check passed ✓"
+          echo "Maker liveness check passed ✓"
+
+      - name: Readiness check
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.INTERNAL_WEBHOOK_SECRET }}" \
+            "${{ secrets.MAKER_APP_URL }}/api/readiness")
+          if [ "$STATUS" != "200" ]; then
+            echo "Readiness check failed with status $STATUS"
+            exit 1
+          fi
+          echo "Maker readiness check passed ✓"
 
   # ──────────────────────────────────────────────────────────
-  # Deploy admin app
+  # STEP 2d: Deploy admin app
   # ──────────────────────────────────────────────────────────
   deploy-admin:
     name: Deploy Admin App
     runs-on: ubuntu-latest
-    needs: detect-changes
+    needs: [detect-changes, migrate-database]
     if: |
       needs.detect-changes.outputs.admin == 'true' ||
       github.event.inputs.app == 'admin' ||
@@ -184,47 +275,32 @@ jobs:
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25
         with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-token:      ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id:     ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_ADMIN }}
-          vercel-args: '--prod'
+          vercel-args:       '--prod'
           working-directory: apps/admin
 
-      - name: Health check (post-deploy)
+      - name: Liveness check
         run: |
           sleep 15
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.ADMIN_APP_URL }}/api/health")
           if [ "$STATUS" != "200" ]; then
-            echo "Health check failed with status $STATUS"
+            echo "Liveness check failed with status $STATUS"
             exit 1
           fi
-          echo "Admin app health check passed ✓"
+          echo "Admin liveness check passed ✓"
 
-  # ──────────────────────────────────────────────────────────
-  # Supabase migrations (run after all app deploys)
-  # ──────────────────────────────────────────────────────────
-  migrate-database:
-    name: Run DB Migrations
-    runs-on: ubuntu-latest
-    needs: [deploy-customer, deploy-driver, deploy-maker, deploy-admin]
-    if: always() && !failure() && !cancelled()
-    environment: production
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install Supabase CLI
-        uses: supabase/setup-cli@v1
-        with:
-          version: latest
-
-      - name: Run migrations
+      - name: Readiness check
         run: |
-          supabase db push \
-            --db-url "${{ secrets.SUPABASE_DB_URL }}" \
-            --include-all
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.INTERNAL_WEBHOOK_SECRET }}" \
+            "${{ secrets.ADMIN_APP_URL }}/api/readiness")
+          if [ "$STATUS" != "200" ]; then
+            echo "Readiness check failed with status $STATUS"
+            exit 1
+          fi
+          echo "Admin readiness check passed ✓"
 
   # ──────────────────────────────────────────────────────────
   # Notify on deployment failure
@@ -232,7 +308,7 @@ jobs:
   notify-failure:
     name: Notify on Failure
     runs-on: ubuntu-latest
-    needs: [deploy-customer, deploy-driver, deploy-maker, deploy-admin, migrate-database]
+    needs: [migrate-database, deploy-customer, deploy-driver, deploy-maker, deploy-admin]
     if: failure()
     steps:
       - name: Post failure to Slack

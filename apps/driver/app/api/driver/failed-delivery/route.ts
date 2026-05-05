@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
     try {
       const stripeKey = process.env.STRIPE_SECRET_KEY
       if (!stripeKey) throw new Error('STRIPE_SECRET_KEY not configured')
-      const stripe = new Stripe(stripeKey, { apiVersion: '2026-02-25.clover' })
+      const stripe = new Stripe(stripeKey, { apiVersion: '2024-11-20.acacia' })
       const refund = await stripe.refunds.create({
         payment_intent: order.stripe_payment_intent_id,
         reason: 'requested_by_customer',

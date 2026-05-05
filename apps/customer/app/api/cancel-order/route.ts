@@ -5,7 +5,7 @@ import { cookies } from 'next/headers'
 import Stripe from 'stripe'
 import * as Sentry from '@sentry/nextjs'
 import { checkRateLimit } from '@/lib/rate-limit'
-import { notifyUser } from '@/lib/push-server'
+import { notifyUser } from '@doornext/shared/notify'
 
 // Cancellation is only allowed before the maker starts preparing
 const CANCELLABLE_STATUSES = ['pending', 'awaiting_payment', 'confirmed']
@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const stripe = new Stripe(stripeKey)
+    const stripe = new Stripe(stripeKey, { apiVersion: '2024-11-20.acacia' })
 
     if (order.status === 'awaiting_payment') {
       // PaymentIntent not yet captured — void it rather than refund

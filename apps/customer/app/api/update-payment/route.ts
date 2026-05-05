@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
     + tip
   const amountCents = Math.round(total * 100)
 
-  const stripe = new Stripe(stripeKey)
+  const stripe = new Stripe(stripeKey, { apiVersion: '2024-11-20.acacia' })
   try {
     await stripe.paymentIntents.update(paymentIntentId, { amount: amountCents })
   } catch (err) {

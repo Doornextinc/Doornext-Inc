@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No saved payment method' }, { status: 400 })
     }
 
-    const stripe = new Stripe(stripeKey)
+    const stripe = new Stripe(stripeKey, { apiVersion: '2024-11-20.acacia' })
     try {
       // List saved payment methods
       const paymentMethods = await stripe.paymentMethods.list({
@@ -128,7 +128,7 @@ export async function POST(req: NextRequest) {
   if (rpcError || !rows || rows.length === 0) {
     // RPC failed or CAS lost the race — refund the Stripe charge to avoid phantom charge
     if (stripePaymentIntentId && orderMeta.payment_method === 'card') {
-      const stripe = new Stripe(stripeKey)
+      const stripe = new Stripe(stripeKey, { apiVersion: '2024-11-20.acacia' })
       await stripe.refunds.create({ payment_intent: stripePaymentIntentId }).catch((refundErr) => {
         Sentry.captureException(refundErr, { extra: { orderId, context: 'tip-refund-on-rpc-failure' } })
         console.error('CRITICAL: tip refund failed after RPC failure:', refundErr)

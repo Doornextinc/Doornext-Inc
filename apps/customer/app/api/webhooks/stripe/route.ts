@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import * as Sentry from '@sentry/nextjs'
-import { notifyUser } from '@/lib/push-server'
+import { notifyUser } from '@doornext/shared/notify'
 
 export async function POST(req: NextRequest) {
   const stripeKey = process.env.STRIPE_SECRET_KEY
@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
   if (!stripeKey || !supabaseUrl || !serviceRoleKey) {
     return NextResponse.json({ error: 'Not configured' }, { status: 500 })
   }
-  const stripe = new Stripe(stripeKey)
+  const stripe = new Stripe(stripeKey, { apiVersion: '2024-11-20.acacia' })
   // Service role client for webhook operations (bypasses RLS)
   const supabase = createClient(supabaseUrl, serviceRoleKey)
 
@@ -76,9 +76,11 @@ export async function POST(req: NextRequest) {
           .single()
 
         if (error) {
+          // Return 200 so Stripe does NOT retry — the idempotency record is already
+          // written and a retry would be a duplicate. Capture via Sentry for alerting.
           Sentry.captureException(new Error(`Failed to confirm order ${orderId}: ${error.message}`))
           console.error('Failed to confirm order:', error)
-          return NextResponse.json({ error: 'DB update failed' }, { status: 500 })
+          return NextResponse.json({ received: true, warning: 'DB update failed, order may need manual review' })
         }
 
         const shortId = orderId.slice(-6).toUpperCase()
@@ -154,7 +156,7 @@ export async function POST(req: NextRequest) {
             .from('orders')
             .update({ status: 'cancelled', updated_at: new Date().toISOString() })
             .eq('stripe_payment_intent_id', piId)
-            .in('status', ['awaiting_payment', 'confirmed', 'accepted'])
+            .in('status', ['awaiting_payment', 'confirmed', 'pending'])
         }
         break
       }

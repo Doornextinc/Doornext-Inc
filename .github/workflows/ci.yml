@@ -154,14 +154,18 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Audit dependencies (high severity)
+        # High/critical vulnerabilities BLOCK CI on protected branches.
+        # To waive a specific advisory, add it to .npmrc as:
+        #   audit-resolve-path=./.audit-resolve.json
+        # and document the business reason in a PR comment.
         run: pnpm audit --audit-level=high
-        continue-on-error: true  # Warn, don't block — review manually
 
       - name: Check for secrets in code (gitleaks)
+        # Confirmed secret leaks block CI. False positives can be suppressed
+        # via .gitleaksignore — requires a reviewer to sign off on the addition.
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        continue-on-error: true  # Warn, don't block CI
 
   # ──────────────────────────────────────────────────────────
   # Job 5: Supabase migration validation
@@ -222,6 +226,10 @@ jobs:
           fi
           if [[ "${{ needs.build.result }}" != "success" ]]; then
             echo "build failed"
+            exit 1
+          fi
+          if [[ "${{ needs.security-audit.result }}" != "success" ]]; then
+            echo "security-audit failed — high-severity vulnerability or secret leak detected"
             exit 1
           fi
           echo "All required CI jobs passed ✓"

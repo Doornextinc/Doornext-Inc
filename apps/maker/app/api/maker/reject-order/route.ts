@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
   // Refund via Stripe BEFORE cancelling — if refund fails, order stays pending so customer keeps their money
   if (!isCash && order.stripe_payment_intent_id) {
     try {
-      const stripe = new Stripe(stripeKey)
+      const stripe = new Stripe(stripeKey, { apiVersion: '2024-11-20.acacia' })
       await stripe.refunds.create({ payment_intent: order.stripe_payment_intent_id })
     } catch (err) {
       Sentry.captureException(err, { extra: { orderId, userId: user.id } })

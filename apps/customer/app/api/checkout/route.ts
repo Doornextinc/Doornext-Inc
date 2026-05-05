@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
   if (!stripeKey) {
     return NextResponse.json({ error: 'Payment not configured' }, { status: 500 })
   }
-  const stripe = new Stripe(stripeKey)
+  const stripe = new Stripe(stripeKey, { apiVersion: '2024-11-20.acacia' })
   try {
     // Get authenticated user
     const cookieStore = await cookies()
@@ -92,6 +92,19 @@ export async function POST(req: NextRequest) {
       if (dbItem.maker_id !== maker_id) {
         return NextResponse.json({ error: 'Items must belong to the same maker' }, { status: 400 })
       }
+    }
+
+    // Verify maker is approved — service role bypasses RLS so we must check explicitly
+    const { data: makerStatus } = await serviceSupabase
+      .from('food_makers')
+      .select('approval_status, is_open')
+      .eq('id', maker_id)
+      .single()
+    if (!makerStatus || makerStatus.approval_status !== 'approved') {
+      return NextResponse.json({ error: 'This kitchen is not currently available' }, { status: 400 })
+    }
+    if (!makerStatus.is_open) {
+      return NextResponse.json({ error: 'This kitchen is currently closed' }, { status: 400 })
     }
 
     // Server-side total calculation using verified DB prices (prevents price tampering)

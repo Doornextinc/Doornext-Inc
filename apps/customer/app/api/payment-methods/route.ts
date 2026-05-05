@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
 
     if (!profile?.stripe_customer_id) return NextResponse.json({ paymentMethods: [] })
 
-    const stripe = new Stripe(stripeKey)
+    const stripe = new Stripe(stripeKey, { apiVersion: '2024-11-20.acacia' })
     const methods = await stripe.paymentMethods.list({
       customer: profile.stripe_customer_id,
       type: 'card',
