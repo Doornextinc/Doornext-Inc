@@ -4,26 +4,39 @@ import { useEffect, useState, useCallback } from 'react'
 
 interface Seller {
   id: string
+  user_id: string
   display_name: string
   cuisine_tags: string[] | null
   avg_rating: number | null
   total_reviews: number
   is_open: boolean
+  approval_status: 'pending' | 'approved' | 'rejected'
   created_at: string
 }
 
 export default function SellersPage() {
   const [sellers, setSellers] = useState<Seller[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [acting, setActing] = useState<string | null>(null)
+  const [confirming, setConfirming] = useState<string | null>(null)
   const [search, setSearch] = useState('')
 
   const loadSellers = useCallback(async () => {
     setLoading(true)
-    const res = await fetch('/api/admin/makers')
-    if (res.ok) {
+    setError(null)
+    try {
+      const res = await fetch('/api/admin/makers')
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        setError(body.error ?? `API error ${res.status}`)
+        setLoading(false)
+        return
+      }
       const data = await res.json()
       setSellers(data.makers ?? [])
+    } catch (err) {
+      setError(String(err))
     }
     setLoading(false)
   }, [])
@@ -39,6 +52,18 @@ export default function SellersPage() {
     })
     await loadSellers()
     setActing(null)
+  }
+
+  const confirmEmail = async (seller: Seller) => {
+    setConfirming(seller.id)
+    const res = await fetch(`/api/admin/users/${seller.user_id}/confirm-email`, { method: 'POST' })
+    if (res.ok) {
+      alert(`✅ Email confirmed for ${seller.display_name}. They can now sign in.`)
+    } else {
+      const body = await res.json().catch(() => ({}))
+      alert(`Failed: ${body.error ?? 'Unknown error'}`)
+    }
+    setConfirming(null)
   }
 
   const filtered = sellers.filter((s) =>
@@ -60,6 +85,13 @@ export default function SellersPage() {
         <span className="text-sm text-gray-400">{filtered.length} total</span>
       </div>
 
+      {error && (
+        <div className="mb-5 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600 flex items-center justify-between">
+          <span>⚠️ {error}</span>
+          <button onClick={loadSellers} className="text-xs font-semibold underline ml-4">Retry</button>
+        </div>
+      )}
+
       <input
         type="search"
         placeholder="Search sellers…"
@@ -75,6 +107,7 @@ export default function SellersPage() {
               <th className="text-left px-5 py-3 text-xs font-bold text-gray-400 uppercase">Name</th>
               <th className="text-left px-5 py-3 text-xs font-bold text-gray-400 uppercase">Cuisines</th>
               <th className="text-left px-5 py-3 text-xs font-bold text-gray-400 uppercase">Rating</th>
+              <th className="text-left px-5 py-3 text-xs font-bold text-gray-400 uppercase">Account</th>
               <th className="text-left px-5 py-3 text-xs font-bold text-gray-400 uppercase">Status</th>
               <th className="text-right px-5 py-3 text-xs font-bold text-gray-400 uppercase">Joined</th>
               <th className="px-5 py-3" />
@@ -98,6 +131,15 @@ export default function SellersPage() {
                 </td>
                 <td className="px-5 py-3">
                   <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${
+                    seller.approval_status === 'approved' ? 'bg-green-100 text-green-700' :
+                    seller.approval_status === 'rejected' ? 'bg-red-100 text-red-600' :
+                    'bg-amber-100 text-amber-700'
+                  }`}>
+                    {seller.approval_status}
+                  </span>
+                </td>
+                <td className="px-5 py-3">
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${
                     seller.is_open ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
                   }`}>
                     {seller.is_open ? 'Open' : 'Closed'}
@@ -109,23 +151,33 @@ export default function SellersPage() {
                   })}
                 </td>
                 <td className="px-5 py-3 text-right">
-                  <button
-                    onClick={() => toggleOpen(seller)}
-                    disabled={acting === seller.id}
-                    className={`text-xs font-semibold px-2.5 py-1 rounded-lg transition-colors disabled:opacity-50 ${
-                      seller.is_open
-                        ? 'text-red-500 hover:bg-red-50 border border-red-200'
-                        : 'text-green-600 hover:bg-green-50 border border-green-200'
-                    }`}
-                  >
-                    {seller.is_open ? 'Force Close' : 'Force Open'}
-                  </button>
+                  <div className="flex items-center justify-end gap-2">
+                    <button
+                      onClick={() => confirmEmail(seller)}
+                      disabled={confirming === seller.id}
+                      title="Force-confirm email so the seller can sign in"
+                      className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-purple-50 text-purple-600 border border-purple-200 hover:bg-purple-100 transition-colors disabled:opacity-50"
+                    >
+                      {confirming === seller.id ? '…' : 'Confirm Email'}
+                    </button>
+                    <button
+                      onClick={() => toggleOpen(seller)}
+                      disabled={acting === seller.id}
+                      className={`text-xs font-semibold px-2.5 py-1 rounded-lg transition-colors disabled:opacity-50 ${
+                        seller.is_open
+                          ? 'text-red-500 hover:bg-red-50 border border-red-200'
+                          : 'text-green-600 hover:bg-green-50 border border-green-200'
+                      }`}
+                    >
+                      {seller.is_open ? 'Force Close' : 'Force Open'}
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
-            {filtered.length === 0 && (
+            {filtered.length === 0 && !error && (
               <tr>
-                <td colSpan={6} className="px-5 py-12 text-center text-sm text-gray-400">No sellers found</td>
+                <td colSpan={7} className="px-5 py-12 text-center text-sm text-gray-400">No sellers found</td>
               </tr>
             )}
           </tbody>

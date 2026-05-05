@@ -16,7 +16,8 @@ export async function GET(req: NextRequest) {
 
   if (filter) query = query.eq('approval_status', filter)
 
-  const { data: makers } = await query
+  const { data: makers, error } = await query
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ makers: makers ?? [] })
 }
 
