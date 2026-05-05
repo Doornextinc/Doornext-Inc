@@ -1,12 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Loader2 } from 'lucide-react'
 
-export default function LoginPage() {
+// Separated so the Suspense boundary only wraps the part that reads searchParams.
+// Without this, Next.js cannot statically prerender /login.
+function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
@@ -45,6 +47,63 @@ export default function LoginPage() {
   }
 
   return (
+    <>
+      {error && (
+        <div className="mb-5 px-4 py-3.5 bg-red-50 border border-red-100 rounded-2xl text-sm text-red-600 font-medium text-center">
+          {error}
+        </div>
+      )}
+
+      <form onSubmit={handleLogin} className="space-y-3">
+        <div>
+          <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Email</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 text-[15px] text-gray-900 focus:outline-none focus:border-[#FF6B35] transition-colors"
+            placeholder="you@example.com"
+          />
+        </div>
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide">Password</label>
+            <Link href="/forgot-password" className="text-xs text-[#FF6B35] font-semibold hover:underline">
+              Forgot password?
+            </Link>
+          </div>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 text-[15px] text-gray-900 focus:outline-none focus:border-[#FF6B35] transition-colors"
+            placeholder="••••••••"
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-[#FF6B35] hover:bg-[#E55A24] text-white rounded-xl py-4 font-black text-[15px] disabled:opacity-50 active:opacity-90 transition-colors mt-1 flex items-center justify-center gap-2 shadow-lg shadow-[#FF6B35]/25"
+        >
+          {loading && <Loader2 size={16} className="animate-spin" />}
+          {loading ? 'Signing in…' : 'Sign In'}
+        </button>
+      </form>
+
+      <p className="text-center text-gray-400 text-sm mt-6">
+        New maker?{' '}
+        <Link href="/signup" className="text-[#FF6B35] font-bold hover:underline">
+          Apply to sell
+        </Link>
+      </p>
+    </>
+  )
+}
+
+export default function LoginPage() {
+  return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-white flex flex-col items-center justify-center px-5">
       <div className="w-full max-w-sm">
 
@@ -57,56 +116,9 @@ export default function LoginPage() {
           <p className="text-gray-400 text-sm mt-1">Sign in to your kitchen dashboard</p>
         </div>
 
-        {error && (
-          <div className="mb-5 px-4 py-3.5 bg-red-50 border border-red-100 rounded-2xl text-sm text-red-600 font-medium text-center">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleLogin} className="space-y-3">
-          <div>
-            <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 text-[15px] text-gray-900 focus:outline-none focus:border-[#FF6B35] transition-colors"
-              placeholder="you@example.com"
-            />
-          </div>
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide">Password</label>
-              <Link href="/forgot-password" className="text-xs text-[#FF6B35] font-semibold hover:underline">
-                Forgot password?
-              </Link>
-            </div>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 text-[15px] text-gray-900 focus:outline-none focus:border-[#FF6B35] transition-colors"
-              placeholder="••••••••"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-[#FF6B35] hover:bg-[#E55A24] text-white rounded-xl py-4 font-black text-[15px] disabled:opacity-50 active:opacity-90 transition-colors mt-1 flex items-center justify-center gap-2 shadow-lg shadow-[#FF6B35]/25"
-          >
-            {loading && <Loader2 size={16} className="animate-spin" />}
-            {loading ? 'Signing in…' : 'Sign In'}
-          </button>
-        </form>
-
-        <p className="text-center text-gray-400 text-sm mt-6">
-          New maker?{' '}
-          <Link href="/signup" className="text-[#FF6B35] font-bold hover:underline">
-            Apply to sell
-          </Link>
-        </p>
+        <Suspense>
+          <LoginForm />
+        </Suspense>
       </div>
     </div>
   )
