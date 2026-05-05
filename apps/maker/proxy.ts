@@ -33,10 +33,11 @@ export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname
   const isAuthRoute =
     pathname.startsWith('/login') ||
-    pathname.startsWith('/welcome') ||
     pathname.startsWith('/signup') ||
+    pathname.startsWith('/check-email') ||
     pathname.startsWith('/forgot-password') ||
     pathname.startsWith('/reset-password') ||
+    pathname.startsWith('/welcome') ||
     pathname.startsWith('/auth/')
   const isApi = pathname.startsWith('/api')
 
@@ -50,7 +51,10 @@ export async function proxy(request: NextRequest) {
   }
 
   if (!user && !isAuthRoute && !isApi) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    // Preserve the intended destination so login can redirect back after auth
+    const loginUrl = new URL('/login', request.url)
+    if (pathname !== '/') loginUrl.searchParams.set('next', pathname)
+    return NextResponse.redirect(loginUrl)
   }
 
   // Verify maker role — fail open if DB unreachable
@@ -67,8 +71,15 @@ export async function proxy(request: NextRequest) {
     }
   }
 
+  // Authenticated user hitting an auth page → send straight to dashboard
   if (user && isAuthRoute) {
-    return NextResponse.redirect(new URL('/', request.url))
+    return NextResponse.redirect(new URL('/dashboard', request.url))
+  }
+
+  // Root path with active session → dashboard (avoids an extra round-trip through
+  // the (main)/page.tsx server redirect)
+  if (user && pathname === '/') {
+    return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
   return supabaseResponse
@@ -76,6 +87,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon\\.ico|icons|manifest\\.json|sw\\.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff2?)$).*)',
   ],
 }
