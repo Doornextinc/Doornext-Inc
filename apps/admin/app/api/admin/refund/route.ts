@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const stripe = new Stripe(stripeKey, { apiVersion: '2024-11-20.acacia' })
+    const stripe = new Stripe(stripeKey, { apiVersion: '2026-02-25.clover' })
 
     // Idempotency key prevents Stripe from creating a second refund if this
     // endpoint is called twice before the DB write completes.

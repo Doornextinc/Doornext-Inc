@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
   if (!stripeKey || !supabaseUrl || !serviceRoleKey) {
     return NextResponse.json({ error: 'Not configured' }, { status: 500 })
   }
-  const stripe = new Stripe(stripeKey, { apiVersion: '2024-11-20.acacia' })
+  const stripe = new Stripe(stripeKey, { apiVersion: '2026-02-25.clover' })
   // Service role client for webhook operations (bypasses RLS)
   const supabase = createClient(supabaseUrl, serviceRoleKey)
 

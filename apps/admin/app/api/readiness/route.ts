@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
     checks.stripe = { status: 'unconfigured' }
   } else {
     try {
-      const stripe = new Stripe(stripeKey, { apiVersion: '2024-11-20.acacia' })
+      const stripe = new Stripe(stripeKey, { apiVersion: '2026-02-25.clover' })
       await stripe.customers.list({ limit: 1 })
       checks.stripe = { status: 'ok' }
     } catch (err) {

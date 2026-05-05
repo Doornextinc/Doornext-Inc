@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const stripe = new Stripe(stripeKey, { apiVersion: '2024-11-20.acacia' })
+    const stripe = new Stripe(stripeKey, { apiVersion: '2026-02-25.clover' })
 
     if (order.status === 'awaiting_payment') {
       // PaymentIntent not yet captured — void it rather than refund

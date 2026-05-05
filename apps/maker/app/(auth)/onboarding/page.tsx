@@ -391,7 +391,7 @@ export default function OnboardingPage() {
                   type="text"
                   value={form.legal_name}
                   onChange={(e) => set('legal_name', e.target.value)}
-                  placeholder={isSoleProp ? 'Jane Marie Smith' : 'Smith's Kitchen LLC'}
+                  placeholder={isSoleProp ? 'Jane Marie Smith' : "Smith's Kitchen LLC"}
                   className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-3 text-sm text-gray-900 focus:outline-none focus:border-[#FF6B35] transition-colors"
                 />
               </div>
