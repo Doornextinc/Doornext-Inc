@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
-import { createClient as createServiceClient } from '@supabase/supabase-js'
+import { createClient as createServiceClient, type SupabaseClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 
 const BUCKET = 'maker-documents'
@@ -22,7 +22,7 @@ const MIME_TO_EXT: Record<string, string> = {
   'application/pdf': 'pdf',
 }
 
-async function ensureBucket(admin: ReturnType<typeof createServiceClient>) {
+async function ensureBucket(admin: SupabaseClient) {
   try {
     const { data: buckets } = await admin.storage.listBuckets()
     if (!buckets?.some((b) => b.id === BUCKET)) {
