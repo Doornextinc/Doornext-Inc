@@ -51,9 +51,13 @@ export async function proxy(request: NextRequest) {
   }
 
   if (!user && !isAuthRoute && !isApi) {
-    // Preserve the intended destination so login can redirect back after auth
+    if (pathname === '/') {
+      // Root with no session → welcome/landing page
+      return NextResponse.redirect(new URL('/welcome', request.url))
+    }
+    // Deep-link to a protected page → preserve destination for post-login redirect
     const loginUrl = new URL('/login', request.url)
-    if (pathname !== '/') loginUrl.searchParams.set('next', pathname)
+    loginUrl.searchParams.set('next', pathname)
     return NextResponse.redirect(loginUrl)
   }
 
