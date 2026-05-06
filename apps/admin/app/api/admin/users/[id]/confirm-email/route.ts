@@ -19,7 +19,7 @@ export async function POST(
   )
 
   // Confirm the email directly — no email link required
-  const { error } = await serviceClient.auth.admin.updateUser(userId, {
+  const { error } = await serviceClient.auth.admin.updateUserById(userId, {
     email_confirm: true,
   })
 
