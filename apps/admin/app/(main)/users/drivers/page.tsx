@@ -107,7 +107,11 @@ export default function DriversPage() {
           <tbody className="divide-y divide-gray-50">
             {drivers.map((driver) => (
               <tr key={driver.id} className="hover:bg-gray-50/50">
-                <td className="px-5 py-3 font-medium text-gray-900">{driver.full_name}</td>
+                <td className="px-5 py-3 font-medium text-gray-900">
+                  <Link href={`/users/${driver.id}`} className="hover:text-[#FF6B35] hover:underline">
+                    {driver.full_name}
+                  </Link>
+                </td>
                 <td className="px-5 py-3 text-gray-500">
                   {driver.vehicle_type
                     ? `${VEHICLE_ICONS[driver.vehicle_type] ?? ''} ${driver.vehicle_type}`

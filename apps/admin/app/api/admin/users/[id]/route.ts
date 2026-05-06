@@ -19,6 +19,20 @@ export async function GET(
 
   if (error || !user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
+  // Auth-level info (email confirmed, last sign in) — requires service role
+  const { createClient: createServiceClient } = await import('@supabase/supabase-js')
+  const serviceClient = createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  )
+  const { data: { user: authUser } } = await serviceClient.auth.admin.getUserById(id)
+  const authInfo = {
+    email_confirmed: !!authUser?.email_confirmed_at,
+    email_confirmed_at: authUser?.email_confirmed_at ?? null,
+    last_sign_in_at: authUser?.last_sign_in_at ?? null,
+  }
+
   let roleData: Record<string, unknown> = {}
 
   if (user.role === 'customer') {
@@ -44,7 +58,7 @@ export async function GET(
   if (user.role === 'maker') {
     const { data: maker } = await supabase
       .from('food_makers')
-      .select('id, display_name, bio, cuisine_tags, avg_rating, total_reviews, is_open, lat, lng')
+      .select('id, display_name, bio, cuisine_tags, avg_rating, total_reviews, is_open, approval_status, kyc_status, rejection_reason, lat, lng')
       .eq('user_id', id)
       .single()
 
@@ -100,5 +114,5 @@ export async function GET(
     roleData = { profile, earnings30d, kycDoc: doc ?? null }
   }
 
-  return NextResponse.json({ user, roleData })
+  return NextResponse.json({ user, authInfo, roleData })
 }

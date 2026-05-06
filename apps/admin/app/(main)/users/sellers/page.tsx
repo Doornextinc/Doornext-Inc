@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import Link from 'next/link'
 
 interface Seller {
   id: string
@@ -116,7 +117,11 @@ export default function SellersPage() {
           <tbody className="divide-y divide-gray-50">
             {filtered.map((seller) => (
               <tr key={seller.id} className="hover:bg-gray-50/50">
-                <td className="px-5 py-3 font-medium text-gray-900">{seller.display_name}</td>
+                <td className="px-5 py-3 font-medium text-gray-900">
+                  <Link href={`/users/${seller.user_id}`} className="hover:text-[#FF6B35] hover:underline">
+                    {seller.display_name}
+                  </Link>
+                </td>
                 <td className="px-5 py-3">
                   <div className="flex gap-1 flex-wrap">
                     {seller.cuisine_tags?.slice(0, 2).map((tag) => (
@@ -152,6 +157,12 @@ export default function SellersPage() {
                 </td>
                 <td className="px-5 py-3 text-right">
                   <div className="flex items-center justify-end gap-2">
+                    <Link
+                      href={`/users/${seller.user_id}`}
+                      className="text-xs font-semibold px-2.5 py-1 rounded-lg text-gray-600 border border-gray-200 hover:bg-gray-50 transition-colors"
+                    >
+                      View
+                    </Link>
                     <button
                       onClick={() => confirmEmail(seller)}
                       disabled={confirming === seller.id}
