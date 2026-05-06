@@ -19,8 +19,8 @@ function makeSupabaseMock() {
 
   function makeBuilder(table: string) {
     let payload: Record<string, unknown> = {}
-    let filters: Record<string, unknown> = {}
-    let _error: unknown = null
+    const filters: Record<string, unknown> = {}
+    const _error: unknown = null
 
     const builder: Record<string, unknown> = {
       insert: (data: Record<string, unknown>) => {

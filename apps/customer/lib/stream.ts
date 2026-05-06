@@ -25,7 +25,7 @@ export function getStreamClient(): StreamChat {
     client = StreamChat.getInstance(apiKey, {
       logger: (logLevel, message, extraData) => {
         if (logLevel === 'info') {
-          // eslint-disable-next-line no-console
+           
           console.debug('[Stream]', message, extraData ?? '')
         }
       },

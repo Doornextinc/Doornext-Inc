@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
           .single(),
       ])
 
-      let customerUserId: string | null = order?.customer_id ?? null
+      const customerUserId: string | null = order?.customer_id ?? null
       let makerUserId: string | null = null
 
       if (customerUserId) {

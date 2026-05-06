@@ -46,7 +46,7 @@ export default function OrdersPage() {
   const clearCart = useCartStore((s) => s.clearCart)
 
   const loadOrders = useCallback(async () => {
-    setLoadError(false as false)
+    setLoadError(false as const)
     try {
       const supabase = createClient()
       const { data: { session } } = await supabase.auth.getSession()

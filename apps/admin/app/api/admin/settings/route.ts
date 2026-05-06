@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
 
   const body = await req.formData()
   const key = body.get('key') as string
-  let value = body.get('value') as string
+  const value = body.get('value') as string
 
   if (!key || value === null) {
     return NextResponse.redirect(new URL('/settings?error=missing', req.url))

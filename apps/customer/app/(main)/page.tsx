@@ -219,7 +219,7 @@ export default function HomePage() {
       clearTimeout(timer)
       if (ac) window.google?.maps?.event?.clearInstanceListeners(ac)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [pickerOpen])
 
   const handleSelectAddress = (addr: Address) => {

@@ -438,7 +438,7 @@ export default function HomePage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-black text-[#E06B38] uppercase tracking-wider mb-1">Active Delivery</p>
-                  <p className="font-black text-white text-base">{(data.activeOrder as any).food_maker?.display_name ?? 'Order'}</p>
+                  <p className="font-black text-white text-base">{data.activeOrder.food_maker?.display_name ?? 'Order'}</p>
                   <p className="text-sm text-zinc-400 mt-0.5 capitalize">{data.activeOrder.status.replace(/_/g, ' ')}</p>
                 </div>
                 <div className="flex items-center gap-2">
