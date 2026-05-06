@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Loader2 } from 'lucide-react'
+import { MakerLogo } from '@/components/ui/logo'
 
 // Separated so the Suspense boundary only wraps the part that reads searchParams.
 // Without this, Next.js cannot statically prerender /login.
@@ -109,9 +110,7 @@ export default function LoginPage() {
 
         {/* Logo */}
         <div className="text-center mb-10">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#FF6B35] to-[#FF8C5A] flex items-center justify-center mx-auto mb-5 shadow-lg shadow-[#FF6B35]/25">
-            <span className="text-white font-black text-xl">D</span>
-          </div>
+          <MakerLogo size={56} className="rounded-2xl shadow-lg shadow-[#FF6B35]/25 mx-auto mb-5" />
           <h1 className="text-2xl font-black text-gray-900">Welcome back</h1>
           <p className="text-gray-400 text-sm mt-1">Sign in to your kitchen dashboard</p>
         </div>

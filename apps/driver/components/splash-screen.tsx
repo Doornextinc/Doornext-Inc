@@ -80,13 +80,13 @@ export function SplashScreen() {
 
         {/* Center icon */}
         <div
-          className="relative z-10 w-16 h-16 rounded-2xl flex items-center justify-center"
-          style={{
-            background: 'linear-gradient(145deg, #FF7A50, #E06030)',
-            boxShadow: '0 0 32px rgba(255,122,80,0.35), 0 0 8px rgba(255,122,80,0.2)',
-          }}
+          className="relative z-10 w-16 h-16 rounded-2xl overflow-hidden"
+          style={{ boxShadow: '0 0 32px rgba(255,122,80,0.35), 0 0 8px rgba(255,122,80,0.2)' }}
         >
-          <span className="text-white font-black text-3xl leading-none select-none">N</span>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" className="w-full h-full">
+            <rect width="192" height="192" rx="42" fill="#0A0A0A" />
+            <polygon points="112,36 76,108 98,108 80,156 116,84 94,84" fill="#FF7A50" />
+          </svg>
         </div>
       </div>
 

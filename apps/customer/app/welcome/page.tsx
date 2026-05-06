@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { ChevronRight } from 'lucide-react'
+import { CustomerLogo } from '@/components/ui/logo'
 
 const FEATURES = [
   { emoji: '🍳', title: 'Home-cooked meals', desc: 'Order from local home cooks in your neighborhood' },
@@ -19,9 +20,7 @@ export default function WelcomePage() {
         <div className="absolute -bottom-6 -left-6 w-32 h-32 rounded-full bg-white/10" />
 
         <div className="relative z-10">
-          <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center mb-5 mx-auto shadow-lg">
-            <span className="text-[#FF6B35] text-3xl font-black">DN</span>
-          </div>
+          <CustomerLogo size={80} className="rounded-3xl shadow-lg mb-5 mx-auto" />
           <h1 className="text-4xl font-black text-white leading-tight mb-3">
             Doornext
           </h1>

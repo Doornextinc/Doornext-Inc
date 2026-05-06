@@ -1,4 +1,24 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
-  <rect width="192" height="192" rx="40" fill="#FF6B35"/>
-  <text x="96" y="130" text-anchor="middle" font-family="Arial Black" font-weight="900" font-size="80" fill="white">DN</text>
+  <!-- Background -->
+  <rect width="192" height="192" rx="42" fill="#FF6B35"/>
+
+  <!-- Door: arched top, rectangular body -->
+  <!-- The arch: a semi-ellipse sitting on a rectangular base -->
+  <path
+    d="M 58 152 L 58 92 A 38 50 0 0 1 134 92 L 134 152 Z"
+    fill="white"
+  />
+
+  <!-- Door inner panel top (darker inset feel) -->
+  <path
+    d="M 70 100 L 70 92 A 26 36 0 0 1 122 92 L 122 100 Z"
+    fill="#FF6B35"
+    opacity="0.18"
+  />
+
+  <!-- Door inner panel bottom -->
+  <rect x="70" y="104" width="52" height="36" rx="4" fill="#FF6B35" opacity="0.12"/>
+
+  <!-- Door handle -->
+  <circle cx="116" cy="124" r="5.5" fill="#FF6B35"/>
 </svg>

@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { ChefHat, TrendingUp, Clock, ShieldCheck, ChevronRight } from 'lucide-react'
+import { MakerLogo } from '@/components/ui/logo'
 
 const BENEFITS = [
   {
@@ -42,9 +43,7 @@ export default function MakerWelcomePage() {
         <div className="max-w-lg mx-auto lg:mx-0">
           {/* Logo */}
           <div className="flex items-center gap-3 mb-12">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#FF8C5A] flex items-center justify-center">
-              <span className="text-white font-black text-lg">D</span>
-            </div>
+            <MakerLogo size={40} className="rounded-xl shadow-sm" />
             <span className="text-gray-900 font-black text-xl tracking-tight">Doornext <span className="text-[#FF6B35]">for Makers</span></span>
           </div>
 

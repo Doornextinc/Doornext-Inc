@@ -8,6 +8,7 @@ import {
   Zap, Tag, Layers, Award, DollarSign, Target,
   Settings, LogOut, Wrench,
 } from 'lucide-react'
+import { AdminLogo } from '@/components/ui/logo'
 
 type NavItem = { href: string; icon: React.ElementType; label: string }
 type NavGroup = { heading: string; items: NavItem[] }
@@ -70,9 +71,7 @@ export function Sidebar() {
       {/* Logo */}
       <div className="px-5 py-5 border-b border-gray-100">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#FF6B35] to-[#FF8C5A] flex items-center justify-center shadow-sm">
-            <span className="text-white text-sm font-black">D</span>
-          </div>
+          <AdminLogo size={32} className="rounded-lg shadow-sm shrink-0" />
           <div>
             <span className="font-black text-gray-900 text-sm">Nexter</span>
             <p className="text-[10px] text-gray-400 -mt-0.5">Admin Hub</p>

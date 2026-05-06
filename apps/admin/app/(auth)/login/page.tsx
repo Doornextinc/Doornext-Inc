@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { BarChart3, Users, ShoppingBag, Settings } from 'lucide-react'
+import { AdminLogo } from '@/components/ui/logo'
 
 const FEATURES = [
   { icon: ShoppingBag, label: 'Order Management', desc: 'Monitor and manage all orders in real time' },
@@ -46,9 +47,7 @@ export default function AdminLoginPage() {
       {/* Left — branding */}
       <div className="hidden lg:flex lg:w-[55%] bg-gray-900 flex-col justify-between p-12">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#FF6B35] to-[#FF8C5A] flex items-center justify-center">
-            <span className="text-white font-black text-sm">D</span>
-          </div>
+          <AdminLogo size={36} className="rounded-lg" />
           <span className="text-white font-black text-lg">Nexter Admin</span>
         </div>
 
