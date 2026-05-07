@@ -360,19 +360,36 @@ function MultiOrderSummary({
 /* ── Shell shown before address / before PaymentIntent is ready ── */
 function CardAddressShell({
   address, setAddress, selectedAddress, setSelectedAddress,
-  savedAddresses, onAddressSaved, makerEntries, estimates, estimating,
-  dropoffNote, setDropoffNote,
+  savedAddresses, onAddressSaved, makerEntries, estimates, estimating, estimateError,
+  dropoffNote, setDropoffNote, onRetryEstimate,
 }: {
   address: string; setAddress: (v: string) => void
   selectedAddress: Address | null; setSelectedAddress: (a: Address | null) => void
   savedAddresses: Address[]; onAddressSaved: (addr: Address) => void
   makerEntries: Array<[string, { makerName: string; items: CartItem[] }]>
-  estimates: Record<string, FeeEstimate>; estimating: boolean
+  estimates: Record<string, FeeEstimate>; estimating: boolean; estimateError: string | null
   dropoffNote: string; setDropoffNote: (v: string) => void
+  onRetryEstimate: () => void
 }) {
   const [showAddressInput, setShowAddressInput] = useState(savedAddresses.length === 0 || !selectedAddress)
   const allEstimated = makerEntries.every(([id]) => estimates[id])
-  const waitingForIntent = !!selectedAddress && allEstimated && !estimating
+  const hasDropoff = dropoffNote.trim().length > 0
+  // waitingForIntent = PI is being created (estimates done, address set, no error yet)
+  const waitingForIntent = !!selectedAddress && allEstimated && !estimating && !estimateError
+
+  const buttonLabel = waitingForIntent
+    ? <span className="flex items-center gap-2"><Loader2 size={16} className="animate-spin" />Preparing payment…</span>
+    : estimating
+    ? 'Calculating delivery fee…'
+    : estimateError
+    ? 'Failed to calculate fee — tap to retry'
+    : !selectedAddress
+    ? 'Enter delivery address to continue'
+    : !hasDropoff
+    ? 'Select drop-off instructions above ↑'
+    : !allEstimated
+    ? 'Calculating delivery fee…'
+    : 'Enter delivery address to continue'
 
   return (
     <div className="flex flex-col min-h-full">
@@ -386,13 +403,15 @@ function CardAddressShell({
         <DropoffNoteSection note={dropoffNote} setNote={setDropoffNote} />
         <MultiOrderSummary makerEntries={makerEntries} estimates={estimates} estimating={estimating} />
       </div>
+      {estimateError && !estimating && (
+        <div className="mx-4 mb-2 flex items-center gap-2 px-3 py-2.5 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
+          <span className="flex-1">{estimateError}</span>
+          <button type="button" onClick={onRetryEstimate} className="font-semibold underline text-red-700 flex-shrink-0">Retry</button>
+        </div>
+      )}
       <div className="bg-white border-t border-gray-100 px-4 py-4 pb-nav">
-        <Button fullWidth size="lg" disabled>
-          {waitingForIntent
-            ? <span className="flex items-center gap-2"><Loader2 size={16} className="animate-spin" />Preparing payment…</span>
-            : estimating
-            ? 'Calculating delivery fee…'
-            : 'Enter delivery address to continue'}
+        <Button fullWidth size="lg" disabled={!estimateError} onClick={estimateError ? onRetryEstimate : undefined}>
+          {buttonLabel}
         </Button>
       </div>
     </div>
@@ -403,14 +422,14 @@ function CardAddressShell({
 function CardCheckoutForm({
   address, setAddress, selectedAddress, setSelectedAddress,
   savedAddresses, onAddressSaved,
-  makerEntries, estimates, estimating,
+  makerEntries, estimates, estimating, estimateError,
   orderIds, dropoffNote, setDropoffNote,
 }: {
   address: string; setAddress: (v: string) => void
   selectedAddress: Address | null; setSelectedAddress: (a: Address | null) => void
   savedAddresses: Address[]; onAddressSaved: (addr: Address) => void
   makerEntries: Array<[string, { makerName: string; items: CartItem[] }]>
-  estimates: Record<string, FeeEstimate>; estimating: boolean
+  estimates: Record<string, FeeEstimate>; estimating: boolean; estimateError: string | null
   orderIds: string[]
   dropoffNote: string; setDropoffNote: (v: string) => void
 }) {
@@ -495,11 +514,20 @@ function CardCheckoutForm({
         <MultiOrderSummary makerEntries={makerEntries} estimates={estimates} estimating={estimating} />
       </div>
       <div className="bg-white border-t border-gray-100 px-4 py-4 pb-nav">
+        {estimateError && !estimating && (
+          <p className="text-sm text-red-500 mb-2 text-center">{estimateError}</p>
+        )}
         <Button type="submit" fullWidth size="lg" loading={loading} disabled={!stripe || !canPlace}>
           {canPlace
             ? `Place Order · ${formatPriceDollars(grandTotal)}`
-            : estimating
-            ? 'Calculating fee…'
+            : !selectedAddress
+            ? 'Enter delivery address to continue'
+            : !dropoffNote.trim()
+            ? 'Select drop-off instructions above ↑'
+            : estimating || !allEstimated
+            ? 'Calculating delivery fee…'
+            : estimateError
+            ? 'Delivery fee unavailable — go back and retry'
             : 'Enter delivery address to continue'}
         </Button>
       </div>
@@ -519,7 +547,7 @@ function CashCheckoutForm({
   selectedAddress: Address | null; setSelectedAddress: (a: Address | null) => void
   savedAddresses: Address[]; onAddressSaved: (addr: Address) => void
   makerEntries: Array<[string, { makerName: string; items: CartItem[] }]>
-  estimates: Record<string, FeeEstimate>; estimating: boolean
+  estimates: Record<string, FeeEstimate>; estimating: boolean; estimateError: string | null
   makerDistances: Record<string, number>
   onSuccess: (orderGroupId: string) => void
   dropoffNote: string; setDropoffNote: (v: string) => void
@@ -618,8 +646,12 @@ function CashCheckoutForm({
         <Button type="submit" fullWidth size="lg" loading={loading} disabled={!canPlace}>
           {canPlace
             ? `Place Cash Order · ${formatPriceDollars(grandTotal)}`
-            : estimating
-            ? 'Calculating fee…'
+            : !selectedAddress
+            ? 'Enter delivery address to continue'
+            : !dropoffNote.trim()
+            ? 'Select drop-off instructions above ↑'
+            : estimating || !allEstimated
+            ? 'Calculating delivery fee…'
             : 'Enter delivery address to continue'}
         </Button>
       </div>
@@ -651,6 +683,7 @@ export default function CheckoutPage() {
   // Per-maker fee estimates
   const [estimates, setEstimates] = useState<Record<string, FeeEstimate>>({})
   const [estimating, setEstimating] = useState(false)
+  const [estimateError, setEstimateError] = useState<string | null>(null)
 
   // useMemo keeps these stable between renders — only recomputes when `makers` actually changes.
   // Without this, Object.entries() produces a new array reference every render, which makes
@@ -716,6 +749,7 @@ export default function CheckoutPage() {
     setMakerDistances(distances)
 
     setEstimating(true)
+    setEstimateError(null)
     try {
       const results = await Promise.all(
         makerEntries.map(async ([makerId, mc]) => {
@@ -726,15 +760,23 @@ export default function CheckoutPage() {
             body: JSON.stringify({ maker_id: makerId, subtotal: sub, distance_miles: distances[makerId] ?? 0 }),
           })
           const data = await res.json()
-          return [makerId, res.ok ? (data as FeeEstimate) : null] as const
+          if (!res.ok) return [makerId, null, data.error ?? `Estimate failed (${res.status})`] as const
+          return [makerId, data as FeeEstimate, null] as const
         })
       )
       const newEstimates: Record<string, FeeEstimate> = {}
-      for (const [mid, est] of results) {
+      const errors: string[] = []
+      for (const [mid, est, err] of results) {
         if (est) newEstimates[mid] = est
+        else if (err) errors.push(err)
       }
       setEstimates(newEstimates)
-    } catch { /* non-blocking */ } finally {
+      if (errors.length > 0) {
+        setEstimateError(errors[0])
+      }
+    } catch (err) {
+      setEstimateError(err instanceof Error ? err.message : 'Failed to calculate delivery fee')
+    } finally {
       setEstimating(false)
     }
   }, [allMakerIds, makerEntries, makerLocations])
@@ -742,12 +784,25 @@ export default function CheckoutPage() {
   useEffect(() => {
     if (selectedAddress) {
       setEstimates({})
+      setEstimateError(null)
       setClientSecret(null)
       setOrderIds([])
       setOrderGroupId(null)
       fetchAllEstimates(selectedAddress)
     }
   }, [selectedAddress, makerLocations, fetchAllEstimates])
+
+  // Exposed retry: re-fetch estimates for the current address
+  const retryEstimates = useCallback(() => {
+    if (selectedAddress) {
+      setEstimates({})
+      setEstimateError(null)
+      setClientSecret(null)
+      setOrderIds([])
+      setOrderGroupId(null)
+      fetchAllEstimates(selectedAddress)
+    }
+  }, [selectedAddress, fetchAllEstimates])
 
   // Create combined PaymentIntent once all estimates are ready (card only)
   const createCardIntent = useCallback(async () => {
@@ -838,9 +893,9 @@ export default function CheckoutPage() {
           savedAddresses={savedAddresses}
           onAddressSaved={(addr) => setSavedAddresses((prev) => [...prev, addr])}
           makerEntries={makerEntries}
-          estimates={estimates} estimating={estimating}
+          estimates={estimates} estimating={estimating} estimateError={estimateError}
           makerDistances={makerDistances}
-          onSuccess={(gid) => router.push('/orders')}
+          onSuccess={(_gid) => router.push('/orders')}
           dropoffNote={dropoffNote} setDropoffNote={setDropoffNote}
         />
       ) : initError ? (
@@ -864,7 +919,7 @@ export default function CheckoutPage() {
             savedAddresses={savedAddresses}
             onAddressSaved={(addr) => setSavedAddresses((prev) => [...prev, addr])}
             makerEntries={makerEntries}
-            estimates={estimates} estimating={estimating}
+            estimates={estimates} estimating={estimating} estimateError={estimateError}
             orderIds={orderIds}
             dropoffNote={dropoffNote} setDropoffNote={setDropoffNote}
           />
@@ -876,8 +931,9 @@ export default function CheckoutPage() {
           savedAddresses={savedAddresses}
           onAddressSaved={(addr) => setSavedAddresses((prev) => [...prev, addr])}
           makerEntries={makerEntries}
-          estimates={estimates} estimating={estimating}
+          estimates={estimates} estimating={estimating} estimateError={estimateError}
           dropoffNote={dropoffNote} setDropoffNote={setDropoffNote}
+          onRetryEstimate={retryEstimates}
         />
       )}
     </div>
