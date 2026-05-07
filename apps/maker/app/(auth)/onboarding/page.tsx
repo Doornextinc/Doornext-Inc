@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { parsePlace } from '@/lib/google-maps'
+import { AddressAutocomplete } from '@/components/ui/AddressAutocomplete'
 import {
   ChevronRight, ChevronLeft, Upload, CheckCircle2, Loader2,
   User, Building2, Briefcase, Users,
@@ -20,6 +22,8 @@ interface BusinessForm {
   ssn_last4: string
   business_phone: string
   business_address: string
+  kitchen_lat: number
+  kitchen_lng: number
 }
 
 interface UploadedDocs {
@@ -201,6 +205,8 @@ export default function OnboardingPage() {
     ssn_last4: '',
     business_phone: '',
     business_address: '',
+    kitchen_lat: 0,
+    kitchen_lng: 0,
   })
   const [uploaded, setUploaded] = useState<UploadedDocs>({
     identity_front: false,
@@ -301,6 +307,19 @@ export default function OnboardingPage() {
       })
       const data = await res.json()
       if (!res.ok) { setError(data.error ?? 'Submission failed'); return }
+
+      // If address was geocoded, persist lat/lng to food_makers (pickup location)
+      if (form.kitchen_lat && form.kitchen_lng) {
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          await supabase
+            .from('food_makers')
+            .update({ lat: form.kitchen_lat, lng: form.kitchen_lng })
+            .eq('user_id', user.id)
+        }
+      }
+
       router.push('/pending')
     } finally {
       setSubmitting(false)
@@ -459,15 +478,29 @@ export default function OnboardingPage() {
 
               <div>
                 <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">
-                  Business Address
+                  Business / Kitchen Address
                 </label>
-                <input
-                  type="text"
+                <AddressAutocomplete
                   value={form.business_address}
-                  onChange={(e) => set('business_address', e.target.value)}
+                  onChange={(text, place) => {
+                    set('business_address', text)
+                    if (place) {
+                      const parsed = parsePlace(place)
+                      if (parsed?.lat && parsed?.lng) {
+                        setForm(prev => ({ ...prev, kitchen_lat: parsed.lat, kitchen_lng: parsed.lng }))
+                      }
+                    } else {
+                      // Clear geocoded coords when user edits manually
+                      setForm(prev => ({ ...prev, kitchen_lat: 0, kitchen_lng: 0 }))
+                    }
+                  }}
                   placeholder="123 Main St, Brooklyn, NY 11201"
-                  className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-3 text-sm text-gray-900 focus:outline-none focus:border-[#FF6B35] transition-colors"
                 />
+                {form.kitchen_lat !== 0 && (
+                  <p className="text-xs text-green-600 font-medium mt-1 flex items-center gap-1">
+                    <span>✓</span> Location confirmed — kitchen will appear on the map
+                  </p>
+                )}
               </div>
             </>
           )}
