@@ -7,9 +7,10 @@ import dynamic from 'next/dynamic'
 import { createClient } from '@/lib/supabase/client'
 import { useDriverStore } from '@/store/driver-store'
 import { AppHeader } from '@/components/layout/app-header'
-import { ChevronRight, AlertTriangle, MapPin, Clock } from 'lucide-react'
+import { ChevronRight, AlertTriangle, MapPin, Clock, Plus } from 'lucide-react'
 import { haversineDistance, formatDistance, formatPriceDollars, estimateMinutes, formatEta } from '@doornext/shared/utils'
 import { playWithHaptic, initAudio } from '@/lib/notification-sounds'
+import type { StackCandidate } from '@/app/api/driver/stack-candidates/route'
 
 const LiveMap = dynamic(() => import('@/components/live-map').then(m => m.LiveMap), { ssr: false })
 
@@ -58,7 +59,7 @@ const DEFAULT_LNG = -74.006
 
 export default function HomePage() {
   const router = useRouter()
-  const { isOnline, setOnline, setActiveOrder, currentLat, currentLng } = useDriverStore()
+  const { isOnline, setOnline, setActiveOrder, setActiveOrders, addActiveOrder, activeOrderIds, currentLat, currentLng } = useDriverStore()
   const [data, setData] = useState<HomeData | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
@@ -73,6 +74,10 @@ export default function HomePage() {
   const [orders, setOrders] = useState<AvailableOrder[]>([])
   const [accepting, setAccepting] = useState<string | null>(null)
   const knownOrderIds = useRef<Set<string>>(new Set())
+
+  // Stack candidates — shown when driver has 1 active order
+  const [stackCandidates, setStackCandidates] = useState<StackCandidate[]>([])
+  const [addingToRoute, setAddingToRoute] = useState<string | null>(null)
 
   useEffect(() => {
     if (typeof navigator === 'undefined') return
@@ -164,6 +169,27 @@ export default function HomePage() {
     setOrders(incoming)
   }, [])
 
+  // Load stack candidates when driver has exactly 1 active order
+  const loadStackCandidates = useCallback(async () => {
+    if (activeOrderIds.length !== 1) { setStackCandidates([]); return }
+    try {
+      const params = new URLSearchParams()
+      if (currentLat != null) params.set('lat', String(currentLat))
+      if (currentLng != null) params.set('lng', String(currentLng))
+      const res = await fetch(`/api/driver/stack-candidates?${params}`)
+      if (!res.ok) return
+      const { candidates } = await res.json()
+      setStackCandidates(candidates ?? [])
+    } catch {
+      setStackCandidates([])
+    }
+  }, [activeOrderIds.length, currentLat, currentLng])
+
+  useEffect(() => {
+    if (!isOnline) return
+    loadStackCandidates()
+  }, [isOnline, loadStackCandidates])
+
   // Real-time subscription — only subscribe when online
   useEffect(() => {
     if (!isOnline) return
@@ -178,12 +204,11 @@ export default function HomePage() {
   }, [isOnline, loadOrders])
 
   const handleAccept = async (orderId: string) => {
-    if (accepting) return
+    if (accepting || addingToRoute) return
     setAccepting(orderId)
     setOrders(prev => prev.filter(o => o.id !== orderId))
 
     // Optimistic: navigate immediately so the driver sees instant feedback.
-    // The active page will retry fetching the order while the API finishes.
     setActiveOrder(orderId)
     router.push('/active')
 
@@ -191,12 +216,13 @@ export default function HomePage() {
       const res = await fetch('/api/driver/accept-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId }),
+        body: JSON.stringify({ orderId, driverLat: currentLat, driverLng: currentLng }),
       })
       if (res.ok) {
+        const json = await res.json()
+        if (json.allOrderIds?.length) setActiveOrders(json.allOrderIds)
         playWithHaptic('order_accepted')
       } else {
-        // Accept failed — revert and return to home
         setActiveOrder(null)
         loadOrders()
         router.replace('/')
@@ -207,6 +233,34 @@ export default function HomePage() {
       router.replace('/')
     } finally {
       setAccepting(null)
+    }
+  }
+
+  const handleAddToRoute = async (orderId: string) => {
+    if (accepting || addingToRoute) return
+    setAddingToRoute(orderId)
+    setStackCandidates(prev => prev.filter(c => c.order_id !== orderId))
+
+    try {
+      const res = await fetch('/api/driver/accept-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, driverLat: currentLat, driverLng: currentLng }),
+      })
+      if (res.ok) {
+        const json = await res.json()
+        if (json.allOrderIds?.length) setActiveOrders(json.allOrderIds)
+        else addActiveOrder(orderId)
+        playWithHaptic('order_accepted')
+        router.push('/active')
+      } else {
+        setStackCandidates([]) // refresh on failure
+        loadStackCandidates()
+      }
+    } catch {
+      loadStackCandidates()
+    } finally {
+      setAddingToRoute(null)
     }
   }
 
@@ -447,6 +501,62 @@ export default function HomePage() {
                 </div>
               </div>
             </Link>
+          )}
+
+          {/* ── Stack offer cards — shown when driver has 1 active order ── */}
+          {stackCandidates.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs font-black text-[#E06B38] uppercase tracking-wider px-1">
+                💰 Add to your route — earn more
+              </p>
+              {stackCandidates.slice(0, 2).map((candidate) => {
+                const isAdding = addingToRoute === candidate.order_id
+                return (
+                  <div
+                    key={candidate.order_id}
+                    className="bg-[#1a1200]/80 border border-amber-500/20 rounded-2xl overflow-hidden backdrop-blur-sm"
+                  >
+                    <div className="flex items-start justify-between px-4 pt-4 pb-3">
+                      <div className="flex-1 min-w-0 pr-3">
+                        <p className="font-black text-white text-sm leading-tight truncate">
+                          {candidate.maker_name}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1.5">
+                          <span className="text-amber-400 text-xs font-black">
+                            +{(candidate.detour_km).toFixed(1)} km detour
+                          </span>
+                          <span className="text-zinc-500 text-[10px]">•</span>
+                          <span className="text-zinc-400 text-xs">
+                            {Math.round(candidate.score)}% match
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className="font-black text-xl leading-none text-amber-400">
+                          +{formatPriceDollars(candidate.driver_payout)}
+                        </p>
+                        {candidate.tip_amount > 0 && (
+                          <p className="text-green-400 text-xs font-black mt-1">
+                            +{formatPriceDollars(candidate.tip_amount)} tip
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="px-4 pb-4">
+                      <button
+                        onClick={() => handleAddToRoute(candidate.order_id)}
+                        disabled={isAdding || accepting !== null || addingToRoute !== null}
+                        className="w-full flex items-center justify-center gap-2 rounded-xl py-3 font-black text-sm tracking-wide text-white bg-amber-500/80 active:scale-[0.98] transition-all duration-100 disabled:opacity-50"
+                      >
+                        {isAdding ? 'Adding…' : (
+                          <><Plus size={15} /> Add to Route</>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           )}
 
           {/* Stats row — Today / Trips / Rating */}

@@ -137,6 +137,36 @@ export async function POST(req: NextRequest) {
     .eq('status', order.status)
     .eq('nexter_id', user.id)
 
+  // ── Mark route-plan stop as done ──────────────────────────────────────────
+  // picked_up  → marks the 'pickup'  stop done in the route plan
+  // delivered  → marks the 'dropoff' stop done in the route plan
+  if (updateCount === 1) {
+    const stopType =
+      status === 'picked_up' ? 'pickup' :
+      status === 'delivered' ? 'dropoff' :
+      null
+
+    if (stopType) {
+      void Promise.resolve(
+        admin.rpc('mark_route_stop_done', {
+          p_driver_id:  user.id,
+          p_order_id:   orderId,
+          p_stop_type:  stopType,
+        })
+      ).then(({ error: rpcErr }) => {
+        if (rpcErr) {
+          Sentry.captureException(rpcErr, {
+            extra: { orderId, stopType, context: 'mark_route_stop_done' },
+          })
+        }
+      }).catch((e: unknown) => {
+        Sentry.captureException(e, {
+          extra: { orderId, stopType, context: 'mark_route_stop_done' },
+        })
+      })
+    }
+  }
+
   if (updateError) {
     Sentry.captureException(new Error(`update-status DB error: ${updateError.message}`), { extra: { orderId, status, userId: user.id } })
     return NextResponse.json({ error: 'Failed to update order status. Please try again.' }, { status: 500 })

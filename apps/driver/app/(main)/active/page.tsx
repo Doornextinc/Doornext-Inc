@@ -8,11 +8,12 @@ import type { OrderStatus } from '@doornext/shared/types'
 import {
   MapPin, Phone, CheckCircle, Navigation, Package,
   ChevronDown, ChevronUp, Banknote, ArrowRight, Clock, Star, AlertTriangle, X, MessageCircle,
-  ChevronRight, Camera, RotateCcw, MessageSquare, Timer,
+  ChevronRight, Camera, RotateCcw, MessageSquare, Timer, Route,
 } from 'lucide-react'
 import { haversineDistance, estimateMinutes, formatEta, arrivalTimeStr, formatDistance } from '@doornext/shared/utils'
 import { AppHeader } from '@/components/layout/app-header'
 import { playWithHaptic } from '@/lib/notification-sounds'
+import type { RouteStop } from '@doornext/shared/stacking'
 
 type OrderItem = { quantity: number; unit_price: number; menu_items: { name: string } | null }
 type ActiveOrder = {
@@ -270,16 +271,72 @@ function DeliveryCompletionCelebration({
   )
 }
 
+// ── RoutePlanPanel ─────────────────────────────────────────────────────────────
+function RoutePlanPanel({ stops }: { stops: RouteStop[] }) {
+  const pending = stops.filter(s => !s.done)
+  const done    = stops.filter(s => s.done)
+  const next    = pending[0] ?? null
+
+  return (
+    <div className="bg-[#111]/95 border border-white/8 rounded-2xl overflow-hidden mx-4 mb-3">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-white/6">
+        <Route size={14} className="text-[#FF7A50]" />
+        <span className="text-xs font-black text-[#FF7A50] uppercase tracking-wider">Multi-Order Route</span>
+        <span className="ml-auto text-xs text-zinc-500 font-semibold">{done.length}/{stops.length} done</span>
+      </div>
+      <div className="px-4 py-2 space-y-2">
+        {stops.map((stop, idx) => {
+          const isNext = !stop.done && pending[0]?.seq === stop.seq
+          return (
+            <div key={`${stop.order_id}-${stop.type}`} className="flex items-center gap-3">
+              {/* Sequence indicator */}
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-black ${
+                stop.done  ? 'bg-green-500/20 text-green-400' :
+                isNext     ? 'bg-[#FF7A50] text-white' :
+                             'bg-white/8 text-zinc-500'
+              }`}>
+                {stop.done ? '✓' : stop.seq}
+              </div>
+              {/* Stop info */}
+              <div className="flex-1 min-w-0">
+                <p className={`text-sm font-bold truncate ${stop.done ? 'text-zinc-600 line-through' : isNext ? 'text-white' : 'text-zinc-400'}`}>
+                  {stop.label}
+                </p>
+                <p className={`text-[10px] uppercase tracking-wide font-black ${
+                  stop.type === 'pickup' ? 'text-amber-500' : 'text-blue-400'
+                }`}>
+                  {stop.type === 'pickup' ? '▲ Pick up' : '● Drop off'}
+                </p>
+              </div>
+              {isNext && (
+                <span className="text-[10px] font-black text-[#FF7A50] bg-[#FF7A50]/10 px-2 py-0.5 rounded-full flex-shrink-0">
+                  NEXT
+                </span>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 export default function ActiveDeliveryPage() {
   const router = useRouter()
-  const { setActiveOrder, setLocation } = useDriverStore()
+  const { setActiveOrder, setActiveOrders, removeActiveOrder, setLocation } = useDriverStore()
   const userId = useDriverStore((s) => s.userId)
   const hasHydrated = useDriverStore((s) => s._hasHydrated)
   const authReady = useDriverStore((s) => s.authReady)
   const storeActiveOrderId = useDriverStore((s) => s.activeOrderId)
+  const storeActiveOrderIds = useDriverStore((s) => s.activeOrderIds)
   const driverLat = useDriverStore((s) => s.currentLat)
   const driverLng = useDriverStore((s) => s.currentLng)
   const [order, setOrder] = useState<ActiveOrder | null>(null)
+  // Multi-order stacking support
+  const [allOrders, setAllOrders] = useState<ActiveOrder[]>([])
+  const [routePlan, setRoutePlan] = useState<RouteStop[] | null>(null)
+  const [isStacked, setIsStacked] = useState(false)
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [retryCount, setRetryCount] = useState(0)
   const MAX_RETRIES = 6
@@ -328,25 +385,43 @@ export default function ActiveDeliveryPage() {
       const res = await fetch('/api/driver/active-order')
       if (res.status === 401) { router.push('/login'); return }
       if (!res.ok) {
-        // On transient server errors, don't clear the order — keep showing
-        // whatever was loaded before so the driver isn't kicked out mid-delivery.
         setLoading(false)
         return
       }
-      const { order } = await res.json()
-      if (order) {
-        setOrder(order as ActiveOrder)
-        setActiveOrder(order.id)
+      const json = await res.json()
+
+      // New multi-order API shape: { orders, routePlan, isStacked, order (compat) }
+      const orders: ActiveOrder[] = json.orders ?? (json.order ? [json.order] : [])
+      const plan: RouteStop[] | null = json.routePlan ?? null
+      const stacked = json.isStacked ?? false
+
+      if (orders.length > 0) {
+        setAllOrders(orders)
+        setRoutePlan(plan)
+        setIsStacked(stacked)
+        setActiveOrders(orders.map(o => o.id))
+
+        // Keep selectedOrderId pointing to a valid order
+        setSelectedOrderId(prev => {
+          if (prev && orders.find(o => o.id === prev)) return prev
+          return orders[0].id
+        })
+        // Set primary display order
+        setOrder(orders[0])
+        setActiveOrder(orders[0].id)
       } else {
+        setAllOrders([])
         setOrder(null)
+        setRoutePlan(null)
+        setIsStacked(false)
         setActiveOrder(null)
       }
     } catch {
-      // Network error — same: don't clear, just stop loading
+      // Network error — keep current state
     } finally {
       setLoading(false)
     }
-  }, [router, setActiveOrder, userId, authReady, hasHydrated])
+  }, [router, setActiveOrder, setActiveOrders, userId, authReady, hasHydrated])
 
   useEffect(() => { loadActiveOrder() }, [loadActiveOrder])
 
@@ -363,33 +438,50 @@ export default function ActiveDeliveryPage() {
     }
   }, [loading, order, storeActiveOrderId, retryCount, loadActiveOrder])
 
-  // Real-time: detect when maker confirms pickup PIN (status → picked_up)
-  // or any other external order status change.
+  // Sync selected order display whenever selectedOrderId changes
   useEffect(() => {
-    if (!order) return
+    if (!selectedOrderId) return
+    const sel = allOrders.find(o => o.id === selectedOrderId)
+    if (sel) setOrder(sel)
+  }, [selectedOrderId, allOrders])
+
+  // Real-time: detect when maker confirms pickup PIN (status → picked_up)
+  // or any other external order status change. Subscribe to ALL stacked orders.
+  useEffect(() => {
+    if (allOrders.length === 0) return
     const supabase = createClient()
-    const channel = supabase
-      .channel(`driver-order-${order.id}`)
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'orders', filter: `id=eq.${order.id}` },
-        (payload) => {
-          const newStatus = payload.new.status as string
-          // Patch status locally for instant UI response, then re-fetch for full data
-          setOrder((prev) => prev ? { ...prev, status: newStatus, updated_at: payload.new.updated_at ?? prev.updated_at } : prev)
-          if (newStatus === 'picked_up') {
-            playWithHaptic('order_ready')
+    const channels = allOrders.map(o =>
+      supabase
+        .channel(`driver-order-${o.id}`)
+        .on(
+          'postgres_changes',
+          { event: 'UPDATE', schema: 'public', table: 'orders', filter: `id=eq.${o.id}` },
+          (payload) => {
+            const newStatus = payload.new.status as string
+            setAllOrders(prev => prev.map(ord =>
+              ord.id === o.id
+                ? { ...ord, status: newStatus, updated_at: payload.new.updated_at ?? ord.updated_at }
+                : ord
+            ))
+            if (newStatus === 'picked_up') playWithHaptic('order_ready')
+            // Re-fetch full stack in background
+            fetch('/api/driver/active-order')
+              .then(r => r.ok ? r.json() : null)
+              .then(json => {
+                if (!json) return
+                const updatedOrders: ActiveOrder[] = json.orders ?? (json.order ? [json.order] : [])
+                if (updatedOrders.length > 0) {
+                  setAllOrders(updatedOrders)
+                  setRoutePlan(json.routePlan ?? null)
+                }
+              })
+              .catch(() => {})
           }
-          // Re-fetch full order in background so all fields stay in sync
-          fetch('/api/driver/active-order')
-            .then(r => r.ok ? r.json() : null)
-            .then(json => { if (json?.order) setOrder(json.order as ActiveOrder) })
-            .catch(() => {})
-        }
-      )
-      .subscribe()
-    return () => { supabase.removeChannel(channel) }
-  }, [order?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+        )
+        .subscribe()
+    )
+    return () => { channels.forEach(ch => supabase.removeChannel(ch)) }
+  }, [allOrders.map(o => o.id).join(',')]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!order) return
@@ -487,10 +579,24 @@ export default function ActiveDeliveryPage() {
       if (newStatus === 'delivered') {
         playWithHaptic('delivery_done')
         setDeliveredOrder(order)
-        setActiveOrder(null)
-        setDelivered(true)
+        // Remove this order from the active stack
+        removeActiveOrder(order.id)
+        const remaining = allOrders.filter(o => o.id !== order.id)
+        setAllOrders(remaining)
+        if (remaining.length === 0) {
+          // Last order in stack delivered — show celebration
+          setActiveOrder(null)
+          setDelivered(true)
+        } else {
+          // Still have orders to deliver — switch to next order
+          setSelectedOrderId(remaining[0].id)
+          setOrder(remaining[0])
+          setIsStacked(remaining.length > 1)
+        }
       } else {
-        setOrder(prev => prev ? { ...prev, status: newStatus } : prev)
+        const updated = { ...order, status: newStatus }
+        setOrder(updated)
+        setAllOrders(prev => prev.map(o => o.id === order.id ? updated : o))
         setCheckedItems(new Set())
       }
     } catch {
@@ -594,9 +700,46 @@ export default function ActiveDeliveryPage() {
   const dropoffEtaMins  = toCustomerKm != null ? estimateMinutes(toCustomerKm)
                         : makerToCustomerKm   != null ? estimateMinutes(makerToCustomerKm) : null
 
+  // Aggregate earnings across all stacked orders for the header strip
+  const totalEarn = allOrders.reduce((s, o) => s + (o.driver_payout ?? 0), 0)
+  const totalTip  = allOrders.reduce((s, o) => s + (o.tip_amount ?? 0), 0)
+
   return (
     <div className="flex flex-col min-h-full pb-[144px]">
-      <AppHeader title="Active Delivery" />
+      <AppHeader title={isStacked ? `Active Route (${allOrders.length} orders)` : 'Active Delivery'} />
+
+      {/* ── Order switcher tabs — stacked mode only ── */}
+      {isStacked && allOrders.length > 1 && (
+        <div className="flex gap-2 px-4 py-2 bg-[#0D0D0D] border-b border-white/5 overflow-x-auto">
+          {allOrders.map((o, idx) => (
+            <button
+              key={o.id}
+              onClick={() => setSelectedOrderId(o.id)}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black transition-all ${
+                selectedOrderId === o.id
+                  ? 'bg-[#FF7A50] text-white'
+                  : 'bg-white/6 text-zinc-400'
+              }`}
+            >
+              <span>Order {idx + 1}</span>
+              <span className={`w-1.5 h-1.5 rounded-full ${
+                ['driver_assigned', 'arrived_at_maker'].includes(o.status)
+                  ? 'bg-amber-400'
+                  : ['picked_up', 'on_the_way', 'arrived_at_customer'].includes(o.status)
+                  ? 'bg-blue-400'
+                  : 'bg-green-400'
+              }`} />
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* ── Route plan strip — stacked mode only ── */}
+      {isStacked && routePlan && routePlan.length > 0 && (
+        <div className="pt-3">
+          <RoutePlanPanel stops={routePlan} />
+        </div>
+      )}
 
       {/* Cash banner */}
       {order.payment_method === 'cash' && (
@@ -613,10 +756,10 @@ export default function ActiveDeliveryPage() {
           <span className="font-mono text-sm font-bold text-white">{formatElapsed(elapsed)}</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-zinc-500">You earn</span>
-          <span className="font-black text-[#FF7A50] text-sm">${earn.toFixed(2)}</span>
-          {order.tip_amount > 0 && (
-            <span className="text-xs text-green-400 font-semibold ml-1">+${order.tip_amount.toFixed(2)} tip</span>
+          <span className="text-xs text-zinc-500">{isStacked ? 'Total earn' : 'You earn'}</span>
+          <span className="font-black text-[#FF7A50] text-sm">${(isStacked ? totalEarn : earn).toFixed(2)}</span>
+          {(isStacked ? totalTip : order.tip_amount) > 0 && (
+            <span className="text-xs text-green-400 font-semibold ml-1">+${(isStacked ? totalTip : order.tip_amount).toFixed(2)} tip</span>
           )}
         </div>
       </div>
