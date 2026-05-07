@@ -63,11 +63,63 @@ function AddressSection({
   const onAddressSavedRef = useRef(onAddressSaved)
   onAddressSavedRef.current = onAddressSaved
   const [saving, setSaving] = useState(false)
+  const [geocoding, setGeocoding] = useState(false)
+  const [geocodeErr, setGeocodeErr] = useState<string | null>(null)
 
   const handleSelect = (addr: Address) => {
     setSelectedAddress(addr)
     setAddress(`${addr.street}, ${addr.city}, ${addr.state} ${addr.zip}`)
     setShowAddressInput(false)
+    setGeocodeErr(null)
+  }
+
+  /** Save a parsed address to DB and select it */
+  const saveAndSelect = async (parsed: { street: string; city: string; state: string; zip: string; lat: number; lng: number }) => {
+    setSaving(true)
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: newAddr, error } = await supabase
+          .from('addresses')
+          .insert({ user_id: user.id, label: 'Other', ...parsed })
+          .select()
+          .single()
+        if (newAddr && !error) {
+          onAddressSavedRef.current(newAddr as Address)
+          handleSelect(newAddr as Address)
+        }
+      }
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  /** Geocode the typed text and confirm it as the selected address */
+  const handleConfirmTyped = async () => {
+    if (!address.trim()) return
+    setGeocoding(true)
+    setGeocodeErr(null)
+    try {
+      const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+      if (!apiKey) throw new Error('Maps unavailable')
+      await loadGoogleMapsScript(apiKey)
+      const geocoder = new window.google.maps.Geocoder()
+      const result = await new Promise<google.maps.GeocoderResult | null>((resolve) => {
+        geocoder.geocode({ address: address.trim() }, (results, status) => {
+          resolve(status === 'OK' && results && results.length > 0 ? results[0] : null)
+        })
+      })
+      if (!result) { setGeocodeErr('Address not found — try selecting from the dropdown'); return }
+      const parsed = parsePlace(result as unknown as google.maps.places.PlaceResult)
+      if (!parsed) { setGeocodeErr('Could not parse address — please select from the dropdown'); return }
+      setAddress(`${parsed.street}, ${parsed.city}, ${parsed.state} ${parsed.zip}`)
+      await saveAndSelect(parsed)
+    } catch {
+      setGeocodeErr('Could not verify address — please select a suggestion from the list')
+    } finally {
+      setGeocoding(false)
+    }
   }
 
   useEffect(() => {
@@ -87,24 +139,8 @@ function AddressSection({
         const parsed = parsePlace(ac!.getPlace())
         if (!parsed) return
         setAddress(`${parsed.street}, ${parsed.city}, ${parsed.state} ${parsed.zip}`)
-        setSaving(true)
-        try {
-          const supabase = createClient()
-          const { data: { user } } = await supabase.auth.getUser()
-          if (user) {
-            const { data: newAddr, error } = await supabase
-              .from('addresses')
-              .insert({ user_id: user.id, label: 'Other', ...parsed })
-              .select()
-              .single()
-            if (newAddr && !error) {
-              onAddressSavedRef.current(newAddr as Address)
-              handleSelect(newAddr as Address)
-            }
-          }
-        } finally {
-          setSaving(false)
-        }
+        setGeocodeErr(null)
+        await saveAndSelect(parsed)
       })
     })
 
@@ -113,6 +149,10 @@ function AddressSection({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showAddressInput])
+
+  // Show the "Use this address" button when the user has typed something
+  // but hasn't confirmed via the autocomplete dropdown yet
+  const showManualConfirm = showAddressInput && address.trim().length > 5 && !selectedAddress && !saving && !geocoding
 
   return (
     <div className="bg-white px-4 py-4">
@@ -136,7 +176,7 @@ function AddressSection({
           ))}
           <button
             type="button"
-            onClick={() => { setShowAddressInput(true); setSelectedAddress(null); setAddress('') }}
+            onClick={() => { setShowAddressInput(true); setSelectedAddress(null); setAddress(''); setGeocodeErr(null) }}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
               !selectedAddress && showAddressInput
                 ? 'bg-[#FF6B35] text-white border-[#FF6B35]'
@@ -152,23 +192,38 @@ function AddressSection({
             <p className="text-sm font-semibold text-gray-900">{selectedAddress.street}</p>
             <p className="text-xs text-gray-500">{selectedAddress.city}, {selectedAddress.state} {selectedAddress.zip}</p>
           </div>
-          <button type="button" onClick={() => { setShowAddressInput(true); setSelectedAddress(null) }}
+          <button type="button" onClick={() => { setShowAddressInput(true); setSelectedAddress(null); setGeocodeErr(null) }}
             className="text-[#FF6B35] text-xs font-semibold flex-shrink-0">Change</button>
         </div>
       ) : (
-        <div className="relative">
-          <input
-            ref={inputRef}
-            placeholder="Start typing your address..."
-            value={address}
-            onChange={(e) => { setAddress(e.target.value); setSelectedAddress(null) }}
-            autoComplete="off"
-            className="w-full border-2 border-gray-100 rounded-xl px-3.5 py-3 text-sm outline-none focus:border-[#FF6B35] transition-colors"
-          />
-          {saving && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2">
-              <div className="w-4 h-4 border-2 border-[#FF6B35] border-t-transparent rounded-full animate-spin" />
-            </div>
+        <div>
+          <div className="relative">
+            <input
+              ref={inputRef}
+              placeholder="Start typing your address..."
+              value={address}
+              onChange={(e) => { setAddress(e.target.value); setSelectedAddress(null); setGeocodeErr(null) }}
+              autoComplete="off"
+              className="w-full border-2 border-gray-100 rounded-xl px-3.5 py-3 text-sm outline-none focus:border-[#FF6B35] transition-colors"
+            />
+            {(saving || geocoding) && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                <div className="w-4 h-4 border-2 border-[#FF6B35] border-t-transparent rounded-full animate-spin" />
+              </div>
+            )}
+          </div>
+          {geocodeErr && (
+            <p className="text-xs text-red-500 mt-1 font-medium">{geocodeErr}</p>
+          )}
+          {showManualConfirm && (
+            <button
+              type="button"
+              onClick={handleConfirmTyped}
+              className="mt-2 w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl border-2 border-dashed border-[#FF6B35] text-[#FF6B35] text-sm font-semibold hover:bg-orange-50 transition-colors"
+            >
+              <MapPin size={14} />
+              Use &ldquo;{address.length > 40 ? address.slice(0, 40) + '…' : address}&rdquo;
+            </button>
           )}
         </div>
       )}

@@ -77,6 +77,7 @@ export default function OrderTrackingPage() {
   const [showClaim, setShowClaim] = useState(false)
   const [claim, setClaim] = useState<OrderClaim | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
+  const [groupOrders, setGroupOrders] = useState<Array<{ id: string; maker_name: string }>>([])
 
   const { status: realtimeStatus, nexterLocation } = useOrderTracking(
     id,
@@ -150,6 +151,26 @@ export default function OrderTrackingPage() {
         setClaim(existingClaim as OrderClaim | null)
 
         setOrder(data as FullOrder)
+
+        // If this order belongs to a group, load sibling orders for the tab bar
+        const groupId = (data as unknown as { order_group_id?: string }).order_group_id
+        if (groupId) {
+          const { data: siblings } = await supabase
+            .from('orders')
+            .select('id, food_maker:food_makers(display_name)')
+            .eq('order_group_id', groupId)
+            .eq('customer_id', user.id)
+            .order('created_at', { ascending: true })
+          if (siblings && siblings.length > 1) {
+            setGroupOrders(
+              siblings.map((s: unknown) => {
+                const row = s as { id: string; food_maker: { display_name: string } | null }
+                return { id: row.id, maker_name: row.food_maker?.display_name ?? 'Order' }
+              })
+            )
+          }
+        }
+
         const alreadyTipped = (data.tip_amount ?? 0) > 0
         setTipDone(alreadyTipped)
         if (data.status === 'delivered') {
@@ -349,6 +370,32 @@ export default function OrderTrackingPage() {
   return (
     <div className="flex flex-col min-h-full bg-[#f8f8f8]">
       <BackBar title="Order Tracking" />
+
+      {/* Group order tab bar — shown when multiple orders share an order_group_id */}
+      {groupOrders.length > 1 && (
+        <div className="bg-white border-b border-gray-100 px-4 py-2 flex gap-2 overflow-x-auto no-scrollbar">
+          {groupOrders.map((o, idx) => {
+            const isActive = o.id === id
+            return (
+              <button
+                key={o.id}
+                type="button"
+                onClick={() => { if (!isActive) router.push(`/orders/${o.id}`) }}
+                className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold transition-colors ${
+                  isActive
+                    ? 'bg-[#FF6B35] text-white'
+                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                }`}
+              >
+                <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-black ${isActive ? 'bg-white/30 text-white' : 'bg-gray-300 text-gray-600'}`}>
+                  {idx + 1}
+                </span>
+                {o.maker_name.length > 18 ? o.maker_name.slice(0, 18) + '…' : o.maker_name}
+              </button>
+            )
+          })}
+        </div>
+      )}
 
       {/* Cancel banner — only shown before preparation starts */}
       {(currentStatus === 'pending' || currentStatus === 'confirmed') && (
