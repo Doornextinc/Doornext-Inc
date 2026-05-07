@@ -3,7 +3,9 @@
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { ChevronLeft, Loader2, Lock, User, Bell, Shield, Trash2, Camera, LogOut, Image } from 'lucide-react'
+import { ChevronLeft, Loader2, Lock, User, Bell, Shield, Trash2, Camera, LogOut, Image, MapPin } from 'lucide-react'
+import { AddressAutocomplete } from '@/components/ui/AddressAutocomplete'
+import { parsePlace } from '@/lib/google-maps'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -29,6 +31,10 @@ export default function SettingsPage() {
   const [msg, setMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const avatarInputRef = useRef<HTMLInputElement>(null)
+  const [kitchenAddress, setKitchenAddress] = useState('')
+  const [kitchenLat, setKitchenLat] = useState<number>(0)
+  const [kitchenLng, setKitchenLng] = useState<number>(0)
+  const [savingLocation, setSavingLocation] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -45,7 +51,7 @@ export default function SettingsPage() {
 
       const { data: maker } = await supabase
         .from('food_makers')
-        .select('display_name, bio, avatar_url, banner_url')
+        .select('display_name, bio, avatar_url, banner_url, lat, lng, address')
         .eq('user_id', user.id)
         .single()
 
@@ -55,6 +61,9 @@ export default function SettingsPage() {
         setAvatarPreview(maker.avatar_url ?? null)
         setBannerUrl(maker.banner_url ?? null)
         setBannerPreview(maker.banner_url ?? null)
+        setKitchenAddress((maker as unknown as { address?: string }).address ?? '')
+        setKitchenLat((maker as unknown as { lat?: number }).lat ?? 0)
+        setKitchenLng((maker as unknown as { lng?: number }).lng ?? 0)
       }
       setLoading(false)
     }
@@ -127,6 +136,25 @@ export default function SettingsPage() {
       else flash('ok', 'Profile updated')
     }
     setSaving(false)
+  }
+
+  const handleSaveLocation = async () => {
+    if (!kitchenLat || !kitchenLng) {
+      flash('err', 'Please select an address from the suggestions to confirm your location')
+      return
+    }
+    setSavingLocation(true)
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const { error } = await supabase
+        .from('food_makers')
+        .update({ lat: kitchenLat, lng: kitchenLng, address: kitchenAddress || null })
+        .eq('user_id', user.id)
+      if (error) flash('err', 'Failed to save kitchen location')
+      else flash('ok', 'Kitchen location updated')
+    }
+    setSavingLocation(false)
   }
 
   const handleToggleNotification = async (key: 'newOrders' | 'soundEnabled') => {
@@ -331,6 +359,57 @@ export default function SettingsPage() {
             >
               {saving && <Loader2 size={14} className="animate-spin" />}
               Save Changes
+            </button>
+          </div>
+        </section>
+
+        {/* Kitchen Location */}
+        <section>
+          <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-1 mb-2 flex items-center gap-2">
+            <MapPin size={11} /> Kitchen Location
+          </p>
+          <div className="bg-white rounded-2xl border border-gray-100 p-4 space-y-3">
+            <p className="text-xs text-gray-500">
+              Your kitchen address is used to calculate delivery distances and show your restaurant on the map.
+            </p>
+            <div>
+              <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Address</label>
+              <AddressAutocomplete
+                value={kitchenAddress}
+                onChange={(text, place) => {
+                  setKitchenAddress(text)
+                  if (place) {
+                    const parsed = parsePlace(place)
+                    if (parsed?.lat && parsed?.lng) {
+                      setKitchenLat(parsed.lat)
+                      setKitchenLng(parsed.lng)
+                    }
+                  } else {
+                    // Manual typing — clear confirmed coords until a suggestion is picked
+                    setKitchenLat(0)
+                    setKitchenLng(0)
+                  }
+                }}
+                placeholder="123 Main St, Brooklyn, NY 11201"
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-3 pr-10 text-sm text-gray-900 focus:outline-none focus:border-[#FF6B35] transition-colors"
+              />
+              {kitchenLat !== 0 ? (
+                <p className="text-xs text-green-600 font-medium mt-1 flex items-center gap-1">
+                  <span>✓</span> Location confirmed — kitchen will appear on the map
+                </p>
+              ) : kitchenAddress ? (
+                <p className="text-xs text-amber-600 font-medium mt-1">
+                  Select a suggestion from the dropdown to confirm the location
+                </p>
+              ) : null}
+            </div>
+            <button
+              onClick={handleSaveLocation}
+              disabled={savingLocation || !kitchenAddress.trim()}
+              className="w-full bg-[#FF6B35] hover:bg-[#E55A24] text-white rounded-xl py-3 font-bold text-sm disabled:opacity-50 flex items-center justify-center gap-2 transition-colors shadow-sm shadow-[#FF6B35]/30"
+            >
+              {savingLocation && <Loader2 size={14} className="animate-spin" />}
+              Save Location
             </button>
           </div>
         </section>
