@@ -236,7 +236,7 @@ export default function OrderTrackingPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      await supabase.from('reviews').upsert({
+      const { error } = await supabase.from('reviews').upsert({
         order_id: order.id,
         customer_id: user.id,
         maker_id: order.maker_id,
@@ -248,11 +248,14 @@ export default function OrderTrackingPage() {
         packaging_quality: packagingQuality,
       }, { onConflict: 'order_id,customer_id' })
 
+      if (error) throw error
+
       setReviewSubmitted(true)
       setShowReview(false)
       router.push('/orders')
     } catch (e) {
       console.error('Review submission failed:', e)
+      alert('Failed to submit review. Please try again.')
     } finally {
       setSubmittingReview(false)
     }
