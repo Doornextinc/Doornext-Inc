@@ -13,6 +13,10 @@ import { playWithHaptic, initAudio } from '@/lib/notification-sounds'
 import type { StackCandidate } from '@/app/api/driver/stack-candidates/route'
 
 const LiveMap = dynamic(() => import('@/components/live-map').then(m => m.LiveMap), { ssr: false })
+const RoutePreviewMap = dynamic(
+  () => import('@/components/route-preview-map').then(m => m.RoutePreviewMap),
+  { ssr: false }
+)
 
 type HomeData = {
   profile: {
@@ -38,6 +42,7 @@ type AvailableOrder = {
   tip_amount: number
   created_at: string
   food_maker: { display_name: string; lat: number; lng: number } | null
+  delivery_address: { street?: string; city?: string; lat?: number; lng?: number } | null
 }
 
 function greeting() {
@@ -154,7 +159,7 @@ export default function HomePage() {
     const supabase = createClient()
     const { data } = await supabase
       .from('orders')
-      .select('id, status, total, delivery_fee, driver_payout, tip_amount, created_at, food_maker:food_makers(display_name, lat, lng)')
+      .select('id, status, total, delivery_fee, driver_payout, tip_amount, created_at, delivery_address, food_maker:food_makers(display_name, lat, lng)')
       .in('status', ['preparing', 'ready'])
       .is('nexter_id', null)
       .order('created_at', { ascending: true })
@@ -579,25 +584,39 @@ export default function HomePage() {
           {orders.length > 0 ? (
             <div className="space-y-3">
               {orders.map(order => {
-                const makerLat = order.food_maker?.lat
-                const makerLng = order.food_maker?.lng
-                const distanceM = (makerLat != null && makerLng != null)
+                const makerLat  = order.food_maker?.lat
+                const makerLng  = order.food_maker?.lng
+                const dropLat   = order.delivery_address?.lat
+                const dropLng   = order.delivery_address?.lng
+
+                // Driver → pickup distance
+                const toPickupM = (makerLat != null && makerLng != null)
                   ? haversineDistance(driverLat, driverLng, makerLat, makerLng)
                   : null
-                const isAccepting = accepting === order.id
+
+                // Pickup → dropoff delivery run distance
+                const deliveryM = (makerLat != null && makerLng != null && dropLat != null && dropLng != null)
+                  ? haversineDistance(makerLat, makerLng, dropLat, dropLng)
+                  : null
+
+                const hasMapCoords = makerLat != null && makerLng != null && dropLat != null && dropLng != null
+                const isAccepting  = accepting === order.id
+
+                const dropoffStreet = order.delivery_address?.street
+                  ? order.delivery_address.street.replace(/,.*$/, '') // keep street only (trim city)
+                  : null
 
                 return (
                   <div
                     key={order.id}
                     className="bg-[#131313]/95 border border-white/8 rounded-2xl overflow-hidden backdrop-blur-sm"
                   >
-                    {/* Card header: restaurant name + payout */}
+                    {/* ── Card header: restaurant name + earnings ── */}
                     <div className="flex items-start justify-between px-4 pt-4 pb-3 border-b border-white/6">
                       <div className="flex-1 min-w-0 pr-3">
                         <p className="font-black text-white text-base leading-tight truncate">
                           {order.food_maker?.display_name ?? 'Restaurant'}
                         </p>
-                        {/* Status + time ago */}
                         <div className="flex items-center gap-2 mt-1.5">
                           {order.status === 'preparing' ? (
                             <span className="flex items-center gap-1 bg-amber-500/15 border border-amber-500/30 rounded-full px-2 py-0.5 text-[10px] font-black text-amber-400 uppercase tracking-wide">
@@ -626,38 +645,80 @@ export default function HomePage() {
                       </div>
                     </div>
 
-                    {/* Route row */}
-                    <div className="px-4 py-3 space-y-1.5">
-                      {/* Pickup */}
-                      <div className="flex items-center gap-2.5">
-                        <span
-                          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: '#FF7A50' }}
+                    {/* ── Mini route map ── */}
+                    {hasMapCoords && (
+                      <div className="relative w-full h-36 border-b border-white/6">
+                        <RoutePreviewMap
+                          pickupLat={makerLat!}
+                          pickupLng={makerLng!}
+                          dropoffLat={dropLat!}
+                          dropoffLng={dropLng!}
+                          pickupLabel={order.food_maker?.display_name ?? 'Pickup'}
+                          dropoffLabel={dropoffStreet ?? 'Dropoff'}
                         />
+                        {/* Delivery run distance badge — bottom-right overlay */}
+                        {deliveryM != null && (
+                          <div className="absolute bottom-2 right-2 flex items-center gap-1 bg-black/70 backdrop-blur-sm rounded-lg px-2.5 py-1 pointer-events-none">
+                            <MapPin size={10} className="text-cyan-400 flex-shrink-0" />
+                            <span className="text-white text-xs font-black">
+                              {formatDistance(deliveryM)}
+                            </span>
+                            <span className="text-zinc-400 text-[10px] font-semibold">delivery run</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* ── Itinerary rows ── */}
+                    <div className="px-4 py-3 space-y-2">
+
+                      {/* Pickup row */}
+                      <div className="flex items-center gap-2.5">
+                        {/* Orange filled circle */}
+                        <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: '#FF7A50' }} />
                         <span className="text-white text-sm font-semibold flex-1 truncate">
                           {order.food_maker?.display_name ?? 'Restaurant'}
                         </span>
-                        {distanceM != null && (
-                          <span className="text-zinc-500 text-xs font-semibold flex-shrink-0">
-                            {formatDistance(distanceM)}
-                          </span>
-                        )}
-                        {distanceM != null && (
-                          <span className="bg-[#FF7A50]/15 text-[#FF7A50] text-[10px] font-black px-1.5 py-0.5 rounded-full flex-shrink-0">
-                            ~{formatEta(estimateMinutes(distanceM))}
-                          </span>
+                        {toPickupM != null && (
+                          <>
+                            <span className="text-zinc-500 text-xs font-semibold flex-shrink-0">
+                              {formatDistance(toPickupM)} away
+                            </span>
+                            <span className="bg-[#FF7A50]/15 text-[#FF7A50] text-[10px] font-black px-1.5 py-0.5 rounded-full flex-shrink-0">
+                              ~{formatEta(estimateMinutes(toPickupM))}
+                            </span>
+                          </>
                         )}
                       </div>
-                      {/* Connector */}
-                      <div className="ml-[4.5px] w-px h-3 bg-zinc-700" />
-                      {/* Dropoff */}
+
+                      {/* Dashed connector line */}
                       <div className="flex items-center gap-2.5">
-                        <MapPin size={10} className="text-zinc-400 flex-shrink-0" style={{ marginLeft: 1 }} />
-                        <span className="text-zinc-400 text-sm font-semibold flex-1">Delivery location</span>
+                        <div className="w-2.5 flex justify-center flex-shrink-0">
+                          <div className="w-px h-4 border-l-2 border-dashed border-zinc-600" />
+                        </div>
+                        {/* Delivery run distance between the two stops (if no map coords) */}
+                        {!hasMapCoords && deliveryM != null && (
+                          <span className="text-zinc-600 text-[10px] font-semibold">{formatDistance(deliveryM)} run</span>
+                        )}
                       </div>
+
+                      {/* Dropoff row */}
+                      <div className="flex items-center gap-2.5">
+                        {/* Cyan hollow circle */}
+                        <span className="w-2.5 h-2.5 rounded-full border-2 border-cyan-400 flex-shrink-0" />
+                        <span className="text-zinc-300 text-sm font-semibold flex-1 truncate">
+                          {dropoffStreet ?? 'Customer location'}
+                        </span>
+                        {deliveryM != null && (
+                          <span className="bg-cyan-400/10 text-cyan-400 text-[10px] font-black px-1.5 py-0.5 rounded-full flex-shrink-0">
+                            {formatDistance(deliveryM)}
+                          </span>
+                        )}
+                      </div>
+
                     </div>
 
-                    {/* Accept button */}
+                    {/* ── Accept button ── */}
                     <div className="px-4 pb-4">
                       <button
                         onClick={() => handleAccept(order.id)}
