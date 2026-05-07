@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { MapPin, CreditCard, Clock, Lock, Banknote, Loader2, MessageSquare, Store } from 'lucide-react'
 import { loadStripe } from '@stripe/stripe-js'
@@ -652,9 +652,15 @@ export default function CheckoutPage() {
   const [estimates, setEstimates] = useState<Record<string, FeeEstimate>>({})
   const [estimating, setEstimating] = useState(false)
 
-  const allMakerIds = mounted ? makerIds() : []
-  const makerEntries = mounted ? (Object.entries(makers) as Array<[string, { makerName: string; items: CartItem[] }]>) : []
-  const food = mounted ? subtotal() : 0
+  // useMemo keeps these stable between renders — only recomputes when `makers` actually changes.
+  // Without this, Object.entries() produces a new array reference every render, which makes
+  // fetchAllEstimates / createCardIntent new functions every render, causing an infinite effect loop.
+  const allMakerIds = useMemo(() => (mounted ? Object.keys(makers) : []), [mounted, makers])
+  const makerEntries = useMemo(
+    () => (mounted ? (Object.entries(makers) as Array<[string, { makerName: string; items: CartItem[] }]>) : []),
+    [mounted, makers]
+  )
+  const food = useMemo(() => (mounted ? subtotal() : 0), [mounted, makers]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Load saved addresses + all maker locations
   useEffect(() => {
@@ -690,8 +696,9 @@ export default function CheckoutPage() {
       }
     }
     if (mounted && allMakerIds.length > 0) load()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mounted])
+  // allMakerIds is now stable (useMemo) so this won't loop — safe to include
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mounted, allMakerIds])
 
   // Compute distances and fetch estimates whenever address or maker locations change
   const fetchAllEstimates = useCallback(async (addr: Address) => {
