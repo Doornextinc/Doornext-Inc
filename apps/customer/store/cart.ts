@@ -2,78 +2,142 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { CartItem, MenuItem } from '@/types'
 
-interface CartState {
+// One maker's bucket inside the cart
+export interface MakerCart {
+  makerName: string
   items: CartItem[]
-  makerId: string | null
-  makerName: string | null
+}
+
+interface CartState {
+  // keyed by makerId
+  makers: Record<string, MakerCart>
+
   addItem: (item: MenuItem, makerId: string, makerName: string, notes?: string) => void
-  removeItem: (menuItemId: string) => void
-  updateQuantity: (menuItemId: string, quantity: number) => void
+  removeItem: (menuItemId: string, makerId: string) => void
+  updateQuantity: (menuItemId: string, makerId: string, quantity: number) => void
   clearCart: () => void
+  clearMaker: (makerId: string) => void
+
   subtotal: () => number
+  subtotalForMaker: (makerId: string) => number
   totalItems: () => number
+  makerIds: () => string[]
 }
 
 export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
-      items: [],
-      makerId: null,
-      makerName: null,
+      makers: {},
 
       addItem: (menuItem, makerId, makerName, notes = '') => {
-        const { items, makerId: currentMakerId } = get()
+        const { makers } = get()
+        const makerCart = makers[makerId]
 
-        // If adding from a different maker, clear cart first
-        if (currentMakerId && currentMakerId !== makerId) {
-          set({ items: [], makerId: null, makerName: null })
-        }
-
-        const existing = items.find((i) => i.menu_item.id === menuItem.id)
-        if (existing) {
-          set({
-            items: items.map((i) =>
-              i.menu_item.id === menuItem.id
-                ? { ...i, quantity: i.quantity + 1 }
-                : i
-            ),
-          })
+        if (makerCart) {
+          // Maker already in cart — add or increment item
+          const existing = makerCart.items.find((i) => i.menu_item.id === menuItem.id)
+          if (existing) {
+            set({
+              makers: {
+                ...makers,
+                [makerId]: {
+                  ...makerCart,
+                  items: makerCart.items.map((i) =>
+                    i.menu_item.id === menuItem.id
+                      ? { ...i, quantity: i.quantity + 1 }
+                      : i
+                  ),
+                },
+              },
+            })
+          } else {
+            set({
+              makers: {
+                ...makers,
+                [makerId]: {
+                  ...makerCart,
+                  items: [...makerCart.items, { menu_item: menuItem, quantity: 1, notes }],
+                },
+              },
+            })
+          }
         } else {
+          // First item from this maker — create a new bucket
           set({
-            items: [...get().items, { menu_item: menuItem, quantity: 1, notes }],
-            makerId,
-            makerName,
+            makers: {
+              ...makers,
+              [makerId]: {
+                makerName,
+                items: [{ menu_item: menuItem, quantity: 1, notes }],
+              },
+            },
           })
         }
       },
 
-      removeItem: (menuItemId) => {
-        const items = get().items.filter((i) => i.menu_item.id !== menuItemId)
-        set({ items, makerId: items.length ? get().makerId : null, makerName: items.length ? get().makerName : null })
+      removeItem: (menuItemId, makerId) => {
+        const { makers } = get()
+        const makerCart = makers[makerId]
+        if (!makerCart) return
+
+        const items = makerCart.items.filter((i) => i.menu_item.id !== menuItemId)
+        if (items.length === 0) {
+          // Remove maker bucket when it empties
+          const { [makerId]: _removed, ...rest } = makers
+          set({ makers: rest })
+        } else {
+          set({ makers: { ...makers, [makerId]: { ...makerCart, items } } })
+        }
       },
 
-      updateQuantity: (menuItemId, quantity) => {
+      updateQuantity: (menuItemId, makerId, quantity) => {
         if (quantity <= 0) {
-          get().removeItem(menuItemId)
+          get().removeItem(menuItemId, makerId)
           return
         }
+        const { makers } = get()
+        const makerCart = makers[makerId]
+        if (!makerCart) return
         set({
-          items: get().items.map((i) =>
-            i.menu_item.id === menuItemId ? { ...i, quantity } : i
-          ),
+          makers: {
+            ...makers,
+            [makerId]: {
+              ...makerCart,
+              items: makerCart.items.map((i) =>
+                i.menu_item.id === menuItemId ? { ...i, quantity } : i
+              ),
+            },
+          },
         })
       },
 
-      clearCart: () => set({ items: [], makerId: null, makerName: null }),
+      clearCart: () => set({ makers: {} }),
+
+      clearMaker: (makerId) => {
+        const { [makerId]: _removed, ...rest } = get().makers
+        set({ makers: rest })
+      },
 
       subtotal: () =>
-        get().items.reduce(
-          (sum, item) => sum + item.menu_item.price * item.quantity,
+        Object.values(get().makers).reduce(
+          (total, mc) =>
+            total + mc.items.reduce((sum, i) => sum + i.menu_item.price * i.quantity, 0),
           0
         ),
 
+      subtotalForMaker: (makerId) => {
+        const mc = get().makers[makerId]
+        if (!mc) return 0
+        return mc.items.reduce((sum, i) => sum + i.menu_item.price * i.quantity, 0)
+      },
+
       totalItems: () =>
-        get().items.reduce((sum, item) => sum + item.quantity, 0),
+        Object.values(get().makers).reduce(
+          (total, mc) => total + mc.items.reduce((sum, i) => sum + i.quantity, 0),
+          0
+        ),
+
+      makerIds: () => Object.keys(get().makers),
     }),
     {
       name: 'doornext-cart',

@@ -16,9 +16,10 @@ interface MenuItemCardProps {
 export function MenuItemCard({ item, maker }: MenuItemCardProps) {
   const [showModal, setShowModal] = useState(false)
   const [notes, setNotes] = useState('')
-  const { items, addItem, updateQuantity } = useCartStore()
+  const { makers, addItem, updateQuantity } = useCartStore()
 
-  const cartItem = items.find((i) => i.menu_item.id === item.id)
+  const makerItems = makers[maker.id]?.items ?? []
+  const cartItem = makerItems.find((i) => i.menu_item.id === item.id)
   const quantity = cartItem?.quantity ?? 0
 
   const handleAdd = () => {
@@ -79,7 +80,7 @@ export function MenuItemCard({ item, maker }: MenuItemCardProps) {
               onClick={(e) => e.stopPropagation()}
             >
               <button
-                onClick={() => updateQuantity(item.id, quantity - 1)}
+                onClick={() => updateQuantity(item.id, maker.id, quantity - 1)}
                 className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center active:bg-gray-200 transition-colors"
               >
                 <Minus size={10} strokeWidth={2.5} />
@@ -88,7 +89,7 @@ export function MenuItemCard({ item, maker }: MenuItemCardProps) {
                 {quantity}
               </span>
               <button
-                onClick={() => updateQuantity(item.id, quantity + 1)}
+                onClick={() => updateQuantity(item.id, maker.id, quantity + 1)}
                 className="w-6 h-6 bg-[#FF6B35] rounded-full flex items-center justify-center active:bg-[#E55A24] transition-colors"
               >
                 <Plus size={10} strokeWidth={2.5} className="text-white" />

@@ -24,7 +24,12 @@ export function TopBar({
   const [mounted, setMounted] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
   useEffect(() => setMounted(true), [])
-  const rawTotal = useCartStore((s) => s.items.reduce((sum, i) => sum + i.quantity, 0))
+  const rawTotal = useCartStore((s) =>
+    Object.values(s.makers).reduce(
+      (total, mc) => total + mc.items.reduce((sum, i) => sum + i.quantity, 0),
+      0
+    )
+  )
   const totalItems = mounted ? rawTotal : 0
 
   useEffect(() => {
