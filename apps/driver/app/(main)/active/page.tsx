@@ -27,6 +27,8 @@ type ActiveOrder = {
   customer: { full_name: string; phone: string | null } | null
   order_items: OrderItem[]
   updated_at: string
+  arrived_at_maker_at: string | null
+  on_the_way_at: string | null
 }
 
 // 6 milestone stages shown in the progress stepper
@@ -63,6 +65,11 @@ const CANT_DELIVER_REASONS = [
 const ACTIVE_STATUSES = ['driver_assigned', 'arrived_at_maker', 'picked_up', 'on_the_way', 'arrived_at_customer']
 
 function formatElapsed(secs: number) {
+  const m = Math.floor(secs / 60), s = secs % 60
+  return `${m}:${s.toString().padStart(2, '0')}`
+}
+
+function formatCountdown(secs: number) {
   const m = Math.floor(secs / 60), s = secs % 60
   return `${m}:${s.toString().padStart(2, '0')}`
 }
@@ -358,6 +365,7 @@ export default function ActiveDeliveryPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const locationIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const countdownWarnedRef = useRef(false)
 
   const broadcastLocation = useCallback(async () => {
     if (typeof navigator === 'undefined' || !userId) return
@@ -504,6 +512,38 @@ export default function ActiveDeliveryPage() {
       if (proofPhotoUrl) URL.revokeObjectURL(proofPhotoUrl)
     }
   }, [proofPhotoUrl])
+
+  // ── Delivery countdown anchor ─────────────────────────────────────────────
+  // Computed once when on_the_way_at is stamped. Uses straight-line distance
+  // maker → customer as the baseline ETA (same formula as the ETA strip).
+  const estimatedArrivalAt = useMemo(() => {
+    if (!order?.on_the_way_at) return null
+    const mLat = order.food_maker?.lat
+    const mLng = order.food_maker?.lng
+    const cLat = order.delivery_address?.lat
+    const cLng = order.delivery_address?.lng
+    if (!mLat || !mLng || !cLat || !cLng) return null
+    const distKm = haversineDistance(mLat, mLng, cLat, cLng)
+    // Add 40% buffer over straight-line estimate so drivers aren't penalised
+    // for normal traffic/routing overhead
+    return new Date(order.on_the_way_at).getTime() + estimateMinutes(distKm) * 1.4 * 60_000
+  }, [
+    order?.on_the_way_at,
+    order?.food_maker?.lat, order?.food_maker?.lng,
+    order?.delivery_address?.lat, order?.delivery_address?.lng,
+  ])
+
+  // Haptic + visual warning when ≤ 5 minutes remain
+  useEffect(() => {
+    if (estimatedArrivalAt == null) { countdownWarnedRef.current = false; return }
+    const secs = Math.max(0, Math.round((estimatedArrivalAt - Date.now()) / 1000))
+    if (secs <= 300 && secs > 0 && !countdownWarnedRef.current) {
+      countdownWarnedRef.current = true
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate([200, 100, 200, 100, 200])
+      }
+    }
+  }, [estimatedArrivalAt, elapsed])
 
   const handleProofPhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -703,6 +743,14 @@ export default function ActiveDeliveryPage() {
   // Aggregate earnings across all stacked orders for the header strip
   const totalEarn = allOrders.reduce((s, o) => s + (o.driver_payout ?? 0), 0)
   const totalTip  = allOrders.reduce((s, o) => s + (o.tip_amount ?? 0), 0)
+
+  // Countdown — re-derives on every elapsed tick (1 s interval)
+  // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+  void elapsed  // ensure re-render every second
+  const remainingSecs = estimatedArrivalAt != null
+    ? Math.max(0, Math.round((estimatedArrivalAt - Date.now()) / 1000))
+    : null
+  const isCountdownUrgent = remainingSecs != null && remainingSecs < 300
 
   return (
     <div className="flex flex-col min-h-full pb-[144px]">
@@ -1022,6 +1070,39 @@ export default function ActiveDeliveryPage() {
       {/* ── Stage: On the Way to Customer ── */}
       {isHeadingToCustomer && (
         <>
+          {/* Delivery countdown + urgency warning */}
+          {remainingSecs != null && (
+            <div className={`mx-4 mb-3 rounded-2xl border px-4 py-3.5 flex items-center gap-3 ${
+              isCountdownUrgent
+                ? 'bg-red-500/10 border-red-500/30'
+                : 'bg-[#FF7A50]/8 border-[#FF7A50]/20'
+            }`}>
+              <Timer size={20} className={`flex-shrink-0 ${isCountdownUrgent ? 'text-red-400' : 'text-[#FF7A50]'}`} />
+              <div className="flex-1 min-w-0">
+                <p className={`text-[10px] font-black uppercase tracking-wider mb-0.5 ${
+                  isCountdownUrgent ? 'text-red-400' : 'text-zinc-500'
+                }`}>
+                  {isCountdownUrgent ? '⚠ Almost out of time' : 'Time to deliver'}
+                </p>
+                <p className={`font-black text-3xl tabular-nums leading-none ${
+                  isCountdownUrgent ? 'text-red-300' : 'text-white'
+                }`}>
+                  {remainingSecs > 0 ? formatCountdown(remainingSecs) : (
+                    <span className="text-red-400">Overdue</span>
+                  )}
+                </p>
+                {isCountdownUrgent && (
+                  <p className="text-xs text-red-400/80 mt-1 font-semibold">
+                    Drive fast — customer is waiting
+                  </p>
+                )}
+              </div>
+              {isCountdownUrgent && remainingSecs > 0 && (
+                <div className="w-3 h-3 rounded-full bg-red-400 animate-pulse flex-shrink-0" />
+              )}
+            </div>
+          )}
+
           {/* Live ETA strip — updates every 10 s via driver GPS */}
           {dropoffEtaMins != null && (
             <div className="mx-4 mb-3 grid grid-cols-3 gap-2">

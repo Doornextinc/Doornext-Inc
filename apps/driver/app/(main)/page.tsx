@@ -7,7 +7,7 @@ import dynamic from 'next/dynamic'
 import { createClient } from '@/lib/supabase/client'
 import { useDriverStore } from '@/store/driver-store'
 import { AppHeader } from '@/components/layout/app-header'
-import { ChevronRight, AlertTriangle, MapPin, Clock, Plus } from 'lucide-react'
+import { ChevronRight, AlertTriangle, MapPin, Clock, Plus, CheckCircle } from 'lucide-react'
 import { haversineDistance, formatDistance, formatPriceDollars, estimateMinutes, formatEta } from '@doornext/shared/utils'
 import { playWithHaptic, initAudio } from '@/lib/notification-sounds'
 import type { StackCandidate } from '@/app/api/driver/stack-candidates/route'
@@ -78,11 +78,16 @@ export default function HomePage() {
   // Available orders state
   const [orders, setOrders] = useState<AvailableOrder[]>([])
   const [accepting, setAccepting] = useState<string | null>(null)
+  const [acceptError, setAcceptError] = useState<{ orderId: string; message: string } | null>(null)
   const knownOrderIds = useRef<Set<string>>(new Set())
 
   // Stack candidates — shown when driver has 1 active order
   const [stackCandidates, setStackCandidates] = useState<StackCandidate[]>([])
   const [addingToRoute, setAddingToRoute] = useState<string | null>(null)
+
+  // Post-accept holding state: driver stays on home to optionally stack before starting route
+  const [acceptedOrderId, setAcceptedOrderId] = useState<string | null>(null)
+  const [startRouteCountdown, setStartRouteCountdown] = useState<number | null>(null)
 
   useEffect(() => {
     if (typeof navigator === 'undefined') return
@@ -208,14 +213,18 @@ export default function HomePage() {
     return () => { supabase.removeChannel(ch) }
   }, [isOnline, loadOrders])
 
+  // Auto-navigate countdown after accepting first order
+  useEffect(() => {
+    if (startRouteCountdown === null) return
+    if (startRouteCountdown <= 0) { router.push('/active'); return }
+    const t = setTimeout(() => setStartRouteCountdown(c => c !== null ? c - 1 : null), 1000)
+    return () => clearTimeout(t)
+  }, [startRouteCountdown, router])
+
   const handleAccept = async (orderId: string) => {
     if (accepting || addingToRoute) return
     setAccepting(orderId)
-    setOrders(prev => prev.filter(o => o.id !== orderId))
-
-    // Optimistic: navigate immediately so the driver sees instant feedback.
-    setActiveOrder(orderId)
-    router.push('/active')
+    setAcceptError(null)
 
     try {
       const res = await fetch('/api/driver/accept-order', {
@@ -223,19 +232,30 @@ export default function HomePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orderId, driverLat: currentLat, driverLng: currentLng }),
       })
-      if (res.ok) {
-        const json = await res.json()
-        if (json.allOrderIds?.length) setActiveOrders(json.allOrderIds)
-        playWithHaptic('order_accepted')
+      const json = await res.json()
+
+      if (!res.ok) {
+        setAcceptError({ orderId, message: json.error ?? 'Could not accept — please try again.' })
+        return
+      }
+
+      if (json.allOrderIds?.length) setActiveOrders(json.allOrderIds)
+      else setActiveOrder(orderId)
+      playWithHaptic('order_accepted')
+
+      if (json.stacked) {
+        // Was adding to an existing stack — go straight to active delivery
+        router.push('/active')
       } else {
-        setActiveOrder(null)
-        loadOrders()
-        router.replace('/')
+        // First order accepted: stay on screen so the driver can optionally stack,
+        // then auto-navigate after a short window.
+        setOrders(prev => prev.filter(o => o.id !== orderId))
+        setAcceptedOrderId(orderId)
+        setStartRouteCountdown(5)
+        loadStackCandidates()
       }
     } catch {
-      setActiveOrder(null)
-      loadOrders()
-      router.replace('/')
+      setAcceptError({ orderId, message: 'Network error. Please try again.' })
     } finally {
       setAccepting(null)
     }
@@ -245,6 +265,7 @@ export default function HomePage() {
     if (accepting || addingToRoute) return
     setAddingToRoute(orderId)
     setStackCandidates(prev => prev.filter(c => c.order_id !== orderId))
+    setStartRouteCountdown(null) // cancel pending auto-nav
 
     try {
       const res = await fetch('/api/driver/accept-order', {
@@ -259,7 +280,7 @@ export default function HomePage() {
         playWithHaptic('order_accepted')
         router.push('/active')
       } else {
-        setStackCandidates([]) // refresh on failure
+        setStackCandidates([])
         loadStackCandidates()
       }
     } catch {
@@ -508,8 +529,8 @@ export default function HomePage() {
             </Link>
           )}
 
-          {/* ── Stack offer cards — shown when driver has 1 active order ── */}
-          {stackCandidates.length > 0 && (
+          {/* ── Stack offer cards — shown when driver already has 1 active order (normal flow) ── */}
+          {stackCandidates.length > 0 && !acceptedOrderId && (
             <div className="space-y-2">
               <p className="text-xs font-black text-[#E06B38] uppercase tracking-wider px-1">
                 💰 Add to your route — earn more
@@ -580,8 +601,84 @@ export default function HomePage() {
             </Link>
           </div>
 
+          {/* ── Post-accept stacking window ── */}
+          {acceptedOrderId && (
+            <div className="space-y-3">
+              {/* Confirmation + auto-nav countdown */}
+              <div className="flex items-center gap-3 px-4 py-3.5 bg-green-500/12 border border-green-500/25 rounded-2xl backdrop-blur-sm">
+                <CheckCircle size={22} className="text-green-400 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-black text-green-300">Order Accepted!</p>
+                  <p className="text-xs text-green-400/60 mt-0.5">
+                    Starting route in {startRouteCountdown}s — or add another order below
+                  </p>
+                </div>
+                <button
+                  onClick={() => { setStartRouteCountdown(null); router.push('/active') }}
+                  className="flex-shrink-0 flex items-center gap-1.5 bg-[#FF7A50] text-white text-xs font-black px-3 py-2 rounded-xl active:scale-95 transition-all"
+                >
+                  Start Route <ChevronRight size={13} />
+                </button>
+              </div>
+
+              {/* Stack candidates */}
+              {stackCandidates.length > 0 ? (
+                <div className="space-y-2">
+                  <p className="text-xs font-black text-amber-400 uppercase tracking-wider px-1">
+                    💰 Add to your route — earn more
+                  </p>
+                  {stackCandidates.slice(0, 2).map((candidate) => {
+                    const isAdding = addingToRoute === candidate.order_id
+                    return (
+                      <div
+                        key={candidate.order_id}
+                        className="bg-[#1a1200]/80 border border-amber-500/20 rounded-2xl overflow-hidden backdrop-blur-sm"
+                      >
+                        <div className="flex items-start justify-between px-4 pt-4 pb-3">
+                          <div className="flex-1 min-w-0 pr-3">
+                            <p className="font-black text-white text-sm leading-tight truncate">
+                              {candidate.maker_name}
+                            </p>
+                            <div className="flex items-center gap-2 mt-1.5">
+                              <span className="text-amber-400 text-xs font-black">
+                                +{candidate.detour_km.toFixed(1)} km detour
+                              </span>
+                              <span className="text-zinc-500 text-[10px]">•</span>
+                              <span className="text-zinc-400 text-xs">{Math.round(candidate.score)}% match</span>
+                            </div>
+                          </div>
+                          <div className="text-right flex-shrink-0">
+                            <p className="font-black text-xl leading-none text-amber-400">
+                              +{formatPriceDollars(candidate.driver_payout)}
+                            </p>
+                            {candidate.tip_amount > 0 && (
+                              <p className="text-green-400 text-xs font-black mt-1">
+                                +{formatPriceDollars(candidate.tip_amount)} tip
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="px-4 pb-4">
+                          <button
+                            onClick={() => handleAddToRoute(candidate.order_id)}
+                            disabled={isAdding || addingToRoute !== null}
+                            className="w-full flex items-center justify-center gap-2 rounded-xl py-3 font-black text-sm tracking-wide text-white bg-amber-500/80 active:scale-[0.98] transition-all duration-100 disabled:opacity-50"
+                          >
+                            {isAdding ? 'Adding…' : <><Plus size={15} /> Add to Route</>}
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <p className="text-center text-zinc-600 text-xs py-2">No compatible add-on orders nearby right now</p>
+              )}
+            </div>
+          )}
+
           {/* ── Delivery request cards ── */}
-          {orders.length > 0 ? (
+          {!acceptedOrderId && orders.length > 0 ? (
             <div className="space-y-3">
               {orders.map(order => {
                 const makerLat  = order.food_maker?.lat
@@ -718,35 +815,35 @@ export default function HomePage() {
 
                     </div>
 
+                    {/* ── Accept error ── */}
+                    {acceptError?.orderId === order.id && (
+                      <div className="mx-4 mb-2 px-3 py-2 bg-red-500/15 border border-red-500/25 rounded-xl text-xs text-red-400 font-semibold">
+                        {acceptError.message}
+                      </div>
+                    )}
+
                     {/* ── Accept button ── */}
                     <div className="px-4 pb-4">
                       <button
                         onClick={() => handleAccept(order.id)}
-                        disabled={isAccepting || accepting !== null}
+                        disabled={isAccepting || (accepting !== null && accepting !== order.id)}
                         className="w-full flex items-center justify-center gap-2 rounded-xl py-3.5 font-black text-sm tracking-wide text-white active:scale-[0.98] transition-all duration-100 disabled:opacity-50"
                         style={{ backgroundColor: '#FF7A50' }}
                       >
-                        {isAccepting ? (
-                          'Accepting…'
-                        ) : (
-                          <>
-                            Accept Delivery
-                            <ChevronRight size={16} />
-                          </>
-                        )}
+                        {isAccepting ? 'Accepting…' : <>Accept Delivery <ChevronRight size={16} /></>}
                       </button>
                     </div>
                   </div>
                 )
               })}
             </div>
-          ) : (
-            /* Waiting placeholder — compact, no full empty state */
+          ) : !acceptedOrderId ? (
+            /* Waiting placeholder — only when no accepted order pending */
             <div className="flex items-center gap-3 px-4 py-3 bg-[#131313]/70 border border-white/6 rounded-2xl">
               <span className="text-lg leading-none">🛵</span>
               <span className="text-zinc-500 text-sm font-semibold">Waiting for orders…</span>
             </div>
-          )}
+          ) : null}
 
           {/* Accepting orders label + Go Off button + metrics */}
           <div className="flex flex-col items-center gap-3 pt-1">

@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 import type { OrderStatus } from '@doornext/shared/types'
 import { notifyUser } from '@doornext/shared/notify'
 import { snapshotFees } from '@doornext/shared/pricing'
+import { haversineDistance, estimateMinutes } from '@doornext/shared/utils'
 import * as Sentry from '@sentry/nextjs'
 import { checkRateLimit } from '@/lib/rate-limit'
 
@@ -246,11 +247,15 @@ export async function POST(req: NextRequest) {
         admin.rpc('recompute_driver_completion_rate', { driver_id: user.id }),
       ])
 
-      // Recompute avg timing metrics from all delivered orders with timestamps
+      // Recompute avg timing metrics + on-time delivery rate from all delivered orders
       try {
         const { data: timingRows } = await admin
           .from('orders')
-          .select('arrived_at_maker_at, on_the_way_at, delivered_at')
+          .select(`
+            arrived_at_maker_at, on_the_way_at, delivered_at,
+            delivery_address,
+            food_maker:food_makers(lat, lng)
+          `)
           .eq('nexter_id', user.id)
           .eq('status', 'delivered')
           .not('arrived_at_maker_at', 'is', null)
@@ -267,9 +272,34 @@ export async function POST(req: NextRequest) {
 
           const metricsUpdate: Record<string, number> = {}
           if (waitMins.length > 0)
-            metricsUpdate.avg_wait_at_maker_mins = Math.round(waitMins.reduce((s, v) => s + v, 0) / waitMins.length * 10) / 10
+            metricsUpdate.avg_wait_at_maker_mins =
+              Math.round(waitMins.reduce((s, v) => s + v, 0) / waitMins.length * 10) / 10
           if (delivMins.length > 0)
-            metricsUpdate.avg_delivery_mins = Math.round(delivMins.reduce((s, v) => s + v, 0) / delivMins.length * 10) / 10
+            metricsUpdate.avg_delivery_mins =
+              Math.round(delivMins.reduce((s, v) => s + v, 0) / delivMins.length * 10) / 10
+
+          // On-time delivery rate — compare actual time vs straight-line estimate
+          // Allow 40% buffer over the baseline estimate to account for routing overhead
+          type TimingRow = typeof timingRows[number]
+          const onTimeEvals = timingRows.filter((r: TimingRow) => {
+            const addr = r.delivery_address as { lat?: number; lng?: number } | null
+            const maker = Array.isArray(r.food_maker) ? r.food_maker[0] : r.food_maker as { lat: number; lng: number } | null
+            return addr?.lat && addr?.lng && maker?.lat && maker?.lng
+          }).map((r: TimingRow) => {
+            const addr = r.delivery_address as { lat: number; lng: number }
+            const maker = Array.isArray(r.food_maker) ? r.food_maker[0] : r.food_maker as { lat: number; lng: number }
+            const actualMins =
+              (new Date(r.delivered_at).getTime() - new Date(r.on_the_way_at).getTime()) / 60000
+            const distKm = haversineDistance(maker.lat, maker.lng, addr.lat, addr.lng)
+            const estimatedMins = estimateMinutes(distKm) * 1.4
+            return actualMins > 0 && actualMins <= estimatedMins
+          })
+
+          if (onTimeEvals.length > 0) {
+            const onTimeCount = onTimeEvals.filter(Boolean).length
+            metricsUpdate.on_time_delivery_rate =
+              Math.round((onTimeCount / onTimeEvals.length) * 100)
+          }
 
           if (Object.keys(metricsUpdate).length > 0) {
             await admin.from('driver_profiles').update(metricsUpdate).eq('id', user.id)

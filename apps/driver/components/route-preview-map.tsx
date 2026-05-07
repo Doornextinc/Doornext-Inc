@@ -138,5 +138,8 @@ export function RoutePreviewMap({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []) // only run on mount — coordinates are stable per card render
 
-  return <div ref={containerRef} className="w-full h-full" />
+  // pointer-events:none prevents the Google Maps touch handlers from
+  // blocking scroll/tap events in the parent bottom-sheet container.
+  // The map is read-only (gestureHandling:'none') so no interactivity is lost.
+  return <div ref={containerRef} className="w-full h-full" style={{ pointerEvents: 'none' }} />
 }

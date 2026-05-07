@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
     .select(`
       id, status, driver_payout, tip_amount, payment_method,
       pickup_pin, pin_attempts, dropoff_note, updated_at, delivery_address,
-      order_group_id,
+      order_group_id, arrived_at_maker_at, on_the_way_at,
       order_items(quantity, unit_price, customization_notes, menu_items(name)),
       food_maker:food_makers(display_name, lat, lng),
       customer:users!orders_customer_id_fkey(full_name, phone)
