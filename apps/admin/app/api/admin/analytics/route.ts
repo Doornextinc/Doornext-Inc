@@ -72,7 +72,8 @@ export async function GET(request: NextRequest) {
   const makerRevMap: Record<string, { name: string; revenue: number; orders: number }> = {}
   for (const o of topMakers.data ?? []) {
     const mid = o.maker_id
-    const name = (o.food_makers as { display_name: string }[] | null)?.[0]?.display_name ?? 'Unknown'
+    const fm = o.food_makers as { display_name: string } | { display_name: string }[] | null
+    const name = (Array.isArray(fm) ? fm[0]?.display_name : fm?.display_name) ?? 'Unknown'
     if (!makerRevMap[mid]) makerRevMap[mid] = { name, revenue: 0, orders: 0 }
     makerRevMap[mid].revenue += o.total ?? 0
     makerRevMap[mid].orders++
