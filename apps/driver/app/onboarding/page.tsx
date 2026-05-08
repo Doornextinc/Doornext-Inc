@@ -415,7 +415,14 @@ export default function OnboardingPage() {
         }),
       })
 
-      if (!res.ok) { const { error: apiError } = await res.json(); throw new Error(apiError ?? 'Submission failed') }
+      const kycContentType = res.headers.get('content-type') ?? ''
+      if (!kycContentType.includes('application/json')) {
+        throw new Error(`Submission failed (${res.status}) — please try again.`)
+      }
+      if (!res.ok) {
+        const { error: apiError } = await res.json()
+        throw new Error(apiError ?? 'Submission failed')
+      }
       setStep('submitted')
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Something went wrong.')

@@ -57,16 +57,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: uploadError.message }, { status: 500 })
   }
 
-  const { error: upsertError } = await admin
-    .from('driver_documents')
-    .upsert(
-      { driver_id: userId, [docType]: storagePath },
-      { onConflict: 'driver_id' }
-    )
-
-  if (upsertError) {
-    return NextResponse.json({ error: upsertError.message }, { status: 500 })
-  }
-
+  // The storage path is returned to the caller (onboarding page).
+  // driver_documents DB rows are written in bulk by /api/driver/submit-kyc
+  // once the driver completes all steps — writing them here too caused column
+  // name mismatches (docType values vs the actual column names in the table).
   return NextResponse.json({ path: storagePath })
 }
