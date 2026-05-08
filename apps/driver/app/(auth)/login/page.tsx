@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { ChevronLeft, CheckCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
-export default function LoginPage() {
+// Inner component that safely reads search params (must be wrapped in Suspense)
+function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
@@ -121,5 +122,15 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  )
+}
+
+// Default export wraps LoginForm in Suspense so useSearchParams() doesn't
+// break static prerendering during `next build`.
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   )
 }
