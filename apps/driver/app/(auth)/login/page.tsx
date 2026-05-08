@@ -1,17 +1,27 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { ChevronLeft } from 'lucide-react'
+import { ChevronLeft, CheckCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [justCreated, setJustCreated] = useState(false)
+
+  // Pre-fill email and show success banner when redirected from signup
+  useEffect(() => {
+    const prefill = searchParams.get('email')
+    const created = searchParams.get('created')
+    if (prefill) setEmail(decodeURIComponent(prefill))
+    if (created === '1') setJustCreated(true)
+  }, [searchParams])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -50,6 +60,15 @@ export default function LoginPage() {
           <h1 className="text-2xl font-black text-white">Welcome back</h1>
           <p className="text-zinc-400 text-sm mt-1">Sign in to your driver account</p>
         </div>
+
+        {justCreated && (
+          <div className="mb-4 p-3.5 bg-green-900/25 border border-green-700/40 rounded-xl flex items-start gap-2.5">
+            <CheckCircle size={16} className="text-green-400 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-green-300 font-medium leading-snug">
+              Account created! Enter your password below to continue.
+            </p>
+          </div>
+        )}
 
         {error && (
           <div className="mb-4 p-3 bg-red-900/30 border border-red-700/40 rounded-xl text-sm text-red-400 text-center">

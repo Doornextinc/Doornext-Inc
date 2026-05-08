@@ -38,9 +38,19 @@ export default function DriverSignupPage() {
     const data = await res.json()
     if (!res.ok) { setError(data.error ?? 'Signup failed. Please try again.'); setLoading(false); return }
 
+    // Auto sign-in — succeeds because email_confirm: true is set server-side
     const supabase = createClient()
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email: form.email, password: form.password })
-    if (signInError) { setError('Account created but sign-in failed. Please sign in manually.'); setLoading(false); return }
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: form.email,
+      password: form.password,
+    })
+
+    if (signInError) {
+      // Account was created but session couldn't be established — redirect to
+      // login so the driver can sign in manually without losing their account.
+      router.push(`/login?email=${encodeURIComponent(form.email)}&created=1`)
+      return
+    }
 
     router.push('/onboarding')
   }

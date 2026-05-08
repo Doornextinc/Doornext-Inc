@@ -21,10 +21,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'All fields are required' }, { status: 400 })
   }
 
-  // Create auth user — email_confirm omitted so Supabase sends a verification email
+  // Create auth user with email pre-confirmed.
+  // Drivers go through full KYC document verification before being approved,
+  // so a separate email confirmation step adds friction without security benefit.
   const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
     email,
     password,
+    email_confirm: true,
     user_metadata: { full_name: fullName },
   })
 
@@ -64,5 +67,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to create driver profile. Please try again.' }, { status: 500 })
   }
 
-  return NextResponse.json({ ok: true, emailVerificationRequired: true })
+  return NextResponse.json({ ok: true })
 }
