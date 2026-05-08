@@ -166,7 +166,7 @@ export default function OnboardingPage() {
         if (!addressInputRef.current) return
         ac = new window.google.maps.places.Autocomplete(addressInputRef.current, {
           types: ['address'],
-          fields: ['address_components', 'formatted_address'],
+          fields: ['address_components', 'formatted_address', 'geometry'],
         })
         ac.addListener('place_changed', () => {
           const place = ac!.getPlace()

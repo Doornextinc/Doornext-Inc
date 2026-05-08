@@ -65,6 +65,9 @@ export default function HomePage() {
   const overlayRef = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLInputElement>(null)
   const [searchSaving, setSearchSaving] = useState(false)
+  const [searchText, setSearchText] = useState('')
+  // Set to true when Places fires place_changed — prevents showing the manual confirm button
+  const searchPickedRef = useRef(false)
 
   useEffect(() => {
     if (!navigator.geolocation) return
@@ -187,6 +190,7 @@ export default function HomePage() {
         ac.addListener('place_changed', async () => {
           const parsed = parsePlace(ac!.getPlace())
           if (!parsed) return
+          searchPickedRef.current = true
 
           setSearchSaving(true)
           try {
@@ -221,6 +225,49 @@ export default function HomePage() {
     }
    
   }, [pickerOpen])
+
+  // Geocode whatever the user typed when they didn't pick a suggestion
+  const handleSearchConfirm = async () => {
+    if (!searchText.trim() || searchSaving) return
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+    if (!apiKey) return
+
+    setSearchSaving(true)
+    try {
+      await loadGoogleMapsScript(apiKey)
+      const geocoder = new window.google.maps.Geocoder()
+      const result = await new Promise<google.maps.GeocoderResult | null>((resolve) => {
+        geocoder.geocode({ address: searchText.trim() }, (results, status) => {
+          resolve(status === 'OK' && results?.length ? results[0] : null)
+        })
+      })
+      if (!result) return // no match — keep picker open so user can retry
+
+      const { parsePlace: pp } = await import('@/lib/google-maps')
+      const parsed = pp(result as unknown as google.maps.places.PlaceResult)
+      if (!parsed) return
+
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: newAddr, error } = await supabase
+          .from('addresses')
+          .insert({ user_id: user.id, label: 'Other', ...parsed })
+          .select()
+          .single()
+        if (newAddr && !error) {
+          setSavedAddresses((prev) => [...prev, newAddr as Address])
+          handleSelectAddress(newAddr as Address)
+          return
+        }
+      }
+      setSelectedId(null)
+      setLocation({ lat: parsed.lat, lng: parsed.lng, label: `${parsed.street}, ${parsed.city}` })
+      setPickerOpen(false)
+    } finally {
+      setSearchSaving(false)
+    }
+  }
 
   const handleSelectAddress = (addr: Address) => {
     setSelectedId(addr.id)
@@ -352,7 +399,7 @@ export default function HomePage() {
           ref={overlayRef}
           className="fixed inset-0 z-50 flex flex-col justify-end"
           style={{ background: 'rgba(0,0,0,0.5)' }}
-          onClick={(e) => { if (e.target === overlayRef.current) setPickerOpen(false) }}
+          onClick={(e) => { if (e.target === overlayRef.current) { setPickerOpen(false); setSearchText(''); searchPickedRef.current = false } }}
         >
           <div className="bg-white rounded-t-3xl max-h-[75vh] overflow-y-auto sheet-enter">
             {/* Handle */}
@@ -364,7 +411,7 @@ export default function HomePage() {
               <div className="flex items-center justify-between">
                 <h2 className="heading-lg text-gray-900">Deliver to</h2>
                 <button
-                  onClick={() => setPickerOpen(false)}
+                  onClick={() => { setPickerOpen(false); setSearchText(''); searchPickedRef.current = false }}
                   className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center active:bg-gray-200"
                 >
                   <X size={15} className="text-gray-600" strokeWidth={2.5} />
@@ -372,18 +419,32 @@ export default function HomePage() {
               </div>
 
               {/* Address search */}
-              <div className="relative">
-                <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                <input
-                  ref={searchRef}
-                  placeholder="Search for an address..."
-                  autoComplete="off"
-                  className="w-full border-2 border-gray-100 rounded-2xl pl-9 pr-4 py-3 text-sm outline-none focus:border-[#FF6B35] transition-colors"
-                />
-                {searchSaving && (
-                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
-                    <div className="w-4 h-4 border-2 border-[#FF6B35] border-t-transparent rounded-full animate-spin" />
-                  </div>
+              <div className="space-y-2">
+                <div className="relative">
+                  <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                  <input
+                    ref={searchRef}
+                    placeholder="Search for an address..."
+                    autoComplete="off"
+                    value={searchText}
+                    onChange={(e) => { setSearchText(e.target.value); searchPickedRef.current = false }}
+                    className="w-full border-2 border-gray-100 rounded-2xl pl-9 pr-4 py-3 text-sm outline-none focus:border-[#FF6B35] transition-colors"
+                  />
+                  {searchSaving && (
+                    <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
+                      <div className="w-4 h-4 border-2 border-[#FF6B35] border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  )}
+                </div>
+                {/* Manual confirm — shown when user typed but didn't pick a suggestion */}
+                {searchText.trim().length > 6 && !searchPickedRef.current && !searchSaving && (
+                  <button
+                    onClick={handleSearchConfirm}
+                    className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-[#FF6B35]/50 rounded-2xl text-sm font-semibold text-[#FF6B35] active:bg-orange-50 transition-colors"
+                  >
+                    <MapPin size={14} />
+                    Use &ldquo;{searchText.trim().slice(0, 30)}{searchText.trim().length > 30 ? '…' : ''}&rdquo;
+                  </button>
                 )}
               </div>
 

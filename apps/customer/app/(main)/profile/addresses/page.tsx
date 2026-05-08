@@ -26,6 +26,9 @@ export default function AddressesPage() {
   const [zip, setZip] = useState('')
   const [lat, setLat] = useState(0)
   const [lng, setLng] = useState(0)
+  const [geocoding, setGeocoding] = useState(false)
+  // true once Google Places fires place_changed — confirms coords are precise
+  const coordsConfirmedRef = useRef(false)
 
   const streetRef = useRef<HTMLInputElement>(null)
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null)
@@ -54,6 +57,7 @@ export default function AddressesPage() {
         setZip(parsed.zip)
         setLat(parsed.lat)
         setLng(parsed.lng)
+        coordsConfirmedRef.current = true
       })
     })
 
@@ -92,6 +96,8 @@ export default function AddressesPage() {
     setLat(0)
     setLng(0)
     setError(null)
+    setGeocoding(false)
+    coordsConfirmedRef.current = false
     autocompleteRef.current = null
   }
 
@@ -105,6 +111,39 @@ export default function AddressesPage() {
     setSaving(true)
     setError(null)
 
+    // If the user typed without selecting a suggestion, geocode so we always have coords
+    let finalLat = lat
+    let finalLng = lng
+    if (!coordsConfirmedRef.current || finalLat === 0 || finalLng === 0) {
+      const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+      if (apiKey) {
+        setGeocoding(true)
+        try {
+          await loadGoogleMapsScript(apiKey)
+          const geocoder = new window.google.maps.Geocoder()
+          const fullAddr = `${street.trim()}, ${city.trim()}, ${state.trim()} ${zip.trim()}`
+          const result = await new Promise<google.maps.GeocoderResult | null>((resolve) => {
+            geocoder.geocode({ address: fullAddr }, (results, status) => {
+              resolve(status === 'OK' && results?.length ? results[0] : null)
+            })
+          })
+          if (result?.geometry?.location) {
+            finalLat = result.geometry.location.lat()
+            finalLng = result.geometry.location.lng()
+          } else {
+            setError('Address not found — try selecting from the dropdown suggestions.')
+            setSaving(false)
+            setGeocoding(false)
+            return
+          }
+        } catch {
+          // Geocoding failed — continue without precise coords rather than blocking
+        } finally {
+          setGeocoding(false)
+        }
+      }
+    }
+
     const supabase = createClient()
     const { data, error: insertError } = await supabase
       .from('addresses')
@@ -115,8 +154,8 @@ export default function AddressesPage() {
         city:   city.trim(),
         state:  state.trim(),
         zip:    zip.trim(),
-        lat,
-        lng,
+        lat:    finalLat,
+        lng:    finalLng,
       })
       .select()
       .single()
@@ -263,11 +302,25 @@ export default function AddressesPage() {
                 ref={streetRef}
                 autoFocus
                 value={street}
-                onChange={(e) => setStreet(e.target.value)}
+                onChange={(e) => { setStreet(e.target.value); coordsConfirmedRef.current = false }}
                 placeholder="123 Main St"
-                autoComplete="address-line1"
-                className="w-full border-2 border-gray-100 rounded-xl px-3.5 py-3 text-sm outline-none focus:border-[#FF6B35] transition-colors"
+                autoComplete="off"
+                className={`w-full border-2 rounded-xl px-3.5 py-3 text-sm outline-none transition-colors ${
+                  coordsConfirmedRef.current
+                    ? 'border-green-400 focus:border-green-500'
+                    : 'border-gray-100 focus:border-[#FF6B35]'
+                }`}
               />
+              {coordsConfirmedRef.current && (
+                <p className="text-xs text-green-600 font-medium mt-1 flex items-center gap-1">
+                  <Check size={11} /> Location confirmed
+                </p>
+              )}
+              {!coordsConfirmedRef.current && street.trim().length > 5 && (
+                <p className="text-xs text-amber-600 mt-1">
+                  Select a suggestion from the dropdown for precise delivery location
+                </p>
+              )}
             </div>
 
             {/* City / State / ZIP — always visible */}
@@ -329,10 +382,10 @@ export default function AddressesPage() {
               <Button
                 onClick={handleAdd}
                 className="flex-1"
-                loading={saving}
-                disabled={saving}
+                loading={saving || geocoding}
+                disabled={saving || geocoding}
               >
-                Save Address
+                {geocoding ? 'Verifying…' : 'Save Address'}
               </Button>
             </div>
           </div>

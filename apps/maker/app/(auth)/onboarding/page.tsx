@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { parsePlace } from '@/lib/google-maps'
+import { parsePlace, loadGoogleMapsScript } from '@/lib/google-maps'
 import { AddressAutocomplete } from '@/components/ui/AddressAutocomplete'
 import {
   ChevronRight, ChevronLeft, Upload, CheckCircle2, Loader2,
@@ -308,14 +308,34 @@ export default function OnboardingPage() {
       const data = await res.json()
       if (!res.ok) { setError(data.error ?? 'Submission failed'); return }
 
-      // If address was geocoded, persist lat/lng to food_makers (pickup location)
-      if (form.kitchen_lat && form.kitchen_lng) {
+      // Persist kitchen lat/lng — geocode if autocomplete wasn't used
+      let kitchenLat = form.kitchen_lat
+      let kitchenLng = form.kitchen_lng
+      if ((!kitchenLat || !kitchenLng) && form.business_address.trim()) {
+        const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+        if (apiKey) {
+          try {
+            await loadGoogleMapsScript(apiKey)
+            const geocoder = new window.google.maps.Geocoder()
+            const result = await new Promise<google.maps.GeocoderResult | null>((resolve) => {
+              geocoder.geocode({ address: form.business_address.trim() }, (results, status) => {
+                resolve(status === 'OK' && results?.length ? results[0] : null)
+              })
+            })
+            if (result?.geometry?.location) {
+              kitchenLat = result.geometry.location.lat()
+              kitchenLng = result.geometry.location.lng()
+            }
+          } catch { /* geocoding failed — proceed without coords */ }
+        }
+      }
+      if (kitchenLat && kitchenLng) {
         const supabase = createClient()
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
           await supabase
             .from('food_makers')
-            .update({ lat: form.kitchen_lat, lng: form.kitchen_lng })
+            .update({ lat: kitchenLat, lng: kitchenLng, address: form.business_address.trim() || null })
             .eq('user_id', user.id)
         }
       }
