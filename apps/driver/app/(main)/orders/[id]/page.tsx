@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { AppHeader } from '@/components/layout/app-header'
 import {
-  MapPin, Package, DollarSign, Clock, CheckCircle, Store, MessageSquare,
+  MapPin, Package, DollarSign, Clock, CheckCircle, AlertCircle, Store, MessageSquare,
 } from 'lucide-react'
 
 type OrderDetail = {
@@ -58,11 +58,11 @@ export default function DriverOrderDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col min-h-full">
+      <div className="flex flex-col min-h-full bg-[#080808]">
         <AppHeader title="Delivery" showBack />
         <div className="p-4 space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-24 bg-[#141414] rounded-2xl animate-pulse" />
+            <div key={i} className="h-24 bg-[#111] rounded-2xl animate-pulse" />
           ))}
         </div>
       </div>
@@ -71,7 +71,7 @@ export default function DriverOrderDetailPage() {
 
   if (!order) {
     return (
-      <div className="flex flex-col min-h-full">
+      <div className="flex flex-col min-h-full bg-[#080808]">
         <AppHeader title="Delivery" showBack />
         <div className="flex-1 flex items-center justify-center text-zinc-500 text-sm">
           Delivery not found
@@ -84,18 +84,24 @@ export default function DriverOrderDetailPage() {
   const earn = order.driver_payout > 0 ? order.driver_payout : order.delivery_fee
   const tip = order.tip_amount ?? 0
 
+  const isDelivered = order.status === 'delivered'
+  const isFailed    = order.status === 'failed_delivery'
+  const statusIcon  = isFailed ? AlertCircle : CheckCircle
+  const StatusIcon  = statusIcon
+  const statusColor = isFailed ? 'text-red-400' : 'text-green-400'
+
   return (
-    <div className="flex flex-col min-h-full pb-6">
+    <div className="flex flex-col min-h-full bg-[#080808] pb-6">
       <AppHeader title={`#${order.id.slice(-6).toUpperCase()}`} showBack />
 
       <div className="p-4 space-y-3">
 
         {/* Status + date */}
-        <div className="bg-[#141414] rounded-2xl border border-white/5 px-4 py-4">
+        <div className="bg-[#111] rounded-2xl border border-white/5 px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <CheckCircle size={16} className="text-green-400" />
-              <span className="text-sm font-bold text-green-400 capitalize">
+              <StatusIcon size={16} className={statusColor} />
+              <span className={`text-sm font-bold capitalize ${statusColor}`}>
                 {order.status.replace(/_/g, ' ')}
               </span>
             </div>
@@ -109,7 +115,7 @@ export default function DriverOrderDetailPage() {
         </div>
 
         {/* Earnings */}
-        <div className="bg-[#141414] rounded-2xl border border-white/5 px-4 py-4">
+        <div className="bg-[#111] rounded-2xl border border-white/5 px-4 py-4">
           <div className="flex items-center gap-2 mb-3">
             <DollarSign size={15} className="text-[#FF7A50]" />
             <h2 className="text-xs font-black text-white uppercase tracking-wide">Your Earnings</h2>
@@ -135,7 +141,7 @@ export default function DriverOrderDetailPage() {
         </div>
 
         {/* Pickup location */}
-        <div className="bg-[#141414] rounded-2xl border border-white/5 px-4 py-4">
+        <div className="bg-[#111] rounded-2xl border border-white/5 px-4 py-4">
           <div className="flex items-center gap-2 mb-3">
             <Store size={15} className="text-[#FF7A50]" />
             <h2 className="text-xs font-black text-white uppercase tracking-wide">Picked Up From</h2>
@@ -147,7 +153,7 @@ export default function DriverOrderDetailPage() {
 
         {/* Delivery address */}
         {addr && (
-          <div className="bg-[#141414] rounded-2xl border border-white/5 px-4 py-4">
+          <div className="bg-[#111] rounded-2xl border border-white/5 px-4 py-4">
             <div className="flex items-center gap-2 mb-3">
               <MapPin size={15} className="text-[#FF7A50]" />
               <h2 className="text-xs font-black text-white uppercase tracking-wide">Delivered To</h2>
@@ -164,7 +170,7 @@ export default function DriverOrderDetailPage() {
 
         {/* Drop-off instructions */}
         {order.dropoff_note && (
-          <div className="bg-[#141414] rounded-2xl border border-white/5 px-4 py-4">
+          <div className="bg-[#111] rounded-2xl border border-white/5 px-4 py-4">
             <div className="flex items-center gap-2 mb-3">
               <MessageSquare size={15} className="text-[#FF7A50]" />
               <h2 className="text-xs font-black text-white uppercase tracking-wide">Drop-off Instructions</h2>
@@ -175,7 +181,7 @@ export default function DriverOrderDetailPage() {
 
         {/* Order items */}
         {order.order_items.length > 0 && (
-          <div className="bg-[#141414] rounded-2xl border border-white/5 overflow-hidden">
+          <div className="bg-[#111] rounded-2xl border border-white/5 overflow-hidden">
             <div className="flex items-center gap-2 px-4 py-3.5 border-b border-white/5">
               <Package size={15} className="text-[#FF7A50]" />
               <h2 className="text-xs font-black text-white uppercase tracking-wide">

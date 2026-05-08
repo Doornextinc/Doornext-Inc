@@ -21,7 +21,7 @@ type Delivery = {
 
 type Period = 'week' | 'month' | 'all'
 
-const PERIOD_LABELS: Record<Period, string> = { week: 'This Week', month: 'This Month', all: 'All Time' }
+const PERIOD_LABELS: Record<Period, string> = { week: 'Last 7 Days', month: 'Last 30 Days', all: 'All Time' }
 
 function groupByDate(deliveries: Delivery[]) {
   const today = new Date(); today.setHours(0, 0, 0, 0)
@@ -84,17 +84,17 @@ export default function HistoryPage() {
   const groups = groupByDate(filtered)
 
   return (
-    <div className="flex flex-col min-h-full">
+    <div className="flex flex-col min-h-full bg-[#080808]">
       <AppHeader title="Delivery History" showBack backHref="/" />
 
       {/* Period filter */}
       <div className="px-4 py-3">
-        <div className="flex gap-1 bg-[#141414] rounded-xl p-1">
+        <div className="flex gap-1 bg-[#111] rounded-xl p-1">
           {(Object.keys(PERIOD_LABELS) as Period[]).map(p => (
             <button
               key={p}
               onClick={() => setPeriod(p)}
-              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${period === p ? 'bg-[#FF6B35] text-white' : 'text-zinc-500 hover:text-slate-300'}`}
+              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${period === p ? 'bg-[#FF7A50] text-white' : 'text-zinc-500 hover:text-slate-300'}`}
             >
               {PERIOD_LABELS[p]}
             </button>
@@ -104,17 +104,17 @@ export default function HistoryPage() {
 
       {loading ? (
         <div className="p-4 space-y-3">
-          {[1, 2, 3, 4].map(i => <div key={i} className="h-20 bg-[#141414] rounded-2xl animate-pulse" />)}
+          {[1, 2, 3, 4].map(i => <div key={i} className="h-20 bg-[#111] rounded-2xl animate-pulse" />)}
         </div>
       ) : (
         <div className="flex-1 p-4 space-y-5">
           {/* Summary */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-[#141414] rounded-2xl border border-white/5 p-4 text-center">
-              <p className="text-2xl font-black text-[#FF6B35]">${totalEarnings.toFixed(2)}</p>
+            <div className="bg-[#111] rounded-2xl border border-white/5 p-4 text-center">
+              <p className="text-2xl font-black text-[#FF7A50]">${totalEarnings.toFixed(2)}</p>
               <p className="text-xs text-zinc-500 mt-1">Total Earned</p>
             </div>
-            <div className="bg-[#141414] rounded-2xl border border-white/5 p-4 text-center">
+            <div className="bg-[#111] rounded-2xl border border-white/5 p-4 text-center">
               <p className="text-2xl font-black text-white">{filtered.length}</p>
               <p className="text-xs text-zinc-500 mt-1">Deliveries</p>
             </div>
@@ -122,7 +122,7 @@ export default function HistoryPage() {
 
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="w-16 h-16 rounded-full bg-[#141414] border border-white/5 flex items-center justify-center mb-4">
+              <div className="w-16 h-16 rounded-full bg-[#111] border border-white/5 flex items-center justify-center mb-4">
                 <Package size={28} className="text-zinc-600" />
               </div>
               <p className="text-zinc-400 font-semibold">No deliveries yet</p>
@@ -137,13 +137,13 @@ export default function HistoryPage() {
                     ${items.reduce((s, d) => s + (d.driver_payout ?? 0), 0).toFixed(2)}
                   </span>
                 </div>
-                <div className="bg-[#141414] rounded-2xl overflow-hidden border border-white/5 divide-y divide-white/5">
+                <div className="bg-[#111] rounded-2xl overflow-hidden border border-white/5 divide-y divide-white/5">
                   {items.map(d => {
                     const addr = d.delivery_address
                     return (
                       <Link key={d.id} href={`/orders/${d.id}`} className="flex items-center gap-3 px-4 py-3.5 active:bg-white/5 transition-colors">
-                        <div className="w-9 h-9 rounded-xl bg-[#FF6B35]/10 flex items-center justify-center flex-shrink-0">
-                          <Package size={16} className="text-[#FF6B35]" />
+                        <div className="w-9 h-9 rounded-xl bg-[#FF7A50]/10 flex items-center justify-center flex-shrink-0">
+                          <Package size={16} className="text-[#FF7A50]" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-bold text-white truncate">
@@ -163,7 +163,7 @@ export default function HistoryPage() {
                           </div>
                         </div>
                         <div className="text-right flex-shrink-0">
-                          <p className="font-black text-[#FF6B35] text-sm">+${(d.driver_payout ?? 0).toFixed(2)}</p>
+                          <p className="font-black text-[#FF7A50] text-sm">+${(d.driver_payout ?? 0).toFixed(2)}</p>
                           <p className="text-[11px] text-zinc-600 mt-0.5">#{d.id.slice(-6).toUpperCase()}</p>
                         </div>
                         <ChevronRight size={14} className="text-zinc-500 flex-shrink-0" />

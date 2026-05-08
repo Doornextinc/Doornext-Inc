@@ -195,7 +195,7 @@ export default function SettingsPage() {
           .from('orders')
           .select('status')
           .eq('nexter_id', userId)
-          .in('status', ['delivered', 'failed']),
+          .in('status', ['delivered', 'failed_delivery']),
       ])
 
       if (profileRes.data) {
@@ -327,7 +327,7 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col min-h-full">
+      <div className="flex flex-col min-h-full bg-[#080808]">
         <AppHeader title="Settings" />
         <div className="p-4 space-y-3">
           <div className="h-28 bg-[#141414] rounded-2xl animate-pulse" />
@@ -348,7 +348,8 @@ export default function SettingsPage() {
   const acceptanceRateStat = (() => {
     const rate = profile?.acceptance_rate
     if (rate == null) return '—'
-    return `${Math.round(rate * 100)}%`
+    // acceptance_rate is stored as 0–100 in driver_profiles (not a 0–1 ratio)
+    return `${Math.round(rate)}%`
   })()
 
   const completionRateStat = completionRate != null ? `${completionRate}%` : '—'
@@ -655,7 +656,7 @@ export default function SettingsPage() {
 
         {/* ── Version footer ────────────────────────────────────────────── */}
         <div className="pt-2 text-center">
-          <p className="text-[11px] text-zinc-800">Nexter Driver v1.0.0</p>
+          <p className="text-[11px] text-zinc-800">Doornext Driver v1.0.0</p>
         </div>
 
       </div>

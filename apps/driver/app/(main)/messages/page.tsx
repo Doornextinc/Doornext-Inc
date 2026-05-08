@@ -100,7 +100,7 @@ export default function MessagesPage() {
   useEffect(() => { loadChats() }, [loadChats])
 
   return (
-    <div className="flex flex-col min-h-full">
+    <div className="flex flex-col min-h-full bg-[#080808]">
       <AppHeader title="Messages" />
 
       {loading ? (

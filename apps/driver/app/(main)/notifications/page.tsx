@@ -89,7 +89,7 @@ export default function NotificationsPage() {
   }, [router])
 
   return (
-    <div className="flex flex-col min-h-full">
+    <div className="flex flex-col min-h-full bg-[#080808]">
       <AppHeader title="Notifications" showBack backHref="/" />
 
       {loading ? (

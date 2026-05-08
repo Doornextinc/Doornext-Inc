@@ -514,16 +514,16 @@ export default function HomePage() {
         >
           {/* Active order banner */}
           {data?.activeOrder && (
-            <Link href="/active" className="block bg-[#E06B38]/10 border border-[#E06B38]/20 rounded-2xl px-4 py-4 backdrop-blur-sm">
+            <Link href="/active" className="block bg-[#FF7A50]/10 border border-[#FF7A50]/20 rounded-2xl px-4 py-4 backdrop-blur-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-black text-[#E06B38] uppercase tracking-wider mb-1">Active Delivery</p>
+                  <p className="text-xs font-black text-[#FF7A50] uppercase tracking-wider mb-1">Active Delivery</p>
                   <p className="font-black text-white text-base">{data.activeOrder.food_maker?.display_name ?? 'Order'}</p>
                   <p className="text-sm text-zinc-400 mt-0.5 capitalize">{data.activeOrder.status.replace(/_/g, ' ')}</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#E06B38] animate-pulse" />
-                  <ChevronRight size={18} className="text-[#E06B38]" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#FF7A50] animate-pulse" />
+                  <ChevronRight size={18} className="text-[#FF7A50]" />
                 </div>
               </div>
             </Link>
@@ -532,7 +532,7 @@ export default function HomePage() {
           {/* ── Stack offer cards — shown when driver already has 1 active order (normal flow) ── */}
           {stackCandidates.length > 0 && !acceptedOrderId && (
             <div className="space-y-2">
-              <p className="text-xs font-black text-[#E06B38] uppercase tracking-wider px-1">
+              <p className="text-xs font-black text-[#FF7A50] uppercase tracking-wider px-1">
                 💰 Add to your route — earn more
               </p>
               {stackCandidates.slice(0, 2).map((candidate) => {
@@ -687,16 +687,18 @@ export default function HomePage() {
                 const dropLng   = order.delivery_address?.lng
 
                 // Driver → pickup distance
-                const toPickupM = (makerLat != null && makerLng != null)
+                // Use truthy check so 0,0 (null-island / ungeocoded address) is treated as invalid
+                const toPickupM = (makerLat && makerLng)
                   ? haversineDistance(driverLat, driverLng, makerLat, makerLng)
                   : null
 
                 // Pickup → dropoff delivery run distance
-                const deliveryM = (makerLat != null && makerLng != null && dropLat != null && dropLng != null)
+                const deliveryM = (makerLat && makerLng && dropLat && dropLng)
                   ? haversineDistance(makerLat, makerLng, dropLat, dropLng)
                   : null
 
-                const hasMapCoords = makerLat != null && makerLng != null && dropLat != null && dropLng != null
+                // Only render the route map when both endpoints have real coords (not null-island 0,0)
+                const hasMapCoords = !!(makerLat && makerLng && dropLat && dropLng)
                 const isAccepting  = accepting === order.id
 
                 const dropoffStreet = order.delivery_address?.street
