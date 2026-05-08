@@ -58,7 +58,13 @@ export default function OnboardingPage() {
   const router = useRouter()
   const [step, setStep] = useState<Step>('loading')
   const [vehicleType, setVehicleType] = useState<string>('car')
-  const [personalInfo, setPersonalInfo] = useState({ fullName: '', dateOfBirth: '', ssnLast4: '', address: '' })
+  const [personalInfo, setPersonalInfo] = useState({
+    fullName: '', dateOfBirth: '', ssnLast4: '',
+    // Structured address fields — combined into `address` string at submit time
+    street: '', apt: '', city: '', state: '', zip: '',
+  })
+  // true once Google Places fires — shows "confirmed" indicator
+  const addressConfirmedRef = useRef(false)
   const [idType, setIdType] = useState<IdType | null>(null)
   const [frontFile, setFrontFile] = useState<File | null>(null)
   const [frontPreview, setFrontPreview] = useState('')
@@ -154,7 +160,7 @@ export default function OnboardingPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step])
 
-  // Attach Google Places autocomplete when on the personal-info step
+  // Attach Google Places autocomplete to the street field on the personal-info step
   useEffect(() => {
     if (step !== 'personal-info') return
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
@@ -172,8 +178,15 @@ export default function OnboardingPage() {
           const place = ac!.getPlace()
           const parsed = parsePlace(place)
           if (!parsed) return
-          const formatted = place.formatted_address ?? `${parsed.street}, ${parsed.city}, ${parsed.state} ${parsed.zip}`
-          setPersonalInfo(p => ({ ...p, address: formatted }))
+          // Populate all structured fields from the suggestion
+          setPersonalInfo(p => ({
+            ...p,
+            street: parsed.street,
+            city:   parsed.city,
+            state:  parsed.state,
+            zip:    parsed.zip,
+          }))
+          addressConfirmedRef.current = true
         })
       })
     }, 100)
@@ -272,7 +285,10 @@ export default function OnboardingPage() {
     if (!personalInfo.fullName.trim()) { setError('Full name is required.'); return }
     if (!personalInfo.dateOfBirth) { setError('Date of birth is required.'); return }
     if (personalInfo.ssnLast4.length < 4) { setError('Last 4 SSN digits are required.'); return }
-    if (!personalInfo.address.trim()) { setError('Residential address is required.'); return }
+    if (!personalInfo.street.trim()) { setError('Street address is required.'); return }
+    if (!personalInfo.city.trim()) { setError('City is required.'); return }
+    if (!personalInfo.state.trim()) { setError('State is required.'); return }
+    if (!personalInfo.zip.trim()) { setError('ZIP code is required.'); return }
     setError(null); setStep('select-id')
   }
 
@@ -363,10 +379,22 @@ export default function OnboardingPage() {
       const registrationPath = registrationFile ? await uploadFile(registrationFile, 'registration') : null
       const selfiePath = await uploadFile(selfieFile!, 'selfie')
 
+      // Combine structured address fields into a single string for the KYC API
+      const fullAddress = [
+        personalInfo.street.trim(),
+        personalInfo.apt.trim() || null,
+        personalInfo.city.trim(),
+        `${personalInfo.state.trim()} ${personalInfo.zip.trim()}`.trim(),
+      ].filter(Boolean).join(', ')
+
       const res = await fetch('/api/driver/submit-kyc', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...personalInfo, idType, frontPath, backPath, insurancePath, registrationPath, selfiePath, bgCheckConsent }),
+        body: JSON.stringify({
+          ...personalInfo,
+          address: fullAddress,
+          idType, frontPath, backPath, insurancePath, registrationPath, selfiePath, bgCheckConsent,
+        }),
       })
 
       if (!res.ok) { const { error: apiError } = await res.json(); throw new Error(apiError ?? 'Submission failed') }
@@ -543,10 +571,75 @@ export default function OnboardingPage() {
                 <input type="text" inputMode="numeric" value={personalInfo.ssnLast4} onChange={e => setPersonalInfo(p => ({ ...p, ssnLast4: e.target.value.replace(/\D/g, '').slice(0, 4) }))} placeholder="••••" maxLength={4} className={`${inputClass()} font-mono tracking-[0.4em] text-center`} />
               </div>
             </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Residential Address <span className="text-red-400">*</span></label>
-              <input ref={addressInputRef} type="text" value={personalInfo.address} onChange={e => setPersonalInfo(p => ({ ...p, address: e.target.value }))} placeholder="Start typing your address…" autoComplete="off" className={inputClass()} />
-              <p className="text-[10px] text-slate-600 mt-1.5">Must match the address on your ID document</p>
+            {/* ── Residential Address — multi-field with Places autocomplete ── */}
+            <div className="space-y-2">
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
+                Residential Address <span className="text-red-400">*</span>
+              </label>
+
+              {/* Street — autocomplete attaches here */}
+              <div className="relative">
+                <input
+                  ref={addressInputRef}
+                  type="text"
+                  value={personalInfo.street}
+                  onChange={e => {
+                    setPersonalInfo(p => ({ ...p, street: e.target.value }))
+                    addressConfirmedRef.current = false
+                  }}
+                  placeholder="Start typing your street address…"
+                  autoComplete="off"
+                  className={`${inputClass()} ${addressConfirmedRef.current ? 'border-green-500/60 focus:border-green-500' : ''}`}
+                />
+                {addressConfirmedRef.current && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-green-400 pointer-events-none">
+                    <CheckCircle size={15} />
+                    <span className="text-[11px] font-bold">Confirmed</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Apt / Unit — optional, no autocomplete */}
+              <input
+                type="text"
+                value={personalInfo.apt}
+                onChange={e => setPersonalInfo(p => ({ ...p, apt: e.target.value }))}
+                placeholder="Apt, Suite, Unit (optional)"
+                autoComplete="address-line2"
+                className={inputClass()}
+              />
+
+              {/* City / State / ZIP — auto-filled by autocomplete, manually editable */}
+              <div className="grid grid-cols-5 gap-2">
+                <input
+                  type="text"
+                  value={personalInfo.city}
+                  onChange={e => setPersonalInfo(p => ({ ...p, city: e.target.value }))}
+                  placeholder="City"
+                  autoComplete="address-level2"
+                  className={`${inputClass()} col-span-2`}
+                />
+                <input
+                  type="text"
+                  value={personalInfo.state}
+                  onChange={e => setPersonalInfo(p => ({ ...p, state: e.target.value.toUpperCase().slice(0, 2) }))}
+                  placeholder="ST"
+                  autoComplete="address-level1"
+                  maxLength={2}
+                  className={`${inputClass()} text-center tracking-widest font-mono`}
+                />
+                <input
+                  type="text"
+                  value={personalInfo.zip}
+                  onChange={e => setPersonalInfo(p => ({ ...p, zip: e.target.value.replace(/\D/g, '').slice(0, 10) }))}
+                  placeholder="ZIP"
+                  autoComplete="postal-code"
+                  inputMode="numeric"
+                  className={`${inputClass()} col-span-2`}
+                />
+              </div>
+
+              <p className="text-[10px] text-slate-600">Must match the address on your ID document</p>
             </div>
           </div>
           <button onClick={handlePersonalInfoNext} className="w-full bg-[#FF6B35] text-white rounded-2xl py-4 font-bold shadow-lg shadow-[#FF6B35]/20 flex items-center justify-center gap-2">
