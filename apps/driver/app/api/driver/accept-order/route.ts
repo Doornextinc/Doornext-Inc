@@ -198,7 +198,10 @@ export async function POST(req: NextRequest) {
   // ── Generate PIN ──────────────────────────────────────────────────────
   const pickup_pin = String(1000 + (crypto.getRandomValues(new Uint32Array(1))[0] % 9000))
 
-  // ── Atomic accept via SECURITY DEFINER RPC ────────────────────────────
+  // ── Atomic accept — RPC preferred, direct CAS update as fallback ─────────
+  // The SECURITY DEFINER RPC provides the strongest atomicity guarantee.
+  // If it's unavailable (not yet deployed), we fall back to a direct UPDATE
+  // with a CAS guard (nexter_id IS NULL + status check + count = 'exact').
   const { data: rpcResult, error: rpcError } = await admin.rpc(
     'accept_order_atomic',
     {
@@ -212,27 +215,70 @@ export async function POST(req: NextRequest) {
   )
 
   if (rpcError) {
-    Sentry.captureException(new Error(`accept_order_atomic error: ${rpcError.message}`), {
-      extra: { orderId, userId: user.id },
+    // RPC not available (function missing / schema mismatch) — fall through to
+    // direct CAS UPDATE. Log at warning, not error, since fallback handles it.
+    Sentry.captureException(new Error(`accept_order_atomic unavailable: ${rpcError.message}`), {
+      level: 'warning',
+      extra: { orderId, userId: user.id, fallback: true },
     })
-    return NextResponse.json(
-      { error: 'Failed to accept order. Please try again.' },
-      { status: 500 }
-    )
-  }
 
-  if (rpcResult === 'taken') {
-    return NextResponse.json(
-      { error: 'Order is no longer available — another driver accepted it.' },
-      { status: 409 }
-    )
-  }
+    // Build update payload
+    const updateFields: Record<string, unknown> = {
+      nexter_id:  user.id,
+      status:     'driver_assigned',
+      pickup_pin,
+      updated_at: new Date().toISOString(),
+    }
+    if (groupId) updateFields.order_group_id = groupId
+    if (bonusAmount > 0) {
+      const { data: cur } = await admin
+        .from('orders').select('driver_payout').eq('id', orderId).single()
+      if (cur) updateFields.driver_payout = (Number(cur.driver_payout) || 0) + bonusAmount
+    }
 
-  if (rpcResult === 'bad_state') {
-    return NextResponse.json(
-      { error: 'Order cannot be accepted in its current state.' },
-      { status: 409 }
-    )
+    // Stamp group_id on already-accepted stacked orders
+    if (existingIds.length > 0 && groupId) {
+      await admin
+        .from('orders')
+        .update({ order_group_id: groupId, updated_at: new Date().toISOString() })
+        .in('id', existingIds)
+    }
+
+    const { error: casError, count: casCount } = await admin
+      .from('orders')
+      .update(updateFields, { count: 'exact' })
+      .eq('id', orderId)
+      .in('status', ['preparing', 'ready'])
+      .is('nexter_id', null)
+
+    if (casError) {
+      Sentry.captureException(casError, { extra: { orderId, userId: user.id, context: 'accept-cas-fallback' } })
+      return NextResponse.json(
+        { error: 'Failed to accept order. Please try again.' },
+        { status: 500 }
+      )
+    }
+    if (casCount === 0) {
+      return NextResponse.json(
+        { error: 'Order is no longer available — another driver accepted it.' },
+        { status: 409 }
+      )
+    }
+    // Fallback succeeded — continue to side-effects below
+  } else {
+    // RPC executed — check result token
+    if (rpcResult === 'taken') {
+      return NextResponse.json(
+        { error: 'Order is no longer available — another driver accepted it.' },
+        { status: 409 }
+      )
+    }
+    if (rpcResult === 'bad_state') {
+      return NextResponse.json(
+        { error: 'Order cannot be accepted in its current state.' },
+        { status: 409 }
+      )
+    }
   }
 
   // ── Upsert route plan ─────────────────────────────────────────────────
