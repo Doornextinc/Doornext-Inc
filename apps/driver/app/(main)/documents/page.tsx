@@ -23,9 +23,9 @@ import {
 
 type KycStatus = 'not_submitted' | 'pending_review' | 'approved' | 'rejected'
 
+// Frontend display model — assembled from both driver_documents and driver_profiles.
+// Field names match what the render logic already uses.
 type DriverDocument = {
-  id: string
-  driver_id: string
   drivers_license_front: string | null
   drivers_license_back: string | null
   selfie_with_id: string | null
@@ -33,7 +33,7 @@ type DriverDocument = {
   vehicle_insurance: string | null
   vehicle_registration: string | null
   kyc_status: KycStatus | null
-  admin_notes: string | null
+  admin_notes: string | null   // maps to driver_documents.review_notes
   vehicle_type: string | null
   vehicle_make: string | null
   vehicle_year: string | null
@@ -207,43 +207,84 @@ export default function DocumentsPage() {
 
     async function load() {
       const supabase = createClient()
-      const { data } = await supabase
-        .from('driver_documents')
-        .select('*')
-        .eq('driver_id', userId)
-        .single()
 
-      if (data) {
-        setDoc(data as DriverDocument)
-        setVehicleForm({
-          vehicle_type: data.vehicle_type ?? '',
-          vehicle_make: data.vehicle_make ?? '',
-          vehicle_year: data.vehicle_year ?? '',
-          vehicle_color: data.vehicle_color ?? '',
-          vehicle_plate: data.vehicle_plate ?? '',
-        })
-
-        // Generate signed URLs for all uploaded paths
-        const paths: { key: DocType; path: string }[] = [
-          { key: 'drivers_license_front', path: data.drivers_license_front },
-          { key: 'drivers_license_back', path: data.drivers_license_back },
-          { key: 'selfie_with_id', path: data.selfie_with_id },
-          { key: 'vehicle_photo', path: data.vehicle_photo },
-          { key: 'vehicle_insurance', path: data.vehicle_insurance },
-          { key: 'vehicle_registration', path: data.vehicle_registration },
-        ].filter((p) => Boolean(p.path)) as { key: DocType; path: string }[]
-
-        const urls: SignedUrls = {}
-        await Promise.all(
-          paths.map(async ({ key, path }) => {
-            const { data: signed } = await supabase.storage
-              .from('driver-documents')
-              .createSignedUrl(path, 3600)
-            if (signed?.signedUrl) urls[key] = signed.signedUrl
-          })
-        )
-        setSignedUrls(urls)
+      // Load document paths from driver_documents (user_id is the unique key).
+      // Cast to a local type since migration 056 columns aren't yet in generated types.
+      type DocRow = {
+        front_path: string | null; back_path: string | null; selfie_path: string | null
+        vehicle_photo_path: string | null; insurance_path: string | null
+        registration_path: string | null; review_notes: string | null
       }
+      const { data: docData } = await supabase
+        .from('driver_documents')
+        .select(
+          'front_path, back_path, selfie_path, vehicle_photo_path, ' +
+          'insurance_path, registration_path, review_notes'
+        )
+        .eq('user_id', userId)
+        .single()
+      const docRow = docData as unknown as DocRow | null
+
+      // Load KYC status + vehicle details from driver_profiles.
+      // vehicle_make/year/color/plate are added by migration 056.
+      type ProfileRow = {
+        kyc_status: string | null; vehicle_type: string | null
+        vehicle_make: string | null; vehicle_year: string | null
+        vehicle_color: string | null; vehicle_plate: string | null
+      }
+      const { data: profileData } = await supabase
+        .from('driver_profiles')
+        .select('kyc_status, vehicle_type, vehicle_make, vehicle_year, vehicle_color, vehicle_plate')
+        .eq('id', userId)
+        .single()
+      const profileRow = profileData as unknown as ProfileRow | null
+
+      // Map DB column names to the frontend display model
+      const combined: DriverDocument = {
+        drivers_license_front: docRow?.front_path         ?? null,
+        drivers_license_back:  docRow?.back_path          ?? null,
+        selfie_with_id:        docRow?.selfie_path        ?? null,
+        vehicle_photo:         docRow?.vehicle_photo_path ?? null,
+        vehicle_insurance:     docRow?.insurance_path     ?? null,
+        vehicle_registration:  docRow?.registration_path  ?? null,
+        admin_notes:           docRow?.review_notes       ?? null,
+        kyc_status:            (profileRow?.kyc_status as KycStatus) ?? 'not_submitted',
+        vehicle_type:          profileRow?.vehicle_type   ?? null,
+        vehicle_make:          profileRow?.vehicle_make   ?? null,
+        vehicle_year:          profileRow?.vehicle_year   ?? null,
+        vehicle_color:         profileRow?.vehicle_color  ?? null,
+        vehicle_plate:         profileRow?.vehicle_plate  ?? null,
+      }
+
+      setDoc(combined)
+      setVehicleForm({
+        vehicle_type:  profileRow?.vehicle_type  ?? '',
+        vehicle_make:  profileRow?.vehicle_make  ?? '',
+        vehicle_year:  profileRow?.vehicle_year  ?? '',
+        vehicle_color: profileRow?.vehicle_color ?? '',
+        vehicle_plate: profileRow?.vehicle_plate ?? '',
+      })
+
+      // Generate signed URLs for all uploaded storage paths
+      const storagePaths: { key: DocType; path: string }[] = [
+        { key: 'drivers_license_front', path: combined.drivers_license_front ?? '' },
+        { key: 'drivers_license_back',  path: combined.drivers_license_back  ?? '' },
+        { key: 'selfie_with_id',        path: combined.selfie_with_id        ?? '' },
+        { key: 'vehicle_photo',         path: combined.vehicle_photo         ?? '' },
+        { key: 'vehicle_insurance',     path: combined.vehicle_insurance     ?? '' },
+        { key: 'vehicle_registration',  path: combined.vehicle_registration  ?? '' },
+      ].filter((p) => Boolean(p.path)) as { key: DocType; path: string }[]
+
+      const urls: SignedUrls = {}
+      await Promise.all(
+        storagePaths.map(async ({ key, path }) => {
+          const { data: signed } = await supabase.storage
+            .from('driver-documents')
+            .createSignedUrl(path, 3600)
+          if (signed?.signedUrl) urls[key] = signed.signedUrl
+        })
+      )
+      setSignedUrls(urls)
       setLoading(false)
     }
     load()
@@ -258,25 +299,27 @@ export default function DocumentsPage() {
       fd.append('docType', docType)
       fd.append('file', file)
       const res = await fetch('/api/driver/upload-document', { method: 'POST', body: fd })
-      if (!res.ok) return
+      const ct = res.headers.get('content-type') ?? ''
+      if (!res.ok) {
+        const msg = ct.includes('application/json')
+          ? (await res.json().catch(() => ({}))).error ?? 'Upload failed'
+          : `Upload failed (${res.status})`
+        console.error('[upload]', msg)
+        return
+      }
+      const { path: storagePath } = ct.includes('application/json')
+        ? await res.json()
+        : { path: null }
 
-      // Re-fetch to get updated paths + new signed URL
-      const supabase = createClient()
-      const { data } = await supabase
-        .from('driver_documents')
-        .select('*')
-        .eq('driver_id', userId)
-        .single()
-      if (data) {
-        setDoc(data as DriverDocument)
-        const path = (data as DriverDocument)[docType]
-        if (path) {
-          const { data: signed } = await supabase.storage
-            .from('driver-documents')
-            .createSignedUrl(path, 3600)
-          if (signed?.signedUrl) {
-            setSignedUrls((prev) => ({ ...prev, [docType]: signed.signedUrl }))
-          }
+      // Update local state immediately with the returned path + generate signed URL
+      if (storagePath) {
+        setDoc((prev) => prev ? { ...prev, [docType]: storagePath } : prev)
+        const supabase = createClient()
+        const { data: signed } = await supabase.storage
+          .from('driver-documents')
+          .createSignedUrl(storagePath, 3600)
+        if (signed?.signedUrl) {
+          setSignedUrls((prev) => ({ ...prev, [docType]: signed.signedUrl }))
         }
       }
     } finally {

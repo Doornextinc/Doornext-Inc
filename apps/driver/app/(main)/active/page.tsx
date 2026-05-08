@@ -8,12 +8,22 @@ import type { OrderStatus } from '@doornext/shared/types'
 import {
   MapPin, Phone, CheckCircle, Navigation, Package,
   ChevronDown, ChevronUp, Banknote, ArrowRight, Clock, Star, AlertTriangle, X, MessageCircle,
-  ChevronRight, Camera, RotateCcw, MessageSquare, Timer, Route,
+  ChevronRight, Camera, RotateCcw, MessageSquare, Timer, Route, History, TrendingUp,
 } from 'lucide-react'
 import { haversineDistance, estimateMinutes, formatEta, arrivalTimeStr, formatDistance } from '@doornext/shared/utils'
 import { AppHeader } from '@/components/layout/app-header'
 import { playWithHaptic } from '@/lib/notification-sounds'
 import type { RouteStop } from '@doornext/shared/stacking'
+
+type TripRecord = {
+  id: string
+  driver_payout: number
+  tip_amount: number
+  delivered_at: string | null
+  created_at: string
+  delivery_address: { street?: string; city?: string; state?: string } | null
+  food_maker: { display_name: string } | null
+}
 
 type OrderItem = { quantity: number; unit_price: number; menu_items: { name: string } | null }
 type ActiveOrder = {
@@ -74,15 +84,41 @@ function formatCountdown(secs: number) {
   return `${m}:${s.toString().padStart(2, '0')}`
 }
 
+type NavProvider = 'google' | 'apple' | 'waze'
+
+function getNavProvider(): NavProvider {
+  if (typeof window === 'undefined') return 'google'
+  return (localStorage.getItem('driver_nav_provider') as NavProvider | null) ?? 'google'
+}
+
+function buildNavUrl(query: string, lat?: number | null, lng?: number | null): string {
+  const provider = getNavProvider()
+  const hasCoords = lat != null && lng != null
+  switch (provider) {
+    case 'apple':
+      return hasCoords
+        ? `https://maps.apple.com/?daddr=${lat},${lng}`
+        : `https://maps.apple.com/?daddr=${encodeURIComponent(query)}`
+    case 'waze':
+      return hasCoords
+        ? `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`
+        : `https://waze.com/ul?q=${encodeURIComponent(query)}&navigate=yes`
+    default: // google
+      return hasCoords
+        ? `https://maps.google.com/?q=${lat},${lng}`
+        : `https://maps.google.com/?q=${encodeURIComponent(query)}`
+  }
+}
+
 function mapsUrl(addr: ActiveOrder['delivery_address']): string {
   if (!addr) return '#'
-  return `https://maps.google.com/?q=${encodeURIComponent(`${addr.street}, ${addr.city}, ${addr.state}`)}`
+  const query = `${addr.street}, ${addr.city}, ${addr.state}`
+  return buildNavUrl(query, addr.lat, addr.lng)
 }
 
 function makerMapsUrl(maker: ActiveOrder['food_maker']): string {
   if (!maker) return '#'
-  if (maker.lat && maker.lng) return `https://maps.google.com/?q=${maker.lat},${maker.lng}`
-  return `https://maps.google.com/?q=${encodeURIComponent(maker.display_name)}`
+  return buildNavUrl(maker.display_name, maker.lat, maker.lng)
 }
 
 // ── SlideToConfirm ──────────────────────────────────────────────────────────
@@ -328,6 +364,124 @@ function RoutePlanPanel({ stops }: { stops: RouteStop[] }) {
   )
 }
 
+// ── TripsHistoryPanel ────────────────────────────────────────────────────────
+function TripsHistoryPanel({
+  userId,
+  trips,
+  loading,
+  loaded,
+  onTripsLoaded,
+}: {
+  userId: string | null
+  trips: TripRecord[]
+  loading: boolean
+  loaded: boolean
+  onTripsLoaded: (data: TripRecord[]) => void
+}) {
+  useEffect(() => {
+    if (loaded || !userId) return
+    const supabase = createClient()
+    ;(async () => {
+      try {
+        const { data } = await supabase
+          .from('orders')
+          .select('id, driver_payout, tip_amount, delivered_at, created_at, delivery_address, food_maker:food_makers(display_name)')
+          .eq('nexter_id', userId)
+          .eq('status', 'delivered')
+          .order('delivered_at', { ascending: false })
+          .limit(50)
+        onTripsLoaded((data as unknown as TripRecord[]) ?? [])
+      } catch { /* silently ignore */ }
+    })()
+  }, [loaded, userId, onTripsLoaded])
+
+  if (loading || !loaded) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <div className="w-8 h-8 border-[3px] border-[#FF7A50] border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  if (trips.length === 0) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center px-6 text-center py-16">
+        <div className="w-20 h-20 rounded-3xl bg-[#141414] border border-white/5 flex items-center justify-center mb-5">
+          <TrendingUp size={36} className="text-zinc-700" />
+        </div>
+        <p className="text-xl font-black text-white mb-2">No trips yet</p>
+        <p className="text-zinc-500 text-sm">Completed deliveries will appear here</p>
+      </div>
+    )
+  }
+
+  const totalEarned = trips.reduce((s, t) => s + (t.driver_payout ?? 0), 0)
+
+  return (
+    <div className="flex-1 overflow-y-auto">
+      {/* Summary strip */}
+      <div className="flex items-center gap-4 px-4 py-3 border-b border-white/5 bg-[#0D0D0D]">
+        <div className="flex-1 text-center">
+          <p className="text-lg font-black text-white">{trips.length}</p>
+          <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wider">Trips</p>
+        </div>
+        <div className="w-px h-8 bg-white/5" />
+        <div className="flex-1 text-center">
+          <p className="text-lg font-black text-[#FF7A50]">${totalEarned.toFixed(2)}</p>
+          <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wider">Earned</p>
+        </div>
+        <div className="w-px h-8 bg-white/5" />
+        <div className="flex-1 text-center">
+          <p className="text-lg font-black text-white">
+            ${trips.length > 0 ? (totalEarned / trips.length).toFixed(2) : '0.00'}
+          </p>
+          <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wider">Avg</p>
+        </div>
+      </div>
+
+      {/* Trip list */}
+      <div className="divide-y divide-white/5">
+        {trips.map((trip) => {
+          const maker = Array.isArray(trip.food_maker) ? trip.food_maker[0] : trip.food_maker
+          const addr = trip.delivery_address
+          const deliveredAt = trip.delivered_at ?? trip.created_at
+          const date = new Date(deliveredAt)
+          const isToday = new Date().toDateString() === date.toDateString()
+          const dateStr = isToday
+            ? date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+            : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+
+          return (
+            <div key={trip.id} className="flex items-start gap-3 px-4 py-3.5">
+              <div className="w-9 h-9 rounded-xl bg-[#FF7A50]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Package size={15} className="text-[#FF7A50]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-white leading-tight truncate">
+                  {maker?.display_name ?? 'Unknown restaurant'}
+                </p>
+                {addr && (
+                  <p className="text-[11px] text-zinc-500 mt-0.5 truncate">
+                    → {[addr.street, addr.city].filter(Boolean).join(', ')}
+                  </p>
+                )}
+                <p className="text-[11px] text-zinc-700 mt-0.5">{dateStr}</p>
+              </div>
+              <div className="text-right flex-shrink-0">
+                <p className="text-sm font-black text-[#FF7A50]">+${(trip.driver_payout ?? 0).toFixed(2)}</p>
+                {(trip.tip_amount ?? 0) > 0 && (
+                  <p className="text-[11px] text-green-500">+${trip.tip_amount.toFixed(2)} tip</p>
+                )}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+      <div className="h-6" />
+    </div>
+  )
+}
+
 export default function ActiveDeliveryPage() {
   const router = useRouter()
   const { setActiveOrder, setActiveOrders, removeActiveOrder, setLocation } = useDriverStore()
@@ -358,6 +512,11 @@ export default function ActiveDeliveryPage() {
   const [cantDeliverReason, setCantDeliverReason] = useState<string | null>(null)
   const [submittingFailed, setSubmittingFailed] = useState(false)
   const [failedError, setFailedError] = useState<string | null>(null)
+  // Trips tab
+  const [activeTab, setActiveTab] = useState<'active' | 'history'>('active')
+  const [trips, setTrips] = useState<TripRecord[]>([])
+  const [tripsLoading, setTripsLoading] = useState(false)
+  const [tripsLoaded, setTripsLoaded] = useState(false)
   // Proof photo state
   const [proofPhoto, setProofPhoto] = useState<File | null>(null)
   const [proofPhotoUrl, setProofPhotoUrl] = useState<string | null>(null)
@@ -545,6 +704,28 @@ export default function ActiveDeliveryPage() {
     }
   }, [estimatedArrivalAt, elapsed])
 
+  // Load trip history when the History tab is shown
+  useEffect(() => {
+    if (activeTab !== 'history' || tripsLoaded || !userId) return
+    setTripsLoading(true)
+    const supabase = createClient()
+    ;(async () => {
+      try {
+        const { data } = await supabase
+          .from('orders')
+          .select('id, driver_payout, tip_amount, delivered_at, created_at, delivery_address, food_maker:food_makers(display_name)')
+          .eq('nexter_id', userId)
+          .eq('status', 'delivered')
+          .order('delivered_at', { ascending: false })
+          .limit(50)
+        setTrips((data as unknown as TripRecord[]) ?? [])
+        setTripsLoaded(true)
+      } catch { /* silently ignore — trips just won't show */ } finally {
+        setTripsLoading(false)
+      }
+    })()
+  }, [activeTab, tripsLoaded, userId])
+
   const handleProofPhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -649,7 +830,7 @@ export default function ActiveDeliveryPage() {
   if (loading) {
     return (
       <div className="flex flex-col min-h-full">
-        <AppHeader title="Active Delivery" />
+        <AppHeader title="Trips" />
         <div className="flex-1 flex items-center justify-center">
           <div className="w-10 h-10 border-[3px] border-[#FF7A50] border-t-transparent rounded-full animate-spin" />
         </div>
@@ -674,7 +855,7 @@ export default function ActiveDeliveryPage() {
   if (!order && storeActiveOrderId && retryCount < MAX_RETRIES) {
     return (
       <div className="flex flex-col min-h-full">
-        <AppHeader title="Active Delivery" />
+        <AppHeader title="Trips" />
         <div className="flex-1 flex items-center justify-center">
           <div className="w-10 h-10 border-[3px] border-[#FF7A50] border-t-transparent rounded-full animate-spin" />
         </div>
@@ -683,22 +864,17 @@ export default function ActiveDeliveryPage() {
   }
 
   if (!order) {
+    // No active delivery — show the Trips page with History tab selected
     return (
-      <div className="flex flex-col min-h-full">
-        <AppHeader title="Active Delivery" />
-        <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
-          <div className="w-24 h-24 rounded-3xl bg-[#141414] border border-white/5 flex items-center justify-center mb-6">
-            <Package size={44} className="text-zinc-600" />
-          </div>
-          <h2 className="text-2xl font-black text-white mb-2">No active delivery</h2>
-          <p className="text-zinc-500 text-base mb-8">Accept a pickup to start delivering</p>
-          <button
-            onClick={() => router.push('/')}
-            className="bg-[#FF7A50] text-white rounded-2xl px-10 py-4 font-black text-base shadow-lg shadow-[#FF7A50]/20"
-          >
-            Go to Home
-          </button>
-        </div>
+      <div className="flex flex-col min-h-full bg-[#080808]">
+        <AppHeader title="Trips" />
+        <TripsHistoryPanel
+          userId={userId}
+          trips={trips}
+          loading={tripsLoading}
+          loaded={tripsLoaded}
+          onTripsLoaded={(data) => { setTrips(data); setTripsLoaded(true) }}
+        />
       </div>
     )
   }
@@ -754,7 +930,41 @@ export default function ActiveDeliveryPage() {
 
   return (
     <div className="flex flex-col min-h-full pb-[144px]">
-      <AppHeader title={isStacked ? `Active Route (${allOrders.length} orders)` : 'Active Delivery'} />
+      <AppHeader title="Trips" />
+
+      {/* ── Active / History tab strip ── */}
+      <div className="flex gap-1 px-4 pt-3 pb-2 bg-[#080808] border-b border-white/5">
+        <button
+          onClick={() => setActiveTab('active')}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-black transition-colors ${
+            activeTab === 'active' ? 'bg-[#FF7A50] text-white' : 'text-zinc-500 hover:text-zinc-300'
+          }`}
+        >
+          <Package size={12} /> Active
+        </button>
+        <button
+          onClick={() => setActiveTab('history')}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-black transition-colors ${
+            activeTab === 'history' ? 'bg-[#FF7A50] text-white' : 'text-zinc-500 hover:text-zinc-300'
+          }`}
+        >
+          <History size={12} /> History
+        </button>
+      </div>
+
+      {/* ── History tab ── */}
+      {activeTab === 'history' && (
+        <TripsHistoryPanel
+          userId={userId}
+          trips={trips}
+          loading={tripsLoading}
+          loaded={tripsLoaded}
+          onTripsLoaded={(data) => { setTrips(data); setTripsLoaded(true) }}
+        />
+      )}
+
+      {/* ── Active delivery content ── */}
+      {activeTab === 'active' && <>
 
       {/* ── Order switcher tabs — stacked mode only ── */}
       {isStacked && allOrders.length > 1 && (
@@ -1461,6 +1671,9 @@ export default function ActiveDeliveryPage() {
           )}
         </div>
       )}
+
+      </>} {/* end activeTab === 'active' */}
+
     </div>
   )
 }

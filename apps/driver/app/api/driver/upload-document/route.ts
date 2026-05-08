@@ -19,6 +19,16 @@ const ALLOWED_DOC_TYPES = [
 
 type DocType = (typeof ALLOWED_DOC_TYPES)[number]
 
+// Maps the frontend docType slot names to the actual driver_documents column names.
+const DOC_COLUMN_MAP: Record<DocType, string> = {
+  drivers_license_front: 'front_path',
+  drivers_license_back:  'back_path',
+  selfie_with_id:        'selfie_path',
+  vehicle_photo:         'vehicle_photo_path',
+  vehicle_insurance:     'insurance_path',
+  vehicle_registration:  'registration_path',
+}
+
 export async function POST(req: NextRequest) {
   const auth = await requireDriver(req)
   if (!auth.ok) return auth.response
@@ -57,9 +67,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: uploadError.message }, { status: 500 })
   }
 
-  // The storage path is returned to the caller (onboarding page).
-  // driver_documents DB rows are written in bulk by /api/driver/submit-kyc
-  // once the driver completes all steps — writing them here too caused column
-  // name mismatches (docType values vs the actual column names in the table).
+  // Write (or update) the storage path in driver_documents using the correct column name.
+  // This powers the Documents page which lets drivers replace individual documents after
+  // KYC approval. The onboarding flow's submit-kyc endpoint will overwrite these paths
+  // with the same values when a full KYC submission is made — that's safe and intentional.
+  const column = DOC_COLUMN_MAP[docType as DocType]
+  const { error: dbError } = await admin
+    .from('driver_documents')
+    .upsert(
+      { user_id: userId, [column]: storagePath },
+      { onConflict: 'user_id' }
+    )
+
+  if (dbError) {
+    // Storage upload succeeded; log the DB error but don't fail the request.
+    // The caller can still use the returned path for bulk submit-kyc writes.
+    console.error('[upload-document] DB upsert failed:', dbError.message)
+  }
+
   return NextResponse.json({ path: storagePath })
 }

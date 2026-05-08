@@ -6,6 +6,12 @@ import * as Sentry from '@sentry/nextjs'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { snapshotFees } from '@doornext/shared/pricing'
 
+// NOTE: This route is NOT called by any frontend page.
+// `update-status` already runs settlement when status transitions to `delivered`.
+// This endpoint exists as a manual reconciliation tool — it can be called by
+// support/ops tooling to re-run settlement on a delivered order that was missed
+// (e.g. if `update-status` crashed mid-settlement). All upserts use
+// `ignoreDuplicates: true` so it is fully idempotent and safe to call multiple times.
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown'
   if (!await checkRateLimit(`complete-delivery:${ip}`, 20, 60)) {

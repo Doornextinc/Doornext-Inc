@@ -7,7 +7,7 @@ import { useDriverStore } from '@/store/driver-store'
 
 const navItems = [
   { href: '/',          icon: Home,        label: 'Home',     exact: true  },
-  { href: '/active',    icon: Package,     label: 'Active',   exact: false },
+  { href: '/active',    icon: Package,     label: 'Trips',    exact: false },
   { href: '/earnings',  icon: TrendingUp,  label: 'Earnings', exact: false },
   { href: '/profile',   icon: User,        label: 'Account',  exact: false },
 ]
