@@ -366,11 +366,29 @@ export default function OnboardingPage() {
     if (!selfieFile) { setError('Please capture your selfie.'); return }
     setError(null); setStep('submitting')
     try {
-      const uploadFile = async (file: File, name: string): Promise<string> => {
-        const fd = new FormData(); fd.append('file', file); fd.append('name', name)
-        const res = await fetch('/api/driver/upload-doc', { method: 'POST', body: fd })
-        if (!res.ok) { const { error } = await res.json(); throw new Error(`Upload failed: ${error}`) }
-        return (await res.json()).path
+      // Map onboarding slot names to the docType values expected by /api/driver/upload-document
+      const DOC_TYPE_MAP: Record<string, string> = {
+        front:        'drivers_license_front',
+        back:         'drivers_license_back',
+        selfie:       'selfie_with_id',
+        insurance:    'vehicle_insurance',
+        registration: 'vehicle_registration',
+      }
+
+      const uploadFile = async (file: File, slot: string): Promise<string> => {
+        const docType = DOC_TYPE_MAP[slot] ?? slot
+        const fd = new FormData()
+        fd.append('file', file)
+        fd.append('docType', docType)
+        const res = await fetch('/api/driver/upload-document', { method: 'POST', body: fd })
+        // Guard against non-JSON responses (e.g. 404 / 500 HTML pages)
+        const contentType = res.headers.get('content-type') ?? ''
+        if (!contentType.includes('application/json')) {
+          throw new Error(`Upload failed (${res.status}) — please try again.`)
+        }
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error ?? `Upload failed (${res.status})`)
+        return data.path as string
       }
 
       const frontPath = await uploadFile(frontFile!, 'front')
