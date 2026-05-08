@@ -3,39 +3,16 @@
 /**
  * RoutePreviewMap
  *
- * A compact, non-interactive Google Maps embed that renders a pickup pin
- * (orange) and a dropoff pin (teal) connected by a dashed route line.
- * Used inside delivery-request cards so drivers can see the itinerary
- * at a glance before accepting.
+ * Compact, non-interactive route preview using OpenStreetMap tiles (no API key).
+ * Renders an OSM iframe auto-fitted to the pickup→dropoff bounding box, then
+ * overlays an SVG dashed line and coloured pins via absolute positioning.
+ *
+ * The same dark CSS filter as LiveMap is applied for visual consistency.
  */
-import { useEffect, useRef } from 'react'
-import { loadGoogleMapsScript } from '@/lib/google-maps'
-import { darkMapStyle } from '@/lib/mapStyles'
+import { useMemo } from 'react'
 
-// SVG data URIs for the two pin styles —— kept inline so the component is
-// self-contained and doesn't depend on vehicleIcons (which are top-down car
-// sprites, not map pins).
-const PICKUP_PIN = `data:image/svg+xml,${encodeURIComponent(
-  `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="44" viewBox="0 0 36 44">
-    <filter id="s"><feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.4"/></filter>
-    <path d="M18 2C10.27 2 4 8.27 4 16c0 10.5 14 26 14 26S32 26.5 32 16C32 8.27 25.73 2 18 2z"
-      fill="#FF7A50" filter="url(#s)"/>
-    <circle cx="18" cy="16" r="6" fill="white" fill-opacity="0.9"/>
-    <text x="18" y="20" text-anchor="middle" font-size="9" font-weight="900"
-      font-family="system-ui,sans-serif" fill="#FF7A50">P</text>
-  </svg>`
-)}`
-
-const DROPOFF_PIN = `data:image/svg+xml,${encodeURIComponent(
-  `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="44" viewBox="0 0 36 44">
-    <filter id="s"><feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.4"/></filter>
-    <path d="M18 2C10.27 2 4 8.27 4 16c0 10.5 14 26 14 26S32 26.5 32 16C32 8.27 25.73 2 18 2z"
-      fill="#22d3ee" filter="url(#s)"/>
-    <circle cx="18" cy="16" r="6" fill="white" fill-opacity="0.9"/>
-    <text x="18" y="20" text-anchor="middle" font-size="9" font-weight="900"
-      font-family="system-ui,sans-serif" fill="#0891b2">D</text>
-  </svg>`
-)}`
+// Degrees of padding added around the bbox on every side (~500–900 m typical)
+const PAD = 0.01
 
 export interface RoutePreviewMapProps {
   pickupLat: number
@@ -54,92 +31,96 @@ export function RoutePreviewMap({
   pickupLabel = 'Pickup',
   dropoffLabel = 'Dropoff',
 }: RoutePreviewMapProps) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const mapRef       = useRef<google.maps.Map | null>(null)
-  // Track whether the map was already initialised for this component instance
-  const initRef      = useRef(false)
+  const { src, pickupPct, dropoffPct } = useMemo(() => {
+    // Build a bounding box that contains both points with padding
+    const minLat = Math.min(pickupLat, dropoffLat) - PAD
+    const maxLat = Math.max(pickupLat, dropoffLat) + PAD
+    const minLng = Math.min(pickupLng, dropoffLng) - PAD
+    const maxLng = Math.max(pickupLng, dropoffLng) + PAD
 
-  useEffect(() => {
-    if (initRef.current) return
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
-    if (!apiKey) return
+    const bbox = `${minLng},${minLat},${maxLng},${maxLat}`
+    const src  = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik`
 
-    loadGoogleMapsScript(apiKey).then(() => {
-      if (!containerRef.current || initRef.current) return
-      initRef.current = true
+    // Convert lat/lng → % position within the rendered bbox.
+    // OSM renders: x = left → right (lng min → max), y = top → bottom (lat max → min)
+    const lngSpan = maxLng - minLng
+    const latSpan = maxLat - minLat
 
-      const map = new window.google.maps.Map(containerRef.current, {
-        disableDefaultUI:   true,
-        gestureHandling:    'none',
-        keyboardShortcuts:  false,
-        clickableIcons:     false,
-        styles:             darkMapStyle,
-        backgroundColor:    '#212121',
-        // Initial center/zoom — will be overridden by fitBounds below
-        center: { lat: (pickupLat + dropoffLat) / 2, lng: (pickupLng + dropoffLng) / 2 },
-        zoom: 13,
-      })
-      mapRef.current = map
-
-      // Auto-fit so both markers are always visible
-      const bounds = new window.google.maps.LatLngBounds()
-      bounds.extend({ lat: pickupLat, lng: pickupLng })
-      bounds.extend({ lat: dropoffLat, lng: dropoffLng })
-      map.fitBounds(bounds, { top: 40, bottom: 40, left: 40, right: 40 })
-
-      // Pickup marker (orange pin)
-      new window.google.maps.Marker({
-        position: { lat: pickupLat, lng: pickupLng },
-        map,
-        title: pickupLabel,
-        icon: {
-          url:        PICKUP_PIN,
-          scaledSize: new window.google.maps.Size(36, 44),
-          anchor:     new window.google.maps.Point(18, 44),
-        },
-        zIndex: 2,
-      })
-
-      // Dropoff marker (teal pin)
-      new window.google.maps.Marker({
-        position: { lat: dropoffLat, lng: dropoffLng },
-        map,
-        title: dropoffLabel,
-        icon: {
-          url:        DROPOFF_PIN,
-          scaledSize: new window.google.maps.Size(36, 44),
-          anchor:     new window.google.maps.Point(18, 44),
-        },
-        zIndex: 2,
-      })
-
-      // Dashed orange polyline connecting pickup → dropoff
-      new window.google.maps.Polyline({
-        path: [
-          { lat: pickupLat, lng: pickupLng },
-          { lat: dropoffLat, lng: dropoffLng },
-        ],
-        map,
-        strokeOpacity: 0,   // hide solid stroke; we draw dashes via icons
-        icons: [
-          {
-            icon: {
-              path:          'M 0,-1 0,1',
-              strokeOpacity: 0.85,
-              strokeColor:   '#FF7A50',
-              scale:         3,
-            },
-            offset: '0',
-            repeat: '16px',
-          },
-        ],
-      })
+    const pct = (lat: number, lng: number) => ({
+      left: ((lng - minLng) / lngSpan) * 100,
+      top:  ((maxLat - lat) / latSpan) * 100,
     })
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // only run on mount — coordinates are stable per card render
 
-  // pointer-events:none prevents the Google Maps touch handlers from
-  // blocking scroll/tap events in the parent bottom-sheet container.
-  // The map is read-only (gestureHandling:'none') so no interactivity is lost.
-  return <div ref={containerRef} className="w-full h-full" style={{ pointerEvents: 'none' }} />
+    return { src, pickupPct: pct(pickupLat, pickupLng), dropoffPct: pct(dropoffLat, dropoffLng) }
+  }, [pickupLat, pickupLng, dropoffLat, dropoffLng])
+
+  return (
+    <div
+      className="relative w-full h-full overflow-hidden"
+      style={{ pointerEvents: 'none' }}
+      aria-label={`Route from ${pickupLabel} to ${dropoffLabel}`}
+    >
+      {/* OSM tile iframe — same dark CSS filter as LiveMap */}
+      <iframe
+        src={src}
+        title="Route preview"
+        className="absolute inset-0 w-full h-full border-0"
+        style={{
+          filter: 'invert(93%) hue-rotate(180deg) saturate(0.65) brightness(0.82)',
+          transform: 'scale(1.06)',
+        }}
+      />
+
+      {/* SVG overlay: dashed route line */}
+      <svg
+        className="absolute inset-0 w-full h-full"
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+        style={{ overflow: 'visible' }}
+      >
+        <line
+          x1={`${pickupPct.left}%`}
+          y1={`${pickupPct.top}%`}
+          x2={`${dropoffPct.left}%`}
+          y2={`${dropoffPct.top}%`}
+          stroke="#FF7A50"
+          strokeWidth="2"
+          strokeDasharray="4 3"
+          strokeLinecap="round"
+          vectorEffect="non-scaling-stroke"
+          opacity="0.9"
+        />
+      </svg>
+
+      {/* Pickup pin — orange */}
+      <div
+        className="absolute"
+        style={{
+          left:      `${pickupPct.left}%`,
+          top:       `${pickupPct.top}%`,
+          transform: 'translate(-50%, -50%)',
+        }}
+      >
+        <div
+          className="w-4 h-4 rounded-full border-2 border-white shadow-lg"
+          style={{ backgroundColor: '#FF7A50', boxShadow: '0 2px 8px rgba(255,122,80,0.6)' }}
+        />
+      </div>
+
+      {/* Dropoff pin — cyan */}
+      <div
+        className="absolute"
+        style={{
+          left:      `${dropoffPct.left}%`,
+          top:       `${dropoffPct.top}%`,
+          transform: 'translate(-50%, -50%)',
+        }}
+      >
+        <div
+          className="w-4 h-4 rounded-full border-2 border-white shadow-lg"
+          style={{ backgroundColor: '#22d3ee', boxShadow: '0 2px 8px rgba(34,211,238,0.5)' }}
+        />
+      </div>
+    </div>
+  )
 }
