@@ -68,49 +68,49 @@ const ACTION_CONFIG: Partial<Record<OrderStatus, {
 }
 
 const STATE_BANNER: Partial<Record<OrderStatus, {
-  bg: string; dot: string; title: string; sub: (mins: number) => string
+  bg: string; dot: string; title: string; sub: (display: string) => string
 }>> = {
   pending: {
     bg: 'bg-red-50 border-red-100',
     dot: 'bg-red-500',
     title: 'New Order — needs your attention!',
-    sub: (m) => `Received ${m} min${m !== 1 ? 's' : ''} ago`,
+    sub: (d) => d === 'just now' ? 'Just received' : `Received ${d} ago`,
   },
   confirmed: {
     bg: 'bg-blue-50 border-blue-100',
     dot: 'bg-blue-500',
     title: 'Order accepted',
-    sub: (m) => `Waiting ${m} min${m !== 1 ? 's' : ''} — start cooking when ready`,
+    sub: (d) => d === 'just now' ? 'Just accepted — start cooking when ready' : `Waiting ${d} — start cooking when ready`,
   },
   preparing: {
     bg: 'bg-orange-50 border-orange-100',
     dot: 'bg-[#FF6B35]',
     title: 'Cooking in progress',
-    sub: (m) => `Preparing for ${m} min${m !== 1 ? 's' : ''}`,
+    sub: (d) => d === 'just now' ? 'Just started preparing' : `Preparing for ${d}`,
   },
   ready: {
     bg: 'bg-emerald-50 border-emerald-100',
     dot: 'bg-emerald-500',
     title: 'Ready for driver pickup!',
-    sub: (m) => `Marked ready ${m} min${m !== 1 ? 's' : ''} ago`,
+    sub: (d) => d === 'just now' ? 'Just marked ready' : `Marked ready ${d} ago`,
   },
   arrived_at_maker: {
     bg: 'bg-amber-50 border-amber-100',
     dot: 'bg-amber-500',
     title: 'Driver has arrived — enter their PIN to confirm pickup',
-    sub: (m) => `Driver waiting ${m} min${m !== 1 ? 's' : ''}`,
+    sub: (d) => d === 'just now' ? 'Driver just arrived' : `Driver waiting ${d}`,
   },
   picked_up: {
     bg: 'bg-purple-50 border-purple-100',
     dot: 'bg-purple-500',
     title: 'Picked up by driver',
-    sub: (m) => `On the way for ${m} min${m !== 1 ? 's' : ''}`,
+    sub: (d) => d === 'just now' ? 'Just picked up' : `On the way for ${d}`,
   },
   on_the_way: {
     bg: 'bg-purple-50 border-purple-100',
     dot: 'bg-purple-500',
     title: 'Driver on the way',
-    sub: (m) => `In transit for ${m} min${m !== 1 ? 's' : ''}`,
+    sub: (d) => d === 'just now' ? 'Just started transit' : `In transit for ${d}`,
   },
   delivered: {
     bg: 'bg-gray-50 border-gray-100',
@@ -126,8 +126,14 @@ const STATE_BANNER: Partial<Record<OrderStatus, {
   },
 }
 
-function elapsedMins(fromIso: string) {
-  return Math.floor((Date.now() - new Date(fromIso).getTime()) / 60000)
+/** Returns a human-readable elapsed-time string.
+ *  < 1 min  → "just now"
+ *  >= 1 min → "X min" / "X mins"
+ */
+function elapsedStr(fromIso: string): string {
+  const m = Math.floor((Date.now() - new Date(fromIso).getTime()) / 60000)
+  if (m < 1) return 'just now'
+  return `${m} min${m !== 1 ? 's' : ''}`
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
@@ -329,14 +335,12 @@ export default function OrderDetailPage() {
     const idx = STATUS_STEPS.findIndex((s) => s.key === order.status)
     return idx !== -1 ? idx : (BETWEEN_STEP_INDEX[order.status] ?? -1)
   })()
-  const elapsedFromUpdate = elapsedMins(order.updated_at ?? order.created_at)
-
-  // For pending, elapsed from creation; for others, from last update
+  // For pending, elapsed from creation; for others, from last status update
+  // tick forces re-render every 30 s so the display stays current
   const elapsedDisplay = order.status === 'pending'
-    ? elapsedMins(order.created_at)
-    : elapsedFromUpdate
-  // Suppress tick warning
-  void tick
+    ? elapsedStr(order.created_at)
+    : elapsedStr(order.updated_at ?? order.created_at)
+  void tick // suppress unused-var warning
 
   return (
     <div className="flex flex-col min-h-full bg-[#f8f8f8]">

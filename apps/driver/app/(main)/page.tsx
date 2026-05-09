@@ -41,7 +41,7 @@ type AvailableOrder = {
   driver_payout: number
   tip_amount: number
   created_at: string
-  food_maker: { display_name: string; lat: number; lng: number } | null
+  food_maker: { display_name: string; lat: number; lng: number; address?: string | null } | null
   delivery_address: { street?: string; city?: string; lat?: number; lng?: number } | null
 }
 
@@ -164,7 +164,7 @@ export default function HomePage() {
     const supabase = createClient()
     const { data } = await supabase
       .from('orders')
-      .select('id, status, total, delivery_fee, driver_payout, tip_amount, created_at, delivery_address, food_maker:food_makers(display_name, lat, lng)')
+      .select('id, status, total, delivery_fee, driver_payout, tip_amount, created_at, delivery_address, food_maker:food_makers(display_name, lat, lng, address)')
       .in('status', ['preparing', 'ready'])
       .is('nexter_id', null)
       .order('created_at', { ascending: true })
@@ -697,13 +697,23 @@ export default function HomePage() {
                   ? haversineDistance(makerLat, makerLng, dropLat, dropLng)
                   : null
 
-                // Only render the route map when both endpoints have real coords (not null-island 0,0)
-                const hasMapCoords = !!(makerLat && makerLng && dropLat && dropLng)
-                const isAccepting  = accepting === order.id
+                // Build address strings for display and Nominatim geocoding fallback
+                const pickupAddrStr  = order.food_maker?.address ?? null
+                const dropoffAddrStr = [
+                  order.delivery_address?.street,
+                  order.delivery_address?.city,
+                ].filter(Boolean).join(', ')
 
                 const dropoffStreet = order.delivery_address?.street
                   ? order.delivery_address.street.replace(/,.*$/, '') // keep street only (trim city)
                   : null
+
+                // Show the route map when we have valid maker coords (pickup), regardless of
+                // whether delivery coords are stored — RoutePreviewMap will geocode via Nominatim
+                // when dropLat/dropLng are null/zero.
+                const hasPickupCoords = !!(makerLat && makerLng)
+                const hasMap = hasPickupCoords && !!(dropLat && dropLng || dropoffAddrStr)
+                const isAccepting = accepting === order.id
 
                 return (
                   <div
@@ -745,17 +755,19 @@ export default function HomePage() {
                     </div>
 
                     {/* ── Mini route map ── */}
-                    {hasMapCoords && (
+                    {hasMap && (
                       <div className="relative w-full h-36 border-b border-white/6">
                         <RoutePreviewMap
-                          pickupLat={makerLat!}
-                          pickupLng={makerLng!}
-                          dropoffLat={dropLat!}
-                          dropoffLng={dropLng!}
+                          pickupLat={makerLat}
+                          pickupLng={makerLng}
+                          dropoffLat={dropLat}
+                          dropoffLng={dropLng}
                           pickupLabel={order.food_maker?.display_name ?? 'Pickup'}
                           dropoffLabel={dropoffStreet ?? 'Dropoff'}
+                          pickupAddress={!(makerLat && makerLng) && pickupAddrStr ? pickupAddrStr : undefined}
+                          dropoffAddress={!(dropLat && dropLng) && dropoffAddrStr ? dropoffAddrStr : undefined}
                         />
-                        {/* Delivery run distance badge — bottom-right overlay */}
+                        {/* Delivery run distance badge — bottom-right overlay (only when we have coords) */}
                         {deliveryM != null && (
                           <div className="absolute bottom-2 right-2 flex items-center gap-1 bg-black/70 backdrop-blur-sm rounded-lg px-2.5 py-1 pointer-events-none">
                             <MapPin size={10} className="text-cyan-400 flex-shrink-0" />
@@ -772,21 +784,28 @@ export default function HomePage() {
                     <div className="px-4 py-3 space-y-2">
 
                       {/* Pickup row */}
-                      <div className="flex items-center gap-2.5">
-                        {/* Orange filled circle */}
-                        <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: '#FF7A50' }} />
-                        <span className="text-white text-sm font-semibold flex-1 truncate">
-                          {order.food_maker?.display_name ?? 'Restaurant'}
-                        </span>
+                      <div className="flex items-start gap-2.5">
+                        {/* Orange filled circle — align with top line */}
+                        <span className="w-2.5 h-2.5 rounded-full flex-shrink-0 mt-1" style={{ backgroundColor: '#FF7A50' }} />
+                        <div className="flex-1 min-w-0">
+                          <span className="text-white text-sm font-semibold truncate block">
+                            {order.food_maker?.display_name ?? 'Restaurant'}
+                          </span>
+                          {pickupAddrStr && (
+                            <span className="text-zinc-500 text-xs truncate block mt-0.5">
+                              {pickupAddrStr}
+                            </span>
+                          )}
+                        </div>
                         {toPickupM != null && (
-                          <>
-                            <span className="text-zinc-500 text-xs font-semibold flex-shrink-0">
+                          <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
+                            <span className="text-zinc-500 text-xs font-semibold">
                               {formatDistance(toPickupM)} away
                             </span>
-                            <span className="bg-[#FF7A50]/15 text-[#FF7A50] text-[10px] font-black px-1.5 py-0.5 rounded-full flex-shrink-0">
+                            <span className="bg-[#FF7A50]/15 text-[#FF7A50] text-[10px] font-black px-1.5 py-0.5 rounded-full">
                               ~{formatEta(estimateMinutes(toPickupM))}
                             </span>
-                          </>
+                          </div>
                         )}
                       </div>
 
@@ -795,21 +814,28 @@ export default function HomePage() {
                         <div className="w-2.5 flex justify-center flex-shrink-0">
                           <div className="w-px h-4 border-l-2 border-dashed border-zinc-600" />
                         </div>
-                        {/* Delivery run distance between the two stops (if no map coords) */}
-                        {!hasMapCoords && deliveryM != null && (
+                        {/* Delivery run distance between the two stops (if no map is shown) */}
+                        {!hasMap && deliveryM != null && (
                           <span className="text-zinc-600 text-[10px] font-semibold">{formatDistance(deliveryM)} run</span>
                         )}
                       </div>
 
                       {/* Dropoff row */}
-                      <div className="flex items-center gap-2.5">
-                        {/* Cyan hollow circle */}
-                        <span className="w-2.5 h-2.5 rounded-full border-2 border-cyan-400 flex-shrink-0" />
-                        <span className="text-zinc-300 text-sm font-semibold flex-1 truncate">
-                          {dropoffStreet ?? 'Customer location'}
-                        </span>
+                      <div className="flex items-start gap-2.5">
+                        {/* Cyan hollow circle — align with top line */}
+                        <span className="w-2.5 h-2.5 rounded-full border-2 border-cyan-400 flex-shrink-0 mt-1" />
+                        <div className="flex-1 min-w-0">
+                          <span className="text-zinc-300 text-sm font-semibold truncate block">
+                            {dropoffStreet ?? 'Customer location'}
+                          </span>
+                          {order.delivery_address?.city && (
+                            <span className="text-zinc-500 text-xs truncate block mt-0.5">
+                              {[order.delivery_address.city].filter(Boolean).join(', ')}
+                            </span>
+                          )}
+                        </div>
                         {deliveryM != null && (
-                          <span className="bg-cyan-400/10 text-cyan-400 text-[10px] font-black px-1.5 py-0.5 rounded-full flex-shrink-0">
+                          <span className="bg-cyan-400/10 text-cyan-400 text-[10px] font-black px-1.5 py-0.5 rounded-full flex-shrink-0 mt-0.5">
                             {formatDistance(deliveryM)}
                           </span>
                         )}
