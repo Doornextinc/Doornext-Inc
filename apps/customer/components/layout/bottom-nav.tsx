@@ -3,15 +3,15 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
-import { Home, Search, ShoppingBag, MessageCircle, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { EMOJI } from '@doornext/shared/emoji'
 
-const navItems = [
-  { href: '/', icon: Home, label: 'Home' },
-  { href: '/search', icon: Search, label: 'Search' },
-  { href: '/orders', icon: ShoppingBag, label: 'Orders' },
-  { href: '/chat', icon: MessageCircle, label: 'Chat' },
-  { href: '/profile', icon: User, label: 'Profile' },
+const navItems: Array<{ href: string; emoji: string; label: string }> = [
+  { href: '/',        emoji: EMOJI.home,     label: 'Home'    },
+  { href: '/search',  emoji: EMOJI.search,   label: 'Search'  },
+  { href: '/orders',  emoji: EMOJI.receipt,  label: 'Orders'  },
+  { href: '/chat',    emoji: EMOJI.chat,     label: 'Chat'    },
+  { href: '/profile', emoji: EMOJI.user,     label: 'Profile' },
 ]
 
 export function BottomNav() {
@@ -26,7 +26,7 @@ export function BottomNav() {
       className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-gray-100 bottom-nav max-w-[430px] mx-auto"
     >
       <div className="flex items-center justify-around h-16">
-        {navItems.map(({ href, icon: Icon, label }) => {
+        {navItems.map(({ href, emoji, label }) => {
           const isActive = href === '/' ? pathname === '/' : pathname.startsWith(href)
           return (
             <Link
@@ -36,7 +36,6 @@ export function BottomNav() {
               aria-label={label}
               className="flex flex-col items-center justify-center gap-1 flex-1 h-full relative"
             >
-              {/* Active pill indicator */}
               {isActive && (
                 <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-[#FF6B35] rounded-full" />
               )}
@@ -47,14 +46,15 @@ export function BottomNav() {
                   isActive ? 'bg-orange-50' : ''
                 )}
               >
-                <Icon
-                  size={21}
-                  strokeWidth={isActive ? 2.25 : 1.75}
+                <span
                   className={cn(
-                    'transition-colors duration-200',
-                    isActive ? 'text-[#FF6B35]' : 'text-gray-400'
+                    'text-[20px] block transition-all duration-200',
+                    isActive ? 'opacity-100 scale-110' : 'opacity-60'
                   )}
-                />
+                  aria-hidden
+                >
+                  {emoji}
+                </span>
               </div>
 
               <span

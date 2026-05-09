@@ -1,11 +1,11 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Bell, ChevronLeft, MessageCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useDriverStore } from '@/store/driver-store'
+import { getStreamClient, connectStreamUser } from '@/lib/stream'
 
 interface AppHeaderProps {
   /** Custom greeting title (home page only) */
@@ -22,7 +22,10 @@ export function AppHeader({ greeting, title, showBack, backHref }: AppHeaderProp
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [initials, setInitials] = useState('D')
   const [unreadNotifs, setUnreadNotifs] = useState(0)
+  const [unreadChats, setUnreadChats] = useState(0)
   const userId = useDriverStore(s => s.userId)
+  const userEmail = useDriverStore(s => s.userEmail)
+  const streamPollRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     const supabase = createClient()
@@ -35,7 +38,6 @@ export function AppHeader({ greeting, title, showBack, backHref }: AppHeaderProp
         .single()
       if (profile) {
         setInitials((profile.full_name ?? 'D')[0].toUpperCase())
-        // avatar_url stores a storage path — generate a signed URL for display
         const storagePath = profile.avatar_url
         if (storagePath && !storagePath.startsWith('http')) {
           const { data: signed } = await supabase.storage
@@ -49,35 +51,67 @@ export function AppHeader({ greeting, title, showBack, backHref }: AppHeaderProp
     })
   }, [])
 
+  // ── Unread system notifications (DB) ──────────────────────────────────────
   useEffect(() => {
     if (!userId) return
     const supabase = createClient()
 
-    supabase
+    const refresh = () => supabase
       .from('notifications')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', userId)
       .eq('read', false)
       .then(({ count }) => setUnreadNotifs(count ?? 0))
 
+    refresh()
+
     const channel = supabase
       .channel('driver-header-notifs')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` },
-        () => {
-          supabase
-            .from('notifications')
-            .select('id', { count: 'exact', head: true })
-            .eq('user_id', userId)
-            .eq('read', false)
-            .then(({ count }) => setUnreadNotifs(count ?? 0))
-        }
+        refresh,
       )
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
   }, [userId])
+
+  // ── Unread Stream chat messages (polled — cheap, only counts) ─────────────
+  // Stream WebSocket events are flaky; polling every 30 s is reliable enough
+  // for the badge. The notifications page itself uses real-time Stream state.
+  useEffect(() => {
+    if (!userId) return
+
+    let cancelled = false
+
+    async function refreshChatUnread() {
+      try {
+        await connectStreamUser(userId!, userEmail ?? 'Nexter', undefined)
+        const stream = getStreamClient()
+        const channels = await stream.queryChannels(
+          { members: { $in: [userId!] }, type: 'messaging' },
+          [{ last_message_at: -1 }],
+          { limit: 30, watch: false, state: true },
+        )
+        if (cancelled) return
+        const total = channels.reduce((s, ch) => s + ch.countUnread(), 0)
+        setUnreadChats(total)
+      } catch {
+        if (!cancelled) setUnreadChats(0)
+      }
+    }
+
+    refreshChatUnread()
+    streamPollRef.current = setInterval(refreshChatUnread, 30_000)
+
+    return () => {
+      cancelled = true
+      if (streamPollRef.current) clearInterval(streamPollRef.current)
+    }
+  }, [userId, userEmail])
+
+  const totalUnread = unreadNotifs + unreadChats
 
   return (
     <header className="sticky top-0 z-40 bg-[#0A0A0A] border-b border-white/8" style={{ boxShadow: '0 1px 0 rgba(255,255,255,0.04), 0 4px 20px rgba(0,0,0,0.4)' }}>
@@ -89,8 +123,9 @@ export function AppHeader({ greeting, title, showBack, backHref }: AppHeaderProp
             <button
               onClick={() => backHref ? router.push(backHref) : router.back()}
               className="w-10 h-10 rounded-2xl bg-[#161616] border border-white/8 flex items-center justify-center active:scale-95 transition-transform"
+              aria-label="Back"
             >
-              <ChevronLeft size={20} className="text-zinc-300" />
+              <span className="text-zinc-300 text-lg" aria-hidden>‹</span>
             </button>
           )}
 
@@ -104,22 +139,21 @@ export function AppHeader({ greeting, title, showBack, backHref }: AppHeaderProp
           )}
         </div>
 
-        {/* Right side: messages + bell + avatar */}
+        {/* Right side: unified notification bell + avatar.
+            Messages icon was merged into the bell — chat previews now live in
+            the /notifications feed. See finding from this audit session. */}
         <div className="flex items-center gap-2">
-          <Link href="/messages">
+          <Link href="/notifications" aria-label="Notifications and messages">
             <div className="relative w-10 h-10 rounded-2xl bg-[#161616] border border-white/8 flex items-center justify-center active:scale-95 transition-transform">
-              <MessageCircle size={18} className="text-zinc-300" />
-            </div>
-          </Link>
-          <Link href="/notifications">
-            <div className="relative w-10 h-10 rounded-2xl bg-[#161616] border border-white/8 flex items-center justify-center active:scale-95 transition-transform">
-              <Bell size={18} className="text-zinc-300" />
-              {unreadNotifs > 0 && (
-                <span className="absolute top-1.5 right-1.5 min-w-[8px] h-2 bg-[#FF7A50] rounded-full border border-[#161616]" />
+              <span className="text-base" aria-hidden>🔔</span>
+              {totalUnread > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-[#FF7A50] rounded-full border-2 border-[#0A0A0A] text-white text-[10px] font-black flex items-center justify-center">
+                  {totalUnread > 9 ? '9+' : totalUnread}
+                </span>
               )}
             </div>
           </Link>
-          <Link href="/profile">
+          <Link href="/profile" aria-label="Profile">
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#D4622B] to-[#E07545] flex items-center justify-center overflow-hidden active:scale-95 transition-transform">
               {avatarUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element

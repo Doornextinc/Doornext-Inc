@@ -3,15 +3,15 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, ClipboardList, UtensilsCrossed, Bell, User } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { EMOJI } from '@doornext/shared/emoji'
 
-const navItems = [
-  { href: '/dashboard',     icon: LayoutDashboard, label: 'Dashboard' },
-  { href: '/orders',        icon: ClipboardList,   label: 'Orders'    },
-  { href: '/menu',          icon: UtensilsCrossed, label: 'Menu'      },
-  { href: '/notifications', icon: Bell,            label: 'Alerts'    },
-  { href: '/profile',       icon: User,            label: 'Account'   },
+const navItems: Array<{ href: string; emoji: string; label: string }> = [
+  { href: '/dashboard',     emoji: EMOJI.home,           label: 'Dashboard' },
+  { href: '/orders',        emoji: EMOJI.receipt,        label: 'Orders'    },
+  { href: '/menu',          emoji: EMOJI.utensils,       label: 'Menu'      },
+  { href: '/notifications', emoji: EMOJI.notifications,  label: 'Alerts'    },
+  { href: '/profile',       emoji: EMOJI.user,           label: 'Account'   },
 ]
 
 export function BottomNav() {
@@ -58,7 +58,7 @@ export function BottomNav() {
   return (
     <nav aria-label="Main navigation" className="fixed bottom-0 left-0 right-0 z-50 max-w-[430px] mx-auto bg-white border-t border-gray-100">
       <div className="flex items-center justify-around h-[60px]">
-        {navItems.map(({ href, icon: Icon, label }) => {
+        {navItems.map(({ href, emoji, label }) => {
           const isActive = pathname === href || pathname.startsWith(href + '/')
           const showBadge = href === '/notifications' && unread > 0
 
@@ -70,11 +70,14 @@ export function BottomNav() {
               className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2"
             >
               <div className="relative">
-                <Icon
-                  size={22}
-                  strokeWidth={isActive ? 2.8 : 1.8}
-                  className={isActive ? 'text-[#FF6B35]' : 'text-gray-300'}
-                />
+                <span
+                  className={`text-[22px] block transition-all ${
+                    isActive ? 'opacity-100 scale-110' : 'opacity-50'
+                  }`}
+                  aria-hidden
+                >
+                  {emoji}
+                </span>
                 {showBadge && (
                   <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-0.5 bg-[#FF6B35] rounded-full flex items-center justify-center">
                     <span className="text-[9px] font-black text-white leading-none">{Math.min(unread, 9)}</span>

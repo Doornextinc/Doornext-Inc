@@ -54,6 +54,9 @@ importers:
       react-dom:
         specifier: 19.2.3
         version: 19.2.3(react@19.2.3)
+      stream-chat:
+        specifier: ^9.36.0
+        version: 9.36.0
       stripe:
         specifier: ^20.4.1
         version: 20.4.1(@types/node@20.19.37)
