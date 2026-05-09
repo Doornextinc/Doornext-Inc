@@ -538,7 +538,6 @@ export default function ActiveDeliveryPage() {
   const [updating, setUpdating] = useState(false)
   const [updateError, setUpdateError] = useState<string | null>(null)
   const [elapsed, setElapsed] = useState(0)
-  const [showItems, setShowItems] = useState(false)
   const [checkedItems, setCheckedItems] = useState<Set<number>>(new Set())
   const [delivered, setDelivered] = useState(false)
   const [deliveredOrder, setDeliveredOrder] = useState<ActiveOrder | null>(null)
@@ -796,11 +795,6 @@ export default function ActiveDeliveryPage() {
 
   const handleStatusUpdate = async (newStatus: OrderStatus) => {
     if (!order) return
-    // Require item verification before confirming pickup
-    if (order.status === 'arrived_at_maker' && order.order_items.length > 0 && checkedItems.size < order.order_items.length) {
-      const ok = window.confirm(`You haven't verified all ${order.order_items.length} items. Continue anyway?`)
-      if (!ok) return
-    }
     setUpdating(true)
     setUpdateError(null)
 
@@ -1159,100 +1153,144 @@ export default function ActiveDeliveryPage() {
         </>
       )}
 
-      {/* ── Stage: Arrived at Kitchen — PIN handoff ── */}
-      {isAtMaker && (
-        <>
-          {/* PIN display card — driver shows this to the maker */}
-          <div className="mx-4 mb-3 bg-[#141414] rounded-2xl border border-[#FF7A50]/30 overflow-hidden">
-            <div className="px-4 pt-4 pb-2 flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-[#FF7A50] animate-pulse" />
-              <p className="text-[11px] font-black text-[#FF7A50] uppercase tracking-wider">Your Pickup PIN</p>
-            </div>
-            <div className="px-4 pb-4">
-              <div className="flex items-center gap-3 mt-1">
-                {(order.pickup_pin ?? '----').split('').map((digit, i) => (
-                  <div
-                    key={i}
-                    className="w-14 h-16 rounded-xl bg-[#0A0A0A] border-2 border-[#FF7A50]/40 flex items-center justify-center"
-                  >
-                    <span className="text-3xl font-black text-white tracking-widest">{digit}</span>
-                  </div>
-                ))}
-              </div>
-              <p className="text-xs text-zinc-500 mt-3 leading-relaxed">
-                Read this code to the maker — they must enter it on their screen to confirm the pickup handoff.
-              </p>
-            </div>
-          </div>
-
-          {/* Waiting state + elapsed timer */}
-          <div className="mx-4 mb-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl px-4 py-3.5 flex items-center gap-3">
-            <div className="w-4 h-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin flex-shrink-0" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-black text-amber-300">Waiting for maker to confirm</p>
-              <p className="text-xs text-amber-400/70 mt-0.5">Your screen will update automatically once they enter the PIN</p>
-            </div>
-            <div className="flex items-center gap-1 flex-shrink-0">
-              <Timer size={11} className="text-amber-400" />
-              <span className="text-amber-300 font-black text-sm tabular-nums">{formatElapsed(elapsed)}</span>
-            </div>
-          </div>
-
-          {/* Item checklist — informational only while waiting */}
-          {order.order_items.length > 0 && (
-            <div className="mx-4 mb-3 bg-[#141414] rounded-2xl border border-white/5 overflow-hidden">
-              <button
-                onClick={() => setShowItems(!showItems)}
-                className="w-full flex items-center justify-between px-4 py-3.5"
-              >
-                <div className="flex items-center gap-2.5">
-                  <Package size={15} className="text-[#FF7A50]" />
-                  <span className="text-sm font-bold text-white">Check Items</span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
-                    checkedItems.size === order.order_items.length
-                      ? 'bg-green-500/20 text-green-400'
-                      : 'bg-[#1A1A1A] text-zinc-500'
+      {/* ── Stage: Arrived at Kitchen — Items verification + PIN handoff ── */}
+      {isAtMaker && (() => {
+        const totalItems     = order.order_items.length
+        const checkedCount   = checkedItems.size
+        const allItemsChecked = totalItems === 0 || checkedCount === totalItems
+        return (
+          <>
+            {/* ── Step 1: Item verification — MANDATORY before PIN reveal ── */}
+            {totalItems > 0 && (
+              <div className="mx-4 mb-3 bg-[#141414] rounded-2xl border border-white/5 overflow-hidden">
+                <div className="px-4 pt-4 pb-2 flex items-center gap-2">
+                  <div className={`flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-black flex-shrink-0 ${
+                    allItemsChecked ? 'bg-green-500 text-white' : 'bg-[#FF7A50] text-white'
                   }`}>
-                    {checkedItems.size}/{order.order_items.length}
+                    {allItemsChecked ? <CheckCircle size={12} /> : '1'}
+                  </div>
+                  <p className="text-[11px] font-black uppercase tracking-wider text-white">Verify Every Item</p>
+                  <span className={`ml-auto text-xs px-2 py-0.5 rounded-full font-bold ${
+                    allItemsChecked
+                      ? 'bg-green-500/20 text-green-400'
+                      : 'bg-[#1A1A1A] text-zinc-400'
+                  }`}>
+                    {checkedCount}/{totalItems}
                   </span>
                 </div>
-                {showItems ? <ChevronUp size={16} className="text-zinc-500" /> : <ChevronDown size={16} className="text-zinc-500" />}
-              </button>
-              {showItems && (
+                <p className="px-4 pb-3 text-xs text-zinc-500 leading-relaxed">
+                  Tap each item as the maker hands it to you. The PIN unlocks once everything is verified.
+                </p>
                 <div className="border-t border-white/5 divide-y divide-white/5">
-                  {order.order_items.map((item, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setCheckedItems(prev => {
-                        const next = new Set(prev)
-                        next.has(i) ? next.delete(i) : next.add(i)
-                        return next
-                      })}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-left active:bg-white/5"
-                    >
-                      <div className={`w-5 h-5 rounded-md border-2 flex-shrink-0 flex items-center justify-center transition-all ${
-                        checkedItems.has(i) ? 'bg-green-500 border-green-500' : 'border-zinc-700'
-                      }`}>
-                        {checkedItems.has(i) && <CheckCircle size={12} className="text-white" />}
-                      </div>
-                      <span className={`text-sm flex-1 ${checkedItems.has(i) ? 'text-zinc-600 line-through' : 'text-white'}`}>
-                        {item.quantity}× {item.menu_items?.name ?? 'Item'}
-                      </span>
-                      <span className="text-xs text-zinc-600">${(item.quantity * item.unit_price).toFixed(2)}</span>
-                    </button>
-                  ))}
-                  {checkedItems.size === order.order_items.length && (
-                    <div className="flex items-center gap-2 px-4 py-2.5 bg-green-500/10">
-                      <CheckCircle size={13} className="text-green-400" />
-                      <span className="text-xs font-bold text-green-400">All items verified!</span>
-                    </div>
-                  )}
+                  {order.order_items.map((item, i) => {
+                    const isChecked = checkedItems.has(i)
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => setCheckedItems(prev => {
+                          const next = new Set(prev)
+                          next.has(i) ? next.delete(i) : next.add(i)
+                          return next
+                        })}
+                        className="w-full flex items-center gap-3 px-4 py-3.5 text-left active:bg-white/5 transition-colors"
+                      >
+                        <div className={`w-6 h-6 rounded-md border-2 flex-shrink-0 flex items-center justify-center transition-all ${
+                          isChecked ? 'bg-green-500 border-green-500' : 'border-zinc-600'
+                        }`}>
+                          {isChecked && <CheckCircle size={14} className="text-white" />}
+                        </div>
+                        <span className={`text-sm flex-1 leading-tight ${isChecked ? 'text-zinc-600 line-through' : 'text-white font-medium'}`}>
+                          {item.quantity}× {item.menu_items?.name ?? 'Item'}
+                        </span>
+                        <span className="text-xs text-zinc-600">${(item.quantity * item.unit_price).toFixed(2)}</span>
+                      </button>
+                    )
+                  })}
                 </div>
-              )}
+                {allItemsChecked && (
+                  <div className="flex items-center gap-2 px-4 py-3 bg-green-500/10 border-t border-green-500/20">
+                    <CheckCircle size={14} className="text-green-400" />
+                    <span className="text-xs font-bold text-green-400">All items verified — PIN unlocked below</span>
+                  </div>
+                )}
+              </div>
+            )}
+            {/* ── Step 2: PIN — gated behind item verification ── */}
+            <div className={`mx-4 mb-3 rounded-2xl overflow-hidden transition-all ${
+              allItemsChecked
+                ? 'bg-[#141414] border border-[#FF7A50]/30'
+                : 'bg-[#0F0F0F] border border-white/5'
+            }`}>
+              <div className="px-4 pt-4 pb-2 flex items-center gap-2">
+                <div className={`flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-black flex-shrink-0 ${
+                  allItemsChecked ? 'bg-[#FF7A50] text-white' : 'bg-[#1A1A1A] text-zinc-600'
+                }`}>
+                  2
+                </div>
+                <p className={`text-[11px] font-black uppercase tracking-wider ${
+                  allItemsChecked ? 'text-[#FF7A50]' : 'text-zinc-600'
+                }`}>
+                  Pickup PIN
+                </p>
+                {allItemsChecked && (
+                  <div className="ml-auto w-2 h-2 rounded-full bg-[#FF7A50] animate-pulse" />
+                )}
+              </div>
+              <div className="px-4 pb-4">
+                {allItemsChecked ? (
+                  <>
+                    <div className="flex items-center gap-3 mt-1">
+                      {(order.pickup_pin ?? '----').split('').map((digit, i) => (
+                        <div
+                          key={i}
+                          className="w-14 h-16 rounded-xl bg-[#0A0A0A] border-2 border-[#FF7A50]/40 flex items-center justify-center"
+                        >
+                          <span className="text-3xl font-black text-white tracking-widest">{digit}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-xs text-zinc-500 mt-3 leading-relaxed">
+                      Read this code to the maker — they must enter it on their screen to confirm the pickup handoff.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    {/* Locked state — masked PIN + clear unlock requirement */}
+                    <div className="flex items-center gap-3 mt-1">
+                      {[0, 1, 2, 3].map((i) => (
+                        <div
+                          key={i}
+                          className="w-14 h-16 rounded-xl bg-[#0A0A0A] border-2 border-white/5 flex items-center justify-center"
+                        >
+                          <span className="text-3xl font-black text-zinc-700 tracking-widest">•</span>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-xs text-zinc-500 mt-3 leading-relaxed">
+                      Verify all {totalItems} item{totalItems !== 1 ? 's' : ''} above to reveal the pickup PIN.
+                    </p>
+                  </>
+                )}
+              </div>
             </div>
-          )}
-        </>
-      )}
+
+            {/* Waiting state + elapsed timer — only after PIN unlocked */}
+            {allItemsChecked && (
+              <div className="mx-4 mb-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl px-4 py-3.5 flex items-center gap-3">
+                <div className="w-4 h-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-black text-amber-300">Waiting for maker to confirm</p>
+                  <p className="text-xs text-amber-400/70 mt-0.5">Your screen will update automatically once they enter the PIN</p>
+                </div>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <Timer size={11} className="text-amber-400" />
+                  <span className="text-amber-300 font-black text-sm tabular-nums">{formatElapsed(elapsed)}</span>
+                </div>
+              </div>
+            )}
+          </>
+        )
+      })()}
 
       {/* ── Stage: Picked Up — Start Delivery ── */}
       {isPickedUp && (
