@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useDriverStore, useActiveOrderId } from '@/store/driver-store'
 import { AppHeader } from '@/components/layout/app-header'
+import { BRAND } from '@doornext/shared/brand'
 import {
   Camera,
   ChevronRight,
@@ -592,19 +593,19 @@ export default function SettingsPage() {
           >
             <div className="bg-[#141414] rounded-2xl border border-white/5 divide-y divide-white/5">
 
-              <a href="mailto:support@doornext.com" className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-white/5 transition-colors">
+              <a href={`mailto:${BRAND.support.email}`} className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-white/5 transition-colors">
                 <div className="w-8 h-8 rounded-xl bg-[#1E1E1E] flex items-center justify-center flex-shrink-0">
                   <Mail size={16} className="text-zinc-400" />
                 </div>
                 <div className="flex-1 text-left">
                   <p className="text-sm font-semibold text-white">Email Support</p>
-                  <p className="text-xs text-zinc-500">support@doornext.com</p>
+                  <p className="text-xs text-zinc-500">{BRAND.support.email}</p>
                 </div>
                 <ChevronRight size={16} className="text-zinc-600 flex-shrink-0" />
               </a>
 
               <a
-                href="https://wa.me/15551234567"
+                href={BRAND.support.whatsapp}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-white/5 transition-colors"
@@ -619,13 +620,13 @@ export default function SettingsPage() {
                 <ChevronRight size={16} className="text-zinc-600 flex-shrink-0" />
               </a>
 
-              <a href="tel:+15551234567" className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-white/5 transition-colors">
+              <a href={`tel:${BRAND.support.phone.replace(/[^+\d]/g, '')}`} className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-white/5 transition-colors">
                 <div className="w-8 h-8 rounded-xl bg-[#1E1E1E] flex items-center justify-center flex-shrink-0">
                   <Phone size={16} className="text-zinc-400" />
                 </div>
                 <div className="flex-1 text-left">
                   <p className="text-sm font-semibold text-white">Call Support</p>
-                  <p className="text-xs text-zinc-500">+1 (555) 123-4567</p>
+                  <p className="text-xs text-zinc-500">{BRAND.support.phone}</p>
                 </div>
                 <ChevronRight size={16} className="text-zinc-600 flex-shrink-0" />
               </a>

@@ -5,6 +5,7 @@
   "exports": {
     "./types": "./src/types/index.ts",
     "./constants": "./src/lib/constants.ts",
+    "./brand": "./src/lib/brand.ts",
     "./utils": "./src/lib/utils.ts",
     "./pricing": "./src/lib/pricing.ts",
     "./supabase/client": "./src/lib/supabase/client.ts",

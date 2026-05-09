@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Star, Clock, MapPin, MessageCircle, ChevronLeft, ShoppingCart } from 'lucide-react'
 import { MenuItemCard } from '@/components/maker/menu-item-card'
+import { VerifiedBadge } from '@/components/maker/verified-badge'
 import { DietaryBadge } from '@/components/ui/badge'
 import { MenuItemSkeleton } from '@/components/ui/skeleton'
 import { useCartStore } from '@/store/cart'
@@ -143,7 +144,39 @@ export default function MakerProfilePage() {
         </div>
 
         {maker?.bio && (
-          <p className="text-sm text-gray-500 mt-3 leading-relaxed">{maker.bio}</p>
+          <div className="mt-3">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1.5">
+              About {maker.display_name?.split(' ')[0] ?? 'this Maker'}&apos;s Kitchen
+            </p>
+            <p className="text-sm text-gray-600 leading-relaxed">{maker.bio}</p>
+          </div>
+        )}
+
+        {/* Trust panel — surfaces verification, time on platform, neighbors served. */}
+        {maker?.approval_status === 'approved' && (
+          <div className="mt-4 rounded-2xl bg-emerald-50/60 border border-emerald-100 p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <VerifiedBadge size="lg" />
+            </div>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600">
+              {maker.created_at && (
+                <span>
+                  <span className="text-gray-400">Member since</span>{' '}
+                  <span className="font-bold text-gray-700">
+                    {new Date(maker.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                  </span>
+                </span>
+              )}
+              {maker.total_reviews > 0 && (
+                <span>
+                  <span className="text-gray-400">Served</span>{' '}
+                  <span className="font-bold text-gray-700">
+                    {maker.total_reviews} neighbor{maker.total_reviews !== 1 ? 's' : ''}
+                  </span>
+                </span>
+              )}
+            </div>
+          </div>
         )}
 
         {maker && (

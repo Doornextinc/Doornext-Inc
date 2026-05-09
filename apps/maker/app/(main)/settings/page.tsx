@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { ChevronLeft, Loader2, Lock, User, Bell, Shield, Trash2, Camera, LogOut, Image, MapPin } from 'lucide-react'
 import { AddressAutocomplete } from '@/components/ui/AddressAutocomplete'
 import { parsePlace } from '@/lib/google-maps'
+import { BRAND } from '@doornext/shared/brand'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -510,7 +511,7 @@ export default function SettingsPage() {
                 <p className="text-sm font-bold text-red-600">Delete your account?</p>
                 <p className="text-xs text-gray-500">
                   This is permanent and cannot be undone. Contact{' '}
-                  <span className="font-semibold text-gray-700">support@doornext.com</span>{' '}
+                  <span className="font-semibold text-gray-700">{BRAND.support.email}</span>{' '}
                   to proceed with account deletion.
                 </p>
                 <div className="flex gap-2">
@@ -521,7 +522,7 @@ export default function SettingsPage() {
                     Cancel
                   </button>
                   <a
-                    href="mailto:support@doornext.com?subject=Delete%20my%20maker%20account"
+                    href={`mailto:${BRAND.support.email}?subject=Delete%20my%20maker%20account`}
                     className="flex-1 py-2 rounded-xl bg-red-500 text-white text-sm font-bold text-center"
                   >
                     Email Support

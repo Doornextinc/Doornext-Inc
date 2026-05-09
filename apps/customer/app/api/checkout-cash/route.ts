@@ -76,14 +76,21 @@ export async function POST(req: NextRequest) {
     // Verify maker is approved — service role bypasses RLS so we must check explicitly
     const { data: makerStatus } = await serviceSupabase
       .from('food_makers')
-      .select('approval_status, is_open')
+      .select('approval_status, is_open, display_name')
       .eq('id', maker_id)
       .single()
+    const makerName = makerStatus?.display_name ?? 'This Maker'
     if (!makerStatus || makerStatus.approval_status !== 'approved') {
-      return NextResponse.json({ error: 'This kitchen is not currently available' }, { status: 400 })
+      return NextResponse.json(
+        { error: `${makerName} is temporarily unavailable. Try again in a few hours or browse other neighbors.` },
+        { status: 400 }
+      )
     }
     if (!makerStatus.is_open) {
-      return NextResponse.json({ error: 'This kitchen is currently closed' }, { status: 400 })
+      return NextResponse.json(
+        { error: `${makerName} is closed right now. Check their hours on their profile.` },
+        { status: 400 }
+      )
     }
 
     const subtotal = (items as { id: string; quantity: number }[]).reduce((sum, item) => {

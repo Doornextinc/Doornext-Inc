@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { Star, Clock, MapPin } from 'lucide-react'
 import { cn, formatDistance, formatTime } from '@/lib/utils'
 import type { FoodMaker } from '@/types'
+import { VerifiedBadge } from '@/components/maker/verified-badge'
 
 interface MakerCardProps {
   maker: FoodMaker
@@ -66,9 +67,14 @@ export function MakerCard({ maker, className }: MakerCardProps) {
         <div className="pt-8 px-4 pb-4">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-gray-900 text-[15px] leading-tight truncate">
-                {maker.display_name}
-              </h3>
+              <div className="flex items-center gap-1.5 min-w-0">
+                <h3 className="font-bold text-gray-900 text-[15px] leading-tight truncate">
+                  {maker.display_name}
+                </h3>
+                {maker.approval_status === 'approved' && (
+                  <VerifiedBadge className="flex-shrink-0" />
+                )}
+              </div>
               <div className="flex flex-wrap gap-1 mt-1.5">
                 {maker.cuisine_tags.slice(0, 3).map((tag) => (
                   <span

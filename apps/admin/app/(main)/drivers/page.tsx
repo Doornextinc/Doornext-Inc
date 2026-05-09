@@ -52,7 +52,7 @@ export default function DriversPage() {
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-black text-gray-900">Drivers</h1>
+        <h1 className="text-2xl font-black text-gray-900">Nexters</h1>
         <span className="text-sm text-gray-400">{drivers.length} total</span>
       </div>
 
@@ -60,7 +60,7 @@ export default function DriversPage() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-50 bg-gray-50/50">
-              <th className="text-left px-5 py-3 text-xs font-bold text-gray-400 uppercase">Driver</th>
+              <th className="text-left px-5 py-3 text-xs font-bold text-gray-400 uppercase">Nexter</th>
               <th className="text-left px-5 py-3 text-xs font-bold text-gray-400 uppercase">Vehicle</th>
               <th className="text-left px-5 py-3 text-xs font-bold text-gray-400 uppercase">Status</th>
               <th className="text-right px-5 py-3 text-xs font-bold text-gray-400 uppercase">Deliveries</th>

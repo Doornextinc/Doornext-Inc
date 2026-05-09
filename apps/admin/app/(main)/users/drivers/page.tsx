@@ -72,7 +72,7 @@ export default function DriversPage() {
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-black text-gray-900">Drivers</h1>
+        <h1 className="text-2xl font-black text-gray-900">Nexters</h1>
         <div className="flex items-center gap-3">
           <Link
             href="/operations/kyc"

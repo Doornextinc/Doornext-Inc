@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { BackBar } from '@/components/layout/top-bar'
+import { BRAND } from '@doornext/shared/brand'
 
 const FAQS = [
   {
@@ -60,11 +61,13 @@ export default function HelpPage() {
         ))}
 
         <div className="bg-white rounded-2xl px-4 py-4 mt-4">
-          <p className="text-sm font-bold text-gray-800 mb-1">Still need help?</p>
+          <p className="text-sm font-bold text-gray-800 mb-1">Didn&apos;t find what you need?</p>
+          <p className="text-xs text-gray-500 mb-2">
+            Message the Maker directly — they&apos;re your neighbor and want to make it right. Still need us?
+          </p>
           <p className="text-xs text-gray-400">
-            Email us at{' '}
-            <a href="mailto:support@doornext.com" className="text-[#FF6B35] font-semibold">
-              support@doornext.com
+            <a href={`mailto:${BRAND.support.email}`} className="text-[#FF6B35] font-semibold">
+              {BRAND.support.email}
             </a>
           </p>
         </div>

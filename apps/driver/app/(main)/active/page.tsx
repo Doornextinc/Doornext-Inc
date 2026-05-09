@@ -1159,7 +1159,7 @@ export default function ActiveDeliveryPage() {
         </>
       )}
 
-      {/* ── Stage: Arrived at Restaurant — PIN handoff ── */}
+      {/* ── Stage: Arrived at Kitchen — PIN handoff ── */}
       {isAtMaker && (
         <>
           {/* PIN display card — driver shows this to the maker */}

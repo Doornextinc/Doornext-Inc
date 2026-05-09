@@ -18,6 +18,8 @@ interface OrderClaimDialogProps {
   items: ClaimItem[]
   onClose: () => void
   onClaimCreated: () => void
+  /** Maker display name for personalising the success message. */
+  makerName?: string | null
 }
 
 const ISSUE_REASONS = [
@@ -29,7 +31,7 @@ const ISSUE_REASONS = [
   { id: 'other',    label: 'Other',         emoji: '💬' },
 ]
 
-export function OrderClaimDialog({ orderId, customerId, items, onClose, onClaimCreated }: OrderClaimDialogProps) {
+export function OrderClaimDialog({ orderId, customerId, items, onClose, onClaimCreated, makerName }: OrderClaimDialogProps) {
   const [claimType, setClaimType]           = useState<'refund' | 'replacement'>('refund')
   const [selectedItems, setSelectedItems]   = useState<Set<string>>(new Set())
   const [selectedIssue, setSelectedIssue]   = useState<string | null>(null)
@@ -107,7 +109,11 @@ export function OrderClaimDialog({ orderId, customerId, items, onClose, onClaimC
               <CheckCircle size={40} className="text-green-500" />
             </div>
             <h2 className="text-xl font-black text-gray-900 mb-2">Claim Submitted!</h2>
-            <p className="text-sm text-gray-500 text-center">The kitchen will review your request shortly.</p>
+            <p className="text-sm text-gray-500 text-center">
+              {makerName?.trim()
+                ? `${makerName} will review your claim shortly. Need immediate help? Message them from the order page.`
+                : 'Your Maker will review your claim shortly. Need immediate help? Message them from the order page.'}
+            </p>
           </div>
         ) : (
           <>

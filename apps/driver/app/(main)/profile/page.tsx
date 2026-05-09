@@ -12,6 +12,7 @@ import {
   AlertCircle, CheckCircle, Clock, FileText, MapPin,
   Shield, ArrowRight,
 } from 'lucide-react'
+import { BRAND } from '@doornext/shared/brand'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -748,20 +749,20 @@ export default function AccountPage() {
               <SettingRow
                 icon={Mail}
                 label="Email Support"
-                sublabel="support@doornext.com"
-                href="mailto:support@doornext.com"
+                sublabel={BRAND.support.email}
+                href={`mailto:${BRAND.support.email}`}
               />
               <SettingRow
                 icon={MessageCircle}
                 label="WhatsApp"
                 sublabel="Chat with support"
-                href="https://wa.me/15551234567"
+                href={BRAND.support.whatsapp}
               />
               <SettingRow
                 icon={Phone}
                 label="Call Support"
-                sublabel="+1 (555) 123-4567"
-                href="tel:+15551234567"
+                sublabel={BRAND.support.phone}
+                href={`tel:${BRAND.support.phone.replace(/[^+\d]/g, '')}`}
               />
             </div>
           </div>

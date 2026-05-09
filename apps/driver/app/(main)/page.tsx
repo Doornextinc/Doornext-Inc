@@ -249,11 +249,19 @@ export default function HomePage() {
     setAccepting(orderId)
     setAcceptError(null)
 
+    // 25-second abort timeout. The accept-order route does several DB roundtrips
+    // and a SECURITY DEFINER RPC; on Vercel cold starts the first request can take
+    // 5–10 s. Without a long timeout, slow networks would flash "Network error"
+    // even though the server commits — exactly the bug we're fixing here.
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 25_000)
+
     try {
       const res = await fetch('/api/driver/accept-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orderId, driverLat: currentLat, driverLng: currentLng }),
+        signal: controller.signal,
       })
       const json = await res.json()
 
@@ -264,7 +272,8 @@ export default function HomePage() {
 
       if (json.allOrderIds?.length) setActiveOrders(json.allOrderIds)
       else setActiveOrder(orderId)
-      playWithHaptic('order_accepted')
+      // Skip haptic on idempotent retry so the driver isn't double-buzzed.
+      if (!json.alreadyOwned) playWithHaptic('order_accepted')
 
       if (json.stacked) {
         // Was adding to an existing stack — go straight to active delivery
@@ -277,9 +286,17 @@ export default function HomePage() {
         setStartRouteCountdown(5)
         loadStackCandidates()
       }
-    } catch {
-      setAcceptError({ orderId, message: 'Network error. Please try again.' })
+    } catch (err) {
+      // Distinguish actual abort (slow network) from genuine network failure.
+      const isAbort = err instanceof DOMException && err.name === 'AbortError'
+      setAcceptError({
+        orderId,
+        message: isAbort
+          ? 'Taking longer than usual — tap to try again'
+          : 'Network error. Please try again.',
+      })
     } finally {
+      clearTimeout(timeoutId)
       setAccepting(null)
     }
   }
@@ -290,17 +307,22 @@ export default function HomePage() {
     setStackCandidates(prev => prev.filter(c => c.order_id !== orderId))
     setStartRouteCountdown(null) // cancel pending auto-nav
 
+    // Same generous abort timeout as handleAccept — see comment there.
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 25_000)
+
     try {
       const res = await fetch('/api/driver/accept-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orderId, driverLat: currentLat, driverLng: currentLng }),
+        signal: controller.signal,
       })
       if (res.ok) {
         const json = await res.json()
         if (json.allOrderIds?.length) setActiveOrders(json.allOrderIds)
         else addActiveOrder(orderId)
-        playWithHaptic('order_accepted')
+        if (!json.alreadyOwned) playWithHaptic('order_accepted')
         router.push('/active')
       } else {
         setStackCandidates([])
@@ -309,6 +331,7 @@ export default function HomePage() {
     } catch {
       loadStackCandidates()
     } finally {
+      clearTimeout(timeoutId)
       setAddingToRoute(null)
     }
   }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { BRAND } from '@doornext/shared/brand'
 
 export default function PendingApprovalPage() {
   const router = useRouter()
@@ -66,8 +67,8 @@ export default function PendingApprovalPage() {
           )}
           <p className="text-xs text-gray-400">
             Questions? Contact us at{' '}
-            <a href="mailto:support@doornext.com" className="text-[#FF6B35] font-semibold hover:underline">
-              support@doornext.com
+            <a href={`mailto:${BRAND.support.email}`} className="text-[#FF6B35] font-semibold hover:underline">
+              {BRAND.support.email}
             </a>
           </p>
         </div>

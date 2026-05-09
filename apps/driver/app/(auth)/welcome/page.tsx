@@ -53,7 +53,7 @@ export default function DriverWelcomePage() {
             <span className="text-[#FF7A50]">your terms.</span>
           </h1>
           <p className="text-zinc-400 text-lg mb-10">
-            Join Nexter drivers and earn by delivering homemade meals from local chefs to customers nearby.
+            Join Nexters and earn by bringing fresh home-cooked meals from neighbors in your community to hungry customers nearby.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3">

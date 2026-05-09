@@ -22,19 +22,28 @@ const STATUS_STEPS: OrderStatus[] = [
   'confirmed', 'preparing', 'ready', 'driver_assigned', 'arrived_at_maker', 'picked_up', 'on_the_way', 'arrived_at_customer', 'delivered',
 ]
 
-const STATUS_MESSAGES: Partial<Record<OrderStatus, string>> = {
-  pending: 'Waiting for the Maker to confirm your order...',
-  confirmed: 'Your order has been confirmed! 🎉',
-  preparing: 'The Maker is cooking your food 🍳',
-  ready: 'Your order is ready for pickup!',
-  driver_assigned: 'Your Nexter has accepted your order and is heading to the kitchen 🚗',
-  arrived_at_maker: 'Your Nexter has arrived at the kitchen 📦',
-  picked_up: 'Your Nexter picked up your order!',
-  on_the_way: 'Your Nexter is on the way 🛵',
-  arrived_at_customer: 'Your Nexter has arrived at your location!',
-  delivered: 'Delivered! Enjoy your meal 🎉',
-  failed_delivery: 'Delivery was unsuccessful. Our support team will reach out shortly.',
-  cancelled: 'Order was cancelled',
+/**
+ * Status messages — Maker-name-aware. Pass the Maker's display name to
+ * personalise; falls back to the generic 'Maker' / 'kitchen' phrasing when
+ * the name is unavailable.
+ */
+function statusMessage(status: OrderStatus, makerName?: string | null): string {
+  const m = makerName?.trim() || 'the Maker'
+  switch (status) {
+    case 'pending':              return `Waiting for ${m} to confirm your order...`
+    case 'confirmed':            return 'Your order has been confirmed! 🎉'
+    case 'preparing':            return `${m} is cooking your food right now 🍳`
+    case 'ready':                return 'Your order is ready for pickup!'
+    case 'driver_assigned':      return `Your Nexter has accepted your order and is heading to ${m} 🚗`
+    case 'arrived_at_maker':     return `Your Nexter has arrived at ${m} 📦`
+    case 'picked_up':            return 'Your Nexter picked up your order!'
+    case 'on_the_way':           return 'Your Nexter is on the way 🛵'
+    case 'arrived_at_customer':  return 'Your Nexter has arrived at your location!'
+    case 'delivered':            return 'Delivered! Enjoy your meal 🎉'
+    case 'failed_delivery':      return 'Delivery was unsuccessful. Our support team will reach out shortly.'
+    case 'cancelled':            return 'Order was cancelled'
+    default:                     return ''
+  }
 }
 
 interface FullOrder extends Omit<Order, 'food_maker'> {
@@ -462,7 +471,7 @@ export default function OrderTrackingPage() {
               {ORDER_STATUS_LABELS[currentStatus]}
             </p>
             <p className="font-bold text-gray-900 mt-0.5 text-base">
-              {STATUS_MESSAGES[currentStatus] ?? 'Processing your order...'}
+              {statusMessage(currentStatus, order.food_maker?.display_name) || 'Processing your order...'}
             </p>
           </div>
           {order.status !== 'delivered' && order.status !== 'cancelled' && (
@@ -758,6 +767,7 @@ export default function OrderTrackingPage() {
         <OrderClaimDialog
           orderId={order.id}
           customerId={userId}
+          makerName={order.food_maker?.display_name ?? null}
           items={order.order_items.map(oi => ({
             id:         oi.id,
             quantity:   oi.quantity,

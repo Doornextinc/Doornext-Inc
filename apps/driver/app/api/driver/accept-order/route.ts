@@ -214,6 +214,29 @@ export async function POST(req: NextRequest) {
     }
   )
 
+  /**
+   * Idempotency helper: when the atomic accept reports 'taken' (or CAS count = 0),
+   * check whether THIS driver already owns the order. This handles the case
+   * where the first request committed server-side but the client retried
+   * after a network/timeout (cold start, slow connection, etc.). Without this,
+   * the retry shows the misleading "Order is no longer available — another
+   * driver accepted it" error even though the driver is the one who took it.
+   */
+  const checkAlreadyOwned = async (): Promise<{ owned: boolean; groupId: string | null }> => {
+    const { data } = await admin
+      .from('orders')
+      .select('order_group_id, status, nexter_id')
+      .eq('id', orderId)
+      .maybeSingle()
+    if (data && data.nexter_id === user.id) {
+      return { owned: true, groupId: (data.order_group_id ?? null) as string | null }
+    }
+    return { owned: false, groupId: null }
+  }
+
+  /** Becomes true when we detect this is a retry of an already-successful accept. */
+  let alreadyOwned = false
+
   if (rpcError) {
     // RPC not available (function missing / schema mismatch) — fall through to
     // direct CAS UPDATE. Log at warning, not error, since fallback handles it.
@@ -259,21 +282,34 @@ export async function POST(req: NextRequest) {
       )
     }
     if (casCount === 0) {
-      return NextResponse.json(
-        { error: 'Order is no longer available — another driver accepted it.' },
-        { status: 409 }
-      )
+      // Either someone else got it, or THIS driver already accepted it on a previous request.
+      const own = await checkAlreadyOwned()
+      if (own.owned) {
+        alreadyOwned = true
+        groupId = own.groupId ?? groupId
+      } else {
+        return NextResponse.json(
+          { error: 'Order is no longer available — another driver accepted it.' },
+          { status: 409 }
+        )
+      }
     }
-    // Fallback succeeded — continue to side-effects below
+    // Fallback succeeded (or already-owned retry detected) — continue to side-effects below
   } else {
     // RPC executed — check result token
     if (rpcResult === 'taken') {
-      return NextResponse.json(
-        { error: 'Order is no longer available — another driver accepted it.' },
-        { status: 409 }
-      )
-    }
-    if (rpcResult === 'bad_state') {
+      // Same idempotency check: is this driver the owner from a previous request?
+      const own = await checkAlreadyOwned()
+      if (own.owned) {
+        alreadyOwned = true
+        groupId = own.groupId ?? groupId
+      } else {
+        return NextResponse.json(
+          { error: 'Order is no longer available — another driver accepted it.' },
+          { status: 409 }
+        )
+      }
+    } else if (rpcResult === 'bad_state') {
       return NextResponse.json(
         { error: 'Order cannot be accepted in its current state.' },
         { status: 409 }
@@ -282,7 +318,9 @@ export async function POST(req: NextRequest) {
   }
 
   // ── Upsert route plan ─────────────────────────────────────────────────
-  if (routeStops.length > 0) {
+  // (When alreadyOwned, the route plan was upserted on the original request —
+  // skip to avoid clobbering any in-progress edits to it.)
+  if (routeStops.length > 0 && !alreadyOwned) {
     const finalGroupId = groupId ?? orderId // single order: use orderId as group
     admin.from('driver_route_plans').upsert(
       {
@@ -301,7 +339,10 @@ export async function POST(req: NextRequest) {
   const allOrderIds = [...existingIds, orderId]
 
   // ── Side-effects (fire-and-forget) ────────────────────────────────────
-  void (async () => {
+  // Skipped on idempotent retry — original request already sent notifications,
+  // created StreamChat channels, and incremented the acceptance-rate stat.
+  // Re-running would spam customers/makers and double-count acceptance rate.
+  if (!alreadyOwned) void (async () => {
     try {
       const shortId = orderId.slice(-6).toUpperCase()
 
@@ -383,18 +424,22 @@ export async function POST(req: NextRequest) {
     }
   })()
 
-  // Reliability stat — fire-and-forget but log failures so we know if the RPC is broken
-  void (admin.rpc('increment_driver_accepted', { driver_id: user.id }) as unknown as Promise<unknown>)
-    .catch((e: unknown) => {
-      Sentry.captureException(e, { tags: { rpc: 'increment_driver_accepted' }, extra: { driverId: user.id } })
-    })
+  // Reliability stat — fire-and-forget but log failures so we know if the RPC is broken.
+  // Skipped on idempotent retry — already counted on the original request.
+  if (!alreadyOwned) {
+    void (admin.rpc('increment_driver_accepted', { driver_id: user.id }) as unknown as Promise<unknown>)
+      .catch((e: unknown) => {
+        Sentry.captureException(e, { tags: { rpc: 'increment_driver_accepted' }, extra: { driverId: user.id } })
+      })
+  }
 
   return NextResponse.json({
     success:      true,
     orderId,
-    stacked:      isStacking && bonusAmount > 0,
+    stacked:      isStacking && bonusAmount > 0 && !alreadyOwned,
     groupId,
     allOrderIds,
-    bonusAmount,
+    bonusAmount:  alreadyOwned ? 0 : bonusAmount,
+    alreadyOwned, // hint so the client can skip the haptic / animation if desired
   })
 }

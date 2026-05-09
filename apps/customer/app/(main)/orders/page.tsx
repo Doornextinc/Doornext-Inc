@@ -123,7 +123,7 @@ export default function OrdersPage() {
     clearCart()
     for (const oi of order.order_items) {
       if (oi.menu_item) {
-        addItem(oi.menu_item, order.maker_id, order.food_maker?.display_name ?? 'Unknown Kitchen')
+        addItem(oi.menu_item, order.maker_id, order.food_maker?.display_name ?? 'Maker')
       }
     }
     router.push('/cart')
@@ -184,7 +184,7 @@ export default function OrdersPage() {
                   <div className="flex items-center justify-between mb-2.5">
                     <div>
                       <p className="font-bold text-gray-900 text-[15px]">
-                        {order.food_maker?.display_name ?? 'Unknown Kitchen'}
+                        {order.food_maker?.display_name ?? 'Maker'}
                       </p>
                       <p className="text-xs text-gray-400 mt-0.5">{formatOrderDate(order.created_at)}</p>
                     </div>
@@ -218,7 +218,7 @@ export default function OrdersPage() {
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div>
-                      <p className="font-bold text-gray-900 text-[14px]">{order.food_maker?.display_name ?? 'Unknown Kitchen'}</p>
+                      <p className="font-bold text-gray-900 text-[14px]">{order.food_maker?.display_name ?? 'Maker'}</p>
                       <p className="text-xs text-gray-400 mt-0.5">{formatOrderDate(order.created_at)}</p>
                     </div>
                     <StatusBadge status={order.status as OrderStatus} />
@@ -263,12 +263,12 @@ export default function OrdersPage() {
         )}
 
         {orders.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-5">
-              <ShoppingBag size={36} className="text-gray-300" />
-            </div>
-            <h2 className="heading-lg text-gray-700">No orders yet</h2>
-            <p className="text-gray-400 text-sm mt-2 mb-7">Your order history will appear here</p>
+          <div className="flex flex-col items-center justify-center py-20 text-center px-6">
+            <div className="text-5xl mb-4">🍽️</div>
+            <h2 className="heading-lg text-gray-800">Ready to try fresh homemade food?</h2>
+            <p className="text-gray-500 text-sm mt-2 mb-7 max-w-[280px] leading-relaxed">
+              Browse talented home cooks in your neighborhood and discover what neighbors are making today.
+            </p>
             <Button onClick={() => router.push('/')} size="lg">Browse Makers</Button>
           </div>
         )}
