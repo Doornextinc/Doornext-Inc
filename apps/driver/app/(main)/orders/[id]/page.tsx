@@ -147,7 +147,7 @@ export default function DriverOrderDetailPage() {
             <h2 className="text-xs font-black text-white uppercase tracking-wide">Picked Up From</h2>
           </div>
           <p className="text-sm font-bold text-white">
-            {order.food_maker?.display_name ?? 'Restaurant'}
+            {order.food_maker?.display_name ?? 'Kitchen'}
           </p>
         </div>
 

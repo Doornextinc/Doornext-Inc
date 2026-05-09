@@ -338,7 +338,7 @@ export default function HomePage() {
     }
   }
 
-  const firstName = data?.profile?.full_name?.split(' ')[0] ?? 'Driver'
+  const firstName = data?.profile?.full_name?.split(' ')[0] ?? 'Nexter'
   const driverLat = currentLat ?? lat
   const driverLng = currentLng ?? lng
 
@@ -791,7 +791,7 @@ export default function HomePage() {
                     <div className="flex items-start justify-between px-4 pt-4 pb-3 border-b border-white/6">
                       <div className="flex-1 min-w-0 pr-3">
                         <p className="font-black text-white text-base leading-tight truncate">
-                          {order.food_maker?.display_name ?? 'Restaurant'}
+                          {order.food_maker?.display_name ?? 'Kitchen'}
                         </p>
                         <div className="flex items-center gap-2 mt-1.5">
                           {order.status === 'preparing' ? (
@@ -856,7 +856,7 @@ export default function HomePage() {
                         <span className="w-2.5 h-2.5 rounded-full flex-shrink-0 mt-1" style={{ backgroundColor: '#FF7A50' }} />
                         <div className="flex-1 min-w-0">
                           <span className="text-white text-sm font-semibold truncate block">
-                            {order.food_maker?.display_name ?? 'Restaurant'}
+                            {order.food_maker?.display_name ?? 'Kitchen'}
                           </span>
                           {pickupAddrStr && (
                             <span className="text-zinc-500 text-xs truncate block mt-0.5">

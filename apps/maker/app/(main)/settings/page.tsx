@@ -314,7 +314,7 @@ export default function SettingsPage() {
                   {uploadingBanner ? 'Uploading…' : 'Change cover'}
                 </button>
               </div>
-              <p className="text-[11px] text-gray-400 mt-1">Shown on your restaurant page · JPEG, PNG, WebP · Max 10 MB</p>
+              <p className="text-[11px] text-gray-400 mt-1">Shown on your kitchen profile · JPEG, PNG, WebP · Max 10 MB</p>
             </div>
 
             <div>
@@ -370,7 +370,7 @@ export default function SettingsPage() {
           </p>
           <div className="bg-white rounded-2xl border border-gray-100 p-4 space-y-3">
             <p className="text-xs text-gray-500">
-              Your kitchen address is used to calculate delivery distances and show your restaurant on the map.
+              Your kitchen address is used to calculate delivery distances and show your kitchen on the map.
             </p>
             <div>
               <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Address</label>

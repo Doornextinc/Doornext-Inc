@@ -91,10 +91,10 @@ export default function OrdersPage() {
             <thead>
               <tr className="border-b border-gray-50 bg-gray-50/50">
                 <th className="text-left px-5 py-3 text-xs font-bold text-gray-400 uppercase">Order ID</th>
-                <th className="text-left px-5 py-3 text-xs font-bold text-gray-400 uppercase">Seller</th>
+                <th className="text-left px-5 py-3 text-xs font-bold text-gray-400 uppercase">Maker</th>
                 <th className="text-left px-5 py-3 text-xs font-bold text-gray-400 uppercase">Status</th>
                 <th className="text-left px-5 py-3 text-xs font-bold text-gray-400 uppercase">Payment</th>
-                <th className="text-left px-5 py-3 text-xs font-bold text-gray-400 uppercase">Driver</th>
+                <th className="text-left px-5 py-3 text-xs font-bold text-gray-400 uppercase">Nexter</th>
                 <th className="text-right px-5 py-3 text-xs font-bold text-gray-400 uppercase">Total</th>
                 <th className="text-right px-5 py-3 text-xs font-bold text-gray-400 uppercase">Date</th>
                 <th className="px-5 py-3" />

@@ -788,7 +788,7 @@ export default function AccountPage() {
         </div>
 
         <div className="pt-2 text-center">
-          <p className="text-[11px] text-zinc-800">Doornext Driver v1.0.0</p>
+          <p className="text-[11px] text-zinc-800">Nexter v1.0.0</p>
         </div>
 
       </div>

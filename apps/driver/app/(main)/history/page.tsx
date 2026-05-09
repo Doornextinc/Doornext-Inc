@@ -147,7 +147,7 @@ export default function HistoryPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-bold text-white truncate">
-                            {d.food_maker?.display_name ?? 'Restaurant'}
+                            {d.food_maker?.display_name ?? 'Kitchen'}
                           </p>
                           <div className="flex items-center gap-1.5 mt-0.5">
                             {addr?.city ? (

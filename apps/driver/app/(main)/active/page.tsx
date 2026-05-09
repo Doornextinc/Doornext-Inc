@@ -43,8 +43,8 @@ type ActiveOrder = {
 
 // 6 milestone stages shown in the progress stepper
 const STEPS = [
-  { status: 'driver_assigned',    label: 'Heading Out',     sublabel: 'Drive to restaurant' },
-  { status: 'arrived_at_maker',   label: 'At Restaurant',   sublabel: 'Verify & pick up' },
+  { status: 'driver_assigned',    label: 'Heading Out',     sublabel: 'Head to kitchen' },
+  { status: 'arrived_at_maker',   label: 'At Kitchen',      sublabel: 'Verify & pick up' },
   { status: 'picked_up',          label: 'Picked Up',       sublabel: 'Start delivery' },
   { status: 'on_the_way',         label: 'On the Way',      sublabel: 'Drive to customer' },
   { status: 'arrived_at_customer', label: 'At Customer',    sublabel: 'Complete dropoff' },
@@ -55,7 +55,7 @@ const STEPS = [
 // NOTE: 'arrived_at_maker' is intentionally absent — that transition to
 // 'picked_up' is triggered by the maker entering the PIN on their device.
 const NEXT_ACTION: Record<string, { next: OrderStatus; label: string }> = {
-  driver_assigned:     { next: 'arrived_at_maker',   label: 'Arrived at Restaurant' },
+  driver_assigned:     { next: 'arrived_at_maker',   label: 'Arrived at Kitchen' },
   picked_up:           { next: 'on_the_way',         label: 'Start Delivery' },
   on_the_way:          { next: 'arrived_at_customer', label: 'Arrived at Customer' },
   arrived_at_customer: { next: 'delivered',           label: 'Complete Delivery' },

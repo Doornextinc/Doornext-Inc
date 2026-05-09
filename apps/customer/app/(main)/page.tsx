@@ -30,12 +30,12 @@ const STATUS_BANNER: Partial<Record<OrderStatus, { emoji: string; label: string;
   pending:               { emoji: '⏳', label: 'Waiting for confirmation',       pulse: 'bg-gray-300' },
   confirmed:             { emoji: '✅', label: 'Order confirmed!',                pulse: 'bg-blue-400' },
   preparing:             { emoji: '🍳', label: 'Being prepared…',                 pulse: 'bg-orange-400' },
-  ready:                 { emoji: '🎉', label: 'Ready — waiting for driver',      pulse: 'bg-green-400' },
-  driver_assigned:       { emoji: '🚗', label: 'Driver heading to restaurant',    pulse: 'bg-[#FF6B35]' },
-  arrived_at_maker:      { emoji: '📦', label: 'Driver at restaurant',            pulse: 'bg-[#FF6B35]' },
+  ready:                 { emoji: '🎉', label: 'Ready — waiting for Nexter',     pulse: 'bg-green-400' },
+  driver_assigned:       { emoji: '🚗', label: 'Nexter heading to kitchen',       pulse: 'bg-[#FF6B35]' },
+  arrived_at_maker:      { emoji: '📦', label: 'Nexter at the kitchen',           pulse: 'bg-[#FF6B35]' },
   picked_up:             { emoji: '🛵', label: 'Order picked up!',                pulse: 'bg-[#FF6B35]' },
   on_the_way:            { emoji: '🚀', label: 'On the way to you',               pulse: 'bg-[#FF6B35]' },
-  arrived_at_customer:   { emoji: '📍', label: 'Driver has arrived!',             pulse: 'bg-green-400' },
+  arrived_at_customer:   { emoji: '📍', label: 'Your Nexter has arrived!',        pulse: 'bg-green-400' },
 }
 
 function getGreeting() {

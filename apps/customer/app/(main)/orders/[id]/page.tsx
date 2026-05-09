@@ -23,15 +23,15 @@ const STATUS_STEPS: OrderStatus[] = [
 ]
 
 const STATUS_MESSAGES: Partial<Record<OrderStatus, string>> = {
-  pending: 'Waiting for the kitchen to confirm your order...',
+  pending: 'Waiting for the Maker to confirm your order...',
   confirmed: 'Your order has been confirmed! 🎉',
-  preparing: 'The maker is cooking your food 🍳',
+  preparing: 'The Maker is cooking your food 🍳',
   ready: 'Your order is ready for pickup!',
-  driver_assigned: 'A driver has accepted your order and is heading to the restaurant 🚗',
-  arrived_at_maker: 'Your driver has arrived at the restaurant 📦',
+  driver_assigned: 'Your Nexter has accepted your order and is heading to the kitchen 🚗',
+  arrived_at_maker: 'Your Nexter has arrived at the kitchen 📦',
   picked_up: 'Your Nexter picked up your order!',
   on_the_way: 'Your Nexter is on the way 🛵',
-  arrived_at_customer: 'Your driver has arrived at your location!',
+  arrived_at_customer: 'Your Nexter has arrived at your location!',
   delivered: 'Delivered! Enjoy your meal 🎉',
   failed_delivery: 'Delivery was unsuccessful. Our support team will reach out shortly.',
   cancelled: 'Order was cancelled',

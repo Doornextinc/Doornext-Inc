@@ -63,7 +63,7 @@ export default function WithdrawalsPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-black text-gray-900">Withdrawals</h1>
-          <p className="text-gray-400 text-sm mt-1">Driver & seller payout requests</p>
+          <p className="text-gray-400 text-sm mt-1">Nexter & Maker payout requests</p>
         </div>
         <span className="text-sm text-gray-400">{withdrawals.length} shown</span>
       </div>

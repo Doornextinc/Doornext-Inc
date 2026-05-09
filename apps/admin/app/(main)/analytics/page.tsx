@@ -86,8 +86,8 @@ export default function AnalyticsPage() {
               { label: 'Service Fees', value: `$${summary.serviceFees.toFixed(2)}`, sub: 'Customer service charges' },
               { label: 'Total Orders', value: summary.totalOrders.toLocaleString(), sub: `${summary.deliveredCount} delivered` },
               { label: 'Avg Order Value', value: `$${summary.avgOrderValue.toFixed(2)}`, sub: `${summary.conversionRate}% conversion` },
-              { label: 'Driver Payouts', value: `$${summary.driverPayouts.toFixed(2)}`, sub: 'Total paid to drivers' },
-              { label: 'Seller Payouts', value: `$${summary.makerPayouts.toFixed(2)}`, sub: 'Total paid to sellers' },
+              { label: 'Nexter Payouts', value: `$${summary.driverPayouts.toFixed(2)}`, sub: 'Total paid to Nexters' },
+              { label: 'Maker Payouts', value: `$${summary.makerPayouts.toFixed(2)}`, sub: 'Total paid to Makers' },
               { label: 'Discounts Given', value: `$${summary.discounts.toFixed(2)}`, sub: 'Promo code redemptions' },
               { label: 'Cancelled Orders', value: summary.cancelledCount, sub: `${((summary.cancelledCount / (summary.totalOrders || 1)) * 100).toFixed(1)}% cancel rate` },
             ].map(({ label, value, sub }) => (
@@ -141,9 +141,9 @@ export default function AnalyticsPage() {
               </div>
             </div>
 
-            {/* Top Sellers */}
+            {/* Top Makers */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-              <h2 className="font-bold text-gray-900 mb-4">Top Sellers by Revenue</h2>
+              <h2 className="font-bold text-gray-900 mb-4">Top Makers by Revenue</h2>
               <div className="space-y-3">
                 {topMakers.length === 0 ? (
                   <p className="text-sm text-gray-400">No data yet</p>

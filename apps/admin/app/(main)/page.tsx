@@ -74,8 +74,8 @@ export default async function DashboardPage() {
   const kpis = [
     { label: 'Orders Today', value: stats.ordersToday, icon: ShoppingBag, color: 'text-blue-500 bg-blue-50' },
     { label: 'Revenue Today', value: `$${stats.revenueToday.toFixed(2)}`, icon: DollarSign, color: 'text-green-500 bg-green-50' },
-    { label: 'Active Drivers', value: stats.activeDrivers, icon: Truck, color: 'text-[#FF6B35] bg-orange-50' },
-    { label: 'Open Sellers', value: stats.openMakers, icon: UtensilsCrossed, color: 'text-purple-500 bg-purple-50' },
+    { label: 'Active Nexters', value: stats.activeDrivers, icon: Truck, color: 'text-[#FF6B35] bg-orange-50' },
+    { label: 'Open Makers', value: stats.openMakers, icon: UtensilsCrossed, color: 'text-purple-500 bg-purple-50' },
     { label: 'Total Users', value: stats.totalUsers.toLocaleString(), icon: Users, color: 'text-indigo-500 bg-indigo-50' },
     { label: 'GMV This Month', value: `$${stats.gmvMonth.toFixed(0)}`, icon: TrendingUp, color: 'text-teal-500 bg-teal-50' },
     { label: 'Platform Fees (Mo)', value: `$${stats.platformFeesMonth.toFixed(2)}`, icon: BarChart2, color: 'text-pink-500 bg-pink-50' },

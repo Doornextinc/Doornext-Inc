@@ -25,8 +25,8 @@ const NAV: NavGroup[] = [
     heading: 'Users',
     items: [
       { href: '/users',         icon: Users, label: 'All Users' },
-      { href: '/users/drivers', icon: Truck, label: 'Drivers' },
-      { href: '/users/sellers', icon: Store, label: 'Sellers' },
+      { href: '/users/drivers', icon: Truck, label: 'Nexters' },
+      { href: '/users/sellers', icon: Store, label: 'Makers' },
     ],
   },
   {
@@ -45,8 +45,8 @@ const NAV: NavGroup[] = [
       { href: '/platform/surge-zones',        icon: Zap,         label: 'Surge Zones' },
       { href: '/platform/promo-codes',        icon: Tag,         label: 'Promo Codes' },
       { href: '/platform/price-tiers',        icon: Layers,      label: 'Price Tiers' },
-      { href: '/platform/driver-performance', icon: Award,       label: 'Driver Performance' },
-      { href: '/platform/missions',           icon: Target,      label: 'Driver Missions' },
+      { href: '/platform/driver-performance', icon: Award,       label: 'Nexter Performance' },
+      { href: '/platform/missions',           icon: Target,      label: 'Nexter Missions' },
       { href: '/platform/earnings',           icon: DollarSign,  label: 'Company Earnings' },
     ],
   },
