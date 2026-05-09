@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Home, Package, TrendingUp, User } from 'lucide-react'
-import { useDriverStore } from '@/store/driver-store'
+import { useActiveOrderId } from '@/store/driver-store'
 
 const navItems = [
   { href: '/',          icon: Home,        label: 'Home',     exact: true  },
@@ -14,7 +14,7 @@ const navItems = [
 
 export function BottomNav() {
   const pathname = usePathname()
-  const activeOrderId = useDriverStore(s => s.activeOrderId)
+  const activeOrderId = useActiveOrderId()
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 max-w-[430px] mx-auto">
       <div className="h-px bg-white/6" />

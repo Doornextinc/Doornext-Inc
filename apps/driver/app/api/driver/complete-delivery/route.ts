@@ -12,6 +12,10 @@ import { snapshotFees } from '@doornext/shared/pricing'
 // support/ops tooling to re-run settlement on a delivered order that was missed
 // (e.g. if `update-status` crashed mid-settlement). All upserts use
 // `ignoreDuplicates: true` so it is fully idempotent and safe to call multiple times.
+//
+// Audit finding 5.5.A: previously gated only by `auth.getUser()`, meaning any
+// authenticated user (including drivers and customers) could trigger it.
+// Now restricted to admin role.
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown'
   if (!await checkRateLimit(`complete-delivery:${ip}`, 20, 60)) {
@@ -27,6 +31,13 @@ export async function POST(req: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  // Admin-only: this is a payout-affecting reconciliation tool.
+  const { data: callerProfile } = await supabase
+    .from('users').select('role').eq('id', user.id).single()
+  if (callerProfile?.role !== 'admin') {
+    return NextResponse.json({ error: 'Admin only' }, { status: 403 })
+  }
 
   const { orderId } = await req.json()
   if (!orderId) return NextResponse.json({ error: 'orderId required' }, { status: 400 })

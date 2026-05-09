@@ -49,29 +49,29 @@ export interface StackableOrder {
 }
 
 // ── Haversine ─────────────────────────────────────────────────────────────
+//
+// Audit finding 1.6: previously this module had its own Haversine impl
+// (Math.asin form) parallel to the one in utils.ts (Math.atan2 form). Both
+// computed the same result but drift was a real risk if either was edited
+// without the other. Now there's a single source of truth in utils.ts; the
+// `haversineKm` name is re-exported for back-compat with existing callers.
 
-const EARTH_RADIUS_KM = 6371
+import { haversineDistance as _haversineDistance } from './utils'
 
 /**
  * Returns the great-circle distance (km) between two lat/lng points.
- * Uses the Haversine formula — accurate to ~0.3% for delivery-scale distances.
+ * Re-exported from utils.haversineDistance — same units, same accuracy.
  */
 export function haversineKm(
   lat1: number, lng1: number,
   lat2: number, lng2: number,
 ): number {
-  const toRad = (d: number) => (d * Math.PI) / 180
-  const dLat = toRad(lat2 - lat1)
-  const dLng = toRad(lng2 - lng1)
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2
-  return EARTH_RADIUS_KM * 2 * Math.asin(Math.sqrt(a))
+  return _haversineDistance(lat1, lng1, lat2, lng2)
 }
 
 /** Convenience wrapper for LatLng objects */
 export function distanceKm(a: LatLng, b: LatLng): number {
-  return haversineKm(a.lat, a.lng, b.lat, b.lng)
+  return _haversineDistance(a.lat, a.lng, b.lat, b.lng)
 }
 
 // ── Route length calculator ────────────────────────────────────────────────

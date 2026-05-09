@@ -157,7 +157,14 @@ export async function POST(req: NextRequest) {
       if (!casCount || casCount === 0) {
         // Another concurrent checkout won the race — delete our orphaned customer
         // and use the one that was already written.
-        stripe.customers.del(newCustomer.id).catch(() => {})
+        stripe.customers.del(newCustomer.id).catch((e: unknown) => {
+          // Don't block the user; orphaned Stripe customers are cleanup work, not user-facing.
+          // But log so ops can find them.
+          Sentry.captureException(e, {
+            tags: { context: 'stripe_orphan_customer_cleanup' },
+            extra: { stripeCustomerId: newCustomer.id, userId: user.id },
+          })
+        })
         const { data: refreshed } = await serviceSupabase
           .from('users')
           .select('stripe_customer_id')
@@ -246,7 +253,20 @@ export async function POST(req: NextRequest) {
       customization_notes: item.notes ?? null,
     }))
 
-    await serviceSupabase.from('order_items').insert(orderItems)
+    const { error: itemsError } = await serviceSupabase.from('order_items').insert(orderItems)
+    if (itemsError) {
+      // Order without items is unusable — roll back: delete the order and cancel the PI.
+      console.error('Order items insert failed:', itemsError)
+      Sentry.captureException(itemsError, {
+        tags: { context: 'order_items_insert_failed' },
+        extra: { orderId: order.id, paymentIntentId: paymentIntent.id },
+      })
+      await Promise.allSettled([
+        serviceSupabase.from('orders').delete().eq('id', order.id),
+        stripe.paymentIntents.cancel(paymentIntent.id),
+      ])
+      return NextResponse.json({ error: 'Failed to create order items' }, { status: 500 })
+    }
 
     // Update PaymentIntent metadata with orderId for webhook lookup
     await stripe.paymentIntents.update(paymentIntent.id, {

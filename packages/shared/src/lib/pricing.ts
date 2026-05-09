@@ -297,8 +297,28 @@ export function snapshotFees(order: OrderFeeSnapshot): FeeSnapshot {
     order.delivery_fee -
     order.driver_payout
   )
+  const driverPayout = r(order.driver_payout + order.tip_amount)
+
+  // Invariant: the three payouts MUST sum to what the customer paid.
+  // customer total = subtotal + service_fee + small_order_fee + surge_fee + delivery_fee + tip
+  // If this assertion fails, settlement is broken — fail loudly rather than silently mis-paying.
+  const customerTotal = r(
+    order.subtotal +
+    order.service_fee +
+    (order.small_order_fee ?? 0) +
+    (order.surge_fee ?? 0) +
+    order.delivery_fee +
+    order.tip_amount
+  )
+  const sumPayouts = r(driverPayout + makerPayout + platformFee)
+  if (Math.abs(sumPayouts - customerTotal) > 0.02) {
+    throw new Error(
+      `snapshotFees invariant violation: driver(${driverPayout}) + maker(${makerPayout}) + platform(${platformFee}) = ${sumPayouts}, but customer paid ${customerTotal}`
+    )
+  }
+
   return {
-    driverPayout: r(order.driver_payout + order.tip_amount),
+    driverPayout,
     makerPayout,
     platformFee,
     platformCommission,

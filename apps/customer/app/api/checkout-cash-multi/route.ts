@@ -228,7 +228,17 @@ export async function POST(req: NextRequest) {
         unit_price:          allMenuItems.find((m) => m.id === item.id)!.price,
         customization_notes: item.notes ?? null,
       }))
-      await serviceSupabase.from('order_items').insert(orderItems)
+      const { error: itemsError } = await serviceSupabase.from('order_items').insert(orderItems)
+      if (itemsError) {
+        // Roll back this order plus all earlier orders in the group.
+        console.error('Cash multi order items insert failed:', itemsError)
+        Sentry.captureException(itemsError, {
+          tags: { context: 'order_items_insert_failed_cash_multi' },
+          extra: { orderId: order.id, orderGroupId: order_group_id },
+        })
+        await serviceSupabase.from('orders').delete().in('id', orderIds)
+        return NextResponse.json({ error: 'Failed to create order items' }, { status: 500 })
+      }
 
       // Notify maker (fire-and-forget)
       const makerProfile = makerStatuses?.find((m) => m.id === bucket.maker_id)

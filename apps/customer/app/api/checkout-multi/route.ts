@@ -67,7 +67,17 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await req.json()
-    const { makers: makerBuckets, order_group_id }: { makers: MakerBucket[]; order_group_id: string } = body
+    const {
+      makers: makerBuckets,
+      order_group_id,
+      delivery_address,
+      dropoff_note,
+    }: {
+      makers: MakerBucket[]
+      order_group_id: string
+      delivery_address?: { street: string; city: string; state: string; zip: string; lat?: number; lng?: number }
+      dropoff_note?: string
+    } = body
 
     if (!makerBuckets || !Array.isArray(makerBuckets) || makerBuckets.length === 0) {
       return NextResponse.json({ error: 'No makers provided' }, { status: 400 })
@@ -75,6 +85,11 @@ export async function POST(req: NextRequest) {
     if (!order_group_id) {
       return NextResponse.json({ error: 'order_group_id required' }, { status: 400 })
     }
+    if (!delivery_address || !delivery_address.street) {
+      return NextResponse.json({ error: 'delivery_address required' }, { status: 400 })
+    }
+
+    const safeDropoffNote = (dropoff_note ?? '').toString().slice(0, 500).trim() || null
 
     const serviceSupabase = createServiceClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -248,7 +263,8 @@ export async function POST(req: NextRequest) {
           is_priority:      false,
           driver_payout:    pricing.driverTotal,
           maker_payout:     Math.round(subtotal * (1 - commPct) * 100) / 100,
-          delivery_address: { street: 'N/A', city: 'N/A', state: 'NY', zip: '00000' },
+          delivery_address,
+          dropoff_note: safeDropoffNote,
           stripe_payment_intent_id: paymentIntent.id,
         })
         .select('id')
@@ -273,7 +289,20 @@ export async function POST(req: NextRequest) {
         unit_price:          allMenuItems.find((m) => m.id === item.id)!.price,
         customization_notes: item.notes ?? null,
       }))
-      await serviceSupabase.from('order_items').insert(orderItems)
+      const { error: itemsError } = await serviceSupabase.from('order_items').insert(orderItems)
+      if (itemsError) {
+        // Roll back this group entirely — order with no items is unusable.
+        console.error('Order items insert failed:', itemsError)
+        Sentry.captureException(itemsError, {
+          tags: { context: 'order_items_insert_failed_card_multi' },
+          extra: { orderId: order.id, orderGroupId: order_group_id, paymentIntentId: paymentIntent.id },
+        })
+        await Promise.allSettled([
+          serviceSupabase.from('orders').delete().in('id', orderIds),
+          stripe.paymentIntents.cancel(paymentIntent.id),
+        ])
+        return NextResponse.json({ error: 'Failed to create order items' }, { status: 500 })
+      }
     }
 
     // Update PI metadata with all order IDs

@@ -517,15 +517,14 @@ function CardCheckoutForm({
     if (stripeError) { setError(stripeError.message ?? 'Payment failed. Please try again.'); setLoading(false); return }
 
     if (paymentIntent?.status === 'succeeded') {
-      const deliveryAddress = selectedAddress
-        ? { street: selectedAddress.street, city: selectedAddress.city, state: selectedAddress.state, zip: selectedAddress.zip, lat: selectedAddress.lat, lng: selectedAddress.lng }
-        : { street: address.trim(), city: '', state: '', zip: '' }
-
-      const supabase = createClient()
-      // Persist address + drop-off note on all orders in the group
-      if (orderIds.length > 0) {
+      // delivery_address is persisted at PI creation time. dropoff_note may have been
+      // edited by the user AFTER the PI was created (we don't recreate the PI on note edits),
+      // so patch it once here. Address changes already trigger PI recreation upstream.
+      const finalNote = dropoffNote.trim()
+      if (finalNote && orderIds.length > 0) {
+        const supabase = createClient()
         await supabase.from('orders')
-          .update({ delivery_address: deliveryAddress, dropoff_note: dropoffNote.trim() })
+          .update({ dropoff_note: finalNote })
           .in('id', orderIds)
       }
       clearCart()
@@ -863,8 +862,17 @@ export default function CheckoutPage() {
   const createCardIntent = useCallback(async () => {
     const allEstimated = allMakerIds.every((id) => estimates[id])
     if (!allEstimated || paymentMethod !== 'card' || allMakerIds.length === 0) return
+    if (!selectedAddress) return  // require a real address before creating the PI
     setInitError(null)
     const groupId = uuid4()
+    const deliveryAddress = {
+      street: selectedAddress.street,
+      city:   selectedAddress.city,
+      state:  selectedAddress.state,
+      zip:    selectedAddress.zip,
+      lat:    selectedAddress.lat,
+      lng:    selectedAddress.lng,
+    }
     try {
       const res = await fetch('/api/checkout-multi', {
         method: 'POST',
@@ -876,6 +884,8 @@ export default function CheckoutPage() {
             distance_miles: makerDistances[makerId] ?? 0,
           })),
           order_group_id: groupId,
+          delivery_address: deliveryAddress,
+          dropoff_note:    dropoffNote.trim() || undefined,
         }),
       })
       if (res.status === 401) { router.push('/login'); return }
@@ -887,7 +897,7 @@ export default function CheckoutPage() {
     } catch {
       setInitError('Failed to initialize payment. Please try again.')
     }
-  }, [estimates, allMakerIds, paymentMethod, makerEntries, makerDistances, router])
+  }, [estimates, allMakerIds, paymentMethod, makerEntries, makerDistances, router, selectedAddress, dropoffNote])
 
   useEffect(() => {
     const allEstimated = allMakerIds.length > 0 && allMakerIds.every((id) => estimates[id])

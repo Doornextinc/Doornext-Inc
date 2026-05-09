@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { useDriverStore } from '@/store/driver-store'
+import { useDriverStore, useActiveOrderId } from '@/store/driver-store'
 import type { OrderStatus } from '@doornext/shared/types'
 import {
   MapPin, Phone, CheckCircle, Navigation, Package,
@@ -488,7 +488,7 @@ export default function ActiveDeliveryPage() {
   const userId = useDriverStore((s) => s.userId)
   const hasHydrated = useDriverStore((s) => s._hasHydrated)
   const authReady = useDriverStore((s) => s.authReady)
-  const storeActiveOrderId = useDriverStore((s) => s.activeOrderId)
+  const storeActiveOrderId = useActiveOrderId()
   const storeActiveOrderIds = useDriverStore((s) => s.activeOrderIds)
   const driverLat = useDriverStore((s) => s.currentLat)
   const driverLng = useDriverStore((s) => s.currentLng)

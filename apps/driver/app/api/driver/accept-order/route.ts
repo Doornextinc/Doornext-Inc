@@ -383,8 +383,11 @@ export async function POST(req: NextRequest) {
     }
   })()
 
-  // Reliability stat
-  void (admin.rpc('increment_driver_accepted', { driver_id: user.id }) as unknown as Promise<unknown>).catch(() => {})
+  // Reliability stat — fire-and-forget but log failures so we know if the RPC is broken
+  void (admin.rpc('increment_driver_accepted', { driver_id: user.id }) as unknown as Promise<unknown>)
+    .catch((e: unknown) => {
+      Sentry.captureException(e, { tags: { rpc: 'increment_driver_accepted' }, extra: { driverId: user.id } })
+    })
 
   return NextResponse.json({
     success:      true,

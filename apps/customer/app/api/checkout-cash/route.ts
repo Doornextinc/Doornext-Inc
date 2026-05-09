@@ -169,7 +169,17 @@ export async function POST(req: NextRequest) {
       unit_price:          menuItems.find((m) => m.id === item.id)!.price,
       customization_notes: item.notes ?? null,
     }))
-    await serviceSupabase.from('order_items').insert(orderItems)
+    const { error: itemsError } = await serviceSupabase.from('order_items').insert(orderItems)
+    if (itemsError) {
+      // Order without items is unusable — roll back the order row.
+      console.error('Cash order items insert failed:', itemsError)
+      Sentry.captureException(itemsError, {
+        tags: { context: 'order_items_insert_failed_cash' },
+        extra: { orderId: order.id },
+      })
+      await serviceSupabase.from('orders').delete().eq('id', order.id)
+      return NextResponse.json({ error: 'Failed to create order items' }, { status: 500 })
+    }
 
     // Notify maker of new cash order (fire-and-forget)
     const { data: makerProfile } = await serviceSupabase

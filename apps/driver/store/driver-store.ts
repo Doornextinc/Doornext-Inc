@@ -2,9 +2,15 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 interface DriverState {
-  /** Primary active order ID (first undelivered order in the current stack) */
-  activeOrderId: string | null
-  /** All order IDs currently in the driver's active stack (1 or 2) */
+  /**
+   * All order IDs currently in the driver's active stack (1 or 2).
+   * The "primary" active order is `activeOrderIds[0]` — use the
+   * `useActiveOrderId` selector below to access it without duplicating state.
+   *
+   * Audit finding 3.1: previously this store kept both `activeOrderId` and
+   * `activeOrderIds`, which had to be hand-synced in every setter. The single
+   * source of truth is now `activeOrderIds`; `activeOrderId` is derived.
+   */
   activeOrderIds: string[]
   isOnline: boolean
   currentLat: number | null
@@ -35,8 +41,7 @@ interface DriverState {
 
 export const useDriverStore = create<DriverState>()(
   persist(
-    (set, get) => ({
-      activeOrderId: null,
+    (set) => ({
       activeOrderIds: [],
       isOnline: false,
       currentLat: null,
@@ -48,30 +53,25 @@ export const useDriverStore = create<DriverState>()(
 
       setActiveOrder: (id) =>
         set((s) => {
-          if (id === null) return { activeOrderId: null, activeOrderIds: [] }
-          // Keeps legacy call sites working: sets primary and ensures it's in the list
+          if (id === null) return { activeOrderIds: [] }
+          // Promote `id` to the head of the stack if not already present
           const next = s.activeOrderIds.includes(id)
-            ? s.activeOrderIds
+            ? [id, ...s.activeOrderIds.filter((oid) => oid !== id)]
             : [id, ...s.activeOrderIds]
-          return { activeOrderId: id, activeOrderIds: next }
+          return { activeOrderIds: next }
         }),
 
-      setActiveOrders: (ids) =>
-        set({ activeOrderIds: ids, activeOrderId: ids[0] ?? null }),
+      setActiveOrders: (ids) => set({ activeOrderIds: ids }),
 
       addActiveOrder: (id) =>
-        set((s) => {
-          if (s.activeOrderIds.includes(id)) return {}
-          const next = [...s.activeOrderIds, id]
-          return { activeOrderIds: next, activeOrderId: s.activeOrderId ?? id }
-        }),
+        set((s) =>
+          s.activeOrderIds.includes(id)
+            ? {}
+            : { activeOrderIds: [...s.activeOrderIds, id] }
+        ),
 
       removeActiveOrder: (id) =>
-        set((s) => {
-          const next = s.activeOrderIds.filter((oid) => oid !== id)
-          const primary = s.activeOrderId === id ? (next[0] ?? null) : s.activeOrderId
-          return { activeOrderIds: next, activeOrderId: primary }
-        }),
+        set((s) => ({ activeOrderIds: s.activeOrderIds.filter((oid) => oid !== id) })),
 
       setOnline: (online) => set({ isOnline: online }),
       setLocation: (lat, lng) => set({ currentLat: lat, currentLng: lng }),
@@ -80,7 +80,6 @@ export const useDriverStore = create<DriverState>()(
       setHasHydrated: () => set({ _hasHydrated: true }),
       clearStore: () =>
         set({
-          activeOrderId: null,
           activeOrderIds: [],
           isOnline: false,
           currentLat: null,
@@ -94,7 +93,6 @@ export const useDriverStore = create<DriverState>()(
       name: 'doornext-driver',
       partialize: (state) => ({
         isOnline:       state.isOnline,
-        activeOrderId:  state.activeOrderId,
         activeOrderIds: state.activeOrderIds,
         userId:         state.userId,
         userEmail:      state.userEmail,
@@ -106,3 +104,7 @@ export const useDriverStore = create<DriverState>()(
     }
   )
 )
+
+/** Selector: the primary active order ID (head of the stack), or null. */
+export const useActiveOrderId = (): string | null =>
+  useDriverStore((s) => s.activeOrderIds[0] ?? null)

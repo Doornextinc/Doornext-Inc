@@ -6,6 +6,12 @@ import { notifyUser } from '@doornext/shared/notify'
 
 const MAX_PIN_ATTEMPTS = 5
 
+type AttemptResult = {
+  result: 'success' | 'wrong_pin' | 'locked' | 'wrong_status' | 'wrong_maker' | 'not_found'
+  attempts_remaining: number
+  customer_id: string | null
+}
+
 export async function POST(req: NextRequest) {
   const cookieStore = await cookies()
   const supabase = createServerClient(
@@ -41,7 +47,7 @@ export async function POST(req: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  // Fetch order — verify it belongs to this maker and is in the right state
+  // Resolve maker_id for ownership check inside the RPC
   const { data: makerProfile } = await admin
     .from('food_makers')
     .select('id')
@@ -52,94 +58,73 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Maker profile not found' }, { status: 404 })
   }
 
-  const { data: order, error: fetchErr } = await admin
-    .from('orders')
-    .select('id, status, maker_id, customer_id, pickup_pin, pin_attempts, nexter_id')
-    .eq('id', orderId)
-    .single()
+  // Atomic: row-locks the order, validates state + PIN + attempts, increments
+  // counter or flips status to picked_up — all in one transaction. See
+  // migration 060_atomic_pickup_pin.sql for the full guard logic.
+  const { data: rows, error: rpcErr } = await admin.rpc('attempt_pickup_pin', {
+    p_order_id: orderId,
+    p_pin:      pin,
+    p_maker_id: makerProfile.id,
+  })
 
-  if (fetchErr || !order) {
-    return NextResponse.json({ error: 'Order not found' }, { status: 404 })
+  if (rpcErr) {
+    console.error('attempt_pickup_pin RPC error:', rpcErr)
+    return NextResponse.json({ error: 'Failed to verify PIN' }, { status: 500 })
   }
 
-  // Ownership check — order must belong to this maker's kitchen
-  if (order.maker_id !== makerProfile.id) {
-    return NextResponse.json({ error: 'Order does not belong to your kitchen' }, { status: 403 })
+  const r = (rows as AttemptResult[] | null)?.[0]
+  if (!r) {
+    return NextResponse.json({ error: 'Failed to verify PIN' }, { status: 500 })
   }
 
-  // State guard — PIN entry is only valid at arrived_at_maker
-  if (order.status !== 'arrived_at_maker') {
-    return NextResponse.json(
-      { error: `PIN confirmation is only valid when driver has arrived. Current status: ${order.status}` },
-      { status: 409 }
-    )
-  }
-
-  // Lockout check — too many failed attempts escalates to support
-  if (order.pin_attempts >= MAX_PIN_ATTEMPTS) {
-    return NextResponse.json(
-      {
-        error: 'Too many incorrect attempts. This pickup has been flagged for support review.',
-        locked: true,
-      },
-      { status: 423 }
-    )
-  }
-
-  // Wrong PIN — increment attempt counter
-  if (order.pickup_pin !== pin) {
-    const newAttempts = order.pin_attempts + 1
-    await admin
-      .from('orders')
-      .update({ pin_attempts: newAttempts, updated_at: new Date().toISOString() })
-      .eq('id', orderId)
-
-    const remaining = MAX_PIN_ATTEMPTS - newAttempts
-    if (remaining <= 0) {
-      // Flag for support
-      await notifyUser(admin, {
-        userId: order.customer_id,
-        type: 'pickup_pin_locked',
-        title: 'Pickup Issue — Support Notified',
-        body: `Order #${orderId.slice(-6).toUpperCase()} pickup could not be confirmed after ${MAX_PIN_ATTEMPTS} attempts. Our support team has been alerted.`,
-        data: { order_id: orderId },
-      })
+  switch (r.result) {
+    case 'not_found':
+      return NextResponse.json({ error: 'Order not found' }, { status: 404 })
+    case 'wrong_maker':
+      return NextResponse.json({ error: 'Order does not belong to your kitchen' }, { status: 403 })
+    case 'wrong_status':
+      return NextResponse.json(
+        { error: 'PIN confirmation is only valid when the driver has arrived.' },
+        { status: 409 }
+      )
+    case 'locked': {
+      // Notify customer once that pickup is flagged for support
+      if (r.customer_id) {
+        await notifyUser(admin, {
+          userId: r.customer_id,
+          type: 'pickup_pin_locked',
+          title: 'Pickup Issue — Support Notified',
+          body: `Order #${orderId.slice(-6).toUpperCase()} pickup could not be confirmed after ${MAX_PIN_ATTEMPTS} attempts. Our support team has been alerted.`,
+          data: { order_id: orderId },
+        })
+      }
       return NextResponse.json(
         { error: 'Too many incorrect attempts. This pickup has been flagged for support review.', locked: true },
         { status: 423 }
       )
     }
-
-    return NextResponse.json(
-      {
-        error: `Incorrect PIN. ${remaining} attempt${remaining !== 1 ? 's' : ''} remaining.`,
-        attemptsRemaining: remaining,
-      },
-      { status: 401 }
-    )
+    case 'wrong_pin':
+      return NextResponse.json(
+        {
+          error: `Incorrect PIN. ${r.attempts_remaining} attempt${r.attempts_remaining !== 1 ? 's' : ''} remaining.`,
+          attemptsRemaining: r.attempts_remaining,
+        },
+        { status: 401 }
+      )
+    case 'success': {
+      // Notify the customer that the order is on its way
+      if (r.customer_id) {
+        await notifyUser(admin, {
+          userId: r.customer_id,
+          type: 'order_picked_up',
+          title: '🛵 Order Picked Up!',
+          body: `Your order #${orderId.slice(-6).toUpperCase()} has been picked up and is heading your way.`,
+          data: { order_id: orderId },
+        })
+      }
+      return NextResponse.json({ success: true, status: 'picked_up' })
+    }
+    default:
+      return NextResponse.json({ error: 'Unknown PIN verification result' }, { status: 500 })
   }
-
-  // ── PIN is correct ────────────────────────────────────────────────────────
-
-  await admin
-    .from('orders')
-    .update({
-      status: 'picked_up',
-      pin_attempts: 0,   // reset on success
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', orderId)
-
-  // Notify the customer that the order is on its way (DB + push)
-  if (order.customer_id) {
-    await notifyUser(admin, {
-      userId: order.customer_id,
-      type: 'order_picked_up',
-      title: '🛵 Order Picked Up!',
-      body: `Your order #${orderId.slice(-6).toUpperCase()} has been picked up and is heading your way.`,
-      data: { order_id: orderId },
-    })
-  }
-
-  return NextResponse.json({ success: true, status: 'picked_up' })
 }

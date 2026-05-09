@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { useDriverStore } from '@/store/driver-store'
+import { useDriverStore, useActiveOrderId } from '@/store/driver-store'
 import { AppHeader } from '@/components/layout/app-header'
 import {
   Camera,
@@ -127,7 +127,7 @@ function SectionHeader({
 
 export default function SettingsPage() {
   const router = useRouter()
-  const activeOrderId = useDriverStore((s) => s.activeOrderId)
+  const activeOrderId = useActiveOrderId()
   const clearStore = useDriverStore((s) => s.clearStore)
   const userId = useDriverStore((s) => s.userId)
   const userEmail = useDriverStore((s) => s.userEmail)
