@@ -58,48 +58,67 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Maker profile not found' }, { status: 404 })
   }
 
-  // Atomic: row-locks the order, validates state + PIN + attempts, increments
-  // counter or flips status to picked_up — all in one transaction. See
-  // migration 060_atomic_pickup_pin.sql for the full guard logic.
+  // Atomic-first strategy: try the SECURITY DEFINER RPC (`attempt_pickup_pin`,
+  // migration 060) for race-safe row-locked verification. If the RPC errors
+  // for ANY reason (missing migration, transient DB issue, return-shape mismatch)
+  // OR returns an empty result, fall back to a non-atomic manual path so PIN
+  // verification keeps working. The fallback's race window is small and
+  // acceptable as a safety net — far preferable to a hard "Failed to verify PIN"
+  // 500 that strands the driver and customer at handoff.
   let r: AttemptResult | null = null
-  const { data: rows, error: rpcErr } = await admin.rpc('attempt_pickup_pin', {
-    p_order_id: orderId,
-    p_pin:      pin,
-    p_maker_id: makerProfile.id,
-  })
+  let usedFallback = false
 
-  if (rpcErr) {
-    // Detect "function does not exist" (PGRST202 / 42883) → migration 060 not deployed.
-    // For that specific case, fall back to a manual check-and-update so PIN
-    // verification keeps working even before the migration is applied.
-    // For other errors (transient DB issues), surface a 500 with the error logged.
-    const code = (rpcErr as { code?: string }).code
-    const msg  = rpcErr.message ?? ''
-    const isMissingRpc =
-      code === 'PGRST202' ||
-      code === '42883' ||
-      /function .*attempt_pickup_pin.*does not exist/i.test(msg) ||
-      /could not find the function/i.test(msg)
+  try {
+    const { data: rows, error: rpcErr } = await admin.rpc('attempt_pickup_pin', {
+      p_order_id: orderId,
+      p_pin:      pin,
+      p_maker_id: makerProfile.id,
+    })
 
-    if (!isMissingRpc) {
-      console.error('attempt_pickup_pin RPC error:', rpcErr)
-      return NextResponse.json({ error: 'Failed to verify PIN' }, { status: 500 })
+    if (!rpcErr && rows) {
+      const arr = rows as AttemptResult[]
+      if (arr.length > 0) r = arr[0]
     }
 
-    // ── Fallback: non-atomic check-and-update (race window is acceptable as a
-    //    bridge until migration 060 is applied). The race lets two concurrent
-    //    wrong-PIN requests both increment from N → N+1 instead of going
-    //    N → N+1 → N+2 — i.e. the brute-force lockout takes 1 extra try in
-    //    the worst case. Far better than a hard 500 error.
-    console.warn('attempt_pickup_pin RPC missing — using fallback path. Apply migration 060 to enable atomic verification.')
+    if (!r) {
+      usedFallback = true
+      // Detailed log so we can detect drift between the RPC and the fallback
+      // in production (Sentry will pick this up via the next.js logger).
+      const errSnapshot = rpcErr
+        ? {
+            code: (rpcErr as { code?: string }).code ?? null,
+            message: rpcErr.message ?? null,
+            details: (rpcErr as { details?: string }).details ?? null,
+            hint: (rpcErr as { hint?: string }).hint ?? null,
+          }
+        : { reason: 'rpc_returned_empty' }
+      console.warn(
+        '[confirm-pickup] attempt_pickup_pin RPC unavailable or returned empty — using manual fallback.',
+        errSnapshot,
+      )
+    }
+  } catch (err) {
+    usedFallback = true
+    console.warn('[confirm-pickup] attempt_pickup_pin RPC threw — using manual fallback.', err)
+  }
 
+  if (!r) {
+    // ── Manual fallback: non-atomic check-and-update.
+    //    Race window: two concurrent wrong-PIN requests can both increment
+    //    from N → N+1 (lockout takes 1 extra try in the worst case).
+    //    Apply migration 060 to enable the atomic path.
     const { data: order, error: fetchErr } = await admin
       .from('orders')
       .select('id, status, maker_id, customer_id, pickup_pin, pin_attempts')
       .eq('id', orderId)
-      .single()
+      .maybeSingle()
 
-    if (fetchErr || !order) {
+    if (fetchErr) {
+      console.error('[confirm-pickup] fallback fetch failed:', fetchErr)
+      return NextResponse.json({ error: 'Failed to verify PIN' }, { status: 500 })
+    }
+
+    if (!order) {
       r = { result: 'not_found', attempts_remaining: 0, customer_id: null }
     } else if (order.maker_id !== makerProfile.id) {
       r = { result: 'wrong_maker', attempts_remaining: 0, customer_id: order.customer_id ?? null }
@@ -109,10 +128,14 @@ export async function POST(req: NextRequest) {
       r = { result: 'locked', attempts_remaining: 0, customer_id: order.customer_id ?? null }
     } else if (order.pickup_pin === pin) {
       // Correct PIN → flip status, reset counter
-      await admin
+      const { error: upErr } = await admin
         .from('orders')
         .update({ status: 'picked_up', pin_attempts: 0, updated_at: new Date().toISOString() })
         .eq('id', orderId)
+      if (upErr) {
+        console.error('[confirm-pickup] fallback success-update failed:', upErr)
+        return NextResponse.json({ error: 'Failed to verify PIN' }, { status: 500 })
+      }
       r = {
         result: 'success',
         attempts_remaining: MAX_PIN_ATTEMPTS,
@@ -121,10 +144,14 @@ export async function POST(req: NextRequest) {
     } else {
       // Wrong PIN → increment counter
       const newAttempts = (order.pin_attempts ?? 0) + 1
-      await admin
+      const { error: upErr } = await admin
         .from('orders')
         .update({ pin_attempts: newAttempts, updated_at: new Date().toISOString() })
         .eq('id', orderId)
+      if (upErr) {
+        console.error('[confirm-pickup] fallback wrong-pin-update failed:', upErr)
+        // Still return wrong_pin to the user — they can retry.
+      }
       const remaining = MAX_PIN_ATTEMPTS - newAttempts
       r = {
         result: remaining <= 0 ? 'locked' : 'wrong_pin',
@@ -132,11 +159,11 @@ export async function POST(req: NextRequest) {
         customer_id: order.customer_id ?? null,
       }
     }
-  } else {
-    r = (rows as AttemptResult[] | null)?.[0] ?? null
   }
 
   if (!r) {
+    // Both RPC and fallback failed — truly unrecoverable.
+    console.error('[confirm-pickup] both RPC and fallback returned no result. usedFallback=', usedFallback)
     return NextResponse.json({ error: 'Failed to verify PIN' }, { status: 500 })
   }
 
