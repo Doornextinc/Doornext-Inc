@@ -405,37 +405,64 @@ function TripsHistoryPanel({
 
   if (trips.length === 0) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center px-6 text-center py-16">
-        <div className="w-20 h-20 rounded-3xl bg-[#141414] border border-white/5 flex items-center justify-center mb-5">
-          <TrendingUp size={36} className="text-zinc-700" />
+      <div className="flex-1 flex flex-col items-center justify-center px-6 text-center py-20">
+        <div className="relative mb-6">
+          <span
+            className="absolute inset-0 -m-4 rounded-3xl pointer-events-none"
+            style={{ background: 'radial-gradient(circle at center, rgba(255,122,80,0.12), transparent 70%)' }}
+          />
+          <div className="relative w-20 h-20 rounded-3xl bg-[#141414] border border-white/8 flex items-center justify-center">
+            <Package size={32} className="text-zinc-700" />
+          </div>
         </div>
-        <p className="text-xl font-black text-white mb-2">No trips yet</p>
-        <p className="text-zinc-500 text-sm">Completed deliveries will appear here</p>
+        <p className="text-xl font-black text-white mb-2 tracking-tight">No completed trips yet</p>
+        <p className="text-zinc-500 text-sm max-w-[260px]">
+          Once you finish a delivery, it'll show up here with your earnings and rating.
+        </p>
       </div>
     )
   }
 
+  // ── Summary stats: lifetime + last 7 days ─────────────────────────────────
   const totalEarned = trips.reduce((s, t) => s + (t.driver_payout ?? 0), 0)
+  const totalTips   = trips.reduce((s, t) => s + (t.tip_amount ?? 0), 0)
+  const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
+  const last7Trips = trips.filter((t) => {
+    const ts = new Date(t.delivered_at ?? t.created_at).getTime()
+    return ts >= sevenDaysAgo
+  })
+  const last7Earned = last7Trips.reduce((s, t) => s + (t.driver_payout ?? 0), 0)
 
   return (
     <div className="flex-1 overflow-y-auto">
-      {/* Summary strip */}
-      <div className="flex items-center gap-4 px-4 py-3 border-b border-white/5 bg-[#0D0D0D]">
-        <div className="flex-1 text-center">
-          <p className="text-lg font-black text-white">{trips.length}</p>
-          <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wider">Trips</p>
-        </div>
-        <div className="w-px h-8 bg-white/5" />
-        <div className="flex-1 text-center">
-          <p className="text-lg font-black text-[#FF7A50]">${totalEarned.toFixed(2)}</p>
-          <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wider">Earned</p>
-        </div>
-        <div className="w-px h-8 bg-white/5" />
-        <div className="flex-1 text-center">
-          <p className="text-lg font-black text-white">
-            ${trips.length > 0 ? (totalEarned / trips.length).toFixed(2) : '0.00'}
-          </p>
-          <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wider">Avg</p>
+      {/* Hero summary — corporate-grade focal point */}
+      <div className="relative px-4 pt-4 pb-3 bg-gradient-to-b from-[#101010] to-[#0A0A0A] border-b border-white/5 overflow-hidden">
+        <span
+          className="absolute -top-16 -right-16 w-48 h-48 rounded-full pointer-events-none"
+          style={{ background: 'radial-gradient(circle, rgba(255,122,80,0.08), transparent 70%)' }}
+        />
+        <div className="relative">
+          <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Lifetime Earnings</p>
+          <div className="flex items-baseline gap-2 mt-1">
+            <p className="text-3xl font-black text-white tracking-tight">${totalEarned.toFixed(2)}</p>
+            {totalTips > 0 && (
+              <p className="text-sm font-bold text-green-400">+${totalTips.toFixed(2)} tips</p>
+            )}
+          </div>
+          <div className="flex items-center gap-3 mt-3 text-xs">
+            <div className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#FF7A50]" />
+              <span className="text-zinc-400 font-semibold">{trips.length} trip{trips.length === 1 ? '' : 's'}</span>
+            </div>
+            <span className="text-zinc-700">·</span>
+            <span className="text-zinc-400 font-semibold">
+              ${(totalEarned / trips.length).toFixed(2)} avg
+            </span>
+            <span className="text-zinc-700">·</span>
+            <span className="text-zinc-400 font-semibold">
+              ${last7Earned.toFixed(0)} <span className="text-zinc-600 font-normal">past 7d</span>
+            </span>
+          </div>
         </div>
       </div>
 
@@ -451,26 +478,33 @@ function TripsHistoryPanel({
             ? date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
             : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
 
+          const subtotalEarn = (trip.driver_payout ?? 0) + (trip.tip_amount ?? 0)
+
           return (
-            <div key={trip.id} className="flex items-start gap-3 px-4 py-3.5">
-              <div className="w-9 h-9 rounded-xl bg-[#FF7A50]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <Package size={15} className="text-[#FF7A50]" />
+            <div key={trip.id} className="flex items-start gap-3 px-4 py-3.5 active:bg-white/[0.02] transition-colors">
+              <div className="w-10 h-10 rounded-xl bg-[#FF7A50]/10 border border-[#FF7A50]/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Package size={16} className="text-[#FF7A50]" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold text-white leading-tight truncate">
                   {maker?.display_name ?? 'Unknown restaurant'}
                 </p>
                 {addr && (
-                  <p className="text-[11px] text-zinc-500 mt-0.5 truncate">
-                    → {[addr.street, addr.city].filter(Boolean).join(', ')}
-                  </p>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <span className="text-zinc-700 text-[11px]">→</span>
+                    <p className="text-[11px] text-zinc-500 truncate">
+                      {[addr.street, addr.city].filter(Boolean).join(', ')}
+                    </p>
+                  </div>
                 )}
                 <p className="text-[11px] text-zinc-700 mt-0.5">{dateStr}</p>
               </div>
               <div className="text-right flex-shrink-0">
-                <p className="text-sm font-black text-[#FF7A50]">+${(trip.driver_payout ?? 0).toFixed(2)}</p>
+                <p className="text-sm font-black text-[#FF7A50]">+${subtotalEarn.toFixed(2)}</p>
                 {(trip.tip_amount ?? 0) > 0 && (
-                  <p className="text-[11px] text-green-500">+${trip.tip_amount.toFixed(2)} tip</p>
+                  <p className="text-[10px] text-green-500 font-semibold mt-0.5">
+                    inc ${trip.tip_amount.toFixed(2)} tip
+                  </p>
                 )}
               </div>
             </div>
@@ -851,13 +885,15 @@ export default function ActiveDeliveryPage() {
     )
   }
 
-  /* ── No active order ── */
+  /* ── Loading: we have a store-known active order but server hasn't returned yet ── */
   if (!order && storeActiveOrderId && retryCount < MAX_RETRIES) {
     return (
-      <div className="flex flex-col min-h-full">
+      <div className="flex flex-col min-h-full bg-[#080808]">
         <AppHeader title="Trips" />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="w-10 h-10 border-[3px] border-[#FF7A50] border-t-transparent rounded-full animate-spin" />
+        <div className="flex-1 flex flex-col items-center justify-center px-6">
+          <div className="w-12 h-12 border-[3px] border-[#FF7A50]/30 border-t-[#FF7A50] rounded-full animate-spin mb-4" />
+          <p className="text-sm font-bold text-white">Loading your delivery…</p>
+          <p className="text-xs text-zinc-500 mt-1">Hang tight — fetching the latest details</p>
         </div>
       </div>
     )
@@ -932,23 +968,31 @@ export default function ActiveDeliveryPage() {
     <div className="flex flex-col min-h-full pb-[144px]">
       <AppHeader title="Trips" />
 
-      {/* ── Active / History tab strip ── */}
-      <div className="flex gap-1 px-4 pt-3 pb-2 bg-[#080808] border-b border-white/5">
+      {/* ── Active / History tab strip — corporate underline style ── */}
+      <div className="flex gap-1 px-4 pt-2 bg-[#080808] border-b border-white/5">
         <button
           onClick={() => setActiveTab('active')}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-black transition-colors ${
-            activeTab === 'active' ? 'bg-[#FF7A50] text-white' : 'text-zinc-500 hover:text-zinc-300'
+          className={`flex-1 relative flex items-center justify-center gap-1.5 py-3 text-xs font-black transition-colors ${
+            activeTab === 'active' ? 'text-white' : 'text-zinc-500 active:text-zinc-300'
           }`}
         >
-          <Package size={12} /> Active
+          <Package size={13} className={activeTab === 'active' ? 'text-[#FF7A50]' : 'text-zinc-600'} />
+          <span className="uppercase tracking-wider">Active</span>
+          {activeTab === 'active' && (
+            <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-[#FF7A50] rounded-full" />
+          )}
         </button>
         <button
           onClick={() => setActiveTab('history')}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-black transition-colors ${
-            activeTab === 'history' ? 'bg-[#FF7A50] text-white' : 'text-zinc-500 hover:text-zinc-300'
+          className={`flex-1 relative flex items-center justify-center gap-1.5 py-3 text-xs font-black transition-colors ${
+            activeTab === 'history' ? 'text-white' : 'text-zinc-500 active:text-zinc-300'
           }`}
         >
-          <History size={12} /> History
+          <History size={13} className={activeTab === 'history' ? 'text-[#FF7A50]' : 'text-zinc-600'} />
+          <span className="uppercase tracking-wider">History</span>
+          {activeTab === 'history' && (
+            <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-[#FF7A50] rounded-full" />
+          )}
         </button>
       </div>
 

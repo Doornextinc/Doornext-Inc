@@ -10,6 +10,7 @@ import {
   Mail, MessageCircle, Phone, Bell, Volume2, DollarSign,
   Navigation, Check, X, Star, TrendingUp, Package, Pencil,
   AlertCircle, CheckCircle, Clock, FileText, MapPin,
+  Shield, ArrowRight,
 } from 'lucide-react'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -117,6 +118,36 @@ function SectionLabel({ label }: { label: string }) {
   return <p className="text-xs text-zinc-600 font-bold uppercase tracking-widest mb-2 px-1">{label}</p>
 }
 
+function PerfTile({
+  label,
+  value,
+  tone,
+}: {
+  label: string
+  value: string
+  tone: 'good' | 'warn' | 'bad' | 'neutral'
+}) {
+  const valueColor =
+    tone === 'good'    ? 'text-green-400'
+    : tone === 'warn'  ? 'text-amber-400'
+    : tone === 'bad'   ? 'text-red-400'
+    : 'text-zinc-500'
+  const dotColor =
+    tone === 'good'    ? 'bg-green-400'
+    : tone === 'warn'  ? 'bg-amber-400'
+    : tone === 'bad'   ? 'bg-red-400'
+    : 'bg-zinc-600'
+  return (
+    <div className="bg-[#141414] rounded-2xl border border-white/5 px-4 py-3.5">
+      <div className="flex items-center justify-between mb-1.5">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">{label}</p>
+        <span className={`w-1.5 h-1.5 rounded-full ${dotColor}`} />
+      </div>
+      <p className={`text-2xl font-black leading-none ${valueColor}`}>{value}</p>
+    </div>
+  )
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Page
 // ─────────────────────────────────────────────────────────────────────────────
@@ -154,7 +185,6 @@ export default function AccountPage() {
   const [earningsAlerts, setEarningsAlerts] = useState(true)
 
   // ── Collapsible sections ──────────────────────────────────────────────────
-  const [performanceOpen, setPerformanceOpen] = useState(false)
   const [highlightsOpen, setHighlightsOpen]   = useState(false)
   const [deliveryOpen, setDeliveryOpen]       = useState(false)
   const [prefsOpen, setPrefsOpen]             = useState(false)
@@ -378,8 +408,36 @@ export default function AccountPage() {
 
       <div className="px-4 pt-5 pb-10 space-y-5">
 
+        {/* ── KYC payout-block banner — only shown when not approved ───────── */}
+        {profile?.kyc_status !== 'approved' && (
+          <button
+            type="button"
+            onClick={() => router.push('/documents')}
+            className="w-full flex items-center gap-3 rounded-2xl bg-gradient-to-r from-amber-500/15 to-amber-500/5 border border-amber-500/30 px-4 py-3.5 text-left active:scale-[0.99] transition-transform"
+          >
+            <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center flex-shrink-0">
+              <Shield size={18} className="text-amber-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-black text-amber-100 leading-tight">
+                {profile?.kyc_status === 'pending_review'
+                  ? 'Verification under review'
+                  : profile?.kyc_status === 'rejected'
+                  ? 'Verification rejected — action needed'
+                  : 'Complete identity verification'}
+              </p>
+              <p className="text-xs text-amber-200/70 mt-0.5 leading-tight">
+                {profile?.kyc_status === 'pending_review'
+                  ? 'We\'ll notify you when approved. Payouts unlock automatically.'
+                  : 'Required to receive payouts. Tap to continue.'}
+              </p>
+            </div>
+            <ArrowRight size={16} className="text-amber-400 flex-shrink-0" />
+          </button>
+        )}
+
         {/* ── Profile card ─────────────────────────────────────────────────── */}
-        <div className="bg-[#141414] rounded-2xl border border-white/5 overflow-hidden">
+        <div className={`bg-[#141414] rounded-2xl border overflow-hidden transition-colors ${isOnline ? 'border-green-500/20' : 'border-white/5'}`}>
 
           {/* Avatar + identity */}
           <div className="flex items-center gap-4 px-4 pt-4 pb-3">
@@ -485,16 +543,37 @@ export default function AccountPage() {
           </div>
         </div>
 
-        {/* ── Status ───────────────────────────────────────────────────────── */}
+        {/* ── Status (online toggle gets a hero treatment) ─────────────────── */}
         <div>
           <SectionLabel label="Status" />
-          <div className="bg-[#141414] rounded-2xl border border-white/5 divide-y divide-white/5">
-            <SettingRow
-              icon={isOnline ? CheckCircle : AlertCircle}
-              label="Available for Deliveries"
-              sublabel={isOnline ? 'You are visible to incoming orders' : 'Go online to start accepting orders'}
-              right={<Toggle value={isOnline} onChange={handleOnlineToggle} />}
-            />
+          <div className={`rounded-2xl border overflow-hidden transition-colors ${
+            isOnline
+              ? 'bg-gradient-to-br from-green-500/10 via-[#141414] to-[#141414] border-green-500/25'
+              : 'bg-[#141414] border-white/5'
+          }`}>
+            <div className="flex items-center gap-3 px-4 py-4">
+              <div className={`relative w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                isOnline ? 'bg-green-500/15 border border-green-500/30' : 'bg-[#1E1E1E] border border-white/8'
+              }`}>
+                {isOnline && (
+                  <span className="absolute inset-0 rounded-xl bg-green-500/30 animate-ping opacity-40" />
+                )}
+                <CheckCircle size={18} className={isOnline ? 'text-green-400' : 'text-zinc-600'} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-black text-white">Available for Deliveries</p>
+                  {isOnline && (
+                    <span className="text-[10px] font-black uppercase tracking-wider text-green-400">Live</span>
+                  )}
+                </div>
+                <p className={`text-xs mt-0.5 ${isOnline ? 'text-green-300/70' : 'text-zinc-500'}`}>
+                  {isOnline ? 'Visible to incoming orders nearby' : 'Toggle to start accepting orders'}
+                </p>
+              </div>
+              <Toggle value={isOnline} onChange={handleOnlineToggle} />
+            </div>
+            <div className="h-px bg-white/5" />
             <SettingRow
               icon={KycIcon}
               label="Identity Verification"
@@ -510,60 +589,49 @@ export default function AccountPage() {
           </div>
         </div>
 
-        {/* ── Performance (collapsible) ─────────────────────────────────── */}
+        {/* ── Performance summary (always visible — these are critical for drivers) ── */}
         <div>
-          <SectionHeader label="Performance" open={performanceOpen} onToggle={() => setPerformanceOpen((o) => !o)} />
-          <div className={`overflow-hidden transition-all duration-300 ease-in-out ${performanceOpen ? 'max-h-[300px] opacity-100' : 'max-h-0 opacity-0'}`}>
-            <div className="bg-[#141414] rounded-2xl border border-white/5 overflow-hidden">
-              <div className="grid grid-cols-2 divide-x divide-white/5">
-                <div className="py-4 text-center">
-                  <p className={`font-black text-xl leading-none ${
-                    profile?.acceptance_rate == null ? 'text-zinc-500'
-                    : profile.acceptance_rate >= 80 ? 'text-green-400'
-                    : profile.acceptance_rate >= 60 ? 'text-amber-400'
-                    : 'text-red-400'
-                  }`}>
-                    {profile?.acceptance_rate != null ? `${Math.round(profile.acceptance_rate)}%` : '—'}
-                  </p>
-                  <p className="text-[10px] text-zinc-600 mt-1.5 font-bold uppercase tracking-wide">Acceptance</p>
-                </div>
-                <div className="py-4 text-center">
-                  <p className={`font-black text-xl leading-none ${
-                    completionRate == null ? 'text-zinc-500'
-                    : completionRate >= 90 ? 'text-green-400'
-                    : completionRate >= 70 ? 'text-amber-400'
-                    : 'text-red-400'
-                  }`}>
-                    {completionRate != null ? `${completionRate}%` : '—'}
-                  </p>
-                  <p className="text-[10px] text-zinc-600 mt-1.5 font-bold uppercase tracking-wide">Completion</p>
-                </div>
-              </div>
-              <div className="h-px bg-white/5" />
-              <div className="grid grid-cols-2 divide-x divide-white/5">
-                <div className="py-4 text-center">
-                  <p className={`font-black text-xl leading-none ${
-                    profile?.on_time_delivery_rate == null ? 'text-zinc-500'
-                    : profile.on_time_delivery_rate >= 85 ? 'text-green-400'
-                    : profile.on_time_delivery_rate >= 65 ? 'text-amber-400'
-                    : 'text-red-400'
-                  }`}>
-                    {profile?.on_time_delivery_rate != null ? `${Math.round(profile.on_time_delivery_rate)}%` : '—'}
-                  </p>
-                  <p className="text-[10px] text-zinc-600 mt-1.5 font-bold uppercase tracking-wide">On-Time</p>
-                </div>
-                <div className="py-4 text-center">
-                  <p className={`font-black text-xl leading-none ${
-                    (profile?.issues_reported ?? 0) === 0 ? 'text-green-400'
-                    : (profile?.issues_reported ?? 0) <= 3 ? 'text-amber-400'
-                    : 'text-red-400'
-                  }`}>
-                    {profile?.issues_reported ?? 0}
-                  </p>
-                  <p className="text-[10px] text-zinc-600 mt-1.5 font-bold uppercase tracking-wide">Issues</p>
-                </div>
-              </div>
-            </div>
+          <SectionLabel label="Performance" />
+          <div className="grid grid-cols-2 gap-2.5">
+            <PerfTile
+              label="Acceptance"
+              value={profile?.acceptance_rate != null ? `${Math.round(profile.acceptance_rate)}%` : '—'}
+              tone={
+                profile?.acceptance_rate == null ? 'neutral'
+                : profile.acceptance_rate >= 80 ? 'good'
+                : profile.acceptance_rate >= 60 ? 'warn'
+                : 'bad'
+              }
+            />
+            <PerfTile
+              label="On-Time"
+              value={profile?.on_time_delivery_rate != null ? `${Math.round(profile.on_time_delivery_rate)}%` : '—'}
+              tone={
+                profile?.on_time_delivery_rate == null ? 'neutral'
+                : profile.on_time_delivery_rate >= 85 ? 'good'
+                : profile.on_time_delivery_rate >= 65 ? 'warn'
+                : 'bad'
+              }
+            />
+            <PerfTile
+              label="Completion"
+              value={completionRate != null ? `${completionRate}%` : '—'}
+              tone={
+                completionRate == null ? 'neutral'
+                : completionRate >= 90 ? 'good'
+                : completionRate >= 70 ? 'warn'
+                : 'bad'
+              }
+            />
+            <PerfTile
+              label="Issues"
+              value={String(profile?.issues_reported ?? 0)}
+              tone={
+                (profile?.issues_reported ?? 0) === 0 ? 'good'
+                : (profile?.issues_reported ?? 0) <= 3 ? 'warn'
+                : 'bad'
+              }
+            />
           </div>
         </div>
 

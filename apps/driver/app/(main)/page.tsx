@@ -7,7 +7,7 @@ import dynamic from 'next/dynamic'
 import { createClient } from '@/lib/supabase/client'
 import { useDriverStore } from '@/store/driver-store'
 import { AppHeader } from '@/components/layout/app-header'
-import { ChevronRight, AlertTriangle, MapPin, Clock, Plus, CheckCircle } from 'lucide-react'
+import { ChevronRight, AlertTriangle, MapPin, Clock, Plus, CheckCircle, Star } from 'lucide-react'
 import { haversineDistance, formatDistance, formatPriceDollars, estimateMinutes, formatEta } from '@doornext/shared/utils'
 import { playWithHaptic, initAudio } from '@/lib/notification-sounds'
 import type { StackCandidate } from '@/app/api/driver/stack-candidates/route'
@@ -61,6 +61,29 @@ function timeAgo(dateStr: string) {
 
 const DEFAULT_LAT = 40.7128
 const DEFAULT_LNG = -74.006
+
+/** Compact KPI cell used inside the offline-state performance strip. */
+function KpiCell({
+  label,
+  value,
+  tone,
+}: {
+  label: string
+  value: string
+  tone: 'good' | 'warn' | 'bad' | 'neutral'
+}) {
+  const valueColor =
+    tone === 'good'    ? 'text-green-400'
+    : tone === 'warn'  ? 'text-amber-400'
+    : tone === 'bad'   ? 'text-red-400'
+    : 'text-zinc-400'
+  return (
+    <div className="flex-1 py-3.5 text-center">
+      <p className={`font-black text-lg leading-none ${valueColor}`}>{value}</p>
+      <p className="text-[10px] text-zinc-600 mt-1.5 font-bold uppercase tracking-wider">{label}</p>
+    </div>
+  )
+}
 
 export default function HomePage() {
   const router = useRouter()
@@ -434,18 +457,24 @@ export default function HomePage() {
           {/* Heading */}
           <div className="text-center mb-7">
             <h2 className="text-3xl font-black text-white leading-tight tracking-tight">Ready to earn?</h2>
-            <p className="text-zinc-400 text-base mt-2">Tap GO to start accepting orders</p>
+            <p className="text-zinc-400 text-sm mt-2">Tap GO to start accepting orders nearby</p>
           </div>
 
-          {/* Round GO button */}
-          <div className="flex justify-center mb-5">
+          {/* Round GO button — soft orange aura signals "live to start" */}
+          <div className="flex justify-center mb-6 relative">
+            <span
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-44 h-44 rounded-full pointer-events-none"
+              style={{
+                background: 'radial-gradient(circle at center, rgba(255,122,80,0.18), transparent 70%)',
+              }}
+            />
             <button
               onClick={toggleOnline}
               disabled={toggling}
               className="relative w-32 h-32 rounded-full flex items-center justify-center active:scale-95 transition-all duration-150 disabled:opacity-60"
               style={{
                 background: 'linear-gradient(145deg, #1e1e1e, #141414)',
-                boxShadow: '0 0 0 5px #1c1c1c, 0 0 0 9px #222, 0 16px 48px rgba(0,0,0,0.9)',
+                boxShadow: '0 0 0 5px #1c1c1c, 0 0 0 9px #222, 0 0 32px rgba(255,122,80,0.20), 0 16px 48px rgba(0,0,0,0.9)',
               }}
             >
               <span className="absolute inset-0 rounded-full border border-white/10" />
@@ -455,53 +484,79 @@ export default function HomePage() {
             </button>
           </div>
 
-          {/* Performance metrics — directly below GO button */}
+          {/* Today's earnings hero — large, single focal point */}
           {!loading && (
-            <div className="grid grid-cols-2 gap-2 mb-4">
-              <div className="bg-[#141414]/95 border border-white/8 rounded-2xl py-3.5 text-center backdrop-blur-sm">
-                <p className="font-black text-white text-xl leading-none">
-                  {data?.profile?.acceptance_rate != null ? `${Math.round(data.profile.acceptance_rate)}%` : '—'}
-                </p>
-                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Acceptance Rate</p>
-              </div>
-              <div className="bg-[#141414]/95 border border-white/8 rounded-2xl py-3.5 text-center backdrop-blur-sm">
-                <p className="font-black text-white text-xl leading-none">
-                  {data?.profile?.completion_rate != null ? `${Math.round(data.profile.completion_rate)}%` : '—'}
-                </p>
-                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Completion Rate</p>
-              </div>
-              <div className="bg-[#141414]/95 border border-white/8 rounded-2xl py-3.5 text-center backdrop-blur-sm">
-                <p className="font-black text-white text-xl leading-none">
-                  {data?.profile?.on_time_delivery_rate != null ? `${Math.round(data.profile.on_time_delivery_rate)}%` : '—'}
-                </p>
-                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">On-Time Delivery</p>
-              </div>
-              <div className="bg-[#141414]/95 border border-white/8 rounded-2xl py-3.5 text-center backdrop-blur-sm">
-                <p className="font-black text-white text-xl leading-none">
-                  {data?.profile?.issues_reported ?? 0}
-                </p>
-                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Issues Reported</p>
+            <div className="relative bg-gradient-to-br from-[#1a1a1a] via-[#141414] to-[#0f0f0f] border border-white/8 rounded-3xl px-5 py-4 mb-2.5 backdrop-blur-sm overflow-hidden">
+              <span
+                className="absolute -top-12 -right-12 w-32 h-32 rounded-full pointer-events-none"
+                style={{ background: 'radial-gradient(circle, rgba(255,122,80,0.10), transparent 70%)' }}
+              />
+              <div className="flex items-end justify-between">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Today's earnings</p>
+                  <p className="font-black text-white text-4xl leading-none mt-1.5 tracking-tight">
+                    ${(data?.todayEarnings ?? 0).toFixed(2)}
+                  </p>
+                  <p className="text-xs text-zinc-500 mt-2">
+                    {data?.todayDeliveries ?? 0} trip{data?.todayDeliveries === 1 ? '' : 's'} ·{' '}
+                    <span className="text-zinc-400 font-semibold">${(data?.weekEarnings ?? 0).toFixed(0)}</span> this week
+                  </p>
+                </div>
+                <div className="flex items-center gap-1 bg-amber-500/10 border border-amber-500/20 rounded-lg px-2 py-1 flex-shrink-0">
+                  <Star size={11} className="text-amber-400 fill-amber-400" />
+                  <span className="text-amber-300 text-xs font-black">
+                    {data?.profile?.avg_rating != null ? data.profile.avg_rating.toFixed(1) : '—'}
+                  </span>
+                </div>
               </div>
             </div>
           )}
 
-          {/* Today / Trips / Rating strip */}
+          {/* Performance metrics — single inline strip (4 KPIs at a glance) */}
           {!loading && (
-            <div className="flex items-stretch bg-[#141414]/95 border border-white/8 rounded-3xl overflow-hidden backdrop-blur-sm">
-              <div className="flex-1 py-4 text-center">
-                <p className="font-black text-white text-2xl leading-none">${(data?.todayEarnings ?? 0).toFixed(2)}</p>
-                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Today</p>
-              </div>
-              <div className="w-px bg-white/8" />
-              <div className="flex-1 py-4 text-center">
-                <p className="font-black text-white text-2xl leading-none">{data?.todayDeliveries ?? 0}</p>
-                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Trips</p>
-              </div>
-              <div className="w-px bg-white/8" />
-              <div className="flex-1 py-4 text-center">
-                <p className="font-black text-white text-2xl leading-none">{data?.profile?.avg_rating != null ? data.profile.avg_rating.toFixed(1) : '—'}</p>
-                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Rating</p>
-              </div>
+            <div className="flex items-stretch bg-[#141414]/95 border border-white/8 rounded-2xl overflow-hidden backdrop-blur-sm">
+              <KpiCell
+                label="Accept"
+                value={data?.profile?.acceptance_rate != null ? `${Math.round(data.profile.acceptance_rate)}%` : '—'}
+                tone={
+                  data?.profile?.acceptance_rate == null ? 'neutral'
+                  : data.profile.acceptance_rate >= 80 ? 'good'
+                  : data.profile.acceptance_rate >= 60 ? 'warn'
+                  : 'bad'
+                }
+              />
+              <span className="w-px bg-white/8" />
+              <KpiCell
+                label="On-Time"
+                value={data?.profile?.on_time_delivery_rate != null ? `${Math.round(data.profile.on_time_delivery_rate)}%` : '—'}
+                tone={
+                  data?.profile?.on_time_delivery_rate == null ? 'neutral'
+                  : data.profile.on_time_delivery_rate >= 85 ? 'good'
+                  : data.profile.on_time_delivery_rate >= 65 ? 'warn'
+                  : 'bad'
+                }
+              />
+              <span className="w-px bg-white/8" />
+              <KpiCell
+                label="Complete"
+                value={data?.profile?.completion_rate != null ? `${Math.round(data.profile.completion_rate)}%` : '—'}
+                tone={
+                  data?.profile?.completion_rate == null ? 'neutral'
+                  : data.profile.completion_rate >= 90 ? 'good'
+                  : data.profile.completion_rate >= 70 ? 'warn'
+                  : 'bad'
+                }
+              />
+              <span className="w-px bg-white/8" />
+              <KpiCell
+                label="Issues"
+                value={String(data?.profile?.issues_reported ?? 0)}
+                tone={
+                  (data?.profile?.issues_reported ?? 0) === 0 ? 'good'
+                  : (data?.profile?.issues_reported ?? 0) <= 3 ? 'warn'
+                  : 'bad'
+                }
+              />
             </div>
           )}
         </div>
@@ -512,19 +567,31 @@ export default function HomePage() {
           className="absolute bottom-0 left-0 right-0 z-10 max-h-[70vh] overflow-y-auto px-4 pb-8 pt-6 space-y-3"
           style={{ background: 'linear-gradient(to top, #0A0A0A 68%, rgba(10,10,10,0.6) 85%, transparent)' }}
         >
-          {/* Active order banner */}
+          {/* Active order banner — corporate-grade primacy when on a delivery */}
           {data?.activeOrder && (
-            <Link href="/active" className="block bg-[#FF7A50]/10 border border-[#FF7A50]/20 rounded-2xl px-4 py-4 backdrop-blur-sm">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-black text-[#FF7A50] uppercase tracking-wider mb-1">Active Delivery</p>
-                  <p className="font-black text-white text-base">{data.activeOrder.food_maker?.display_name ?? 'Order'}</p>
-                  <p className="text-sm text-zinc-400 mt-0.5 capitalize">{data.activeOrder.status.replace(/_/g, ' ')}</p>
+            <Link
+              href="/active"
+              className="relative block bg-gradient-to-r from-[#FF7A50]/15 via-[#FF7A50]/8 to-[#FF7A50]/4 border border-[#FF7A50]/25 rounded-2xl px-4 py-4 backdrop-blur-sm overflow-hidden active:scale-[0.99] transition-transform"
+            >
+              <span
+                className="absolute -top-8 -right-8 w-24 h-24 rounded-full pointer-events-none"
+                style={{ background: 'radial-gradient(circle, rgba(255,122,80,0.18), transparent 70%)' }}
+              />
+              <div className="relative flex items-center justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="relative w-2 h-2 flex-shrink-0">
+                      <span className="absolute inset-0 rounded-full bg-[#FF7A50] animate-ping opacity-50" />
+                      <span className="absolute inset-0 rounded-full bg-[#FF7A50]" />
+                    </span>
+                    <p className="text-[10px] font-black text-[#FF7A50] uppercase tracking-widest">Active Delivery</p>
+                  </div>
+                  <p className="font-black text-white text-base truncate">{data.activeOrder.food_maker?.display_name ?? 'Order'}</p>
+                  <p className="text-xs text-zinc-400 mt-0.5 capitalize">
+                    {data.activeOrder.status.replace(/_/g, ' ')} · Tap to continue
+                  </p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#FF7A50] animate-pulse" />
-                  <ChevronRight size={18} className="text-[#FF7A50]" />
-                </div>
+                <ChevronRight size={20} className="text-[#FF7A50] flex-shrink-0" />
               </div>
             </Link>
           )}
