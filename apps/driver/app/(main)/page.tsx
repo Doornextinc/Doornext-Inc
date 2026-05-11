@@ -6,8 +6,7 @@ import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { createClient } from '@/lib/supabase/client'
 import { useDriverStore } from '@/store/driver-store'
-import { AppHeader } from '@/components/layout/app-header'
-import { ChevronRight, AlertTriangle, MapPin, Clock, Plus, CheckCircle, Star } from 'lucide-react'
+import { ChevronRight, AlertTriangle, MapPin, Clock, Plus, CheckCircle, Star, Menu, X } from 'lucide-react'
 import { haversineDistance, formatDistance, formatPriceDollars, estimateMinutes, formatEta } from '@doornext/shared/utils'
 import { playWithHaptic, initAudio } from '@/lib/notification-sounds'
 import type { StackCandidate } from '@/app/api/driver/stack-candidates/route'
@@ -43,13 +42,6 @@ type AvailableOrder = {
   created_at: string
   food_maker: { display_name: string; lat: number; lng: number; address?: string | null } | null
   delivery_address: { street?: string; city?: string; lat?: number; lng?: number } | null
-}
-
-function greeting() {
-  const h = new Date().getHours()
-  if (h < 12) return 'morning'
-  if (h < 17) return 'afternoon'
-  return 'evening'
 }
 
 function timeAgo(dateStr: string) {
@@ -111,6 +103,36 @@ export default function HomePage() {
   // Post-accept holding state: driver stays on home to optionally stack before starting route
   const [acceptedOrderId, setAcceptedOrderId] = useState<string | null>(null)
   const [startRouteCountdown, setStartRouteCountdown] = useState<number | null>(null)
+
+  // ── Dasher-style dashboard UI state ─────────────────────────────────────
+  const [sideMenuOpen, setSideMenuOpen] = useState(false)
+  const [sheetExpanded, setSheetExpanded] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
+  const userId = useDriverStore((s) => s.userId)
+
+  // Realtime unread count for the floating bell
+  useEffect(() => {
+    if (!userId) return
+    const supabase = createClient()
+    const refresh = () => supabase
+      .from('notifications')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('read', false)
+      .then(({ count }) => setUnreadCount(count ?? 0))
+    refresh()
+    const channel = supabase
+      .channel('driver-home-bell')
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` },
+        refresh,
+      )
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [userId])
+
+  // Close side menu when navigating
+  const closeSideMenu = useCallback(() => setSideMenuOpen(false), [])
 
   useEffect(() => {
     if (typeof navigator === 'undefined') return
@@ -366,10 +388,16 @@ export default function HomePage() {
   const driverLng = currentLng ?? lng
 
   return (
-    <div className="relative flex flex-col overflow-hidden" style={{ height: '100svh' }}>
+    <div className="fixed inset-0 bg-[#080808] overflow-hidden">
 
-      {/* Live map — interactive (pan / zoom enabled) */}
-      <LiveMap lat={lat} lng={lng} isOnline={isOnline} />
+      {/* ── Full-bleed map — Dasher-style background ───────────────────── */}
+      <div className="absolute inset-0">
+        <LiveMap lat={lat} lng={lng} isOnline={isOnline} />
+      </div>
+
+      {/* Subtle top + bottom gradients for legibility of floating controls */}
+      <div className="absolute top-0 left-0 right-0 h-44 pointer-events-none bg-gradient-to-b from-[#080808]/75 via-[#080808]/30 to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 h-1/3 pointer-events-none bg-gradient-to-t from-[#080808]/60 via-[#080808]/20 to-transparent" />
 
       {/* ── Online/Offline transition splash ── */}
       {transitioning && (
@@ -380,8 +408,6 @@ export default function HomePage() {
               to   { stroke-dashoffset: 0; }
             }
           `}</style>
-
-          {/* Circular progress button */}
           <div className="relative flex items-center justify-center" style={{ width: 160, height: 160 }}>
             <svg className="absolute inset-0 -rotate-90" width="160" height="160" viewBox="0 0 160 160">
               <circle cx="80" cy="80" r="68" fill="none" stroke="#1a1a1a" strokeWidth="4" />
@@ -401,7 +427,6 @@ export default function HomePage() {
                 boxShadow: '0 0 0 5px #1c1c1c, 0 0 0 9px #222',
               }}
             >
-              <span className="absolute inset-0 rounded-full border border-white/10 w-28 h-28 m-auto" style={{ width: 112, height: 112, borderRadius: 9999 }} />
               {transitionTarget ? (
                 <span className="text-white font-black text-2xl tracking-wide">Go</span>
               ) : (
@@ -412,7 +437,6 @@ export default function HomePage() {
               )}
             </div>
           </div>
-
           <p className="text-white font-black text-xl mt-8 tracking-tight">
             {transitionTarget ? 'Going Online…' : 'Going Offline…'}
           </p>
@@ -422,175 +446,198 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Floating sticky header */}
-      <div className="relative z-10">
-        <AppHeader greeting={loading ? undefined : { time: greeting(), name: firstName }} />
-      </div>
-
-      {/* Load error banner */}
-      {loadError && (
-        <div className="absolute top-16 left-0 right-0 z-20 px-4 pt-2">
+      {/* ── Floating top controls (hamburger / status pill / bell) ───────── */}
+      <div className="absolute top-0 left-0 right-0 z-30" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+        <div className="flex items-center gap-2 px-3 pt-3">
+          {/* Hamburger menu */}
           <button
-            onClick={load}
-            className="w-full flex items-center justify-center gap-2 bg-red-500/15 border border-red-500/30 rounded-2xl px-4 py-3 text-red-400 text-sm font-bold"
+            onClick={() => setSideMenuOpen(true)}
+            aria-label="Open menu"
+            className="w-11 h-11 rounded-2xl bg-[#0f0f0f]/95 backdrop-blur border border-white/10 flex items-center justify-center shadow-xl active:scale-95 transition-transform flex-shrink-0"
           >
-            <AlertTriangle size={15} />
-            Failed to load — tap to retry
+            <Menu size={20} className="text-white" />
           </button>
-        </div>
-      )}
 
-      {/* ── KYC incomplete banner ── */}
-      {!loading && !loadError && data?.profile?.kyc_status && data.profile.kyc_status !== 'approved' && (
-        <div className="absolute top-16 left-0 right-0 z-20 px-4 pt-2">
-          <Link
-            href="/onboarding"
-            className="flex items-center gap-3 bg-amber-500/10 border border-amber-500/30 rounded-2xl px-4 py-3 backdrop-blur-sm"
+          {/* Status pill — Online/Offline toggle (the primary action) */}
+          <button
+            onClick={toggleOnline}
+            disabled={toggling || transitioning}
+            className={`flex-1 h-11 rounded-2xl backdrop-blur border flex items-center justify-center gap-2 shadow-xl active:scale-[0.98] transition-all duration-200 disabled:opacity-60 ${
+              isOnline
+                ? 'bg-green-500/15 border-green-500/40'
+                : 'bg-[#0f0f0f]/95 border-white/10'
+            }`}
           >
-            <AlertTriangle size={18} className="text-amber-400 flex-shrink-0" />
-            <div className="flex-1 min-w-0">
-              {data.profile.kyc_status === 'pending_review' ? (
-                <>
-                  <p className="text-amber-400 font-black text-sm">Verification Under Review</p>
-                  <p className="text-amber-400/70 text-xs mt-0.5">We&apos;ll notify you when it&apos;s approved</p>
-                </>
-              ) : data.profile.kyc_status === 'rejected' ? (
-                <>
-                  <p className="text-amber-400 font-black text-sm">Verification Rejected</p>
-                  <p className="text-amber-400/70 text-xs mt-0.5">Tap to resubmit your documents</p>
-                </>
-              ) : (
-                <>
-                  <p className="text-amber-400 font-black text-sm">Identity Verification Required</p>
-                  <p className="text-amber-400/70 text-xs mt-0.5">Complete KYC to start accepting orders</p>
-                </>
-              )}
-            </div>
-            <ChevronRight size={16} className="text-amber-400/70 flex-shrink-0" />
+            {isOnline ? (
+              <>
+                <span className="relative flex h-2 w-2 flex-shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-60" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-400" />
+                </span>
+                <span className="text-white font-black text-sm">Online</span>
+                <span className="text-green-400/70 text-xs font-semibold">· tap to go off</span>
+              </>
+            ) : (
+              <>
+                <span className="text-zinc-500 text-xs">⚫</span>
+                <span className="text-white font-black text-sm">Offline</span>
+                <span className="text-zinc-500 text-xs font-semibold">· tap GO</span>
+              </>
+            )}
+          </button>
+
+          {/* Bell — notifications + chat unified */}
+          <Link
+            href="/notifications"
+            aria-label="Notifications and messages"
+            className="relative w-11 h-11 rounded-2xl bg-[#0f0f0f]/95 backdrop-blur border border-white/10 flex items-center justify-center shadow-xl active:scale-95 transition-transform flex-shrink-0"
+          >
+            <span className="text-base" aria-hidden>🔔</span>
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-[#FF7A50] rounded-full border-2 border-[#080808] text-white text-[10px] font-black flex items-center justify-center">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
           </Link>
         </div>
-      )}
 
-      {/* ── OFFLINE bottom sheet ── */}
-      {!isOnline ? (
+        {/* KYC banner — floats below top bar when verification incomplete */}
+        {!loading && !loadError && data?.profile?.kyc_status && data.profile.kyc_status !== 'approved' && (
+          <Link
+            href="/onboarding"
+            className="mx-3 mt-2 flex items-center gap-2 bg-amber-500/15 border border-amber-500/30 rounded-2xl px-3 py-2.5 backdrop-blur shadow-xl"
+          >
+            <AlertTriangle size={15} className="text-amber-400 flex-shrink-0" />
+            <span className="flex-1 text-amber-300 font-bold text-xs leading-tight">
+              {data.profile.kyc_status === 'pending_review' ? 'Verification under review — we\'ll notify you when approved'
+                : data.profile.kyc_status === 'rejected' ? 'Verification rejected — tap to resubmit'
+                : 'Identity verification required to accept orders'}
+            </span>
+            <ChevronRight size={14} className="text-amber-400/70 flex-shrink-0" />
+          </Link>
+        )}
+
+        {/* Load error banner */}
+        {loadError && (
+          <button
+            onClick={load}
+            className="mx-3 mt-2 flex items-center justify-center gap-2 bg-red-500/15 border border-red-500/30 rounded-2xl px-3 py-2.5 w-[calc(100%-1.5rem)] backdrop-blur shadow-xl"
+          >
+            <AlertTriangle size={14} className="text-red-400" />
+            <span className="text-red-400 font-bold text-xs">Failed to load — tap to retry</span>
+          </button>
+        )}
+      </div>
+
+      {/* ── Bottom sheet — collapsible (peek / expanded) ──────────────────── */}
+      <div
+        className="absolute bottom-0 left-0 right-0 z-20 transition-all duration-300 ease-out"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
         <div
-          className="absolute bottom-0 left-0 right-0 z-10 px-5 pb-10 pt-8"
-          style={{ background: 'linear-gradient(to top, #0A0A0A 72%, rgba(10,10,10,0.6) 88%, transparent)' }}
+          className="bg-[#0A0A0A]/98 backdrop-blur-xl rounded-t-3xl border-t border-white/10 shadow-2xl flex flex-col"
+          style={{ maxHeight: sheetExpanded ? '85vh' : '50vh' }}
         >
-          {/* Heading */}
-          <div className="text-center mb-7">
-            <h2 className="text-3xl font-black text-white leading-tight tracking-tight">Ready to earn?</h2>
-            <p className="text-zinc-400 text-sm mt-2">Tap GO to start accepting orders nearby</p>
-          </div>
+          {/* Drag handle — tap to expand/collapse */}
+          <button
+            onClick={() => setSheetExpanded((e) => !e)}
+            className="w-full pt-3 pb-2 flex justify-center group flex-shrink-0"
+            aria-label={sheetExpanded ? 'Collapse sheet' : 'Expand sheet'}
+          >
+            <div className={`w-12 h-1.5 rounded-full transition-colors ${sheetExpanded ? 'bg-white/40' : 'bg-white/20 group-active:bg-white/40'}`} />
+          </button>
 
-          {/* Round GO button — soft orange aura signals "live to start" */}
-          <div className="flex justify-center mb-6 relative">
-            <span
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-44 h-44 rounded-full pointer-events-none"
-              style={{
-                background: 'radial-gradient(circle at center, rgba(255,122,80,0.18), transparent 70%)',
-              }}
-            />
-            <button
-              onClick={toggleOnline}
-              disabled={toggling}
-              className="relative w-32 h-32 rounded-full flex items-center justify-center active:scale-95 transition-all duration-150 disabled:opacity-60"
-              style={{
-                background: 'linear-gradient(145deg, #1e1e1e, #141414)',
-                boxShadow: '0 0 0 5px #1c1c1c, 0 0 0 9px #222, 0 0 32px rgba(255,122,80,0.20), 0 16px 48px rgba(0,0,0,0.9)',
-              }}
-            >
-              <span className="absolute inset-0 rounded-full border border-white/10" />
-              <span className="text-white font-black text-3xl tracking-wide">
-                {toggling ? '…' : 'Go'}
-              </span>
-            </button>
-          </div>
-
-          {/* Today's earnings hero — large, single focal point */}
-          {!loading && (
-            <div className="relative bg-gradient-to-br from-[#1a1a1a] via-[#141414] to-[#0f0f0f] border border-white/8 rounded-3xl px-5 py-4 mb-2.5 backdrop-blur-sm overflow-hidden">
-              <span
-                className="absolute -top-12 -right-12 w-32 h-32 rounded-full pointer-events-none"
-                style={{ background: 'radial-gradient(circle, rgba(255,122,80,0.10), transparent 70%)' }}
-              />
-              <div className="flex items-end justify-between">
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Today's earnings</p>
-                  <p className="font-black text-white text-4xl leading-none mt-1.5 tracking-tight">
-                    ${(data?.todayEarnings ?? 0).toFixed(2)}
-                  </p>
-                  <p className="text-xs text-zinc-500 mt-2">
-                    {data?.todayDeliveries ?? 0} trip{data?.todayDeliveries === 1 ? '' : 's'} ·{' '}
-                    <span className="text-zinc-400 font-semibold">${(data?.weekEarnings ?? 0).toFixed(0)}</span> this week
-                  </p>
-                </div>
-                <div className="flex items-center gap-1 bg-amber-500/10 border border-amber-500/20 rounded-lg px-2 py-1 flex-shrink-0">
-                  <Star size={11} className="text-amber-400 fill-amber-400" />
-                  <span className="text-amber-300 text-xs font-black">
-                    {data?.profile?.avg_rating != null ? data.profile.avg_rating.toFixed(1) : '—'}
-                  </span>
-                </div>
+          {/* Scrollable sheet content */}
+          <div className="flex-1 overflow-y-auto px-4 pb-6 space-y-3">
+          {!isOnline ? (
+            <>
+              {/* ── OFFLINE sheet content ── */}
+              <div className="pt-1">
+                <p className="text-zinc-500 text-[10px] font-black uppercase tracking-widest">You&apos;re offline</p>
+                <p className="text-white text-2xl font-black mt-1 leading-tight">Ready to earn?</p>
+                <p className="text-zinc-400 text-sm mt-1">Tap <span className="text-white font-bold">Offline</span> in the status pill above to go online.</p>
               </div>
-            </div>
-          )}
 
-          {/* Performance metrics — single inline strip (4 KPIs at a glance) */}
-          {!loading && (
-            <div className="flex items-stretch bg-[#141414]/95 border border-white/8 rounded-2xl overflow-hidden backdrop-blur-sm">
-              <KpiCell
-                label="Accept"
-                value={data?.profile?.acceptance_rate != null ? `${Math.round(data.profile.acceptance_rate)}%` : '—'}
-                tone={
-                  data?.profile?.acceptance_rate == null ? 'neutral'
-                  : data.profile.acceptance_rate >= 80 ? 'good'
-                  : data.profile.acceptance_rate >= 60 ? 'warn'
-                  : 'bad'
-                }
-              />
-              <span className="w-px bg-white/8" />
-              <KpiCell
-                label="On-Time"
-                value={data?.profile?.on_time_delivery_rate != null ? `${Math.round(data.profile.on_time_delivery_rate)}%` : '—'}
-                tone={
-                  data?.profile?.on_time_delivery_rate == null ? 'neutral'
-                  : data.profile.on_time_delivery_rate >= 85 ? 'good'
-                  : data.profile.on_time_delivery_rate >= 65 ? 'warn'
-                  : 'bad'
-                }
-              />
-              <span className="w-px bg-white/8" />
-              <KpiCell
-                label="Complete"
-                value={data?.profile?.completion_rate != null ? `${Math.round(data.profile.completion_rate)}%` : '—'}
-                tone={
-                  data?.profile?.completion_rate == null ? 'neutral'
-                  : data.profile.completion_rate >= 90 ? 'good'
-                  : data.profile.completion_rate >= 70 ? 'warn'
-                  : 'bad'
-                }
-              />
-              <span className="w-px bg-white/8" />
-              <KpiCell
-                label="Issues"
-                value={String(data?.profile?.issues_reported ?? 0)}
-                tone={
-                  (data?.profile?.issues_reported ?? 0) === 0 ? 'good'
-                  : (data?.profile?.issues_reported ?? 0) <= 3 ? 'warn'
-                  : 'bad'
-                }
-              />
-            </div>
-          )}
-        </div>
+              {/* Today's earnings hero */}
+              {!loading && (
+                <div className="relative bg-gradient-to-br from-[#1a1a1a] via-[#141414] to-[#0f0f0f] border border-white/8 rounded-3xl px-5 py-4 backdrop-blur-sm overflow-hidden">
+                  <span
+                    className="absolute -top-12 -right-12 w-32 h-32 rounded-full pointer-events-none"
+                    style={{ background: 'radial-gradient(circle, rgba(255,122,80,0.10), transparent 70%)' }}
+                  />
+                  <div className="flex items-end justify-between">
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Today&apos;s earnings</p>
+                      <p className="font-black text-white text-4xl leading-none mt-1.5 tracking-tight">
+                        ${(data?.todayEarnings ?? 0).toFixed(2)}
+                      </p>
+                      <p className="text-xs text-zinc-500 mt-2">
+                        {data?.todayDeliveries ?? 0} trip{data?.todayDeliveries === 1 ? '' : 's'} ·{' '}
+                        <span className="text-zinc-400 font-semibold">${(data?.weekEarnings ?? 0).toFixed(0)}</span> this week
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1 bg-amber-500/10 border border-amber-500/20 rounded-lg px-2 py-1 flex-shrink-0">
+                      <Star size={11} className="text-amber-400 fill-amber-400" />
+                      <span className="text-amber-300 text-xs font-black">
+                        {data?.profile?.avg_rating != null ? data.profile.avg_rating.toFixed(1) : '—'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
 
-      ) : (
-        /* ── ONLINE bottom sheet ── */
-        <div
-          className="absolute bottom-0 left-0 right-0 z-10 max-h-[70vh] overflow-y-auto px-4 pb-8 pt-6 space-y-3"
-          style={{ background: 'linear-gradient(to top, #0A0A0A 68%, rgba(10,10,10,0.6) 85%, transparent)' }}
-        >
-          {/* Active order banner — corporate-grade primacy when on a delivery */}
+              {/* Performance KPIs */}
+              {!loading && (
+                <div className="flex items-stretch bg-[#141414]/95 border border-white/8 rounded-2xl overflow-hidden backdrop-blur-sm">
+                  <KpiCell
+                    label="Accept"
+                    value={data?.profile?.acceptance_rate != null ? `${Math.round(data.profile.acceptance_rate)}%` : '—'}
+                    tone={
+                      data?.profile?.acceptance_rate == null ? 'neutral'
+                      : data.profile.acceptance_rate >= 80 ? 'good'
+                      : data.profile.acceptance_rate >= 60 ? 'warn'
+                      : 'bad'
+                    }
+                  />
+                  <span className="w-px bg-white/8" />
+                  <KpiCell
+                    label="On-Time"
+                    value={data?.profile?.on_time_delivery_rate != null ? `${Math.round(data.profile.on_time_delivery_rate)}%` : '—'}
+                    tone={
+                      data?.profile?.on_time_delivery_rate == null ? 'neutral'
+                      : data.profile.on_time_delivery_rate >= 85 ? 'good'
+                      : data.profile.on_time_delivery_rate >= 65 ? 'warn'
+                      : 'bad'
+                    }
+                  />
+                  <span className="w-px bg-white/8" />
+                  <KpiCell
+                    label="Complete"
+                    value={data?.profile?.completion_rate != null ? `${Math.round(data.profile.completion_rate)}%` : '—'}
+                    tone={
+                      data?.profile?.completion_rate == null ? 'neutral'
+                      : data.profile.completion_rate >= 90 ? 'good'
+                      : data.profile.completion_rate >= 70 ? 'warn'
+                      : 'bad'
+                    }
+                  />
+                  <span className="w-px bg-white/8" />
+                  <KpiCell
+                    label="Issues"
+                    value={String(data?.profile?.issues_reported ?? 0)}
+                    tone={
+                      (data?.profile?.issues_reported ?? 0) === 0 ? 'good'
+                      : (data?.profile?.issues_reported ?? 0) <= 3 ? 'warn'
+                      : 'bad'
+                    }
+                  />
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              {/* ── ONLINE sheet content ── */}
+              {/* Active order banner — primacy when on a delivery */}
           {data?.activeOrder && (
             <Link
               href="/active"
@@ -1019,8 +1066,100 @@ export default function HomePage() {
               </div>
             </div>
           </div>
+            </>
+          )}
+          </div>{/* close scrollable sheet content */}
+        </div>{/* close sheet bg container */}
+      </div>{/* close bottom sheet position */}
+
+      {/* ── Side menu drawer ──────────────────────────────────────────── */}
+      <div
+        className={`absolute inset-0 z-40 transition-opacity duration-300 ${
+          sideMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
+      >
+        {/* Backdrop */}
+        <div onClick={closeSideMenu} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+
+        {/* Drawer */}
+        <div
+          className={`absolute top-0 bottom-0 left-0 w-[280px] bg-[#0A0A0A] border-r border-white/10 shadow-2xl transition-transform duration-300 ease-out flex flex-col ${
+            sideMenuOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
+          style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-4 border-b border-white/8">
+            <p className="text-white font-black text-xl tracking-tight">Doornext</p>
+            <button
+              onClick={closeSideMenu}
+              aria-label="Close menu"
+              className="w-9 h-9 rounded-xl bg-[#1A1A1A] border border-white/8 flex items-center justify-center active:scale-95 transition-transform"
+            >
+              <X size={16} className="text-zinc-400" />
+            </button>
+          </div>
+
+          {/* Profile peek */}
+          <Link
+            href="/profile"
+            onClick={closeSideMenu}
+            className="flex items-center gap-3 px-4 py-4 border-b border-white/8 active:bg-white/5"
+          >
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#D4622B] to-[#E07545] flex items-center justify-center flex-shrink-0">
+              <span className="text-white font-black text-base">
+                {(data?.profile?.full_name ?? firstName)[0]?.toUpperCase() ?? 'N'}
+              </span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-white font-bold text-sm truncate">{data?.profile?.full_name ?? 'Nexter'}</p>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <Star size={11} className="text-amber-400 fill-amber-400" />
+                <span className="text-zinc-400 text-xs font-semibold">
+                  {data?.profile?.avg_rating != null ? data.profile.avg_rating.toFixed(1) : '—'}
+                </span>
+                <span className="text-zinc-600 text-xs">·</span>
+                <span className="text-zinc-500 text-xs">{data?.profile?.total_deliveries ?? 0} trips</span>
+              </div>
+            </div>
+            <ChevronRight size={16} className="text-zinc-600 flex-shrink-0" />
+          </Link>
+
+          {/* Nav items */}
+          <nav className="flex-1 py-2 overflow-y-auto">
+            {[
+              { href: '/',              emoji: '🏠', label: 'Home',          badge: 0 },
+              { href: '/active',        emoji: '🗺️', label: 'Trips',         badge: 0 },
+              { href: '/earnings',      emoji: '📈', label: 'Earnings',      badge: 0 },
+              { href: '/history',       emoji: '📜', label: 'History',       badge: 0 },
+              { href: '/notifications', emoji: '🔔', label: 'Notifications', badge: unreadCount },
+              { href: '/documents',     emoji: '🪪', label: 'Documents',     badge: 0 },
+              { href: '/settings',      emoji: '⚙️', label: 'Settings',      badge: 0 },
+            ].map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={closeSideMenu}
+                className="flex items-center gap-3 px-4 py-3 active:bg-white/5 transition-colors"
+              >
+                <span className="text-xl flex-shrink-0" aria-hidden>{item.emoji}</span>
+                <span className="flex-1 text-white text-sm font-semibold">{item.label}</span>
+                {item.badge > 0 && (
+                  <span className="min-w-[20px] h-5 px-1.5 bg-[#FF7A50] rounded-full text-white text-[10px] font-black flex items-center justify-center">
+                    {item.badge > 9 ? '9+' : item.badge}
+                  </span>
+                )}
+              </Link>
+            ))}
+          </nav>
+
+          {/* Footer */}
+          <div className="px-4 py-3 border-t border-white/8">
+            <p className="text-[10px] text-zinc-700 font-semibold tracking-wide">Nexter v1.0.0</p>
+          </div>
         </div>
-      )}
+      </div>
+
     </div>
   )
 }
