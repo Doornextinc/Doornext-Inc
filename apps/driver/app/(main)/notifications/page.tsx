@@ -219,6 +219,45 @@ export default function NotificationsPage() {
 
   useEffect(() => { load() }, [load])
 
+  // ── Realtime refresh: new DB notification rows + Stream message events ──
+  // Without this, the feed only updates on page mount. The driver could miss
+  // a new dispatch alert or chat message while the screen is open.
+  useEffect(() => {
+    if (!userId) return
+    const supabase = createClient()
+
+    // 1. New notification rows for this user → reload feed
+    const notifChannel = supabase
+      .channel('notifications-feed-' + userId)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` },
+        () => { load() },
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` },
+        () => { load() },
+      )
+      .subscribe()
+
+    // 2. New Stream Chat messages → reload feed (the Stream client we already
+    //    connected in load() emits `message.new` events globally).
+    let unsubStream: (() => void) | null = null
+    try {
+      const stream = getStreamClient()
+      const handler = stream.on('message.new', () => { load() })
+      unsubStream = () => handler.unsubscribe()
+    } catch {
+      // Stream not connected — fine, just no chat realtime
+    }
+
+    return () => {
+      supabase.removeChannel(notifChannel)
+      if (unsubStream) unsubStream()
+    }
+  }, [userId, load])
+
   return (
     <div className="flex flex-col min-h-full bg-[#080808]">
       <AppHeader title="Notifications" showBack backHref="/" />

@@ -9,6 +9,10 @@ const securityHeaders = [
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains; preload' },
   { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+  // Admin must never appear in search results. The Next.js `metadata.robots`
+  // setting only renders a <meta> tag; this header is the belt-and-braces
+  // version that bots respect even when JS / metadata rendering fails.
+  { key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive, nosnippet' },
   {
     key: 'Content-Security-Policy',
     value: [

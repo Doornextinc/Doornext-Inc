@@ -47,15 +47,19 @@ export async function POST(req: NextRequest) {
   )
 
   // ── Find delivered orders whose 5-minute grace has expired ───────────────
-  const cutoff = new Date(Date.now() - EXPIRY_MS).toISOString()
+  // Prefer `delivered_at` (immutable timestamp of the delivery transition)
+  // over `updated_at` (bumped by any post-delivery update — e.g. proof photo,
+  // tip submission). Using updated_at would cause the cleanup to never fire
+  // on orders that get touched after delivery for any reason.
+  const cutoff   = new Date(Date.now() - EXPIRY_MS).toISOString()
   const lookback = new Date(Date.now() - LOOKBACK_MS).toISOString()
 
   const { data: orders, error } = await admin
     .from('orders')
     .select('id, delivered_at, updated_at')
     .eq('status', 'delivered')
-    .lte('updated_at', cutoff)
-    .gte('updated_at', lookback)
+    .or(`delivered_at.lte.${cutoff},and(delivered_at.is.null,updated_at.lte.${cutoff})`)
+    .or(`delivered_at.gte.${lookback},and(delivered_at.is.null,updated_at.gte.${lookback})`)
     .limit(200)
 
   if (error) {

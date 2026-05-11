@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 export async function POST(req: NextRequest) {
   const cookieStore = await cookies()
@@ -13,6 +14,11 @@ export async function POST(req: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  // KYC-grade submission (legal name, SSN/EIN) — cap at 3 per hour per user.
+  if (!await checkRateLimit(`maker-onboarding:${user.id}`, 3, 3600)) {
+    return NextResponse.json({ error: 'Too many submissions. Please wait an hour before retrying.' }, { status: 429 })
+  }
 
   const body = await req.json()
   const { business_type, legal_name, dba_name, ein, ssn_last4, business_phone, business_address } = body

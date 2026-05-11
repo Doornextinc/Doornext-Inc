@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { requireDriver } from '@/lib/require-driver'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 const adminClient = createAdmin(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -12,6 +13,12 @@ export async function POST(req: NextRequest) {
   const auth = await requireDriver(req)
   if (!auth.ok) return auth.response
   const { userId } = auth
+
+  // KYC submissions are heavy (file uploads + identity-vendor calls). Cap at
+  // 3 per hour per user — legitimate drivers won't hit this, scripted abuse will.
+  if (!await checkRateLimit(`submit-kyc:${userId}`, 3, 3600)) {
+    return NextResponse.json({ error: 'Too many submissions. Please wait an hour before retrying.' }, { status: 429 })
+  }
 
   const {
     fullName, dateOfBirth, ssnLast4, address,
