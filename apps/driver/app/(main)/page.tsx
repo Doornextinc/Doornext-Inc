@@ -54,29 +54,6 @@ function timeAgo(dateStr: string) {
 const DEFAULT_LAT = 40.7128
 const DEFAULT_LNG = -74.006
 
-/** Compact KPI cell used inside the offline-state performance strip. */
-function KpiCell({
-  label,
-  value,
-  tone,
-}: {
-  label: string
-  value: string
-  tone: 'good' | 'warn' | 'bad' | 'neutral'
-}) {
-  const valueColor =
-    tone === 'good'    ? 'text-green-400'
-    : tone === 'warn'  ? 'text-amber-400'
-    : tone === 'bad'   ? 'text-red-400'
-    : 'text-zinc-400'
-  return (
-    <div className="flex-1 py-3.5 text-center">
-      <p className={`font-black text-lg leading-none ${valueColor}`}>{value}</p>
-      <p className="text-[10px] text-zinc-600 mt-1.5 font-bold uppercase tracking-wider">{label}</p>
-    </div>
-  )
-}
-
 export default function HomePage() {
   const router = useRouter()
   const { isOnline, setOnline, setActiveOrder, setActiveOrders, addActiveOrder, activeOrderIds, currentLat, currentLng } = useDriverStore()
@@ -106,7 +83,6 @@ export default function HomePage() {
 
   // ── Dasher-style dashboard UI state ─────────────────────────────────────
   const [sideMenuOpen, setSideMenuOpen] = useState(false)
-  const [sheetExpanded, setSheetExpanded] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
   const userId = useDriverStore((s) => s.userId)
 
@@ -529,119 +505,29 @@ export default function HomePage() {
         )}
       </div>
 
-      {/* ── Bottom sheet — collapsible (peek / expanded) ──────────────────── */}
-      <div
-        className="absolute bottom-0 left-0 right-0 z-20 transition-all duration-300 ease-out"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-      >
+      {/* ──────────────────────────────────────────────────────────────────
+          Floating bottom UI — only what's actively needed, never a wrapper sheet.
+          The map remains fully visible at all times.
+          Order of precedence (only the first matching block renders):
+            1. Offline → nothing (status pill at top is enough)
+            2. Active delivery → small pill linking to /active
+            3. Post-accept window → confirmation + countdown + optional stack cards
+            4. Stack candidates (1 active order) → floating amber cards
+            5. Available orders (no active) → floating order cards (max 2 visible)
+            6. Online + no orders → tiny "waiting" pill
+          ────────────────────────────────────────────────────────────────── */}
+
+      {isOnline && (
         <div
-          className="bg-[#0A0A0A]/98 backdrop-blur-xl rounded-t-3xl border-t border-white/10 shadow-2xl flex flex-col"
-          style={{ maxHeight: sheetExpanded ? '85vh' : '50vh' }}
+          className="absolute bottom-0 left-0 right-0 z-20 px-3 pointer-events-none"
+          style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1rem)' }}
         >
-          {/* Drag handle — tap to expand/collapse */}
-          <button
-            onClick={() => setSheetExpanded((e) => !e)}
-            className="w-full pt-3 pb-2 flex justify-center group flex-shrink-0"
-            aria-label={sheetExpanded ? 'Collapse sheet' : 'Expand sheet'}
-          >
-            <div className={`w-12 h-1.5 rounded-full transition-colors ${sheetExpanded ? 'bg-white/40' : 'bg-white/20 group-active:bg-white/40'}`} />
-          </button>
-
-          {/* Scrollable sheet content */}
-          <div className="flex-1 overflow-y-auto px-4 pb-6 space-y-3">
-          {!isOnline ? (
-            <>
-              {/* ── OFFLINE sheet content ── */}
-              <div className="pt-1">
-                <p className="text-zinc-500 text-[10px] font-black uppercase tracking-widest">You&apos;re offline</p>
-                <p className="text-white text-2xl font-black mt-1 leading-tight">Ready to earn?</p>
-                <p className="text-zinc-400 text-sm mt-1">Tap <span className="text-white font-bold">Offline</span> in the status pill above to go online.</p>
-              </div>
-
-              {/* Today's earnings hero */}
-              {!loading && (
-                <div className="relative bg-gradient-to-br from-[#1a1a1a] via-[#141414] to-[#0f0f0f] border border-white/8 rounded-3xl px-5 py-4 backdrop-blur-sm overflow-hidden">
-                  <span
-                    className="absolute -top-12 -right-12 w-32 h-32 rounded-full pointer-events-none"
-                    style={{ background: 'radial-gradient(circle, rgba(255,122,80,0.10), transparent 70%)' }}
-                  />
-                  <div className="flex items-end justify-between">
-                    <div>
-                      <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Today&apos;s earnings</p>
-                      <p className="font-black text-white text-4xl leading-none mt-1.5 tracking-tight">
-                        ${(data?.todayEarnings ?? 0).toFixed(2)}
-                      </p>
-                      <p className="text-xs text-zinc-500 mt-2">
-                        {data?.todayDeliveries ?? 0} trip{data?.todayDeliveries === 1 ? '' : 's'} ·{' '}
-                        <span className="text-zinc-400 font-semibold">${(data?.weekEarnings ?? 0).toFixed(0)}</span> this week
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1 bg-amber-500/10 border border-amber-500/20 rounded-lg px-2 py-1 flex-shrink-0">
-                      <Star size={11} className="text-amber-400 fill-amber-400" />
-                      <span className="text-amber-300 text-xs font-black">
-                        {data?.profile?.avg_rating != null ? data.profile.avg_rating.toFixed(1) : '—'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Performance KPIs */}
-              {!loading && (
-                <div className="flex items-stretch bg-[#141414]/95 border border-white/8 rounded-2xl overflow-hidden backdrop-blur-sm">
-                  <KpiCell
-                    label="Accept"
-                    value={data?.profile?.acceptance_rate != null ? `${Math.round(data.profile.acceptance_rate)}%` : '—'}
-                    tone={
-                      data?.profile?.acceptance_rate == null ? 'neutral'
-                      : data.profile.acceptance_rate >= 80 ? 'good'
-                      : data.profile.acceptance_rate >= 60 ? 'warn'
-                      : 'bad'
-                    }
-                  />
-                  <span className="w-px bg-white/8" />
-                  <KpiCell
-                    label="On-Time"
-                    value={data?.profile?.on_time_delivery_rate != null ? `${Math.round(data.profile.on_time_delivery_rate)}%` : '—'}
-                    tone={
-                      data?.profile?.on_time_delivery_rate == null ? 'neutral'
-                      : data.profile.on_time_delivery_rate >= 85 ? 'good'
-                      : data.profile.on_time_delivery_rate >= 65 ? 'warn'
-                      : 'bad'
-                    }
-                  />
-                  <span className="w-px bg-white/8" />
-                  <KpiCell
-                    label="Complete"
-                    value={data?.profile?.completion_rate != null ? `${Math.round(data.profile.completion_rate)}%` : '—'}
-                    tone={
-                      data?.profile?.completion_rate == null ? 'neutral'
-                      : data.profile.completion_rate >= 90 ? 'good'
-                      : data.profile.completion_rate >= 70 ? 'warn'
-                      : 'bad'
-                    }
-                  />
-                  <span className="w-px bg-white/8" />
-                  <KpiCell
-                    label="Issues"
-                    value={String(data?.profile?.issues_reported ?? 0)}
-                    tone={
-                      (data?.profile?.issues_reported ?? 0) === 0 ? 'good'
-                      : (data?.profile?.issues_reported ?? 0) <= 3 ? 'warn'
-                      : 'bad'
-                    }
-                  />
-                </div>
-              )}
-            </>
-          ) : (
-            <>
-              {/* ── ONLINE sheet content ── */}
-              {/* Active order banner — primacy when on a delivery */}
-          {data?.activeOrder && (
+          <div className="space-y-2.5 max-h-[70vh] overflow-y-auto pointer-events-auto">
+          {/* Active order pill — top priority */}
+          {data?.activeOrder ? (
             <Link
               href="/active"
-              className="relative block bg-gradient-to-r from-[#FF7A50]/15 via-[#FF7A50]/8 to-[#FF7A50]/4 border border-[#FF7A50]/25 rounded-2xl px-4 py-4 backdrop-blur-sm overflow-hidden active:scale-[0.99] transition-transform"
+              className="relative block bg-gradient-to-r from-[#FF7A50]/20 via-[#FF7A50]/10 to-[#FF7A50]/5 border border-[#FF7A50]/30 rounded-2xl px-4 py-4 backdrop-blur-xl overflow-hidden active:scale-[0.99] transition-transform shadow-2xl"
             >
               <span
                 className="absolute -top-8 -right-8 w-24 h-24 rounded-full pointer-events-none"
@@ -664,7 +550,7 @@ export default function HomePage() {
                 <ChevronRight size={20} className="text-[#FF7A50] flex-shrink-0" />
               </div>
             </Link>
-          )}
+          ) : null}
 
           {/* ── Stack offer cards — shown when driver already has 1 active order (normal flow) ── */}
           {stackCandidates.length > 0 && !acceptedOrderId && (
@@ -722,21 +608,7 @@ export default function HomePage() {
             </div>
           )}
 
-          {/* Stats row — Today / Trips / Rating */}
-          <div className="grid grid-cols-3 gap-2.5">
-            <div className="bg-[#131313]/95 border border-white/8 rounded-2xl px-3 py-4 text-center backdrop-blur-sm">
-              <p className="font-black text-white text-xl leading-none">${(data?.todayEarnings ?? 0).toFixed(2)}</p>
-              <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Today</p>
-            </div>
-            <div className="bg-[#131313]/95 border border-white/8 rounded-2xl px-3 py-4 text-center backdrop-blur-sm">
-              <p className="font-black text-white text-xl leading-none">{data?.todayDeliveries ?? 0}</p>
-              <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Trips</p>
-            </div>
-            <Link href="/earnings" className="bg-[#131313]/95 border border-white/8 rounded-2xl px-3 py-4 text-center backdrop-blur-sm">
-              <p className="font-black text-white text-xl leading-none">{data?.profile?.avg_rating != null ? data.profile.avg_rating.toFixed(1) : '—'}</p>
-              <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Rating</p>
-            </Link>
-          </div>
+          {/* (Stats row moved to side drawer — keeps the map free.) */}
 
           {/* ── Post-accept stacking window ── */}
           {acceptedOrderId && (
@@ -1010,67 +882,9 @@ export default function HomePage() {
             </div>
           ) : null}
 
-          {/* Accepting orders label + Go Off button + metrics */}
-          <div className="flex flex-col items-center gap-3 pt-1">
-            <div className="flex items-center gap-2">
-              <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-60" />
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-400" />
-              </span>
-              <span className="font-black text-green-400 text-sm tracking-wide">Accepting orders</span>
-            </div>
-            <button
-              onClick={toggleOnline}
-              disabled={toggling}
-              className="relative w-24 h-24 rounded-full flex items-center justify-center active:scale-95 transition-all duration-150 disabled:opacity-60"
-              style={{
-                background: 'linear-gradient(145deg, #1e1e1e, #141414)',
-                boxShadow: '0 0 0 4px #1c1c1c, 0 0 0 7px #222, 0 12px 32px rgba(0,0,0,0.8)',
-              }}
-            >
-              <span className="absolute inset-0 rounded-full border border-white/8" />
-              {toggling ? (
-                <span className="text-zinc-300 font-black text-xl">…</span>
-              ) : (
-                <span className="flex flex-col items-center leading-none">
-                  <span className="text-white font-black text-lg tracking-widest">Go</span>
-                  <span className="text-white font-black text-lg tracking-widest">Off</span>
-                </span>
-              )}
-            </button>
-            {/* Performance metrics — directly below GoOff button */}
-            <div className="w-full grid grid-cols-2 gap-2">
-              <div className="bg-[#131313]/95 border border-white/8 rounded-2xl py-3.5 text-center backdrop-blur-sm">
-                <p className="font-black text-white text-xl leading-none">
-                  {data?.profile?.acceptance_rate != null ? `${Math.round(data.profile.acceptance_rate)}%` : '—'}
-                </p>
-                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Acceptance Rate</p>
-              </div>
-              <div className="bg-[#131313]/95 border border-white/8 rounded-2xl py-3.5 text-center backdrop-blur-sm">
-                <p className="font-black text-white text-xl leading-none">
-                  {data?.profile?.completion_rate != null ? `${Math.round(data.profile.completion_rate)}%` : '—'}
-                </p>
-                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Completion Rate</p>
-              </div>
-              <div className="bg-[#131313]/95 border border-white/8 rounded-2xl py-3.5 text-center backdrop-blur-sm">
-                <p className="font-black text-white text-xl leading-none">
-                  {data?.profile?.on_time_delivery_rate != null ? `${Math.round(data.profile.on_time_delivery_rate)}%` : '—'}
-                </p>
-                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">On-Time Delivery</p>
-              </div>
-              <div className="bg-[#131313]/95 border border-white/8 rounded-2xl py-3.5 text-center backdrop-blur-sm">
-                <p className="font-black text-white text-xl leading-none">
-                  {data?.profile?.issues_reported ?? 0}
-                </p>
-                <p className="text-xs text-zinc-500 mt-1.5 font-semibold">Issues Reported</p>
-              </div>
-            </div>
           </div>
-            </>
-          )}
-          </div>{/* close scrollable sheet content */}
-        </div>{/* close sheet bg container */}
-      </div>{/* close bottom sheet position */}
+        </div>
+      )}
 
       {/* ── Side menu drawer ──────────────────────────────────────────── */}
       <div
@@ -1124,6 +938,71 @@ export default function HomePage() {
             </div>
             <ChevronRight size={16} className="text-zinc-600 flex-shrink-0" />
           </Link>
+
+          {/* Today snapshot — earnings + trip count + KPIs (moved here from the old bottom sheet) */}
+          {!loading && (
+            <div className="px-4 py-4 border-b border-white/8 space-y-3">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Today&apos;s earnings</p>
+                <div className="flex items-baseline gap-2 mt-1">
+                  <p className="font-black text-white text-3xl leading-none tracking-tight">
+                    ${(data?.todayEarnings ?? 0).toFixed(2)}
+                  </p>
+                  <p className="text-xs text-zinc-500">
+                    {data?.todayDeliveries ?? 0} trip{data?.todayDeliveries === 1 ? '' : 's'}
+                  </p>
+                </div>
+                <p className="text-xs text-zinc-600 mt-1.5">
+                  <span className="text-zinc-400 font-semibold">${(data?.weekEarnings ?? 0).toFixed(0)}</span> this week
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-1.5">
+                <div className="bg-[#1A1A1A] border border-white/5 rounded-xl py-2 px-3">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-600">Accept</p>
+                  <p className={`text-base font-black leading-none mt-0.5 ${
+                    data?.profile?.acceptance_rate == null ? 'text-zinc-500'
+                    : data.profile.acceptance_rate >= 80 ? 'text-green-400'
+                    : data.profile.acceptance_rate >= 60 ? 'text-amber-400'
+                    : 'text-red-400'
+                  }`}>
+                    {data?.profile?.acceptance_rate != null ? `${Math.round(data.profile.acceptance_rate)}%` : '—'}
+                  </p>
+                </div>
+                <div className="bg-[#1A1A1A] border border-white/5 rounded-xl py-2 px-3">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-600">On-Time</p>
+                  <p className={`text-base font-black leading-none mt-0.5 ${
+                    data?.profile?.on_time_delivery_rate == null ? 'text-zinc-500'
+                    : data.profile.on_time_delivery_rate >= 85 ? 'text-green-400'
+                    : data.profile.on_time_delivery_rate >= 65 ? 'text-amber-400'
+                    : 'text-red-400'
+                  }`}>
+                    {data?.profile?.on_time_delivery_rate != null ? `${Math.round(data.profile.on_time_delivery_rate)}%` : '—'}
+                  </p>
+                </div>
+                <div className="bg-[#1A1A1A] border border-white/5 rounded-xl py-2 px-3">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-600">Complete</p>
+                  <p className={`text-base font-black leading-none mt-0.5 ${
+                    data?.profile?.completion_rate == null ? 'text-zinc-500'
+                    : data.profile.completion_rate >= 90 ? 'text-green-400'
+                    : data.profile.completion_rate >= 70 ? 'text-amber-400'
+                    : 'text-red-400'
+                  }`}>
+                    {data?.profile?.completion_rate != null ? `${Math.round(data.profile.completion_rate)}%` : '—'}
+                  </p>
+                </div>
+                <div className="bg-[#1A1A1A] border border-white/5 rounded-xl py-2 px-3">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-600">Issues</p>
+                  <p className={`text-base font-black leading-none mt-0.5 ${
+                    (data?.profile?.issues_reported ?? 0) === 0 ? 'text-green-400'
+                    : (data?.profile?.issues_reported ?? 0) <= 3 ? 'text-amber-400'
+                    : 'text-red-400'
+                  }`}>
+                    {data?.profile?.issues_reported ?? 0}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Nav items */}
           <nav className="flex-1 py-2 overflow-y-auto">
