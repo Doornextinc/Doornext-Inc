@@ -9,7 +9,9 @@ export async function GET(request: Request) {
   const code      = searchParams.get('code')
   const tokenHash = searchParams.get('token_hash')
   const type      = searchParams.get('type') as 'signup' | 'recovery' | 'invite' | 'email' | 'magiclink' | null
-  const next      = searchParams.get('next') ?? '/dashboard'
+  const rawNext   = searchParams.get('next') ?? '/dashboard'
+  // Guard against open redirect — only allow relative paths
+  const next      = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/dashboard'
 
   const supabase = await createClient()
   let exchangeError = true
