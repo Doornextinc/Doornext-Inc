@@ -14,7 +14,7 @@ const navItems: Array<{ href: string; emoji: string; label: string; exact: boole
   { href: '/',         emoji: EMOJI.home,      label: 'Home',     exact: true  },
   { href: '/active',   emoji: EMOJI.trips,     label: 'Trips',    exact: false },
   { href: '/earnings', emoji: EMOJI.earnings,  label: 'Earnings', exact: false },
-  { href: '/profile',  emoji: EMOJI.user,      label: 'Account',  exact: false },
+  { href: '/account',  emoji: EMOJI.user,      label: 'Account',  exact: false },
 ]
 
 export function BottomNav() {
