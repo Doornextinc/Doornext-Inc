@@ -364,7 +364,7 @@ export default function HomePage() {
   const driverLng = currentLng ?? lng
 
   return (
-    <div className="fixed inset-0 bg-[#080808] overflow-hidden">
+    <div className="absolute inset-0 bg-[#080808] overflow-hidden">
 
       {/* ── Full-bleed map — Dasher-style background ───────────────────── */}
       <div className="absolute inset-0">
