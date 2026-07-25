@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useDriverStore } from '@/store/driver-store'
 import { Package, MapPin, Clock, ChevronRight } from 'lucide-react'
 import { AppHeader } from '@/components/layout/app-header'
+import { SegmentedControl, StatCard } from '@/components/ui/list'
 
 
 type Delivery = {
@@ -89,17 +90,11 @@ export default function HistoryPage() {
 
       {/* Period filter */}
       <div className="px-4 py-3">
-        <div className="flex gap-1 bg-[#111] rounded-xl p-1">
-          {(Object.keys(PERIOD_LABELS) as Period[]).map(p => (
-            <button
-              key={p}
-              onClick={() => setPeriod(p)}
-              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${period === p ? 'bg-[#FF7A50] text-white' : 'text-zinc-500 hover:text-slate-300'}`}
-            >
-              {PERIOD_LABELS[p]}
-            </button>
-          ))}
-        </div>
+        <SegmentedControl
+          options={(Object.keys(PERIOD_LABELS) as Period[]).map((p) => ({ value: p, label: PERIOD_LABELS[p] }))}
+          value={period}
+          onChange={setPeriod}
+        />
       </div>
 
       {loading ? (
@@ -110,14 +105,8 @@ export default function HistoryPage() {
         <div className="flex-1 p-4 space-y-5">
           {/* Summary */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-[#111] rounded-2xl border border-white/5 p-4 text-center">
-              <p className="text-2xl font-black text-[#FF7A50]">${totalEarnings.toFixed(2)}</p>
-              <p className="text-xs text-zinc-500 mt-1">Total Earned</p>
-            </div>
-            <div className="bg-[#111] rounded-2xl border border-white/5 p-4 text-center">
-              <p className="text-2xl font-black text-white">{filtered.length}</p>
-              <p className="text-xs text-zinc-500 mt-1">Deliveries</p>
-            </div>
+            <StatCard value={`$${totalEarnings.toFixed(2)}`} label="Total Earned" accent />
+            <StatCard value={String(filtered.length)} label="Deliveries" />
           </div>
 
           {filtered.length === 0 ? (

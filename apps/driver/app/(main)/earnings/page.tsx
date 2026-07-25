@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useDriverStore } from '@/store/driver-store'
 import { Zap, Star, Package, TrendingUp, ChevronDown, ChevronRight, Clock, DollarSign } from 'lucide-react'
 import { AppHeader } from '@/components/layout/app-header'
+import { SegmentedControl } from '@/components/ui/list'
 
 /* ─── types ─── */
 type Delivery = { id: string; driver_payout: number; tip_amount: number; created_at: string }
@@ -143,19 +144,11 @@ export default function EarningsPage() {
 
       <div className="p-4 space-y-4">
         {/* ── Period selector ── */}
-        <div className="flex gap-1 bg-[#111] rounded-xl p-1 border border-white/5">
-          {(Object.keys(PERIOD_LABELS) as Period[]).map(p => (
-            <button
-              key={p}
-              onClick={() => setPeriod(p)}
-              className={`flex-1 py-2 rounded-lg text-[11px] font-bold transition-colors ${
-                period === p ? 'bg-[#FF7A50] text-white' : 'text-zinc-500 hover:text-zinc-300'
-              }`}
-            >
-              {PERIOD_LABELS[p]}
-            </button>
-          ))}
-        </div>
+        <SegmentedControl
+          options={(Object.keys(PERIOD_LABELS) as Period[]).map((p) => ({ value: p, label: PERIOD_LABELS[p] }))}
+          value={period}
+          onChange={setPeriod}
+        />
 
         {/* ── Hero earnings + cash out ── */}
         <div className="bg-[#111] rounded-2xl border border-white/5 overflow-hidden">

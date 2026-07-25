@@ -199,6 +199,56 @@ export function Toggle({
   )
 }
 
+/**
+ * Segmented filter control, e.g. the Last 7 Days / 30 Days / All Time
+ * selector shared by the Earnings and History screens.
+ */
+export function SegmentedControl<T extends string>({
+  options,
+  value,
+  onChange,
+}: {
+  options: Array<{ value: T; label: string }>
+  value: T
+  onChange: (v: T) => void
+}) {
+  return (
+    <div className="flex gap-1 bg-[#111] rounded-xl p-1 border border-white/5">
+      {options.map((opt) => (
+        <button
+          key={opt.value}
+          type="button"
+          onClick={() => onChange(opt.value)}
+          aria-pressed={value === opt.value}
+          className={`flex-1 py-2 rounded-lg text-[12px] font-bold transition-colors ${
+            value === opt.value ? 'bg-[#FF7A50] text-white' : 'text-zinc-500 active:text-zinc-300'
+          }`}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+/** Centered stat tile — big value over a caption. */
+export function StatCard({
+  value,
+  label,
+  accent = false,
+}: {
+  value: string
+  label: string
+  accent?: boolean
+}) {
+  return (
+    <div className="bg-[#111] rounded-2xl border border-white/5 p-4 text-center">
+      <p className={`text-2xl font-black ${accent ? 'text-[#FF7A50]' : 'text-white'}`}>{value}</p>
+      <p className="text-xs text-zinc-500 mt-1">{label}</p>
+    </div>
+  )
+}
+
 /** Full-width primary action, e.g. "Edit profile". */
 export function PrimaryButton({
   children,
