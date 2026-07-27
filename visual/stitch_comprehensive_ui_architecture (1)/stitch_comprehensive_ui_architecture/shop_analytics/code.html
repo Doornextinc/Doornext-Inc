@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Neighborly | DoorMaker Performance</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Anybody:wght@700;800&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-variant": "#f7ddd4",
+                    "surface-tint": "#a63b00",
+                    "tertiary": "#006492",
+                    "on-primary-container": "#4f1800",
+                    "primary-fixed-dim": "#ffb599",
+                    "on-tertiary-container": "#002d45",
+                    "surface-container": "#ffe9e2",
+                    "error": "#ba1a1a",
+                    "background": "#fff8f6",
+                    "secondary": "#5f5e5e",
+                    "surface-container-lowest": "#ffffff",
+                    "inverse-on-surface": "#ffede7",
+                    "on-tertiary": "#ffffff",
+                    "outline": "#8d7166",
+                    "surface-bright": "#fff8f6",
+                    "on-secondary-container": "#656464",
+                    "surface-container-low": "#fff1ec",
+                    "surface": "#fff8f6",
+                    "tertiary-container": "#009ade",
+                    "on-tertiary-fixed-variant": "#004b6f",
+                    "warm-gray": "#736F6E",
+                    "secondary-fixed": "#e5e2e1",
+                    "on-secondary-fixed": "#1c1b1b",
+                    "on-surface": "#261813",
+                    "primary": "#a63b00",
+                    "on-surface-variant": "#594138",
+                    "error-container": "#ffdad6",
+                    "secondary-container": "#e5e2e1",
+                    "on-primary": "#ffffff",
+                    "on-error": "#ffffff",
+                    "on-primary-fixed-variant": "#7f2b00",
+                    "on-secondary-fixed-variant": "#474646",
+                    "on-error-container": "#93000a",
+                    "primary-fixed": "#ffdbce",
+                    "outline-variant": "#e1bfb3",
+                    "on-secondary": "#ffffff",
+                    "on-background": "#261813",
+                    "surface-container-high": "#fde3da",
+                    "inverse-surface": "#3c2d27",
+                    "tertiary-fixed-dim": "#8cceff",
+                    "surface-container-highest": "#f7ddd4",
+                    "neighborhood-green": "#2D6A4F",
+                    "tertiary-fixed": "#cae6ff",
+                    "surface-dim": "#eed5cc",
+                    "secondary-fixed-dim": "#c9c6c5",
+                    "on-tertiary-fixed": "#001e2f",
+                    "on-primary-fixed": "#370e00",
+                    "surface-cream": "#FDFCFB",
+                    "primary-container": "#f26522",
+                    "inverse-primary": "#ffb599"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "1.5rem",
+                    "section-gap": "4rem",
+                    "container-padding-mobile": "1.25rem",
+                    "container-padding-desktop": "2.5rem",
+                    "base": "8px"
+            },
+            "fontFamily": {
+                    "title-lg": ["Plus Jakarta Sans"],
+                    "body-lg": ["Plus Jakarta Sans"],
+                    "headline-md-mobile": ["Anybody"],
+                    "label-sm": ["JetBrains Mono"],
+                    "headline-md": ["Anybody"],
+                    "body-md": ["Plus Jakarta Sans"],
+                    "display-lg-mobile": ["Anybody"],
+                    "display-lg": ["Anybody"]
+            },
+            "fontSize": {
+                    "title-lg": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "headline-md-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "label-sm": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "headline-md": ["32px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "display-lg-mobile": ["36px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { background-color: #fff8f6; color: #261813; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: middle; }
+        .glass-card { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(229, 229, 221, 0.5); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .custom-shadow { box-shadow: 0 10px 30px -5px rgba(166, 59, 0, 0.08); }
+        .chart-bar { transition: height 1s ease-out; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-on-surface">
+<!-- TopAppBar -->
+<header class="w-full sticky top-0 z-40 bg-surface dark:bg-background shadow-[0_2px_15px_-3px_rgba(166,59,0,0.08)] flex justify-between items-center px-container-padding-mobile md:px-container-padding-desktop h-16">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary-fixed">
+<img class="w-full h-full object-cover" data-alt="A warm, approachable portrait of a Latina chef in her mid-40s, smiling at the camera in a sunlit kitchen. She is wearing a clean white apron. The photo has a soft, human-centric lighting, avoiding corporate polish for a more authentic, community-driven feel. The background shows hints of a home kitchen with fresh herbs and ceramic pots." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDmnSpvG81P06oFT2TXTFwm3wrBhABiZJ5sgT2YpAp7-hKBxJciwHxNNSAsAv5UOxAvDlauUoKwsGHwX1J6t9qML8XYuM4AbswV0a3MSIArRKwVbNYJMw9gZYItwhOOfYu_8ylxGmos-ifCGHpnzmnX_D1_Z1d3IM0-7VyCPF1J5GHlUWSYw-cPQZc5wWJLmwJyxuK-Ckgx-8NqLsQuX2mBechHa5vEtxA3RWrbqwLzIaSNuhzdtHxGCR4n89ri-XRmjEWQXXcvW70P"/>
+</div>
+<h1 class="font-headline-md-mobile text-headline-md-mobile md:font-headline-md md:text-headline-md text-primary dark:text-primary-fixed-dim">Neighborly</h1>
+</div>
+<div class="flex gap-4">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-variant/20 transition-colors active:scale-95 duration-200">
+<span class="material-symbols-outlined text-primary">notifications</span>
+</button>
+</div>
+</header>
+<main class="max-w-[1280px] mx-auto px-container-padding-mobile md:px-container-padding-desktop pt-8 pb-32">
+<!-- Header & Date Toggle -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+<div>
+<span class="font-label-sm text-label-sm uppercase tracking-widest text-primary mb-2 block">Storefront Performance</span>
+<h2 class="font-display-lg-mobile text-display-lg-mobile md:font-display-lg md:text-display-lg text-on-surface leading-tight">Your Local <br/><span class="text-primary-container">Reach &amp; Impact</span></h2>
+</div>
+<div class="flex bg-surface-container rounded-full p-1 self-start custom-shadow">
+<button class="px-6 py-2 rounded-full font-title-lg text-body-md bg-white shadow-sm text-primary transition-all">Weekly</button>
+<button class="px-6 py-2 rounded-full font-title-lg text-body-md text-on-surface-variant hover:text-primary transition-all">Monthly</button>
+</div>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter">
+<!-- Main Sales Chart -->
+<div class="md:col-span-8 glass-card rounded-[2rem] p-8 custom-shadow flex flex-col justify-between overflow-hidden relative">
+<div class="flex justify-between items-start mb-8">
+<div>
+<h3 class="font-title-lg text-title-lg mb-1">Sales Trends</h3>
+<p class="text-on-surface-variant font-body-md">Revenue is up <span class="text-neighborhood-green font-bold">+12.4%</span> this week</p>
+</div>
+<div class="text-right">
+<p class="font-label-sm text-label-sm text-on-surface-variant">TOTAL REVENUE</p>
+<p class="font-display-lg-mobile text-primary font-bold tracking-tighter">$1,248.50</p>
+</div>
+</div>
+<!-- Simple CSS Bar Chart -->
+<div class="flex items-end justify-between h-48 gap-2 md:gap-4 px-2">
+<div class="flex-1 flex flex-col items-center gap-2 group">
+<div class="w-full bg-primary-fixed/30 rounded-t-xl chart-bar h-[40%] group-hover:bg-primary transition-colors cursor-pointer relative">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 bg-inverse-surface text-white text-[10px] px-2 py-1 rounded transition-opacity">$142</div>
+</div>
+<span class="font-label-sm text-[10px] text-on-surface-variant">MON</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2 group">
+<div class="w-full bg-primary-fixed/30 rounded-t-xl chart-bar h-[65%] group-hover:bg-primary transition-colors cursor-pointer relative">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 bg-inverse-surface text-white text-[10px] px-2 py-1 rounded transition-opacity">$210</div>
+</div>
+<span class="font-label-sm text-[10px] text-on-surface-variant">TUE</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2 group">
+<div class="w-full bg-primary-container rounded-t-xl chart-bar h-[85%] relative">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 opacity-100 bg-primary text-white text-[10px] px-2 py-1 rounded">$320</div>
+</div>
+<span class="font-label-sm text-[10px] text-primary font-bold">WED</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2 group">
+<div class="w-full bg-primary-fixed/30 rounded-t-xl chart-bar h-[55%] group-hover:bg-primary transition-colors cursor-pointer relative">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 bg-inverse-surface text-white text-[10px] px-2 py-1 rounded transition-opacity">$188</div>
+</div>
+<span class="font-label-sm text-[10px] text-on-surface-variant">THU</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2 group">
+<div class="w-full bg-primary-fixed/30 rounded-t-xl chart-bar h-[70%] group-hover:bg-primary transition-colors cursor-pointer relative">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 bg-inverse-surface text-white text-[10px] px-2 py-1 rounded transition-opacity">$245</div>
+</div>
+<span class="font-label-sm text-[10px] text-on-surface-variant">FRI</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2 group">
+<div class="w-full bg-primary-fixed/30 rounded-t-xl chart-bar h-[95%] group-hover:bg-primary transition-colors cursor-pointer relative">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 bg-inverse-surface text-white text-[10px] px-2 py-1 rounded transition-opacity">$390</div>
+</div>
+<span class="font-label-sm text-[10px] text-on-surface-variant">SAT</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2 group">
+<div class="w-full bg-primary-fixed/30 rounded-t-xl chart-bar h-[45%] group-hover:bg-primary transition-colors cursor-pointer relative">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 bg-inverse-surface text-white text-[10px] px-2 py-1 rounded transition-opacity">$155</div>
+</div>
+<span class="font-label-sm text-[10px] text-on-surface-variant">SUN</span>
+</div>
+</div>
+</div>
+<!-- Neighbor Reach Map -->
+<div class="md:col-span-4 bg-inverse-surface rounded-[2rem] p-6 text-white overflow-hidden flex flex-col relative group">
+<div class="z-10 relative">
+<h3 class="font-title-lg text-title-lg mb-1">Neighbor Reach</h3>
+<p class="text-surface-variant/80 font-body-md text-sm">Delivery density in San Salvador</p>
+</div>
+<div class="mt-4 flex-grow rounded-2xl overflow-hidden relative shadow-inner">
+<div class="absolute inset-0 bg-cover bg-center" data-location="San Salvador, El Salvador" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBbdfGElyU-TwAlLczgocX_puLoI_5Ls0z55weQ9ylZh67nEkShLMRj4WSuHX21PvtborPPadALZW_oVVmVMJXRdNvMpe_cjvAXQOygIloUvI0QmlzhRZ34MFsHPDg708OZNTBntw_BcUb-cCrLRRHu6VnF23UH_6i59IAYn65wc2VsMDtOryiZcNBwYmYHP_3LHFsf0VYHwX2WhGAeUvOFo8Ip2FlTJ90iZdc5crAeCT8YaOfWmP13fREkO5jPC2rFYQq2m-7dSS5b')"></div>
+<!-- Mock Map Hotspots -->
+<div class="absolute top-1/3 left-1/4 w-12 h-12 bg-primary/40 rounded-full animate-pulse flex items-center justify-center">
+<div class="w-3 h-3 bg-primary rounded-full"></div>
+</div>
+<div class="absolute bottom-1/4 right-1/3 w-16 h-16 bg-neighborhood-green/40 rounded-full animate-pulse flex items-center justify-center" style="animation-delay: 1s">
+<div class="w-4 h-4 bg-neighborhood-green rounded-full"></div>
+</div>
+<div class="absolute top-1/2 right-1/4 w-8 h-8 bg-tertiary/40 rounded-full animate-pulse flex items-center justify-center" style="animation-delay: 0.5s">
+<div class="w-2 h-2 bg-tertiary rounded-full"></div>
+</div>
+</div>
+<div class="mt-4 flex justify-between items-center z-10">
+<span class="font-label-sm text-xs">85% Local (2km radius)</span>
+<button class="bg-primary text-white p-2 rounded-full active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-sm">open_in_full</span>
+</button>
+</div>
+</div>
+<!-- Top Selling Items -->
+<div class="md:col-span-5 glass-card rounded-[2rem] p-8 custom-shadow">
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-title-lg text-title-lg">Best Sellers</h3>
+<span class="material-symbols-outlined text-primary">local_fire_department</span>
+</div>
+<div class="space-y-4">
+<div class="flex items-center gap-4 group cursor-pointer">
+<div class="w-14 h-14 rounded-xl overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A close-up shot of three authentic Salvadoran chicken tamales wrapped in vibrant green plantain leaves, steaming slightly. The lighting is warm and golden, highlighting the texture of the corn masa. The aesthetic is rustic, home-cooked, and appetizing, emphasizing traditional neighborhood food." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB5iGGPzE-veyF9IvwkcTTLeSj6yBRBRsNoO_ZDlMUZ3rJCr2Mlhm_M8DmQ1OG1nvUEIJNRovNpr4-ZwdsjFVo6-4kX-zkqJmN2kAXwT3ZpFGt_8HpoY_P5eBI7S_CBtgvei5J5TCaadqWXfNFdIz2Kb_jBhuniaYpMfkhICmbV9HeFrV-TpwYN8vGKkcjU2YMNpPIqNGL7Fn1J1I8K469XWQleg0MAuIQzA2UY4yT56x3_L0tAdHYoq1wGICJ1Gl66cHAd7ZWWWBK6"/>
+</div>
+<div class="flex-grow">
+<p class="font-bold text-on-surface">Chicken Tamales</p>
+<p class="text-on-surface-variant text-sm font-label-sm">42 sold this week</p>
+</div>
+<div class="text-right">
+<p class="text-neighborhood-green font-bold">+$336</p>
+<div class="w-24 h-1 bg-surface-container rounded-full mt-1 overflow-hidden">
+<div class="bg-neighborhood-green h-full w-[85%]"></div>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-4 group cursor-pointer">
+<div class="w-14 h-14 rounded-xl overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="Freshly toasted pupusas on a rustic ceramic plate, filled with melting cheese and loroco. A small bowl of curtido (pickled cabbage) is visible in the soft-focus background. The shot is high-end but cozy, reflecting a premium neighborhood dining experience. The lighting is soft and natural." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDLvMo5WPoMS0ppxAYnPUgQGrSMvcDDNsme_47lhyrI8m-231R45D3ylxjubdZPhU4h-NoMnD1eAT1tC9VXa73ExneRX_Q1r1fPfju6OZcEoFcPboyuplNykVCbmSY9lNpS4Mj5k-pMsUTKF_F64UFFCDdEq0rda572TpdO36kzSch0-KGC3r9HmGZXlZOn14w78aK68s6_31YfihoUjmB8ZAUEpzQo3d8aZBABKR6uTSMPE1oPm8DU6O6p1ryzLb_b5SqAunCUyBww"/>
+</div>
+<div class="flex-grow">
+<p class="font-bold text-on-surface">Cheese &amp; Loroco Pupusas</p>
+<p class="text-on-surface-variant text-sm font-label-sm">38 sold this week</p>
+</div>
+<div class="text-right">
+<p class="text-neighborhood-green font-bold">+$190</p>
+<div class="w-24 h-1 bg-surface-container rounded-full mt-1 overflow-hidden">
+<div class="bg-neighborhood-green h-full w-[72%]"></div>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-4 group cursor-pointer">
+<div class="w-14 h-14 rounded-xl overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A cold, artisanal Horchata drink in a condensation-covered glass, garnished with a cinnamon stick. The background is a vibrant, sun-drenched patio. The style is fresh, clean, and summery, celebrating local beverages in a modern, appealing way." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCKTI9185fgAHHYDFq-XB_0qnmhYqzYRCKo7OpMmWz5UxVstT-IWz8Cj2PkI3501zjPxyOhfwNEwQvldp4OkkSYiF8WDPN1GtUcdOnKDjQUtu3x6uWCaOy1oNzhvDRQBxMupgqVXf-iPcshEumMwpeHSn6gNm33sBjXAAsubOIT2iAA8ofS8GTtPorWpErc7BcygpK7JLAvvFZeI2q8VZEqLeFNnjI16hSZ4QebqoquEtuqioVP7I7zFE9Sc0A3TVTI_P2eBwRt6zFj"/>
+</div>
+<div class="flex-grow">
+<p class="font-bold text-on-surface">Artisan Horchata</p>
+<p class="text-on-surface-variant text-sm font-label-sm">29 sold this week</p>
+</div>
+<div class="text-right">
+<p class="text-neighborhood-green font-bold">+$116</p>
+<div class="w-24 h-1 bg-surface-container rounded-full mt-1 overflow-hidden">
+<div class="bg-neighborhood-green h-full w-[55%]"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Customer Feedback Highlights -->
+<div class="md:col-span-7 glass-card rounded-[2rem] p-8 custom-shadow flex flex-col">
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-title-lg text-title-lg">Neighbor Feedback</h3>
+<div class="flex items-center gap-1 text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-bold text-lg">4.9</span>
+<span class="text-on-surface-variant text-sm">(124)</span>
+</div>
+</div>
+<div class="flex flex-col gap-4 overflow-y-auto no-scrollbar">
+<div class="p-5 bg-surface-container-low rounded-2xl border border-outline-variant/30 flex gap-4">
+<div class="shrink-0">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">JD</div>
+</div>
+<div>
+<div class="flex justify-between mb-1">
+<p class="font-bold text-sm">Juan Delgado</p>
+<span class="text-on-surface-variant text-[10px] font-label-sm">2 HOURS AGO</span>
+</div>
+<p class="text-on-surface-variant text-sm italic">"The tamales were still steaming hot! You can tell they were made with love. My kids absolutely loved them."</p>
+</div>
+</div>
+<div class="p-5 bg-surface-container-low rounded-2xl border border-outline-variant/30 flex gap-4">
+<div class="shrink-0">
+<div class="w-10 h-10 rounded-full bg-tertiary/10 flex items-center justify-center text-tertiary font-bold">MR</div>
+</div>
+<div>
+<div class="flex justify-between mb-1">
+<p class="font-bold text-sm">Maria Rodriguez</p>
+<span class="text-on-surface-variant text-[10px] font-label-sm">YESTERDAY</span>
+</div>
+<p class="text-on-surface-variant text-sm italic">"Best pupusas in Santa Tecla. Hands down. The packaging was also super eco-friendly which I appreciate!"</p>
+</div>
+</div>
+</div>
+<button class="mt-6 text-primary font-bold text-sm flex items-center justify-center gap-2 hover:translate-x-1 transition-transform self-start">
+                    View all 124 reviews
+                    <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center py-3 pb-safe px-4 bg-surface-container-lowest dark:bg-inverse-surface border-t border-outline-variant/30 z-50 rounded-t-xl shadow-[0_-4px_20px_-2px_rgba(166,59,0,0.08)]">
+<a class="flex flex-col items-center justify-center text-on-secondary-fixed-variant dark:text-secondary-fixed-dim px-4 py-1 hover:text-primary transition-all active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined mb-1">home_app_logo</span>
+<span class="font-label-sm text-label-sm">Explore</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-secondary-fixed-variant dark:text-secondary-fixed-dim px-4 py-1 hover:text-primary transition-all active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined mb-1">receipt_long</span>
+<span class="font-label-sm text-label-sm">Orders</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container dark:bg-primary text-on-primary-container dark:text-on-primary rounded-full px-4 py-1 active:scale-90 duration-150 shadow-md" href="#">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">monitoring</span>
+<span class="font-label-sm text-label-sm">Insights</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-secondary-fixed-variant dark:text-secondary-fixed-dim px-4 py-1 hover:text-primary transition-all active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined mb-1">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm">Wallet</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-secondary-fixed-variant dark:text-secondary-fixed-dim px-4 py-1 hover:text-primary transition-all active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined mb-1">person</span>
+<span class="font-label-sm text-label-sm">Profile</span>
+</a>
+</nav>
+<script>
+        // Interactive Micro-interactions
+        document.querySelectorAll('.chart-bar').forEach(bar => {
+            bar.addEventListener('mouseenter', () => {
+                bar.style.transform = 'scaleX(1.05)';
+            });
+            bar.addEventListener('mouseleave', () => {
+                bar.style.transform = 'scaleX(1)';
+            });
+        });
+
+        // Simple Toggle Script
+        const toggleButtons = document.querySelectorAll('.flex.bg-surface-container button');
+        toggleButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                toggleButtons.forEach(b => {
+                    b.classList.remove('bg-white', 'shadow-sm', 'text-primary');
+                    b.classList.add('text-on-surface-variant');
+                });
+                btn.classList.add('bg-white', 'shadow-sm', 'text-primary');
+                btn.classList.remove('text-on-surface-variant');
+            });
+        });
+    </script>
+</body></html>

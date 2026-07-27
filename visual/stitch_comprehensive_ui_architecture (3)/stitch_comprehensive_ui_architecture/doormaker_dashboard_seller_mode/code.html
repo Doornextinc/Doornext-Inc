@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600&amp;family=Anybody:wght@700;800&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-container": "#009ade",
+                    "on-surface-variant": "#594138",
+                    "surface-variant": "#f7ddd4",
+                    "on-primary-fixed": "#370e00",
+                    "outline-variant": "#e1bfb3",
+                    "on-secondary-container": "#656464",
+                    "surface-container-low": "#fff1ec",
+                    "on-primary-fixed-variant": "#7f2b00",
+                    "on-primary-container": "#4f1800",
+                    "on-surface": "#261813",
+                    "background": "#fff8f6",
+                    "tertiary-fixed-dim": "#8cceff",
+                    "surface-container-highest": "#f7ddd4",
+                    "error-container": "#ffdad6",
+                    "primary-fixed": "#ffdbce",
+                    "surface-dim": "#eed5cc",
+                    "on-error-container": "#93000a",
+                    "error": "#ba1a1a",
+                    "on-error": "#ffffff",
+                    "tertiary-fixed": "#cae6ff",
+                    "surface-bright": "#fff8f6",
+                    "inverse-surface": "#3c2d27",
+                    "neighborhood-green": "#2D6A4F",
+                    "secondary-container": "#e5e2e1",
+                    "secondary-fixed-dim": "#c9c6c5",
+                    "surface-container": "#ffe9e2",
+                    "secondary-fixed": "#e5e2e1",
+                    "surface-tint": "#a63b00",
+                    "on-tertiary": "#ffffff",
+                    "on-tertiary-container": "#002d45",
+                    "surface-container-high": "#fde3da",
+                    "on-secondary": "#ffffff",
+                    "outline": "#8d7166",
+                    "surface-cream": "#FDFCFB",
+                    "primary-fixed-dim": "#ffb599",
+                    "on-secondary-fixed": "#1c1b1b",
+                    "on-tertiary-fixed": "#001e2f",
+                    "warm-gray": "#736F6E",
+                    "secondary": "#5f5e5e",
+                    "primary-container": "#f26522",
+                    "tertiary": "#006492",
+                    "surface-container-lowest": "#ffffff",
+                    "on-background": "#261813",
+                    "inverse-on-surface": "#ffede7",
+                    "primary": "#a63b00",
+                    "surface": "#fff8f6",
+                    "on-primary": "#ffffff",
+                    "on-secondary-fixed-variant": "#474646",
+                    "inverse-primary": "#ffb599",
+                    "on-tertiary-fixed-variant": "#004b6f"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "container-padding-desktop": "2.5rem",
+                    "section-gap": "4rem",
+                    "gutter": "1.5rem",
+                    "container-padding-mobile": "1.25rem",
+                    "base": "8px"
+            },
+            "fontFamily": {
+                    "title-lg": ["Plus Jakarta Sans"],
+                    "display-lg": ["Anybody"],
+                    "label-sm": ["JetBrains Mono"],
+                    "headline-md": ["Anybody"],
+                    "display-lg-mobile": ["Anybody"],
+                    "body-md": ["Plus Jakarta Sans"],
+                    "body-lg": ["Plus Jakarta Sans"],
+                    "headline-md-mobile": ["Anybody"]
+            },
+            "fontSize": {
+                    "title-lg": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                    "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "label-sm": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "headline-md": ["32px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "display-lg-mobile": ["36px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "headline-md-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #fff8f6;
+            color: #261813;
+            -webkit-font-smoothing: antialiased;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .active-pill {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md overflow-x-hidden">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-container-padding-mobile md:px-container-padding-desktop py-4 bg-surface dark:bg-on-surface">
+<div class="flex items-center gap-4">
+<div class="relative">
+<div class="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center overflow-hidden ring-2 ring-primary-container">
+<img class="w-full h-full object-cover" data-alt="A warm, friendly portrait of a middle-aged neighborhood baker with a glowing, soft orange light behind them, creating a 'neighborhood glow' effect. The lighting is cozy and human-centric, emphasizing trust and local pride within a clean, modern aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBg8SAKbbfWMubfsbYZ8s7R-wsdXVj5PT3G3m7tczii1LktPAxNsCQxhGdITromPGOcsQHZPo9fVaD9Z0urBefNJXBc3kuPsm-7bWoU_Hy19Vm8wJLSJm7Hl_TdO4iwd-QY73ZGl6WSyiDWHcguYHZDDxnuigqolN1Nh3_QlPw5I08ztc6R7EmRj7GeUuJ-B2D-dYIL7pLwBuo2lweYx7yRAphrHKuRhF4FBIOmfsG0AirloO4Ci3LmUcgndp-NXMWkj8EN_P8tEob-"/>
+</div>
+</div>
+<span class="font-display-lg-mobile md:font-display-lg text-primary-container dark:text-primary-fixed">DoorNext</span>
+</div>
+<!-- Role Switcher -->
+<div class="hidden md:flex bg-secondary-container rounded-full p-1 shadow-inner items-center">
+<button class="px-4 py-1.5 rounded-full font-label-sm text-label-sm transition-all text-secondary hover:text-primary" onclick="switchRole('Rider')">Rider</button>
+<button class="px-4 py-1.5 rounded-full font-label-sm text-label-sm transition-all text-secondary hover:text-primary" onclick="switchRole('Nexter')">Nexter</button>
+<button class="px-4 py-1.5 rounded-full font-label-sm text-label-sm bg-primary-container text-white shadow-sm">DoorMaker</button>
+</div>
+<button class="flex items-center justify-center text-primary-container dark:text-primary-fixed active:scale-95 duration-150 ease-in-out">
+<span class="material-symbols-outlined text-3xl">swap_horizontal_circle</span>
+</button>
+</header>
+<!-- Navigation Drawer (Left) -->
+<aside class="fixed inset-y-0 left-0 z-[60] flex flex-col py-6 bg-background dark:bg-on-surface border-r border-outline-variant rounded-r-xl h-full w-80 shadow-2xl -translate-x-full transition-transform duration-300" id="nav-drawer">
+<div class="px-6 mb-8 flex flex-col">
+<div class="flex items-center gap-3 mb-4">
+<div class="w-12 h-12 rounded-xl bg-surface-container-high flex items-center justify-center">
+<span class="material-symbols-outlined text-primary-container">person</span>
+</div>
+<div>
+<h2 class="font-headline-md-mobile text-headline-md-mobile leading-tight">Welcome back, Neighbor</h2>
+<p class="font-body-md text-on-surface-variant text-sm">Current Role: Rider</p>
+</div>
+</div>
+<div class="bg-primary-fixed/30 rounded-lg px-3 py-1 self-start">
+<span class="font-label-sm text-label-sm text-on-primary-fixed-variant">Trust Score: 4.9</span>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-4 text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-low mx-2 px-4 py-3 rounded-lg transition-transform duration-200 hover:translate-x-1" href="#">
+<span class="material-symbols-outlined">delivery_dining</span>
+<span class="font-label-sm text-label-sm">Switch to Nexter</span>
+</a>
+<a class="flex items-center gap-4 bg-secondary-container dark:bg-on-secondary-container text-on-secondary-container dark:text-secondary-fixed rounded-lg mx-2 px-4 py-3 opacity-80" href="#">
+<span class="material-symbols-outlined">storefront</span>
+<span class="font-label-sm text-label-sm">Switch to DoorMaker</span>
+</a>
+<a class="flex items-center gap-4 text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-low mx-2 px-4 py-3 rounded-lg transition-transform duration-200 hover:translate-x-1" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-sm text-label-sm">Account Settings</span>
+</a>
+<a class="flex items-center gap-4 text-on-surface-variant dark:text-outline-variant hover:bg-surface-container-low mx-2 px-4 py-3 rounded-lg transition-transform duration-200 hover:translate-x-1" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="font-label-sm text-label-sm">Help Center</span>
+</a>
+<div class="mt-auto pt-4 border-t border-outline-variant/30">
+<a class="flex items-center gap-4 text-error mx-2 px-4 py-3 rounded-lg hover:bg-error-container/20 transition-transform duration-200 hover:translate-x-1" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-label-sm text-label-sm">Logout</span>
+</a>
+</div>
+</nav>
+</aside>
+<!-- Main Canvas -->
+<main class="pt-24 pb-32 px-container-padding-mobile md:px-container-padding-desktop max-w-7xl mx-auto">
+<!-- Dashboard Header / Status Toggle -->
+<section class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+<div>
+<h1 class="font-headline-md text-headline-md-mobile md:text-headline-md text-on-surface">DoorMaker Dashboard</h1>
+<p class="font-body-md text-on-surface-variant mt-2">Managing <span class="font-semibold">"Maria's Sourdough Home"</span></p>
+</div>
+<div class="flex items-center gap-4 bg-surface-container-low p-4 rounded-2xl border border-outline-variant">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Shop Status:</span>
+<div class="relative inline-flex items-center cursor-pointer" onclick="toggleShop()">
+<div class="w-24 h-10 bg-neighborhood-green rounded-full transition-colors duration-300" id="shop-bg"></div>
+<div class="absolute left-1 w-8 h-8 bg-white rounded-full transition-all duration-300 flex items-center justify-center transform translate-x-14" id="shop-toggle">
+<span class="w-2 h-2 rounded-full bg-neighborhood-green" id="shop-status-dot"></span>
+</div>
+<span class="absolute left-4 font-label-sm text-white text-[10px] pointer-events-none" id="shop-label">OPEN</span>
+</div>
+</div>
+</section>
+<!-- Bento Stats Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter mb-section-gap">
+<!-- Earnings Card -->
+<div class="md:col-span-2 bg-inverse-surface rounded-3xl p-8 text-white relative overflow-hidden flex flex-col justify-between min-h-[240px]">
+<div class="relative z-10">
+<span class="font-label-sm text-label-sm text-primary-fixed-dim uppercase tracking-widest">Total Earnings Today</span>
+<h2 class="font-display-lg-mobile md:font-display-lg mt-4 text-primary-fixed flex items-baseline gap-2">
+<span class="text-3xl font-label-sm">$</span>
+<span class="font-label-sm tracking-tighter" style="font-family: 'JetBrains Mono'">248.50</span>
+</h2>
+</div>
+<div class="relative z-10 flex gap-4 mt-6">
+<div class="bg-white/10 backdrop-blur-md rounded-xl px-4 py-3 flex-1 border border-white/10">
+<span class="block font-label-sm text-xs text-white/60 mb-1">Orders</span>
+<span class="text-xl font-bold">14</span>
+</div>
+<div class="bg-white/10 backdrop-blur-md rounded-xl px-4 py-3 flex-1 border border-white/10">
+<span class="block font-label-sm text-xs text-white/60 mb-1">Top Item</span>
+<span class="text-xl font-bold">Classic Loaf</span>
+</div>
+</div>
+<!-- Subtle graphic element -->
+<div class="absolute -right-12 -bottom-12 w-64 h-64 bg-primary-container/20 rounded-full blur-3xl"></div>
+</div>
+<!-- Performance Card -->
+<div class="bg-white border border-outline-variant rounded-3xl p-8 flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start mb-4">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Avg. Rating</span>
+<span class="material-symbols-outlined text-primary-container" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<div class="text-5xl font-display-lg text-on-surface">4.9</div>
+<p class="text-sm text-on-surface-variant mt-2">from 128 neighbors this month</p>
+</div>
+<button class="w-full mt-6 py-3 border border-primary-container text-primary-container rounded-full font-label-sm hover:bg-primary-fixed/20 transition-colors">
+                    View Feedback
+                </button>
+</div>
+</div>
+<!-- Active Orders Section -->
+<section>
+<div class="flex items-center justify-between mb-8">
+<h3 class="font-headline-md text-headline-md-mobile">Active Orders</h3>
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary-container animate-pulse"></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">3 in progress</span>
+</div>
+</div>
+<div class="space-y-4">
+<!-- Order Card 1 -->
+<div class="bg-white border border-outline-variant rounded-2xl p-6 flex flex-col md:flex-row md:items-center gap-6 hover:shadow-lg transition-shadow">
+<div class="flex-shrink-0">
+<div class="w-16 h-16 rounded-xl bg-surface-container-high overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A macro photograph of a golden-brown, crusty artisan sourdough bread with steam rising gently from it, set against a rustic wooden tabletop in a warm home kitchen. The lighting is golden and inviting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBpA8L_NhKWZckhjz4G92_smo2qdxFxhLUVmbIKKwp1aos0cIX9UeWGtcgn3zqvV6P--L1xoHBfxlO1V43cH-2x7hwCD_kJ5USZrh7b4bAX_wIC0XgBmDNoklEO7dvzqS1xd60fg_uLHsFB3z5nCWA5ZbsCGKphpUKk3ZAQUvk8L5PKSP-FnbKtqzRHywINdV0ZaZ0D3Qy5iYoquwmxQ8g0sKXpuPdUwwrFeAktEyv31Z7QYgYn69uGS52aRzTdoDPqMFjq3j_LB9MK"/>
+</div>
+</div>
+<div class="flex-grow">
+<div class="flex justify-between items-start">
+<div>
+<h4 class="font-title-lg text-on-surface">#ORD-2849</h4>
+<p class="font-body-md text-on-surface-variant text-sm">2x Sourdough Loaf, 1x Rosemary Focaccia</p>
+</div>
+<span class="bg-surface-container-highest text-primary font-label-sm text-[10px] px-2 py-1 rounded">PREPARING</span>
+</div>
+<div class="flex items-center gap-4 mt-4">
+<div class="flex items-center gap-1.5 text-xs text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">schedule</span>
+<span>Ready in 12 mins</span>
+</div>
+<div class="flex items-center gap-1.5 text-xs text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">person</span>
+<span>Nexter: Dave R.</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="p-3 rounded-full border border-outline hover:bg-surface-variant transition-colors">
+<span class="material-symbols-outlined">chat</span>
+</button>
+<button class="flex-1 md:flex-none px-8 py-3 bg-primary-container text-white rounded-full font-label-sm shadow-sm active:scale-95 transition-transform">
+                            Mark Ready
+                        </button>
+</div>
+</div>
+<!-- Order Card 2 -->
+<div class="bg-white border border-outline-variant rounded-2xl p-6 flex flex-col md:flex-row md:items-center gap-6 hover:shadow-lg transition-shadow">
+<div class="flex-shrink-0">
+<div class="w-16 h-16 rounded-xl bg-surface-container-high overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A vibrant and colorful close-up of a rustic berry tart with fresh raspberries and blueberries, dusted with powdered sugar. The aesthetic is homemade, warm, and neighborly, set in a light-filled modern kitchen." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAeRALjgGaA3r_Ju4y7Mc095Lc9jAi_BVGzxuZ_foDMzB_aVU1QGygMPLhHKjzJkX7h4gfJ5rD1CHOZbeiKMtLKgvNEnbwps9GNabtpml2VEVsi9Z-lsnAJWUWWzJGEfQzF66PhHtLWTgwmmmalmMJAH7uctlUFaRenDmTAcq8RNkLJAcznIfLziSFpC4rfLr_QIY1CH5nS9qSimcIf3VyBqr9lqwFCHaik3fB85xvtaKG0LY-6KA8yOboLMD21uNAcvWABEj6f18Rs"/>
+</div>
+</div>
+<div class="flex-grow">
+<div class="flex justify-between items-start">
+<div>
+<h4 class="font-title-lg text-on-surface">#ORD-2851</h4>
+<p class="font-body-md text-on-surface-variant text-sm">1x Seasonal Berry Tart</p>
+</div>
+<span class="bg-surface-container-highest text-primary font-label-sm text-[10px] px-2 py-1 rounded">PREPARING</span>
+</div>
+<div class="flex items-center gap-4 mt-4">
+<div class="flex items-center gap-1.5 text-xs text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">schedule</span>
+<span>Ready in 45 mins</span>
+</div>
+<div class="flex items-center gap-1.5 text-xs text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">directions_bike</span>
+<span>Awaiting Nexter</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="p-3 rounded-full border border-outline hover:bg-surface-variant transition-colors">
+<span class="material-symbols-outlined">chat</span>
+</button>
+<button class="flex-1 md:flex-none px-8 py-3 bg-primary-container text-white rounded-full font-label-sm shadow-sm active:scale-95 transition-transform">
+                            Mark Ready
+                        </button>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-safe pt-2 bg-surface-container-lowest dark:bg-inverse-surface rounded-t-xl shadow-lg shadow-[0_-4px_30px_rgba(242,101,34,0.08)]">
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim px-5 py-1 hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined">explore</span>
+<span class="font-label-sm text-label-sm">Explore</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-fixed dark:bg-on-primary-fixed-variant text-on-primary-container dark:text-primary-fixed rounded-full px-5 py-1 scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">receipt_long</span>
+<span class="font-label-sm text-label-sm">Orders</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim px-5 py-1 hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined">groups</span>
+<span class="font-label-sm text-label-sm">Community</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim px-5 py-1 hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-sm text-label-sm">Profile</span>
+</a>
+</nav>
+<script>
+        let isShopOpen = true;
+
+        function toggleShop() {
+            const bg = document.getElementById('shop-bg');
+            const toggle = document.getElementById('shop-toggle');
+            const dot = document.getElementById('shop-status-dot');
+            const label = document.getElementById('shop-label');
+            
+            isShopOpen = !isShopOpen;
+            
+            if (isShopOpen) {
+                bg.classList.remove('bg-warm-gray');
+                bg.classList.add('bg-neighborhood-green');
+                toggle.style.transform = 'translateX(56px)';
+                dot.classList.remove('bg-warm-gray');
+                dot.classList.add('bg-neighborhood-green');
+                label.innerText = 'OPEN';
+                label.style.left = '16px';
+            } else {
+                bg.classList.remove('bg-neighborhood-green');
+                bg.classList.add('bg-warm-gray');
+                toggle.style.transform = 'translateX(0px)';
+                dot.classList.remove('bg-neighborhood-green');
+                dot.classList.add('bg-warm-gray');
+                label.innerText = 'CLOSED';
+                label.style.left = '42px';
+            }
+        }
+
+        function switchRole(role) {
+            const drawer = document.getElementById('nav-drawer');
+            drawer.classList.toggle('-translate-x-full');
+            // Mock state change
+            console.log("Switching role to:", role);
+        }
+
+        // Toggle drawer on avatar click
+        document.querySelector('header .w-10').addEventListener('click', () => {
+            document.getElementById('nav-drawer').classList.toggle('-translate-x-full');
+        });
+
+        // Close drawer when clicking outside (mobile optimization)
+        window.onclick = function(event) {
+            const drawer = document.getElementById('nav-drawer');
+            const avatar = document.querySelector('header .w-10');
+            if (!drawer.contains(event.target) && !avatar.contains(event.target)) {
+                drawer.classList.add('-translate-x-full');
+            }
+        }
+    </script>
+</body></html>

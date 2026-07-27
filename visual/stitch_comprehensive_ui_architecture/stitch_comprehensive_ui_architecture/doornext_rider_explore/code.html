@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>DoorNext - Explore Your Neighborhood</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Anybody:wght@400;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Anybody:wght@100..900&family=JetBrains+Mono:wght@100..900&family=Plus+Jakarta+Sans:wght@100..900&display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-background": "#261813",
+                        "primary": "#a63b00",
+                        "on-surface-variant": "#594138",
+                        "surface-container-highest": "#f7ddd4",
+                        "warm-gray": "#736F6E",
+                        "tertiary-container": "#009ade",
+                        "outline-variant": "#e1bfb3",
+                        "on-secondary-container": "#656464",
+                        "inverse-surface": "#3c2d27",
+                        "secondary-fixed-dim": "#c9c6c5",
+                        "on-primary-container": "#4f1800",
+                        "primary-container": "#f26522",
+                        "secondary-fixed": "#e5e2e1",
+                        "primary-fixed-dim": "#ffb599",
+                        "surface": "#fff8f6",
+                        "surface-container-low": "#fff1ec",
+                        "surface-container-high": "#fde3da",
+                        "on-surface": "#261813",
+                        "surface-bright": "#fff8f6",
+                        "inverse-on-surface": "#ffede7",
+                        "on-tertiary": "#ffffff",
+                        "neighborhood-green": "#2D6A4F",
+                        "error": "#ba1a1a",
+                        "on-error": "#ffffff",
+                        "on-tertiary-fixed-variant": "#004b6f",
+                        "tertiary-fixed": "#cae6ff",
+                        "on-secondary-fixed-variant": "#474646",
+                        "surface-tint": "#a63b00",
+                        "primary-fixed": "#ffdbce",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed-dim": "#8cceff",
+                        "on-secondary-fixed": "#1c1b1b",
+                        "on-tertiary-fixed": "#001e2f",
+                        "on-tertiary-container": "#002d45",
+                        "error-container": "#ffdad6",
+                        "surface-dim": "#eed5cc",
+                        "on-primary-fixed": "#370e00",
+                        "surface-variant": "#f7ddd4",
+                        "tertiary": "#006492",
+                        "outline": "#8d7166",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "surface-cream": "#FDFCFB",
+                        "secondary-container": "#e5e2e1",
+                        "background": "#fff8f6",
+                        "on-primary-fixed-variant": "#7f2b00",
+                        "inverse-primary": "#ffb599",
+                        "secondary": "#5f5e5e",
+                        "surface-container": "#ffe9e2"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "1.5rem",
+                        "container-padding-desktop": "2.5rem",
+                        "base": "8px",
+                        "section-gap": "4rem",
+                        "container-padding-mobile": "1.25rem"
+                    },
+                    "fontFamily": {
+                        "display-lg-mobile": ["Anybody"],
+                        "title-lg": ["Plus Jakarta Sans"],
+                        "headline-md-mobile": ["Anybody"],
+                        "headline-md": ["Anybody"],
+                        "body-lg": ["Plus Jakarta Sans"],
+                        "label-sm": ["JetBrains Mono"],
+                        "body-md": ["Plus Jakarta Sans"],
+                        "display-lg": ["Anybody"]
+                    },
+                    "fontSize": {
+                        "display-lg-mobile": ["36px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                        "title-lg": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                        "headline-md-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                        "headline-md": ["32px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "label-sm": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-background min-h-screen font-body-md text-body-md overflow-x-hidden">
+<!-- Top Navigation -->
+<header class="fixed top-0 w-full z-50 bg-surface flex justify-between items-center px-container-padding-mobile md:px-container-padding-desktop h-16">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A warm, professional headshot of a friendly neighbor in their 30s with a bright smile, set against a soft-focus cozy kitchen background. The lighting is warm and natural, following the brand's neighborhood-first aesthetic with soft orange and cream tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAzEwGH4gq6GHqrFagszflZOfPb3kE6G8SQD-uz8GeBwrBT0PqMRtwXpE1dm2rsZ2M1u_LHK2ZwC8d6sFiKZBe3ibQBumNRVSOA2PfjHOWUanG8Q96xpigvXGthYdH0tJtsVZHL7BaaMJaTOgrSpqyeKpKEsKsyHzdq0868l_BcHiFuXCdA9E7PIs0SmA_htfgZzH_pg2leO3zhFHBDBU69Q54YGgVvyedF_XTmJkH_5VzpwCAjhDYpPSNZGYg32GSer5HLasgElYiS"/>
+</div>
+<div>
+<span class="font-title-lg text-title-lg text-primary block leading-none">DoorNext</span>
+</div>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-low text-on-surface hover:opacity-80 transition-all active:translate-y-0.5">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+</header>
+<main class="pt-20 pb-32 px-container-padding-mobile md:px-container-padding-desktop max-w-[1280px] mx-auto">
+<!-- Hero Section -->
+<section class="mb-8">
+<h1 class="font-display-lg-mobile text-display-lg-mobile md:font-display-lg md:text-display-lg mb-6">
+                Fresh from your <span class="text-primary italic">neighbor's</span> kitchen.
+            </h1>
+<div class="relative group">
+<div class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+</div>
+<input class="w-full h-14 pl-12 pr-4 rounded-xl border-none bg-surface-container-low focus:ring-2 focus:ring-primary placeholder:text-warm-gray transition-shadow shadow-sm" placeholder="Craving pupusas or sourdough?" type="text"/>
+</div>
+</section>
+<!-- Delivery Status Widget (Active State) -->
+<section class="mb-10">
+<div class="bg-inverse-surface text-inverse-on-surface p-4 rounded-2xl flex items-center gap-4 shadow-xl shadow-primary/10 border border-outline/10">
+<div class="w-12 h-12 bg-neighborhood-green rounded-full flex items-center justify-center animate-pulse">
+<span class="material-symbols-outlined text-white" data-icon="local_shipping">local_shipping</span>
+</div>
+<div class="flex-1">
+<p class="font-label-sm text-label-sm uppercase tracking-widest text-primary-fixed-dim">On its way</p>
+<p class="font-title-lg text-[16px] font-bold">Nexter Alex is 5 mins away</p>
+</div>
+<div class="font-label-sm text-label-sm px-3 py-1 bg-surface-container-highest/20 rounded-full border border-surface-container-highest/30">
+                    Track
+                </div>
+</div>
+</section>
+<!-- Categories -->
+<section class="mb-10">
+<div class="flex justify-between items-end mb-4">
+<h2 class="font-headline-md-mobile text-headline-md-mobile md:font-headline-md md:text-headline-md">Neighborhood Faves</h2>
+<a class="text-primary font-bold hover:underline decoration-2 underline-offset-4" href="#">View All</a>
+</div>
+<div class="flex gap-4 overflow-x-auto hide-scrollbar -mx-5 px-5 pb-2">
+<!-- Category Chip 1 -->
+<button class="flex flex-col items-center gap-3 group min-w-[84px]">
+<div class="w-20 h-20 rounded-full bg-surface-container-highest flex items-center justify-center group-hover:scale-105 transition-transform border border-outline-variant/30">
+<img class="w-16 h-16 object-contain" data-alt="A close-up, high-quality food photograph of traditional Salvadoran pupusas with melting cheese and vibrant Curtido on the side. The lighting is warm and golden, emphasizing the hand-made texture of the masa. The style is rustic yet clean, consistent with a high-end local community app." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB5av4zNqEa8Ksqbrw7ocbcncyS4yrnT4zHPndnPdxkIzkL4B2GawwTbu7R1qzNHv8chZXlFhLcCkHYcGYeF36cZyZqlLAANcoKmh4s3yp6PUywTB1Ez1mWdO9mvgjyp9P1cfn6N4DGukaQJo80rNGgox9OD6egLsMOSlV6eXem4Stqflo7nyRkJnl9FykO2RoZnP4rnnfWkvvmmfclBRP3FSITIk45j06KAkmFERik0xGcLfuaHf-RXIobJOYuYqqvrMib9hLwx4yP"/>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant group-hover:text-primary transition-colors">Pupusas</span>
+</button>
+<!-- Category Chip 2 -->
+<button class="flex flex-col items-center gap-3 group min-w-[84px]">
+<div class="w-20 h-20 rounded-full bg-surface-container-highest flex items-center justify-center group-hover:scale-105 transition-transform border border-outline-variant/30">
+<img class="w-16 h-16 object-contain" data-alt="A top-down aesthetic shot of freshly baked artisanal sourdough bread with a beautiful crust score. Flour is lightly dusted around the bread on a wooden surface. Soft, natural morning light creates a cozy, home-cooked atmosphere with warm neutral tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBzgnfHIrxYyAs56O9hFQfjC1fKHtKLceCmoXi6eermVz39HM4xLfI9_-sStNxGASwTJ-LIWGxvjgZVurQ-38QyMp2328bLwzC7xAAbPHmWww51FrGdOEOVWSnwDyhwrQwF7fsYxQWg5tp253Ezx4CpgOERnQwWM18vUXwXu9QLra1qNOJOAT057gJKCD_O9Vj-VbVmSEkedO4PJFQ1qjfbCigaPfHjwn_JYh2LZuAwQ8Le05b7kxbD-PdDK-vunLVLVD5y-Gut0KVq"/>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant group-hover:text-primary transition-colors">Bread</span>
+</button>
+<!-- Category Chip 3 -->
+<button class="flex flex-col items-center gap-3 group min-w-[84px]">
+<div class="w-20 h-20 rounded-full bg-surface-container-highest flex items-center justify-center group-hover:scale-105 transition-transform border border-outline-variant/30">
+<img class="w-16 h-16 object-contain" data-alt="A family-style serving of hearty homemade lasagna with vibrant red sauce and melted mozzarella cheese. The dish is presented in a ceramic baker. The mood is warm, welcoming, and captures the essence of a family meal prepared with love." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBMUSlX5FmdKrmz0IxB3iPpSW44e93TE5mexo3Soym2_cgYFFzMqXL8tEN-7lGLTByFrlAWVvYaOa3H1k4UemOKp4p-Oe6hV7GUy2CEDZjg19Vj9CoPbAzJ0eDzIGFhmCCzuEZ53AvDwncmwvUVbEEp6GhSrt18gVruvstVxI8k06bZyz7lfw8vwDfPHVC78LzbOaz4EMNZ6QiUNYpLBC963mtnm-JpTjihIATLqxlktnLLDyM2XD1kq-l6WXe97xMK3eNN15d8gk88"/>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant group-hover:text-primary transition-colors">Family Meals</span>
+</button>
+<!-- Category Chip 4 -->
+<button class="flex flex-col items-center gap-3 group min-w-[84px]">
+<div class="w-20 h-20 rounded-full bg-surface-container-highest flex items-center justify-center group-hover:scale-105 transition-transform border border-outline-variant/30">
+<img class="w-16 h-16 object-contain" data-alt="A colorful, appetizing bowl of traditional Vietnamese Pho with fresh herbs, lime, and sliced beef. The steam is visible, suggesting it was just made. The background is a clean, minimal kitchen setting with warm lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD8uNLi8Bs4bGiCH_Seqaavkhyrxlvc0ohyqmO3ZYJkNeNL2Bx9E-u37zVtWrGmSUmJlsjtWmaqJrNbbC8HpoyYsdpbHGGj_WIcuQFpn-JbYPhd8zwBDzZ6_XDPlWImLv85XNtW0WJ6le3JjMcSTNn7VkH7-vokfCnxr1OJcVIuJ1MYzTQOX9OoKScbkMoUeekiPhRmdqAIfex8tyJnQ4mWxEaLo2eBBQvEaazPUhhAVqXy4j0oUL_cQlVaCTm2B-vw7gwP7IZ39rhz"/>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant group-hover:text-primary transition-colors">Soups</span>
+</button>
+<!-- Category Chip 5 -->
+<button class="flex flex-col items-center gap-3 group min-w-[84px]">
+<div class="w-20 h-20 rounded-full bg-surface-container-highest flex items-center justify-center group-hover:scale-105 transition-transform border border-outline-variant/30">
+<img class="w-16 h-16 object-contain" data-alt="A delightful assortment of homemade Mexican street tacos with diverse fillings like al pastor and carnitas, topped with fresh cilantro and onion. Vibrant colors and a festive, neighborly vibe characterize the image." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAE00Jz6B6k1tVSnqdfJ-EIDlqMtFpRmIpZtcWd5YvFcTffmombSUFd5zBA098QpgeEvYyrpiHAUeNN9M1g09zu2FF7jtbYZwfuYvvkSBshT8Fj4eqT-WQCxK3yVxglipMc8lp5fmW_Ab9FyiPOVXP--ewEevrg4HG45drBvnchnpZ-FPJAnNtW_ypHj8P89AtJIo9F8MLpQjajFnHpkRjK_vqJYIVoW7tEAwYWTEq2JwrNwoM2--BnFKoMuZL0YFoEPUxiFx9-15-o"/>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant group-hover:text-primary transition-colors">Tacos</span>
+</button>
+</div>
+</section>
+<!-- Featured Sellers (Bento-ish Grid) -->
+<section class="mb-10">
+<h2 class="font-headline-md-mobile text-headline-md-mobile md:font-headline-md md:text-headline-md mb-6">Trending DoorMakers</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+<!-- DoorMaker Card 1 -->
+<div class="group cursor-pointer">
+<div class="relative h-64 mb-4 rounded-3xl overflow-hidden shadow-lg border border-outline-variant/20">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A high-resolution, inviting photo of a batch of golden-brown empanadas resting on a wire rack. In the background, a warm kitchen environment is visible with soft bokeh. The lighting is sunny and warm, emphasizing the flaky texture of the pastry." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCv7N5433-485wLj-5HnvZtxirBt-l6SuDmC_cXtEsjwC9yzFCrwGS-c9lpYnE6yxQJwVAFkj5en3YUSE7_P_YclPNB131ITR8UWPNQz4IDjar9-ukX7KC-breSlmMN_u3XY_DIhX7Hr1wvBQKMzX8Rtyqh591sOHttpKvbLzlWz77h6cPPo6kV3JTiDpozGfxBSGXwTVX9U9Mlsqjjn_PHY2oVrGXVETCiwPemTufhneCwVg9iyYISFJTh8RtSWB9UoxM47O0lrOvi"/>
+<div class="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-primary text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-sm text-label-sm text-on-surface">4.9</span>
+</div>
+<div class="absolute bottom-4 left-4">
+<div class="flex items-center gap-2 bg-white/90 backdrop-blur p-2 rounded-2xl shadow-sm">
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary">
+<img class="w-full h-full object-cover" data-alt="A friendly, close-up portrait of Maria, a local home cook in her 50s, wearing a clean linen apron. She has a genuine, welcoming expression. The photo is taken in a brightly lit, modern home kitchen with warm wooden accents." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCb3P-S7g3ooTBDBLPsMLKdFkorBYOZAQJnGMOpFej0r3M-ZhV531JKPRQmuwzGlyS3E_bp15bwZSuN2ykqguCXTmTFfqSMzKE8U9Aid1q9-Z4piqPr3vJ-5Lr8RlztrnffE-otqi5US_0zsAwzfW9o9tzpbwrpuwwvxsGq1BDyZktPcfqaJGj7fa0kQUXeOJKFQDm0Gt563KCqOZd60Z3WwByf5rXPTnpKeNVy29y-7k-FBxfydr3BPj3Jt4LdsFj0QVG6amS4k9a4"/>
+</div>
+<div>
+<p class="font-bold text-[14px] leading-none">Maria's Kitchen</p>
+<p class="font-label-sm text-[10px] text-on-surface-variant uppercase tracking-wider">0.8 miles away</p>
+</div>
+</div>
+</div>
+</div>
+<div class="flex justify-between items-start px-1">
+<div>
+<h3 class="font-title-lg text-title-lg text-on-background">Hand-Pressed Pupusas & Curtido</h3>
+<p class="text-on-surface-variant text-sm mt-1">Specialty Salvadoran recipes passed down for 3 generations.</p>
+</div>
+<div class="bg-primary-container text-on-primary-container font-label-sm text-label-sm px-3 py-1 rounded-full">
+                            $12+
+                        </div>
+</div>
+</div>
+<!-- DoorMaker Card 2 -->
+<div class="group cursor-pointer">
+<div class="relative h-64 mb-4 rounded-3xl overflow-hidden shadow-lg border border-outline-variant/20">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A beautifully composed flat lay of fresh organic pasta noodles, dusted with flour on a dark marble countertop. Fresh basil leaves and cherry tomatoes are scattered artfully around. The lighting is moody yet bright, capturing a high-end artisanal food feeling." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBMkOLxPF4jBaPSHyMh_iV0UY6gb-kwiq1ZA0jUlPrSEVoWGvZAE8hpaZIYWjdEOLc5QD04m0m0C8yble4PZW-ooh2l6RvjVS6k-b1F8zMuC8eWk7FhmfbG99e9d4WlihDQdyX8KukaZbXF-L-yV8QU9R3ngiJ4Wu1jp9iUJQ4V21bHc4F_-iL7MwxIq_psVx7vtqHUz3UtCTqtxkW4z3p4HMafJPLdepoPGHH3S8gvdX4M0-L4T08EDzLIZNM4EiOXcLYNXT63FkQS"/>
+<div class="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-primary text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-sm text-label-sm text-on-surface">5.0</span>
+</div>
+<div class="absolute bottom-4 left-4">
+<div class="flex items-center gap-2 bg-white/90 backdrop-blur p-2 rounded-2xl shadow-sm">
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary">
+<img class="w-full h-full object-cover" data-alt="A professional portrait of David, a young artisan baker in a simple white tee, standing in front of his home oven. He looks passionate and friendly. The scene is lit with warm, natural sunlight streaming through a window." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDOcPXej2jPmRa5cuiCNtlpDwa-t1l97byQgM-YlUFbPJGpao0S8VTtz8XrScLOpiVCzxvOvIEdwPow7mkhBpBVyH_OBsE__Mkfvt2q7Cl48RoNCJPYDXPWo5XJwBXEorYWepfo3rXmYB99t4fBMSDtzyoaGD2x18HMd1Y_N7h-s8DaarRwIPv2M-bgUlicZNa9rnJ_dLea2K9UVGhhio2ByVdXPxNKHpRMT3H2U_2jhZgnXwcTl468XM4WWuMb_3cMiKama_h3mfNA"/>
+</div>
+<div>
+<p class="font-bold text-[14px] leading-none">David's Dough</p>
+<p class="font-label-sm text-[10px] text-on-surface-variant uppercase tracking-wider">1.2 miles away</p>
+</div>
+</div>
+</div>
+</div>
+<div class="flex justify-between items-start px-1">
+<div>
+<h3 class="font-title-lg text-title-lg text-on-background">Ancient Grain Sourdough</h3>
+<p class="text-on-surface-variant text-sm mt-1">24-hour slow ferment bread with locally sourced grains.</p>
+</div>
+<div class="bg-primary-container text-on-primary-container font-label-sm text-label-sm px-3 py-1 rounded-full">
+                            $9+
+                        </div>
+</div>
+</div>
+<!-- DoorMaker Card 3 -->
+<div class="group cursor-pointer">
+<div class="relative h-64 mb-4 rounded-3xl overflow-hidden shadow-lg border border-outline-variant/20">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A macro shot of a vibrant Indian curry, rich with spices and topped with a swirl of cream and fresh cilantro. A piece of fluffy naan bread is dipped into the sauce. Warm lighting highlights the deep oranges and yellows of the dish." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBspI653mEMX1GkLdlHD-qHiQK3MVqxaXDTADOhgB_UFqWux-TSR1g5liDgG6vfnyf1B2OoK0dhCGD_jcHimp9FPkbCaBT0tVMM3x9xRVcz_kDDH-IJwoywzMtvP8-h2StI3nVf28RxYuO84OfxI2bFwTU3jjk_zTlxqJ6wl7reO7rDxy0Sf8aSrIm3FTijcerhA6BLHQsykhsoWnT4oLU4n4w5x9sXil13Rt8eHn8A9R1-60twkO06bW_qu19YkBainoVZi0UZHuRN"/>
+<div class="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-primary text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-sm text-label-sm text-on-surface">4.8</span>
+</div>
+<div class="absolute bottom-4 left-4">
+<div class="flex items-center gap-2 bg-white/90 backdrop-blur p-2 rounded-2xl shadow-sm">
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary">
+<img class="w-full h-full object-cover" data-alt="A portrait of Ananya, a local home cook, smiling warmly while holding a spice jar. She is in a cozy kitchen filled with jars of ingredients. The lighting is soft and golden, creating an atmosphere of trust and authentic home cooking." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBkEfNv9HldS2dV9vHZECUNd40YMsi_bYl4rNk72fPLH6jIWMhRkwoqyRrqROntLncULzRneAfeQdGuNkb-Gk-gGfIyt8SWoBAlCyUldr5VE4oav2oCtzej7ZXwnKzY5qg88aeLeNHblDIsuUojH0lkiTHlgCPKtyo3e6Ifd7ZgkDrEDP5UEc9ATQ9qDVMoH4CW-QVQNBUp3N8y1GmH64JjaMtf2_qZcxwxpZobBcEgfwgbrAjVNxG324C1SZs1VaJuUUqeC3FCDRWJ"/>
+</div>
+<div>
+<p class="font-bold text-[14px] leading-none">Ananya's Spices</p>
+<p class="font-label-sm text-[10px] text-on-surface-variant uppercase tracking-wider">2.5 miles away</p>
+</div>
+</div>
+</div>
+</div>
+<div class="flex justify-between items-start px-1">
+<div>
+<h3 class="font-title-lg text-title-lg text-on-background">Authentic Butter Chicken</h3>
+<p class="text-on-surface-variant text-sm mt-1">Slow-cooked curries with hand-ground spice blends.</p>
+</div>
+<div class="bg-primary-container text-on-primary-container font-label-sm text-label-sm px-3 py-1 rounded-full">
+                            $15+
+                        </div>
+</div>
+</div>
+</div>
+</section>
+<!-- Neighborhood Invite Card -->
+<section class="mb-10">
+<div class="bg-surface-container-high rounded-3xl p-8 flex flex-col md:flex-row items-center gap-8 border border-outline-variant/30 overflow-hidden relative">
+<div class="absolute top-0 left-0 w-32 h-32 bg-primary/10 rounded-full -translate-x-16 -translate-y-16 blur-3xl"></div>
+<div class="relative z-10 flex-1">
+<h2 class="font-headline-md text-headline-md mb-2">Ready to share your talent?</h2>
+<p class="text-on-surface-variant mb-6 text-lg max-w-md">Join 50+ local neighbors earning from their kitchen. Start your DoorMaker journey today.</p>
+<button class="bg-primary text-white px-8 py-3 rounded-full font-bold shadow-md hover:bg-on-primary-fixed-variant transition-all active:scale-95">Become a DoorMaker</button>
+</div>
+<div class="relative z-10 w-full md:w-1/3">
+<div class="aspect-square rounded-2xl overflow-hidden shadow-2xl rotate-3">
+<img class="w-full h-full object-cover" data-alt="A joyful scene of a local neighbor packaging home-baked cookies in eco-friendly brown paper bags with a custom stamp. The environment is a clean, bright home workspace. The photo captures the pride and artisanal nature of the DoorNext platform." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCX5iHjoegR_6Hgt84piVVgQlA8TynfTO7Tri-lX5VIfs4-n_H_C7YpUSCnbbUsAFKLEwzpQ51VUW0_vE0ZZ6N3rznmOqmHyLvOgtnJA_NZD99CDI1WA6mRFHW0t_bH5We9REj7pRT8H8NXpj_kpdvBes21rbWDPum5KnmF7c8VvU_u4S_LPObcoAFYj20m_4DDk9mmSjXKwtoU8Z0GPY1WTYlFsEDgJVm-a_kUIWn83B4MVbbB-fnUzppOm5ENU--GdvbS0ZoKQ3HJ"/>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- FAB: Contextual Action (Suppressed as per rules if not home, but this IS home) -->
+<button class="fixed bottom-24 right-6 w-14 h-14 bg-on-background text-white rounded-full flex items-center justify-center shadow-2xl active:scale-95 transition-transform z-40">
+<span class="material-symbols-outlined" data-icon="shopping_basket">shopping_basket</span>
+<div class="absolute -top-1 -right-1 bg-primary text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center border-2 border-surface font-bold">2</div>
+</button>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-4 pb-4 pt-2 bg-surface shadow-[0_-4px_20px_0_rgba(166,59,0,0.08)]">
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 active:scale-95 transition-transform duration-200 group" href="#">
+<span class="material-symbols-outlined" data-icon="explore" style="font-variation-settings: 'FILL' 1;">explore</span>
+<span class="font-label-sm text-label-sm">Explore</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors px-4 py-1 rounded-full active:scale-95 transition-transform duration-200 group" href="#">
+<span class="material-symbols-outlined" data-icon="shopping_bag">shopping_bag</span>
+<span class="font-label-sm text-label-sm">Orders</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors px-4 py-1 rounded-full active:scale-95 transition-transform duration-200 group" href="#">
+<span class="material-symbols-outlined" data-icon="account_balance_wallet">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm">Wallet</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors px-4 py-1 rounded-full active:scale-95 transition-transform duration-200 group" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-sm text-label-sm">Profile</span>
+</a>
+</nav>
+<script>
+        // Micro-interaction: Header shadow on scroll
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('header');
+            if (window.scrollY > 10) {
+                header.classList.add('shadow-sm', 'bg-surface/90', 'backdrop-blur-md');
+            } else {
+                header.classList.remove('shadow-sm', 'bg-surface/90', 'backdrop-blur-md');
+            }
+        });
+
+        // Micro-interaction: Active nav state handling (simple mock)
+        const navItems = document.querySelectorAll('nav a');
+        navItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                navItems.forEach(nav => {
+                    nav.className = "flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors px-4 py-1 rounded-full active:scale-95 transition-transform duration-200 group";
+                    const icon = nav.querySelector('.material-symbols-outlined');
+                    if(icon) icon.style.fontVariationSettings = "'FILL' 0";
+                });
+                item.className = "flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 active:scale-95 transition-transform duration-200 group";
+                const activeIcon = item.querySelector('.material-symbols-outlined');
+                if(activeIcon) activeIcon.style.fontVariationSettings = "'FILL' 1";
+            });
+        });
+    </script>
+</body></html>

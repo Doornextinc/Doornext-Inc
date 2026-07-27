@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Mama's Kitchen - DoorNext</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&amp;family=Anybody:wght@700;800;900&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary": "#ffffff",
+                    "surface-container-high": "#fde3da",
+                    "on-tertiary-container": "#002d45",
+                    "inverse-on-surface": "#ffede7",
+                    "on-tertiary-fixed-variant": "#004b6f",
+                    "on-background": "#261813",
+                    "surface-tint": "#a63b00",
+                    "on-primary-fixed": "#370e00",
+                    "surface-container": "#ffe9e2",
+                    "surface-bright": "#fff8f6",
+                    "on-secondary-fixed-variant": "#474646",
+                    "tertiary-fixed": "#cae6ff",
+                    "tertiary": "#006492",
+                    "on-secondary-fixed": "#1c1b1b",
+                    "inverse-primary": "#ffb599",
+                    "surface-dim": "#eed5cc",
+                    "surface-cream": "#FDFCFB",
+                    "background": "#fff8f6",
+                    "on-surface": "#261813",
+                    "primary": "#a63b00",
+                    "outline-variant": "#e1bfb3",
+                    "primary-container": "#f26522",
+                    "neighborhood-green": "#2D6A4F",
+                    "surface-container-low": "#fff1ec",
+                    "secondary": "#5f5e5e",
+                    "surface-variant": "#f7ddd4",
+                    "on-secondary-container": "#656464",
+                    "on-primary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "surface": "#fff8f6",
+                    "surface-container-highest": "#f7ddd4",
+                    "tertiary-container": "#009ade",
+                    "inverse-surface": "#3c2d27",
+                    "on-surface-variant": "#594138",
+                    "on-primary-fixed-variant": "#7f2b00",
+                    "on-tertiary": "#ffffff",
+                    "on-primary-container": "#4f1800",
+                    "on-error": "#ffffff",
+                    "error": "#ba1a1a",
+                    "warm-gray": "#736F6E",
+                    "secondary-fixed-dim": "#c9c6c5",
+                    "secondary-container": "#e5e2e1",
+                    "primary-fixed-dim": "#ffb599",
+                    "tertiary-fixed-dim": "#8cceff",
+                    "secondary-fixed": "#e5e2e1",
+                    "on-error-container": "#93000a",
+                    "outline": "#8d7166",
+                    "on-tertiary-fixed": "#001e2f",
+                    "primary-fixed": "#ffdbce"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "1.5rem",
+                    "container-padding-desktop": "2.5rem",
+                    "section-gap": "4rem",
+                    "container-padding-mobile": "1.25rem",
+                    "base": "8px"
+            },
+            "fontFamily": {
+                    "display-lg": ["Anybody"],
+                    "display-lg-mobile": ["Anybody"],
+                    "body-md": ["Plus Jakarta Sans"],
+                    "body-lg": ["Plus Jakarta Sans"],
+                    "label-sm": ["JetBrains Mono"],
+                    "headline-md-mobile": ["Anybody"],
+                    "title-lg": ["Plus Jakarta Sans"],
+                    "headline-md": ["Anybody"]
+            },
+            "fontSize": {
+                    "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "display-lg-mobile": ["36px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "headline-md-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "title-lg": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                    "headline-md": ["32px", {"lineHeight": "1.2", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { background-color: #FDFCFB; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .active-category {
+            background-color: #a63b00;
+            color: white;
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .hero-gradient {
+            background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 100%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-on-surface">
+<!-- Top AppBar (Mobile Style) -->
+<header class="flex justify-between items-center w-full px-5 h-16 fixed top-0 z-50 bg-white/80 backdrop-blur-md">
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container hover:opacity-80 transition-all active:translate-y-0.5">
+<span class="material-symbols-outlined text-primary">arrow_back</span>
+</button>
+<h1 class="font-display-lg-mobile text-display-lg-mobile text-primary font-black">DoorNext</h1>
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container hover:opacity-80 transition-all active:translate-y-0.5">
+<span class="material-symbols-outlined text-primary">share</span>
+</button>
+</header>
+<main class="pb-24">
+<!-- Hero Section -->
+<section class="relative h-80 w-full overflow-hidden">
+<div class="absolute inset-0 bg-cover bg-center" data-alt="A warm and inviting neighborhood kitchen scene where a friendly elderly woman is seen preparing artisanal meals. The lighting is soft and natural, coming from a nearby window, casting a cozy glow over rustic wooden countertops and fresh ingredients like herbs and vegetables. The overall aesthetic is homey, neighborly, and premium, avoiding sterile commercial kitchen vibes in favor of a personal, community-focused atmosphere with a palette of warm oranges and creams." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBZljX_iFUcY2Tn7XksCqAoTy2nQEmGDMxCPeza1ua6pVwdj5jG4EH-AeKcaczzOvfYmD_4SfAVD_5__EHfq2e0NA0dK8PhPeU87LAq3-cj331qEe0EjT-ijXPJViV6WGdHCGRvH03HKmx-VXkVaF9BXNYCV5D9MKAYQwg0Kv-SrDsKsWVv6i76VI6uMq95OlTfnBeEthx-PZrL1fYkIzRi4FlCbbLPcTQrEy0n77qpYZUF87VI0jCAxUIkYXe8Tcu9cv5ZgrZqB-AU')">
+<div class="absolute inset-0 hero-gradient"></div>
+</div>
+<div class="absolute bottom-6 left-5 right-5 flex items-end justify-between">
+<div>
+<span class="inline-flex items-center px-3 py-1 bg-neighborhood-green text-white rounded-full font-label-sm text-label-sm mb-2">
+                        OPEN UNTIL 8:00 PM
+                    </span>
+<h2 class="font-display-lg-mobile text-display-lg-mobile text-white font-extrabold">Mama's Kitchen</h2>
+<div class="flex items-center gap-2 mt-1">
+<div class="flex items-center text-primary-container">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-sm text-white ml-1">4.9 (120+ Reviews)</span>
+</div>
+<span class="text-white/60">•</span>
+<span class="font-label-sm text-white">0.8 miles away</span>
+</div>
+</div>
+<div class="w-20 h-20 rounded-2xl border-4 border-white overflow-hidden shadow-lg bg-white">
+<img class="w-full h-full object-cover" data-alt="A close-up portrait of a smiling, middle-aged neighborhood chef wearing a simple linen apron. The lighting is high-key and welcoming, emphasizing a friendly and trustworthy persona. The background is a soft-focus domestic kitchen, reinforcing the community-driven, local-pride brand identity with a high-end, tactile warmth." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBditp5pMPYiJAbrMRFgwjRtY126so1J29BErdxXAC3dyTAVa3y0vBFS3H9P4r7kujvzn2WVUPHpy6xhVt0d8q4BzUOifC971igBWjIoEzY5TOVmRtez9G9F0mqawKHED0_gDriz989EEz8mLtxhChF0jFcGRfLpIy6qL-jhfJfV1RMMq7i5eAYF-3KYnX0EWsF-0J17r_J9upbXwNI-ZgA2mPyAhG9hpwz3NN_GtFJRUhuUflHUUmuxYQD8lRuB-lvFE-nd5Qpuv63"/>
+</div>
+</div>
+</section>
+<!-- Kitchen Story -->
+<section class="px-5 pt-8">
+<h3 class="font-title-lg text-title-lg text-on-surface mb-3">The Kitchen Story</h3>
+<p class="text-on-surface-variant leading-relaxed">
+                "Hi, I'm Elena! I've been sharing my family's Mediterranean recipes with my neighbors for over 20 years. Every dish from my kitchen is made from scratch using seasonal ingredients from our local farmer's market. DoorNext lets me bring a piece of my home to yours."
+            </p>
+</section>
+<!-- Categories Scroller -->
+<nav class="mt-8 px-5 overflow-x-auto hide-scrollbar flex gap-3 sticky top-16 bg-surface-cream/95 py-4 z-40">
+<button class="active-category px-6 py-2 rounded-full font-label-sm whitespace-nowrap transition-all shadow-sm">All Items</button>
+<button class="bg-surface-container text-on-surface-variant px-6 py-2 rounded-full font-label-sm whitespace-nowrap hover:bg-surface-container-high transition-all">Main Dishes</button>
+<button class="bg-surface-container text-on-surface-variant px-6 py-2 rounded-full font-label-sm whitespace-nowrap hover:bg-surface-container-high transition-all">Sweets</button>
+<button class="bg-surface-container text-on-surface-variant px-6 py-2 rounded-full font-label-sm whitespace-nowrap hover:bg-surface-container-high transition-all">House Drinks</button>
+</nav>
+<!-- Menu Grid -->
+<section class="px-5 mt-4 grid gap-6">
+<!-- Category: Main -->
+<div>
+<h4 class="font-label-sm text-label-sm text-primary mb-4 tracking-widest uppercase">Main Dishes</h4>
+<div class="grid gap-4">
+<!-- Item 1 -->
+<div class="flex gap-4 p-4 bg-white rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow">
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<h5 class="font-title-lg text-title-lg text-on-surface">Grandma's Lasagna</h5>
+<span class="font-label-sm text-primary">$18.50</span>
+</div>
+<p class="text-on-surface-variant text-sm mt-1 line-clamp-2">Slow-cooked ragu, fresh pasta sheets, and a 4-cheese blend passed down for generations.</p>
+<div class="mt-4 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="inline-block px-2 py-0.5 bg-surface-container rounded text-[10px] font-label-sm uppercase">Bestseller</span>
+<span class="inline-block px-2 py-0.5 bg-surface-container rounded text-[10px] font-label-sm uppercase">45 mins</span>
+</div>
+<button class="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-white active:scale-90 transition-transform">
+<span class="material-symbols-outlined">add</span>
+</button>
+</div>
+</div>
+<div class="w-24 h-24 rounded-lg overflow-hidden shrink-0">
+<img class="w-full h-full object-cover" data-alt="A mouth-watering close-up of a portion of lasagna with visible layers of rich ragu, creamy white sauce, and melted golden cheese on top. Garnished with a fresh basil leaf, the dish is presented on a rustic ceramic plate. The lighting is warm and appetite-appealing, reflecting the neighborly, home-cooked energy of the brand." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAlfcH6TUl8UMQ315cmXJcXrTm3BD2Ec0aMntvxQqofJbLR2r8I_f7Gr5TyVz08nzDqgZhU8nqM0j4vm4EfY_nEigAn-bLvGg5KqeW3NmwsoplH-Z-bRTXLhUA7QCCrGZYPDFpd9x2KLUcY6CHxH9JLXcnz2JGnfWHcISYSXnCQLMQ29G5J9zq-Vwx-PVoKog-s6UBHlkpHppZwCbwet5bRinMlz_lFSl7d98pgibY_IKeybyXzswPyft7lrmBUYTX5so8ZR1US4S4E"/>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="flex gap-4 p-4 bg-white rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow">
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<h5 class="font-title-lg text-title-lg text-on-surface">Herb Roasted Chicken</h5>
+<span class="font-label-sm text-primary">$22.00</span>
+</div>
+<p class="text-on-surface-variant text-sm mt-1 line-clamp-2">Half a chicken marinated in lemon and rosemary, served with roasted root vegetables.</p>
+<div class="mt-4 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="inline-block px-2 py-0.5 bg-surface-container rounded text-[10px] font-label-sm uppercase">Farm Fresh</span>
+</div>
+<button class="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-white active:scale-90 transition-transform">
+<span class="material-symbols-outlined">add</span>
+</button>
+</div>
+</div>
+<div class="w-24 h-24 rounded-lg overflow-hidden shrink-0">
+<img class="w-full h-full object-cover" data-alt="Succulent roasted chicken with crispy golden-brown skin, seasoned with sprigs of rosemary and thyme. Beside the chicken are colorful roasted carrots and potatoes. The scene is lit with natural, soft window light, emphasizing the tactile quality and freshness of the meal, styled in a community-first, approachable way." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDjss21oS5UBsUIWXSlO7fQAB9Zw7zYzFFKm_XZLVVVv7sZ1VbPQzXEz-GJ0L_c6-qc_OaL6xbop0YT66BcTAr-gLAxNor_FbTEv_1FLvOL2Rh2lJCdhPMRxSufkKtHrnzlzK9FhiHRGlTAKHSMgX57WbrAWgGiXeRhUTg2cIZpLKcgETCycsd2iK_6zP3hpWrnRzUFjcVWJ4-A3g52DUkLV4EBty-_GteFlXXGayTmkUrCoDOvCwLsRUgZAzxJ0-m2j78sH4meGL6T"/>
+</div>
+</div>
+</div>
+</div>
+<!-- Category: Sweets -->
+<div class="mt-4">
+<h4 class="font-label-sm text-label-sm text-primary mb-4 tracking-widest uppercase">Sweets</h4>
+<div class="grid grid-cols-2 gap-4">
+<!-- Dessert 1 -->
+<div class="bg-white rounded-xl border border-outline-variant overflow-hidden flex flex-col">
+<div class="h-32 w-full">
+<img class="w-full h-full object-cover" data-alt="A delicate serving of Tiramisu in a glass dish, showing layers of espresso-soaked ladyfingers and creamy mascarpone. A dusting of dark cocoa powder covers the top. The lighting is warm and elegant, showcasing a premium but accessible dessert experience that feels like it was made in a neighbor's kitchen." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB5lwFmmxMxctPqt5LUIGxxGkSwDofkSpCQH34VtNEVbZvFKKyiWQ2Rk7f-gx6XPwGhCr58m4gAJK6NoIGv0FRmlmD25XtjJk0ZQtR_LIa7AzRE-Ua8P6NkXvgFEQItwqSCaQineSej85cGKBRPIRHILSasS1PVkzEWKLKcwwtTW1-hrvXhNvUealFdaY1UTYX2p18jZd7iiytQVDdQWjOUSXaYg4ijq7_h_REGu907PBgH4WWr14NsIxVAtYefypWk-HMFCIvBmJwQ"/>
+</div>
+<div class="p-3 flex-1 flex flex-col">
+<h5 class="font-title-lg text-sm text-on-surface">Tiramisu Cup</h5>
+<span class="font-label-sm text-primary text-xs mt-1">$7.50</span>
+<button class="mt-3 w-full py-2 bg-secondary text-white rounded-full font-label-sm text-[10px] flex items-center justify-center gap-1 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-xs">add_shopping_cart</span> ADD TO CART
+                            </button>
+</div>
+</div>
+<!-- Dessert 2 -->
+<div class="bg-white rounded-xl border border-outline-variant overflow-hidden flex flex-col">
+<div class="h-32 w-full">
+<img class="w-full h-full object-cover" data-alt="Three large, soft-baked chocolate chip cookies stacked on a linen napkin. The cookies are slightly warm with melting chocolate puddles and a light sprinkle of sea salt. The background is a bright, minimalist kitchen counter, reinforcing the 'home-cooked' brand energy with vibrant and high-end photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBEqsZMbhq7CGiNQH0lWRouF7Oy4LUypP-L6HaMN_f5xVeJmROsBvwsLnTukn0dowXZcDkbfIzJ3CIKMoPWmWk1TgC1wxGKsvFZWrYY4O_9LHixZ5VdQmpxw-2ZZFAxhm0UDZzD-EDKhKFKOCumZ2A89uEwtjrjzOT0un5lj8psaoEfd9d1HQuYMeu2KeZywxDV02ELI370L1k8fPu02jjotxYS9cQki-yfrDu8kI7Qz8jDnhAyG_D8HQDCTeqe8o0jWTVHw6SBmr5d"/>
+</div>
+<div class="p-3 flex-1 flex flex-col">
+<h5 class="font-title-lg text-sm text-on-surface">Warm Cookies (3)</h5>
+<span class="font-label-sm text-primary text-xs mt-1">$6.00</span>
+<button class="mt-3 w-full py-2 bg-secondary text-white rounded-full font-label-sm text-[10px] flex items-center justify-center gap-1 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-xs">add_shopping_cart</span> ADD TO CART
+                            </button>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar (Context: Top-level Storefront) -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-4 pb-4 pt-2 bg-surface shadow-[0_-4px_20px_0_rgba(166,59,0,0.08)]">
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-95 duration-200">
+<span class="material-symbols-outlined" data-icon="explore">explore</span>
+<span class="font-label-sm text-label-sm mt-1">Explore</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-95 duration-200">
+<span class="material-symbols-outlined" data-icon="shopping_bag">shopping_bag</span>
+<span class="font-label-sm text-label-sm mt-1">Orders</span>
+</button>
+<!-- Floating FAB like button integrated in Nav -->
+<button class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full w-14 h-14 -translate-y-4 shadow-lg active:scale-95 transition-transform duration-200">
+<span class="material-symbols-outlined" data-icon="shopping_cart" style="font-variation-settings: 'FILL' 1;">shopping_cart</span>
+<div class="absolute -top-1 -right-1 bg-primary text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center border-2 border-white">2</div>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-95 duration-200">
+<span class="material-symbols-outlined" data-icon="account_balance_wallet">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm mt-1">Wallet</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-95 duration-200">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-sm text-label-sm mt-1">Profile</span>
+</button>
+</nav>
+<script>
+        // Simple micro-interaction for category switching
+        const categoryButtons = document.querySelectorAll('nav button');
+        categoryButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                categoryButtons.forEach(b => b.classList.remove('active-category', 'bg-primary', 'text-white'));
+                categoryButtons.forEach(b => b.classList.add('bg-surface-container', 'text-on-surface-variant'));
+                btn.classList.add('active-category');
+                btn.classList.remove('bg-surface-container', 'text-on-surface-variant');
+            });
+        });
+
+        // Add to cart animation
+        const addButtons = document.querySelectorAll('button');
+        addButtons.forEach(btn => {
+            if(btn.innerHTML.includes('add')) {
+                btn.addEventListener('click', function() {
+                    this.innerHTML = '<span class="material-symbols-outlined">check</span>';
+                    this.classList.remove('bg-primary');
+                    this.classList.add('bg-neighborhood-green');
+                    setTimeout(() => {
+                        this.innerHTML = '<span class="material-symbols-outlined">add</span>';
+                        this.classList.add('bg-primary');
+                        this.classList.remove('bg-neighborhood-green');
+                    }, 1500);
+                });
+            }
+        });
+    </script>
+</body></html>

@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=Anybody:wght@700;800&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-variant": "#f7ddd4",
+                        "surface-tint": "#a63b00",
+                        "tertiary": "#006492",
+                        "on-primary-container": "#4f1800",
+                        "primary-fixed-dim": "#ffb599",
+                        "on-tertiary-container": "#002d45",
+                        "surface-container": "#ffe9e2",
+                        "error": "#ba1a1a",
+                        "background": "#fff8f6",
+                        "secondary": "#5f5e5e",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-on-surface": "#ffede7",
+                        "on-tertiary": "#ffffff",
+                        "outline": "#8d7166",
+                        "surface-bright": "#fff8f6",
+                        "on-secondary-container": "#656464",
+                        "surface-container-low": "#fff1ec",
+                        "surface": "#fff8f6",
+                        "tertiary-container": "#009ade",
+                        "on-tertiary-fixed-variant": "#004b6f",
+                        "warm-gray": "#736F6E",
+                        "secondary-fixed": "#e5e2e1",
+                        "on-secondary-fixed": "#1c1b1b",
+                        "on-surface": "#261813",
+                        "primary": "#a63b00",
+                        "on-surface-variant": "#594138",
+                        "error-container": "#ffdad6",
+                        "secondary-container": "#e5e2e1",
+                        "on-primary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "on-primary-fixed-variant": "#7f2b00",
+                        "on-secondary-fixed-variant": "#474646",
+                        "on-error-container": "#93000a",
+                        "primary-fixed": "#ffdbce",
+                        "outline-variant": "#e1bfb3",
+                        "on-secondary": "#ffffff",
+                        "on-background": "#261813",
+                        "surface-container-high": "#fde3da",
+                        "inverse-surface": "#3c2d27",
+                        "tertiary-fixed-dim": "#8cceff",
+                        "surface-container-highest": "#f7ddd4",
+                        "neighborhood-green": "#2D6A4F",
+                        "tertiary-fixed": "#cae6ff",
+                        "surface-dim": "#eed5cc",
+                        "secondary-fixed-dim": "#c9c6c5",
+                        "on-tertiary-fixed": "#001e2f",
+                        "on-primary-fixed": "#370e00",
+                        "surface-cream": "#FDFCFB",
+                        "primary-container": "#f26522",
+                        "inverse-primary": "#ffb599"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "1.5rem",
+                        "section-gap": "4rem",
+                        "container-padding-mobile": "1.25rem",
+                        "container-padding-desktop": "2.5rem",
+                        "base": "8px"
+                    },
+                    "fontFamily": {
+                        "title-lg": ["Plus Jakarta Sans"],
+                        "body-lg": ["Plus Jakarta Sans"],
+                        "headline-md-mobile": ["Anybody"],
+                        "label-sm": ["JetBrains Mono"],
+                        "headline-md": ["Anybody"],
+                        "body-md": ["Plus Jakarta Sans"],
+                        "display-lg-mobile": ["Anybody"],
+                        "display-lg": ["Anybody"]
+                    },
+                    "fontSize": {
+                        "title-lg": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "headline-md-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                        "label-sm": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "headline-md": ["32px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                        "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "display-lg-mobile": ["36px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                        "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-cream text-on-surface selection:bg-primary-fixed selection:text-on-primary-fixed min-h-screen pb-24">
+<!-- Top App Bar (Shared Component) -->
+<header class="w-full sticky top-0 z-40 bg-surface shadow-sm h-16 flex justify-between items-center px-container-padding-mobile md:px-container-padding-desktop">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center overflow-hidden border-2 border-primary-container">
+<img class="w-full h-full object-cover" data-alt="A warm and friendly close-up portrait of a local chef named Alex, smiling warmly. The lighting is soft and natural, emphasizing a community-focused, trustworthy vibe. The background is a slightly blurred, bright, modern home kitchen with warm wood accents and copper cookware, following the neighborly brand aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC5wnivQEv87-XaTSn0vKIwYoHSvv7xERwbWVa4Ao9DSPLP9kw9GiibMcguS2GMFDVVUT0nLQv0_Azb9rZ6Zg3uyTl-MD9PZ0Oi-pB9m7GUWwyHGKbDrH1AXiATcOsN-faja9TBr44gneMRoAMgAiyWpzcHnAMS8HkZtehlax1kMaF6XiukrdOzs9sjeETM3ecZogZ5poSqthFymND9Q5PgqWtfHsIboZKXxmHCRNmrmhbwxoxnVjuDlwZ5UrKe25xnm4HsKhCswxSs"/>
+</div>
+<h1 class="font-display-lg-mobile text-display-lg-mobile md:font-headline-md md:text-headline-md text-primary">Neighborly</h1>
+</div>
+<button class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-surface-variant/20 transition-colors active:scale-95 duration-200">
+<span class="material-symbols-outlined text-primary">notifications</span>
+</button>
+</header>
+<main class="max-w-screen-xl mx-auto px-container-padding-mobile md:px-container-padding-desktop mt-4">
+<!-- DoorMaker Shop Profile Section -->
+<section class="relative mb-gutter">
+<!-- Cover Photo -->
+<div class="h-48 md:h-64 w-full rounded-2xl overflow-hidden shadow-sm relative group">
+<div class="w-full h-full bg-cover bg-center" data-alt="A vibrant, high-quality photograph of a bustling home kitchen filled with freshly baked artisanal sourdough bread and colorful Mediterranean spreads. The lighting is warm and golden, evoking a cozy, 'home-cooked' atmosphere. The aesthetic is tactile and premium, with natural textures and a rich palette of terracotta and deep blacks." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCTUPX82pc1V77B6NSaaRiBreWezZSgO_bP2BQ_m86hlrTNR6RmMzL6ttI6BHCTf_HZ6PhcYazIie19xp7MNFbCov2DhRfRaJlgOe1hyA8nI2lbxFvfLhvBV0GRfbsV7BuovqIF9_r3fjQR89sBUUQulMljL2YUTOcrc4zq9uVg52s_9I_xTmpx-jYztaJiG4XNOVq9XEi0-Tjz5GMFtqKbiXu2QBdQJMpKpaOADWVc8kdTBBetGvtSWS0J06AWJO1bdTz6wzDU96jt')"></div>
+<div class="absolute inset-0 bg-black/10 transition-opacity group-hover:bg-black/20"></div>
+<button class="absolute bottom-4 right-4 bg-white/90 backdrop-blur-md px-4 py-2 rounded-full flex items-center gap-2 shadow-lg hover:bg-white transition-all active:scale-95">
+<span class="material-symbols-outlined text-sm">photo_camera</span>
+<span class="font-label-sm text-label-sm uppercase">Edit Cover</span>
+</button>
+</div>
+<!-- Profile Info Overlay -->
+<div class="px-4 -mt-12 relative z-10 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+<div class="flex items-end gap-4">
+<div class="w-24 h-24 md:w-32 md:h-32 rounded-2xl bg-white p-1 shadow-xl">
+<div class="w-full h-full rounded-xl overflow-hidden bg-surface-container border-2 border-primary-container/20">
+<img class="w-full h-full object-cover" data-alt="A friendly and professional headshot of a local vendor, a woman in her 40s with a welcoming smile. She wears a simple linen apron over a casual shirt. The photography is clean, bright, and authentic, set against a minimalist white studio background with soft ambient shadows to match the high-end accessible brand style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB9L80lr81mEDFHO4fLAX0eS1fRRQAnCeK_PTcSryEqIsmVXvISQHfR1qR2aMWluuaoJ8524IIJ9BlJOpD7QWXXv73w8LMCteFrr1eNbJGTWd7IhJN6KmaA2flvEBrcqZQb3wkzPoeFHE_9KJTM6JSop45EpPNVefl7mQcuDyw9ULIDo4MslqQW7X3qDQUpqn0-NZoCel88W5lAU84DdNZwhFfDgStxAlSUZON1_fvrioKBYMTyHWnk5Uzzp8ZXq5FJHVnOIpCvu4jA"/>
+</div>
+</div>
+<div class="pb-2">
+<h2 class="font-title-lg text-title-lg text-on-surface">Alex's Artisan Table</h2>
+<div class="flex items-center gap-2 mt-1">
+<span class="flex items-center gap-0.5 text-primary">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-sm text-label-sm">4.9</span>
+</span>
+<span class="text-on-surface-variant text-sm">•</span>
+<span class="text-on-surface-variant text-sm font-medium">124 Reviews</span>
+<span class="ml-2 px-2 py-0.5 bg-neighborhood-green/10 text-neighborhood-green rounded-full text-[10px] font-bold uppercase tracking-wider">Top Rated</span>
+</div>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="flex-1 md:flex-none bg-primary text-white font-body-md px-8 py-2.5 rounded-full shadow-lg hover:translate-y-[-2px] transition-all active:scale-95">
+                        Share Shop
+                    </button>
+</div>
+</div>
+</section>
+<section class="grid grid-cols-1 md:grid-cols-12 gap-gutter items-start">
+<!-- Left Column: Bio & Settings -->
+<div class="md:col-span-8 flex flex-col gap-gutter">
+<!-- Shop Bio -->
+<div class="bg-white p-6 rounded-2xl border border-outline-variant/30 shadow-sm">
+<div class="flex justify-between items-center mb-4">
+<h3 class="font-title-lg text-title-lg flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">storefront</span>
+                            Shop Bio
+                        </h3>
+<button class="text-primary hover:bg-primary-fixed/30 p-2 rounded-full transition-colors">
+<span class="material-symbols-outlined">edit</span>
+</button>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+                        Hand-crafted Mediterranean delights made with organic ingredients sourced from local farms. Specializing in long-fermentation sourdough and small-batch dips that bring the flavor of our neighborhood to your table. Every order is prepared with love and a pinch of local pride.
+                    </p>
+</div>
+<!-- Shop Settings Bento -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<!-- Operating Hours -->
+<div class="bg-white p-6 rounded-2xl border border-outline-variant/30 shadow-sm hover:border-primary-container transition-colors cursor-pointer group">
+<div class="flex items-center justify-between mb-6">
+<div class="w-10 h-10 rounded-xl bg-primary-fixed/40 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">schedule</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:translate-x-1 transition-transform">chevron_right</span>
+</div>
+<h4 class="font-title-lg text-title-lg mb-1">Operating Hours</h4>
+<p class="text-on-surface-variant text-sm font-medium">Tue - Sat, 08:00 AM - 04:00 PM</p>
+<div class="mt-4 flex gap-1">
+<span class="w-2 h-2 rounded-full bg-neighborhood-green animate-pulse"></span>
+<span class="text-[10px] uppercase font-bold text-neighborhood-green tracking-widest">Currently Open</span>
+</div>
+</div>
+<!-- Pickup Instructions -->
+<div class="bg-white p-6 rounded-2xl border border-outline-variant/30 shadow-sm hover:border-primary-container transition-colors cursor-pointer group">
+<div class="flex items-center justify-between mb-6">
+<div class="w-10 h-10 rounded-xl bg-tertiary-fixed/40 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined">directions_walk</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:translate-x-1 transition-transform">chevron_right</span>
+</div>
+<h4 class="font-title-lg text-title-lg mb-1">Pickup Logic</h4>
+<p class="text-on-surface-variant text-sm font-medium">Front Porch, Smart Lock Box</p>
+<div class="mt-4 flex gap-1">
+<span class="text-[10px] uppercase font-bold text-tertiary tracking-widest">Contactless Enabled</span>
+</div>
+</div>
+</div>
+<!-- Legal & Payouts Section -->
+<div class="bg-inverse-surface text-on-primary-fixed p-8 rounded-2xl shadow-xl relative overflow-hidden">
+<div class="absolute -right-20 -top-20 w-64 h-64 bg-primary-container/20 rounded-full blur-3xl"></div>
+<div class="relative z-10">
+<h3 class="font-headline-md text-headline-md text-white mb-6">Legal &amp; Financials</h3>
+<div class="space-y-4">
+<!-- Stripe Link -->
+<div class="flex items-center justify-between p-4 bg-white/10 rounded-xl hover:bg-white/15 transition-all cursor-pointer group">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-[#635BFF] flex items-center justify-center">
+<span class="material-symbols-outlined text-white">payments</span>
+</div>
+<div>
+<p class="text-white font-bold font-body-lg">Payout Account</p>
+<p class="text-primary-fixed-dim text-sm font-label-sm">Connected via Stripe • Active</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-white/50 group-hover:translate-x-1 transition-transform">open_in_new</span>
+</div>
+<!-- License Status -->
+<div class="flex items-center justify-between p-4 bg-white/10 rounded-xl hover:bg-white/15 transition-all cursor-pointer group">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-neighborhood-green flex items-center justify-center">
+<span class="material-symbols-outlined text-white">verified_user</span>
+</div>
+<div>
+<p class="text-white font-bold font-body-lg">Health Permit &amp; License</p>
+<p class="text-primary-fixed-dim text-sm font-label-sm">Verified • Expires Dec 2025</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-white/50 group-hover:translate-x-1 transition-transform">visibility</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Wallet & Support -->
+<div class="md:col-span-4 flex flex-col gap-gutter">
+<!-- Wallet Earnings Mini Card -->
+<div class="bg-black text-white p-6 rounded-2xl shadow-2xl relative overflow-hidden">
+<div class="flex items-center justify-between mb-8">
+<span class="font-label-sm text-label-sm text-neighborhood-green uppercase tracking-tighter">Current Balance</span>
+<span class="material-symbols-outlined text-primary-container">account_balance_wallet</span>
+</div>
+<div class="flex items-baseline gap-1 mb-8">
+<span class="font-label-sm text-2xl text-primary-container">$</span>
+<h3 class="font-label-sm text-5xl font-bold text-neighborhood-green leading-none">2,840.45</h3>
+</div>
+<button class="w-full bg-white text-black font-body-md font-bold py-3 rounded-full hover:bg-primary-container transition-colors active:scale-95">
+                        Withdraw Funds
+                    </button>
+<!-- Background Pattern -->
+<div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(#2D6A4F 1px, transparent 1px); background-size: 10px 10px;"></div>
+</div>
+<!-- Support Section -->
+<div class="bg-surface-container-high p-6 rounded-2xl border border-outline-variant/30">
+<h3 class="font-title-lg text-title-lg mb-4 text-on-surface">Community Support</h3>
+<div class="space-y-2">
+<a class="flex items-center justify-between p-3 rounded-xl hover:bg-white/50 transition-all text-on-surface-variant" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-sm">help_center</span>
+<span class="font-body-md">Knowledge Base</span>
+</div>
+<span class="material-symbols-outlined text-sm">arrow_forward_ios</span>
+</a>
+<a class="flex items-center justify-between p-3 rounded-xl hover:bg-white/50 transition-all text-on-surface-variant" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-sm">chat_bubble</span>
+<span class="font-body-md">Chat with a Neighbor</span>
+</div>
+<span class="material-symbols-outlined text-sm">arrow_forward_ios</span>
+</a>
+<a class="flex items-center justify-between p-3 rounded-xl hover:bg-white/50 transition-all text-on-surface-variant" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-sm">gavel</span>
+<span class="font-body-md">Terms of Service</span>
+</div>
+<span class="material-symbols-outlined text-sm">arrow_forward_ios</span>
+</a>
+</div>
+</div>
+<!-- Sign Out -->
+<button class="w-full flex items-center justify-center gap-2 p-4 text-error font-bold font-body-md border-2 border-error/10 rounded-2xl hover:bg-error/5 transition-all">
+<span class="material-symbols-outlined">logout</span>
+                    Sign Out
+                </button>
+</div>
+</section>
+</main>
+<!-- Bottom Nav Bar (Shared Component) -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center py-3 pb-safe px-4 bg-surface-container-lowest shadow-[0_-4px_20px_-2px_rgba(166,59,0,0.08)] rounded-t-xl z-50">
+<button class="flex flex-col items-center justify-center text-on-secondary-fixed-variant px-4 py-1 hover:text-primary transition-all active:scale-90 duration-150">
+<span class="material-symbols-outlined">home_app_logo</span>
+<span class="font-label-sm text-label-sm">Explore</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-secondary-fixed-variant px-4 py-1 hover:text-primary transition-all active:scale-90 duration-150">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="font-label-sm text-label-sm">Orders</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-secondary-fixed-variant px-4 py-1 hover:text-primary transition-all active:scale-90 duration-150">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm">Wallet</span>
+</button>
+<!-- Active Tab: Profile -->
+<button class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 active:scale-90 duration-150">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="font-label-sm text-label-sm">Profile</span>
+</button>
+</nav>
+<script>
+        // Simple micro-interaction for scroll effects on the top bar
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('header');
+            if (window.scrollY > 20) {
+                header.classList.add('shadow-md');
+                header.classList.remove('shadow-sm');
+            } else {
+                header.classList.add('shadow-sm');
+                header.classList.remove('shadow-md');
+            }
+        });
+
+        // Toggle hover states for buttons and cards
+        const interactiveElements = document.querySelectorAll('.active\\:scale-95');
+        interactiveElements.forEach(el => {
+            el.addEventListener('mousedown', () => el.classList.add('scale-95'));
+            el.addEventListener('mouseup', () => el.classList.remove('scale-95'));
+            el.addEventListener('mouseleave', () => el.classList.remove('scale-95'));
+        });
+    </script>
+</body></html>

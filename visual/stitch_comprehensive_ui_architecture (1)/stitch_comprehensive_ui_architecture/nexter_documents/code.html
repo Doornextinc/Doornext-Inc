@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Neighborly | Nexter Document Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=Anybody:wght@700;800&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-variant": "#f7ddd4",
+                    "surface-tint": "#a63b00",
+                    "tertiary": "#006492",
+                    "on-primary-container": "#4f1800",
+                    "primary-fixed-dim": "#ffb599",
+                    "on-tertiary-container": "#002d45",
+                    "surface-container": "#ffe9e2",
+                    "error": "#ba1a1a",
+                    "background": "#fff8f6",
+                    "secondary": "#5f5e5e",
+                    "surface-container-lowest": "#ffffff",
+                    "inverse-on-surface": "#ffede7",
+                    "on-tertiary": "#ffffff",
+                    "outline": "#8d7166",
+                    "surface-bright": "#fff8f6",
+                    "on-secondary-container": "#656464",
+                    "surface-container-low": "#fff1ec",
+                    "surface": "#fff8f6",
+                    "tertiary-container": "#009ade",
+                    "on-tertiary-fixed-variant": "#004b6f",
+                    "warm-gray": "#736F6E",
+                    "secondary-fixed": "#e5e2e1",
+                    "on-secondary-fixed": "#1c1b1b",
+                    "on-surface": "#261813",
+                    "primary": "#a63b00",
+                    "on-surface-variant": "#594138",
+                    "error-container": "#ffdad6",
+                    "secondary-container": "#e5e2e1",
+                    "on-primary": "#ffffff",
+                    "on-error": "#ffffff",
+                    "on-primary-fixed-variant": "#7f2b00",
+                    "on-secondary-fixed-variant": "#474646",
+                    "on-error-container": "#93000a",
+                    "primary-fixed": "#ffdbce",
+                    "outline-variant": "#e1bfb3",
+                    "on-secondary": "#ffffff",
+                    "on-background": "#261813",
+                    "surface-container-high": "#fde3da",
+                    "inverse-surface": "#3c2d27",
+                    "tertiary-fixed-dim": "#8cceff",
+                    "surface-container-highest": "#f7ddd4",
+                    "neighborhood-green": "#2D6A4F",
+                    "tertiary-fixed": "#cae6ff",
+                    "surface-dim": "#eed5cc",
+                    "secondary-fixed-dim": "#c9c6c5",
+                    "on-tertiary-fixed": "#001e2f",
+                    "on-primary-fixed": "#370e00",
+                    "surface-cream": "#FDFCFB",
+                    "primary-container": "#f26522",
+                    "inverse-primary": "#ffb599"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "1.5rem",
+                    "section-gap": "4rem",
+                    "container-padding-mobile": "1.25rem",
+                    "container-padding-desktop": "2.5rem",
+                    "base": "8px"
+            },
+            "fontFamily": {
+                    "title-lg": ["Plus Jakarta Sans"],
+                    "body-lg": ["Plus Jakarta Sans"],
+                    "headline-md-mobile": ["Anybody"],
+                    "label-sm": ["JetBrains Mono"],
+                    "headline-md": ["Anybody"],
+                    "body-md": ["Plus Jakarta Sans"],
+                    "display-lg-mobile": ["Anybody"],
+                    "display-lg": ["Anybody"]
+            },
+            "fontSize": {
+                    "title-lg": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "headline-md-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "label-sm": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "headline-md": ["32px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "display-lg-mobile": ["36px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #FDFCFB;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .filled-icon {
+            font-variation-settings: 'FILL' 1;
+        }
+        .card-shadow {
+            box-shadow: 0 4px 20px -2px rgba(166, 59, 0, 0.08);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-on-surface">
+<!-- TopAppBar -->
+<header class="w-full sticky top-0 z-40 bg-surface dark:bg-background shadow-sm flex justify-between items-center px-container-padding-mobile md:px-container-padding-desktop h-16 w-full">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden bg-primary-fixed flex items-center justify-center">
+<img class="w-full h-full object-cover" data-alt="A warm, professional portrait of a friendly Hispanic man in his late 20s, wearing a casual orange polo shirt. He is outdoors in a bright, sunny suburban neighborhood with soft-focus greenery in the background. The lighting is natural and golden, emphasizing a trustworthy and local neighborhood hero aesthetic. High-quality photography with a shallow depth of field." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC0W79utW9MW4y6GfW327J6kWFxISTVdrqJCIat81VpgAgSR0VNW9XPFSuvh_WVdA1xY_HVt37aoMNWEdf-VhbedIq9QvZDQKCYdvklJVBCEVRCzDDXgw6i6Ow18Y6DljOxIjjd3Edp25CebAKETiFUNYVkWfXcCgJdBK6yRA4xA6nd90Zg873la7Z87APp2YwaPrJl77ZB_0nlzv7_8oGoHLHYfE1Ny58cAZ8_LWaMlhmgNp_IsU9AkOKL3PIxDROAO8S4DH8FZzIh"/>
+</div>
+<span class="font-display-lg-mobile text-display-lg-mobile text-primary dark:text-primary-fixed-dim">Neighborly</span>
+</div>
+<button class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-surface-variant/20 transition-colors active:scale-95 duration-200">
+<span class="material-symbols-outlined text-primary">notifications</span>
+</button>
+</header>
+<main class="max-w-4xl mx-auto px-container-padding-mobile md:px-container-padding-desktop py-8 pb-32">
+<!-- Header Section -->
+<section class="mb-10">
+<h1 class="font-headline-md text-headline-md text-on-surface mb-2">Driver Documents</h1>
+<p class="text-on-surface-variant font-body-lg text-body-lg">Keep your credentials up to date to ensure uninterrupted access to the Nexter platform.</p>
+</section>
+<!-- Status Overview Bento -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-gutter">
+<!-- Overall Status Card -->
+<div class="md:col-span-2 bg-white rounded-xl p-6 border border-outline-variant/30 card-shadow flex flex-col justify-between">
+<div>
+<span class="font-label-sm text-label-sm text-neighborhood-green bg-neighborhood-green/10 px-3 py-1 rounded-full uppercase">Active Status</span>
+<h2 class="font-title-lg text-title-lg mt-4 mb-2">Verification Profile</h2>
+<p class="text-on-surface-variant">Your documents are currently valid, but one item requires attention soon to avoid dispatch suspension.</p>
+</div>
+<div class="mt-6 flex items-center gap-2 text-primary font-bold">
+<span class="material-symbols-outlined filled-icon" style="font-variation-settings: 'FILL' 1;">stars</span>
+<span>Gold Level Nexter Benefits Active</span>
+</div>
+</div>
+<!-- Quick Action Card -->
+<div class="bg-primary text-white rounded-xl p-6 card-shadow flex flex-col items-center justify-center text-center cursor-pointer active:scale-95 transition-transform">
+<div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mb-4">
+<span class="material-symbols-outlined text-4xl">add_a_photo</span>
+</div>
+<h3 class="font-title-lg text-title-lg">Upload New</h3>
+<p class="text-white/80 text-sm mt-1">Scan physical docs</p>
+</div>
+</div>
+<!-- Document List -->
+<div class="space-y-4">
+<!-- Driver's License -->
+<div class="bg-white rounded-xl p-5 border border-outline-variant/30 flex items-center justify-between group hover:border-primary/30 transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-surface-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-3xl">badge</span>
+</div>
+<div>
+<h4 class="font-title-lg text-title-lg text-on-surface">Driver's License</h4>
+<div class="flex items-center gap-2 mt-1">
+<span class="font-label-sm text-label-sm text-neighborhood-green flex items-center gap-1">
+<span class="material-symbols-outlined text-sm filled-icon" style="font-variation-settings: 'FILL' 1;">verified</span> Verified
+                            </span>
+<span class="text-outline text-xs">•</span>
+<span class="font-label-sm text-label-sm text-outline">Expires Oct 2026</span>
+</div>
+</div>
+</div>
+<button class="p-2 rounded-full hover:bg-surface-variant/30 transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant">visibility</span>
+</button>
+</div>
+<!-- Vehicle Insurance -->
+<div class="bg-white rounded-xl p-5 border border-error/20 flex items-center justify-between group bg-gradient-to-r from-transparent to-error/5">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-error-container flex items-center justify-center text-error">
+<span class="material-symbols-outlined text-3xl">directions_car</span>
+</div>
+<div>
+<h4 class="font-title-lg text-title-lg text-on-surface">Vehicle Insurance</h4>
+<div class="flex items-center gap-2 mt-1">
+<span class="font-label-sm text-label-sm text-error flex items-center gap-1">
+<span class="material-symbols-outlined text-sm filled-icon" style="font-variation-settings: 'FILL' 1;">warning</span> Action Required
+                            </span>
+<span class="text-outline text-xs">•</span>
+<span class="font-label-sm text-label-sm text-error font-bold">Expires in 3 days</span>
+</div>
+</div>
+</div>
+<button class="bg-primary text-white font-bold py-2 px-6 rounded-full active:scale-95 transition-transform flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">camera_alt</span>
+                    Update
+                </button>
+</div>
+<!-- Background Check -->
+<div class="bg-white rounded-xl p-5 border border-outline-variant/30 flex items-center justify-between group">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-surface-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-3xl">gavel</span>
+</div>
+<div>
+<h4 class="font-title-lg text-title-lg text-on-surface">Background Check</h4>
+<div class="flex items-center gap-2 mt-1">
+<span class="font-label-sm text-label-sm text-neighborhood-green flex items-center gap-1">
+<span class="material-symbols-outlined text-sm filled-icon" style="font-variation-settings: 'FILL' 1;">verified</span> Verified
+                            </span>
+<span class="text-outline text-xs">•</span>
+<span class="font-label-sm text-label-sm text-outline">Last check: Jan 2024</span>
+</div>
+</div>
+</div>
+<button class="p-2 rounded-full hover:bg-surface-variant/30 transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant">info</span>
+</button>
+</div>
+</div>
+<!-- Help Section -->
+<section class="mt-section-gap p-6 bg-surface-container-low rounded-3xl border border-outline-variant/20">
+<div class="flex flex-col md:flex-row gap-6 items-center">
+<div class="flex-1">
+<h3 class="font-headline-md-mobile text-headline-md-mobile text-on-surface mb-3">Having trouble scanning?</h3>
+<p class="text-on-surface-variant mb-4">Make sure you are in a well-lit area and all four corners of the document are visible in the frame.</p>
+<button class="text-primary font-bold flex items-center gap-2 hover:underline">
+                        Contact Nexter Support <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+<div class="w-full md:w-48 h-32 rounded-2xl overflow-hidden shadow-lg">
+<img class="w-full h-full object-cover" data-alt="A high-quality close-up shot of a person's hands holding a smartphone over a professional document on a wooden table. The phone screen shows a document scanning app interface with bright blue alignment corners. The scene is bright and airy with warm daylight, evoking a sense of easy and modern technology use for a community-driven app." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDVpUXFx5_SRmQEBTeIrJNwV8XgvHc-n7FL_8z-80U8ZP9Ge-a_k3ORXc3M8otZOASE3dv8gK6m1JZA1rVUAJ6qnLDeZ3hOXN7mYAZt0NWdPHQDfTpmaSkBfrGRIcink1MSjfz7XzsGPkrJIMjm1XwyHrv0AOWD5ZOYJxLf58FD4LtbXVapd6Ucny_tAiy0Hp7RB_4CpDa1rv7_Gr7AkAv7bw0bz_3y4eSFFNw4JD_y2Z_FEXsObYdHKHoh4euKVYoyntNNXtpNorD9"/>
+</div>
+</div>
+</section>
+</main>
+<!-- Navigation Drawer (Hidden by default, for desktop/tablet context) -->
+<aside class="hidden md:flex flex-col gap-2 p-4 h-full w-80 fixed left-0 top-0 z-[60] bg-surface-bright dark:bg-surface-dim shadow-xl translate-x-[-100%] transition-transform duration-300" id="navDrawer">
+<div class="flex flex-col mb-8 px-2">
+<div class="w-16 h-16 rounded-full overflow-hidden mb-4 border-2 border-primary">
+<img class="w-full h-full object-cover" data-alt="Close up of a friendly male delivery driver smiling warmly at the camera. He has a kind expression and is wearing a clean, modern uniform. The background is a soft-focus residential street with leafy trees and cozy homes under a clear blue sky. Professional high-end photography, vibrant colors, warm light." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDDJCVLzWdDEVv2aB_zr1ur5rmEZgeI2YUCmyCCydr1uwYCeDfrorgbKfypoIJyjVVSAQGEuHBU7RIK2K3RP_CuCPjJpkDjD5csqhSnPG4xmGqbqwbY8or2JN7O9DTDsvmlDd3dB7cHY-8irNFwF3j57NO4NURfwG2xHxy7qU--zUaVAgcIR6McZbNgZgwjSYHxT3IlTyAvKz3IKQD9U7dFNp-qokp0MvDqv-EvLIZp6ukPCXq1VHQID-XYW9B47f77nIGrxs2OMytJ"/>
+</div>
+<h3 class="font-headline-md text-primary">Neighbor Alex</h3>
+<p class="text-on-surface-variant font-label-sm">Nexter Gold Level</p>
+<p class="text-outline text-xs mt-1">San Salvador, SV</p>
+</div>
+<nav class="flex flex-col gap-2">
+<a class="flex items-center gap-4 py-3 px-4 text-on-surface-variant hover:bg-surface-variant/30 rounded-full mx-2 transition-transform hover:translate-x-1" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-body-lg">My Profile</span>
+</a>
+<a class="flex items-center gap-4 py-3 px-4 bg-primary-fixed text-on-primary-fixed rounded-full mx-2 font-bold" href="#">
+<span class="material-symbols-outlined filled-icon">description</span>
+<span class="font-body-lg">Documents</span>
+</a>
+<a class="flex items-center gap-4 py-3 px-4 text-on-surface-variant hover:bg-surface-variant/30 rounded-full mx-2 transition-transform hover:translate-x-1" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="font-body-lg">Help Center</span>
+</a>
+<a class="flex items-center gap-4 py-3 px-4 text-on-surface-variant hover:bg-surface-variant/30 rounded-full mx-2 transition-transform hover:translate-x-1" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-body-lg">Logout</span>
+</a>
+</nav>
+</aside>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full flex justify-around items-center py-3 pb-safe px-4 bg-surface-container-lowest dark:bg-inverse-surface border-t border-outline-variant/30 shadow-[0_-4px_20px_-2px_rgba(166,59,0,0.08)] z-50">
+<a class="flex flex-col items-center justify-center text-on-secondary-fixed-variant dark:text-secondary-fixed-dim px-4 py-1 active:scale-90 duration-150 transition-all hover:text-primary" href="#">
+<span class="material-symbols-outlined">local_shipping</span>
+<span class="font-label-sm text-label-sm">Dispatch</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-secondary-fixed-variant dark:text-secondary-fixed-dim px-4 py-1 active:scale-90 duration-150 transition-all hover:text-primary" href="#">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm">Wallet</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-secondary-fixed-variant dark:text-secondary-fixed-dim px-4 py-1 active:scale-90 duration-150 transition-all hover:text-primary" href="#">
+<span class="material-symbols-outlined">history</span>
+<span class="font-label-sm text-label-sm">History</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container dark:bg-primary text-on-primary-container dark:text-on-primary rounded-full px-4 py-1 active:scale-90 duration-150 transition-all" href="#">
+<span class="material-symbols-outlined filled-icon" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="font-label-sm text-label-sm">Account</span>
+</a>
+</nav>
+<!-- Fab for quick upload (only on documents/home context) -->
+<button class="fixed bottom-24 right-6 w-14 h-14 bg-primary text-white rounded-2xl shadow-xl flex items-center justify-center active:scale-90 transition-transform md:bottom-12 md:right-12 z-40">
+<span class="material-symbols-outlined text-3xl">camera_alt</span>
+</button>
+<script>
+        // Simple micro-interaction for the upload cards
+        document.querySelectorAll('.cursor-pointer').forEach(el => {
+            el.addEventListener('click', () => {
+                const originalColor = el.style.backgroundColor;
+                el.style.backgroundColor = 'rgba(166, 59, 0, 0.9)';
+                setTimeout(() => {
+                    el.style.backgroundColor = originalColor;
+                }, 200);
+            });
+        });
+
+        // Toggle nav drawer on desktop (simulated for demo)
+        const drawer = document.getElementById('navDrawer');
+        let drawerOpen = false;
+        
+        // This would typically be triggered by a menu button in TopAppBar
+        // Adding a basic hover zone for demo purposes
+        window.addEventListener('mousemove', (e) => {
+            if (window.innerWidth >= 768) {
+                if (e.clientX < 20 && !drawerOpen) {
+                    drawer.style.transform = 'translateX(0)';
+                    drawerOpen = true;
+                } else if (e.clientX > 320 && drawerOpen) {
+                    drawer.style.transform = 'translateX(-100%)';
+                    drawerOpen = false;
+                }
+            }
+        });
+    </script>
+</body></html>

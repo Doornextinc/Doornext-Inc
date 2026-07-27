@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Nexter - Shift History</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Typography -->
+<link href="https://fonts.googleapis.com/css2?family=Anybody:wght@700;800&amp;family=Plus+Jakarta+Sans:wght@400;600&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Theme Config -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary-fixed": "#ffdbce",
+                    "background": "#fff8f6",
+                    "on-tertiary-container": "#002d45",
+                    "on-surface-variant": "#594138",
+                    "on-surface": "#261813",
+                    "warm-gray": "#736F6E",
+                    "surface-bright": "#fff8f6",
+                    "surface": "#fff8f6",
+                    "secondary-container": "#e5e2e1",
+                    "primary": "#a63b00",
+                    "on-tertiary-fixed": "#001e2f",
+                    "surface-variant": "#f7ddd4",
+                    "on-primary-container": "#4f1800",
+                    "on-secondary-container": "#656464",
+                    "secondary-fixed-dim": "#c9c6c5",
+                    "surface-container-low": "#fff1ec",
+                    "inverse-on-surface": "#ffede7",
+                    "on-background": "#261813",
+                    "on-secondary": "#ffffff",
+                    "surface-container-lowest": "#ffffff",
+                    "error": "#ba1a1a",
+                    "on-primary": "#ffffff",
+                    "outline-variant": "#e1bfb3",
+                    "secondary-fixed": "#e5e2e1",
+                    "on-primary-fixed": "#370e00",
+                    "tertiary-container": "#009ade",
+                    "surface-cream": "#FDFCFB",
+                    "inverse-surface": "#3c2d27",
+                    "secondary": "#5f5e5e",
+                    "on-secondary-fixed-variant": "#474646",
+                    "on-error": "#ffffff",
+                    "outline": "#8d7166",
+                    "inverse-primary": "#ffb599",
+                    "on-primary-fixed-variant": "#7f2b00",
+                    "neighborhood-green": "#2D6A4F",
+                    "surface-container-highest": "#f7ddd4",
+                    "on-secondary-fixed": "#1c1b1b",
+                    "tertiary-fixed-dim": "#8cceff",
+                    "error-container": "#ffdad6",
+                    "tertiary": "#006492",
+                    "surface-dim": "#eed5cc",
+                    "on-tertiary-fixed-variant": "#004b6f",
+                    "surface-container": "#ffe9e2",
+                    "primary-fixed-dim": "#ffb599",
+                    "on-tertiary": "#ffffff",
+                    "surface-container-high": "#fde3da",
+                    "primary-container": "#f26522",
+                    "tertiary-fixed": "#cae6ff",
+                    "on-error-container": "#93000a",
+                    "surface-tint": "#a63b00"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "container-padding-desktop": "2.5rem",
+                    "container-padding-mobile": "1.25rem",
+                    "base": "8px",
+                    "section-gap": "4rem",
+                    "gutter": "1.5rem"
+            },
+            "fontFamily": {
+                    "display-lg": ["Anybody"],
+                    "title-lg": ["Plus Jakarta Sans"],
+                    "body-lg": ["Plus Jakarta Sans"],
+                    "label-sm": ["JetBrains Mono"],
+                    "headline-md-mobile": ["Anybody"],
+                    "display-lg-mobile": ["Anybody"],
+                    "body-md": ["Plus Jakarta Sans"],
+                    "headline-md": ["Anybody"]
+            },
+            "fontSize": {
+                    "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "title-lg": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "headline-md-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "display-lg-mobile": ["36px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "headline-md": ["32px", {"lineHeight": "1.2", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .active-nav .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1;
+        }
+        body {
+            background-color: #fff8f6;
+            color: #261813;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(225, 191, 179, 0.3);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-body-md selection:bg-primary-fixed">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface dark:bg-on-surface flex justify-between items-center px-container-padding-mobile h-16 w-full">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full overflow-hidden border-2 border-primary-fixed">
+<img class="w-full h-full object-cover" data-alt="A professional studio portrait of a friendly local delivery driver smiling warmly. The lighting is soft and natural, emphasizing a approachable neighborhood helper aesthetic. The background is a clean, minimalist cream color that matches the app's warm-gray and surface-cream palette. High-end photography style with a shallow depth of field." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCSyrwJ-45j-c2NsI4SqUvnfOxjhhbqZRZGzZ8hSEKhBslj85BaGFoRhdR_RaqEJDl4VWlqpM9k1QLJbtIqRaEjjZiH7TzT3JA0zpxxyX1_4A6yJ-w7bWMPMLI4brduoUSTrZJIe9TTlmdBSewaTbD2RVxskyt3cywWm-d8D4y-2DOrFttMHbAlnenbRgBN1iGs7c9efXQOt9q6DUTop0w1DDzooXmvprwB2LE9QmJ25em2cZDgjo7_cA0mX-JZ1LAa14oqZdbBIVpl"/>
+</div>
+<span class="font-display-lg-mobile text-display-lg-mobile text-primary dark:text-primary-fixed-dim">Nexter</span>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-primary hover:bg-surface-variant transition-colors active:opacity-80 transition-all">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+</header>
+<main class="pt-20 pb-32 px-container-padding-mobile max-w-2xl mx-auto min-h-screen">
+<!-- Weekly Summary Section -->
+<section class="mb-gutter">
+<h2 class="font-title-lg text-title-lg-mobile text-on-surface mb-4">Current Week</h2>
+<div class="bg-on-surface p-6 rounded-xl shadow-2xl relative overflow-hidden">
+<!-- Decorative element -->
+<div class="absolute -right-8 -top-8 w-32 h-32 bg-primary opacity-20 rounded-full blur-3xl"></div>
+<div class="flex justify-between items-start relative z-10">
+<div>
+<p class="font-label-sm text-label-sm text-surface-variant uppercase tracking-widest mb-1">Total Earnings</p>
+<h3 class="font-display-lg-mobile text-display-lg-mobile text-primary-fixed-dim font-bold flex items-baseline gap-1">
+<span class="font-label-sm text-headline-md-mobile">$</span>
+<span class="font-label-sm text-display-lg-mobile">842.50</span>
+</h3>
+</div>
+<div class="bg-neighborhood-green px-3 py-1 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-white" style="font-variation-settings: 'FILL' 1;">trending_up</span>
+<span class="font-label-sm text-[10px] text-white font-bold">+12%</span>
+</div>
+</div>
+<div class="mt-8 grid grid-cols-2 gap-4 relative z-10">
+<div class="bg-on-secondary-fixed-variant/20 p-3 rounded-lg border border-on-secondary-fixed-variant/30">
+<p class="font-label-sm text-[10px] text-surface-variant/80 uppercase">Duration</p>
+<p class="font-title-lg text-white">32h 15m</p>
+</div>
+<div class="bg-on-secondary-fixed-variant/20 p-3 rounded-lg border border-on-secondary-fixed-variant/30">
+<p class="font-label-sm text-[10px] text-surface-variant/80 uppercase">Deliveries</p>
+<p class="font-title-lg text-white">48 Total</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Filter/Chips Row -->
+<div class="flex gap-2 mb-gutter overflow-x-auto no-scrollbar pb-2">
+<span class="bg-primary text-white font-label-sm text-label-sm px-4 py-2 rounded-full whitespace-nowrap">All Shifts</span>
+<span class="bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm px-4 py-2 rounded-full whitespace-nowrap">High Earnings</span>
+<span class="bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm px-4 py-2 rounded-full whitespace-nowrap">Weekends</span>
+</div>
+<!-- Shift History List -->
+<div class="space-y-4">
+<h2 class="font-title-lg text-title-lg-mobile text-on-surface">Recent Shifts</h2>
+<!-- Shift Card 1 -->
+<div class="bg-surface-container-lowest border border-outline-variant p-4 rounded-xl flex flex-col gap-3 hover:shadow-lg transition-shadow duration-300">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-primary-fixed text-on-primary-fixed-variant rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined">calendar_today</span>
+</div>
+<div>
+<p class="font-title-lg text-on-surface">Friday, Oct 27</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">08:00 AM - 04:30 PM</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-title-lg text-primary font-bold">$184.20</p>
+<p class="font-label-sm text-label-sm text-neighborhood-green font-bold">+$12.00 Tip</p>
+</div>
+</div>
+<div class="flex items-center gap-6 border-t border-outline-variant pt-3">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-secondary text-sm">schedule</span>
+<span class="font-label-sm text-on-surface-variant">8h 30m</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-secondary text-sm">local_shipping</span>
+<span class="font-label-sm text-on-surface-variant">12 Del.</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-secondary text-sm">distance</span>
+<span class="font-label-sm text-on-surface-variant">42.5 mi</span>
+</div>
+</div>
+</div>
+<!-- Shift Card 2 -->
+<div class="bg-surface-container-lowest border border-outline-variant p-4 rounded-xl flex flex-col gap-3 hover:shadow-lg transition-shadow duration-300">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-surface-variant text-on-surface-variant rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined">calendar_today</span>
+</div>
+<div>
+<p class="font-title-lg text-on-surface">Thursday, Oct 26</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">11:00 AM - 05:00 PM</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-title-lg text-primary font-bold">$142.10</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">No tips yet</p>
+</div>
+</div>
+<div class="flex items-center gap-6 border-t border-outline-variant pt-3">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-secondary text-sm">schedule</span>
+<span class="font-label-sm text-on-surface-variant">6h 00m</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-secondary text-sm">local_shipping</span>
+<span class="font-label-sm text-on-surface-variant">9 Del.</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-secondary text-sm">distance</span>
+<span class="font-label-sm text-on-surface-variant">31.2 mi</span>
+</div>
+</div>
+</div>
+<!-- Shift Card 3 (Bento Style Variation) -->
+<div class="bg-surface-container-lowest border border-outline-variant p-4 rounded-xl flex flex-col gap-3 hover:shadow-lg transition-shadow duration-300">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-primary-fixed text-on-primary-fixed-variant rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined">calendar_today</span>
+</div>
+<div>
+<p class="font-title-lg text-on-surface">Tuesday, Oct 24</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">04:00 PM - 10:00 PM</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-title-lg text-primary font-bold">$215.75</p>
+<p class="font-label-sm text-label-sm text-neighborhood-green font-bold">+$25.50 Surge</p>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-2 border-t border-outline-variant pt-3">
+<div class="bg-surface-container-low p-2 rounded-lg text-center">
+<p class="font-label-sm text-[10px] text-secondary">DURATION</p>
+<p class="font-title-lg text-on-surface text-sm">6h 00m</p>
+</div>
+<div class="bg-surface-container-low p-2 rounded-lg text-center">
+<p class="font-label-sm text-[10px] text-secondary">TRIPS</p>
+<p class="font-title-lg text-on-surface text-sm">15</p>
+</div>
+<div class="bg-surface-container-low p-2 rounded-lg text-center">
+<p class="font-label-sm text-[10px] text-secondary">PER HR</p>
+<p class="font-title-lg text-neighborhood-green text-sm">$35.95</p>
+</div>
+</div>
+</div>
+<button class="w-full py-4 rounded-full border-2 border-outline-variant text-on-surface-variant font-title-lg hover:bg-surface-container-high transition-colors active:scale-95 transition-all">
+                Load Previous Month
+            </button>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center pt-2 pb-6 px-4 bg-surface-container-lowest dark:bg-inverse-surface rounded-t-xl z-50 shadow-[0_-4px_30px_rgba(166,59,0,0.08)]">
+<a class="flex flex-col items-center justify-center text-secondary hover:text-primary transition-colors scale-90 active:scale-110 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="local_shipping">local_shipping</span>
+<span class="font-label-sm text-label-sm mt-1">Dispatch</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary hover:text-primary transition-colors scale-90 active:scale-110 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="account_balance_wallet">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm mt-1">Wallet</span>
+</a>
+<a class="active-nav flex flex-col items-center justify-center bg-primary-fixed text-on-primary-fixed-variant rounded-full px-4 py-1 scale-90 active:scale-110 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="history" style="font-variation-settings: 'FILL' 1;">history</span>
+<span class="font-label-sm text-label-sm mt-1">History</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary hover:text-primary transition-colors scale-90 active:scale-110 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-sm text-label-sm mt-1">Account</span>
+</a>
+</nav>
+<script>
+        // Micro-interaction for cards
+        document.querySelectorAll('.bg-surface-container-lowest').forEach(card => {
+            card.addEventListener('touchstart', () => {
+                card.style.transform = 'scale(0.98)';
+                card.style.transition = 'transform 0.1s';
+            });
+            card.addEventListener('touchend', () => {
+                card.style.transform = 'scale(1)';
+            });
+        });
+    </script>
+</body></html>

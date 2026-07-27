@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>KYC Verification | Control Hub</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=Anybody:wght@700;800;900&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-highest": "#f7ddd4",
+                    "surface-container": "#ffe9e2",
+                    "inverse-on-surface": "#ffede7",
+                    "on-surface": "#261813",
+                    "warm-gray": "#736F6E",
+                    "on-secondary-fixed-variant": "#474646",
+                    "surface-tint": "#a63b00",
+                    "neighborhood-green": "#2D6A4F",
+                    "outline-variant": "#e1bfb3",
+                    "secondary-fixed-dim": "#c9c6c5",
+                    "on-tertiary-fixed-variant": "#004b6f",
+                    "tertiary": "#006492",
+                    "primary-container": "#f26522",
+                    "on-surface-variant": "#594138",
+                    "on-primary-container": "#4f1800",
+                    "on-error-container": "#93000a",
+                    "secondary-container": "#e5e2e1",
+                    "surface-dim": "#eed5cc",
+                    "secondary": "#5f5e5e",
+                    "on-primary": "#ffffff",
+                    "tertiary-fixed": "#cae6ff",
+                    "surface-container-low": "#fff1ec",
+                    "surface-bright": "#fff8f6",
+                    "secondary-fixed": "#e5e2e1",
+                    "on-secondary-fixed": "#1c1b1b",
+                    "on-primary-fixed": "#370e00",
+                    "surface-container-high": "#fde3da",
+                    "surface-cream": "#FDFCFB",
+                    "on-secondary-container": "#656464",
+                    "on-secondary": "#ffffff",
+                    "primary-fixed-dim": "#ffb599",
+                    "tertiary-fixed-dim": "#8cceff",
+                    "tertiary-container": "#009ade",
+                    "on-error": "#ffffff",
+                    "primary-fixed": "#ffdbce",
+                    "on-primary-fixed-variant": "#7f2b00",
+                    "surface": "#fff8f6",
+                    "on-tertiary-container": "#002d45",
+                    "background": "#fff8f6",
+                    "primary": "#a63b00",
+                    "on-background": "#261813",
+                    "outline": "#8d7166",
+                    "error-container": "#ffdad6",
+                    "surface-variant": "#f7ddd4",
+                    "surface-container-lowest": "#ffffff",
+                    "inverse-surface": "#3c2d27",
+                    "on-tertiary-fixed": "#001e2f",
+                    "on-tertiary": "#ffffff",
+                    "inverse-primary": "#ffb599",
+                    "error": "#ba1a1a"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "section-gap": "4rem",
+                    "gutter": "1.5rem",
+                    "container-padding-mobile": "1.25rem",
+                    "base": "8px",
+                    "container-padding-desktop": "2.5rem"
+            },
+            "fontFamily": {
+                    "title-lg": ["Plus Jakarta Sans"],
+                    "body-lg": ["Plus Jakarta Sans"],
+                    "display-lg": ["Anybody"],
+                    "display-lg-mobile": ["Anybody"],
+                    "headline-md-mobile": ["Anybody"],
+                    "body-md": ["Plus Jakarta Sans"],
+                    "label-sm": ["JetBrains Mono"],
+                    "headline-md": ["Anybody"]
+            },
+            "fontSize": {
+                    "title-lg": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "display-lg-mobile": ["36px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "headline-md-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "headline-md": ["32px", {"lineHeight": "1.2", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #FDFCFB;
+            color: #261813;
+            -webkit-font-smoothing: antialiased;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #fff1ec;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #e1bfb3;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="overflow-hidden">
+<div class="flex h-screen w-full bg-surface-cream">
+<!-- NavigationDrawer (Shared Component) -->
+<aside class="flex flex-col h-full p-4 gap-2 bg-surface-container-lowest dark:bg-inverse-surface h-screen w-64 border-r border-outline-variant shrink-0">
+<div class="font-display-lg text-display-lg text-primary mb-8">DoorNext</div>
+<div class="flex flex-col gap-1 mb-8">
+<div class="flex items-center gap-3 p-3">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container">
+<span class="material-symbols-outlined">person</span>
+</div>
+<div>
+<div class="font-title-lg text-title-lg text-on-surface leading-tight">Control Hub</div>
+<div class="font-body-md text-body-md text-on-surface-variant opacity-70">System Admin</div>
+</div>
+</div>
+</div>
+<nav class="flex-1 flex flex-col gap-2">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-all rounded-lg font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">dashboard</span> Dashboard
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 bg-primary-container text-on-primary-container font-bold rounded-lg transition-all font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person_search</span> Merchants
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-all rounded-lg font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">local_shipping</span> Deliveries
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-all rounded-lg font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">leaderboard</span> Analytics
+                </a>
+<div class="mt-auto flex flex-col gap-2">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-all rounded-lg font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">settings</span> Settings
+                    </a>
+<div class="px-4 py-2 text-on-surface-variant opacity-40 font-label-sm text-label-sm">v1.0.2</div>
+</div>
+</nav>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col overflow-hidden">
+<!-- TopAppBar (Shared Component) -->
+<header class="flex justify-between items-center w-full px-gutter h-16 bg-surface shrink-0">
+<div class="flex items-center gap-4">
+<button class="md:hidden text-primary">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<h1 class="font-title-lg text-title-lg text-primary">Verification Queue / Marcus Chen</h1>
+</div>
+<div class="flex items-center gap-4">
+<div class="hidden sm:flex items-center bg-surface-container px-3 py-1.5 rounded-full border border-outline-variant">
+<span class="material-symbols-outlined text-primary text-sm mr-2">fiber_manual_record</span>
+<span class="font-label-sm text-label-sm text-on-surface">12 PENDING REVIEWS</span>
+</div>
+<button class="w-10 h-10 rounded-full flex items-center justify-center hover:opacity-80 active:translate-y-0.5 transition-all">
+<span class="material-symbols-outlined text-primary">notifications</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest border border-primary overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Close-up professional portrait of a tech-savvy administrative manager in a bright modern office setting, wearing a neutral-toned business casual outfit. The lighting is soft and professional, emphasizing a clean corporate modern aesthetic with warm cream tones and subtle orange accents in the background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC5hUi_ZuLnHIJiu_U5UqSFz_v8O8Cz_o26WJaDmDZrY2YpxZYiwQouvQ6dYPyjpv_HulfKRhRLjMniOt4efIVBd_Ty4HtTNd6_kb82SwVyVGvG8Ir380YmlEKb1oIBbTBsHXzUUAMn4XIQaZsyt-LdUweSRsZrPG_cu7y1_89uIioEK9aYfO5rWfgUDAAnVn_H3vhU8GgMgQ9CkMfDIy3qjbzw-ijd3MnimV48dRo_0OSMG02_vovk5RziGmAmuAhn1y_3Ys_hfo_i"/>
+</div>
+</div>
+</header>
+<!-- Content Split View -->
+<div class="flex-1 flex overflow-hidden">
+<!-- Left Panel: Applicant Documents -->
+<section class="flex-1 overflow-y-auto custom-scrollbar p-gutter bg-surface-cream">
+<div class="max-w-4xl mx-auto space-y-8">
+<!-- Profile Header -->
+<div class="flex items-start justify-between bg-white p-6 rounded-xl border border-outline-variant shadow-sm">
+<div class="flex gap-6">
+<div class="w-24 h-24 rounded-xl overflow-hidden shadow-md">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of Marcus Chen, a middle-aged man with a friendly and trustworthy expression. He is wearing a clean apron, suggesting he is a local food artisan. The background is a soft-focus artisanal kitchen with warm lighting, reinforcing the neighborhood-green and primary orange brand colors in a subtle, natural way." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBzVd8uqUlJkr2mEMm0iIPbX5z8-cc2583quAW_LqVVZSOzIRWVJjWFK9r-YrppcOVPgZQFIhOfhSPu0AaW7fcCNNXyV0mvxiuIa8_BUEb_nYbHwF4JBlVTsUMzFOO6dXUvzBQd4Ze7nyosDW-mKEZVx5XYlPR7EbsInSGZQB8lBqEoEdysJFjBP1z8eYWo_x6-rXY4_BQs8TD_WtoFbuuf5bwvqUu4j6fmBm7f3lVJ7_Ge8if2agkGb2FSg7-CLyEGwQQPSQf4X9gI"/>
+</div>
+<div class="space-y-1">
+<h2 class="font-headline-md text-headline-md text-on-surface">Marcus Chen</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Merchant Application: <span class="font-semibold">Chen's Dumpling House</span></p>
+<div class="flex gap-2 mt-2">
+<span class="px-2 py-1 bg-surface-container-highest text-primary font-label-sm text-label-sm rounded uppercase">Individual Merchant</span>
+<span class="px-2 py-1 bg-surface-container-highest text-primary font-label-sm text-label-sm rounded uppercase">San Francisco, CA</span>
+</div>
+</div>
+</div>
+<div class="text-right">
+<div class="font-label-sm text-label-sm text-on-surface-variant opacity-60 mb-1">SUBMITTED ON</div>
+<div class="font-body-md text-body-md font-bold">Oct 24, 2023 • 14:22</div>
+</div>
+</div>
+<!-- ID Verification Section -->
+<div class="space-y-4">
+<div class="flex items-center justify-between">
+<h3 class="font-title-lg text-title-lg flex items-center gap-2">
+<span class="material-symbols-outlined text-neighborhood-green" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+                                    Government ID Verification
+                                </h3>
+<span class="font-label-sm text-label-sm px-3 py-1 bg-neighborhood-green/10 text-neighborhood-green rounded-full">MATCH CONFIRMED (98%)</span>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="group relative aspect-[1.6/1] bg-surface-container rounded-xl border border-outline-variant overflow-hidden cursor-zoom-in">
+<img class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" data-alt="A high-resolution, clear photo of a California Driver's License belonging to Marcus Chen. The document is placed on a clean, neutral surface with professional lighting to ensure all text is legible. The image feels authentic and secure, reflecting the reliable and trustworthy nature of the DoorNext platform." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAeXUwF9WS32f3aWXvdk2YcAgKVXz3l1LhMJbk0L-2p8cXn7qAyLPsbnhLulIUoqJ6VOMuPAXcCjJvjPGNg0t7aMWUCxqn466Sm2-fJd7VhyLxXI3Kql1GElqFLaSNycdQI2eq3N_0EIzC0UiO9a8BVGoA-oSz3szKV377gxh5PhbbgiCY-xrsHyyTI9s4ePtF4M_7tZs25IPY_dK22Yd1ZxEvp8Gpteu0dikg4U-fNwWef6mLktHxIPTrKJHY2_EVoBnDEKcIBvY_3"/>
+<div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="text-white font-body-md flex items-center gap-2">
+<span class="material-symbols-outlined">zoom_in</span> View ID Front
+                                        </span>
+</div>
+<div class="absolute bottom-2 left-2 px-2 py-1 bg-black/60 text-white font-label-sm text-label-sm rounded">FRONT</div>
+</div>
+<div class="group relative aspect-[1.6/1] bg-surface-container rounded-xl border border-outline-variant overflow-hidden cursor-zoom-in">
+<img class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" data-alt="A clear photo of the back side of a California Driver's License. The magnetic stripe and barcodes are sharply focused. The environment is a professional, bright office setting with consistent, soft lighting, matching the clean corporate modern style of the verification dashboard." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDTtwSlnvu-x3S3iflhk9-a4NoyodauxfSMuMc2kfeku5N8v84kIps536vz6G3WlIdYxD6rilcPduegU6BcedvfPLRhR2Ce3TBQRqlLUKGdic1TtnNA0GvT9Sg5dppGxRIrBWwHDCgaqFNwGhBoJw52SBNgoWEtEXtRWflQxe4A5JKg_SER_6TpAhUCHS8R6m00kdYMaSo2DZfVMZxJ8jokzjUXWI7njLu-yXGIw-j0EqOHyRL-zrNBlRLn2icCoFfBLAy34fk0gSSP"/>
+<div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="text-white font-body-md flex items-center gap-2">
+<span class="material-symbols-outlined">zoom_in</span> View ID Back
+                                        </span>
+</div>
+<div class="absolute bottom-2 left-2 px-2 py-1 bg-black/60 text-white font-label-sm text-label-sm rounded">BACK</div>
+</div>
+</div>
+<div class="p-4 bg-surface-container-low rounded-lg border-l-4 border-neighborhood-green">
+<div class="grid grid-cols-3 gap-4">
+<div>
+<div class="font-label-sm text-label-sm text-on-surface-variant opacity-60">ID NUMBER</div>
+<div class="font-body-md text-body-md font-mono">L84732991</div>
+</div>
+<div>
+<div class="font-label-sm text-label-sm text-on-surface-variant opacity-60">EXPIRY DATE</div>
+<div class="font-body-md text-body-md font-mono">08 / 15 / 2028</div>
+</div>
+<div>
+<div class="font-label-sm text-label-sm text-on-surface-variant opacity-60">DATE OF BIRTH</div>
+<div class="font-body-md text-body-md font-mono">04 / 12 / 1978</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Insurance & Permits Section -->
+<div class="space-y-4 pb-12">
+<div class="flex items-center justify-between">
+<h3 class="font-title-lg text-title-lg flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">gavel</span>
+                                    Business Insurance &amp; Permits
+                                </h3>
+<span class="font-label-sm text-label-sm px-3 py-1 bg-primary/10 text-primary rounded-full">PENDING MANUAL REVIEW</span>
+</div>
+<div class="space-y-3">
+<!-- Doc 1 -->
+<div class="flex items-center justify-between p-4 bg-white border border-outline-variant rounded-xl hover:border-primary transition-colors cursor-pointer group">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-surface-container-highest flex items-center justify-center rounded-lg text-primary">
+<span class="material-symbols-outlined">description</span>
+</div>
+<div>
+<div class="font-title-lg text-title-lg text-on-surface group-hover:text-primary transition-colors">General_Liability_Insurance_2023.pdf</div>
+<div class="font-body-md text-body-md text-on-surface-variant opacity-60">Signed on Oct 20, 2023 • 2.4 MB</div>
+</div>
+</div>
+<button class="p-2 rounded-full hover:bg-primary-container hover:text-on-primary-container transition-all">
+<span class="material-symbols-outlined">open_in_new</span>
+</button>
+</div>
+<!-- Doc 2 -->
+<div class="flex items-center justify-between p-4 bg-white border border-outline-variant rounded-xl hover:border-primary transition-colors cursor-pointer group">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-surface-container-highest flex items-center justify-center rounded-lg text-primary">
+<span class="material-symbols-outlined">food_bank</span>
+</div>
+<div>
+<div class="font-title-lg text-title-lg text-on-surface group-hover:text-primary transition-colors">SF_Health_Department_Permit.jpg</div>
+<div class="font-body-md text-body-md text-on-surface-variant opacity-60">Uploaded Oct 22, 2023 • 1.1 MB</div>
+</div>
+</div>
+<button class="p-2 rounded-full hover:bg-primary-container hover:text-on-primary-container transition-all">
+<span class="material-symbols-outlined">open_in_new</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Right Panel: Approval Panel -->
+<aside class="w-96 border-l border-outline-variant bg-white flex flex-col shrink-0 overflow-hidden shadow-[-4px_0_20px_0_rgba(166,59,0,0.04)]">
+<div class="p-6 border-b border-outline-variant">
+<h2 class="font-title-lg text-title-lg text-on-surface mb-2">Verification Decision</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Review the applicant's data against our neighborly trust standards.</p>
+</div>
+<div class="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+<!-- Checklist -->
+<div class="space-y-4">
+<h4 class="font-label-sm text-label-sm text-on-surface-variant opacity-60 uppercase tracking-wider">CHECKLIST</h4>
+<div class="space-y-3">
+<label class="flex items-center gap-3 p-3 rounded-lg border border-outline-variant hover:bg-surface-container-low cursor-pointer transition-all">
+<input checked="" class="w-5 h-5 rounded border-outline text-neighborhood-green focus:ring-neighborhood-green" type="checkbox"/>
+<span class="font-body-md text-body-md">Identity matches photo ID</span>
+</label>
+<label class="flex items-center gap-3 p-3 rounded-lg border border-outline-variant hover:bg-surface-container-low cursor-pointer transition-all">
+<input checked="" class="w-5 h-5 rounded border-outline text-neighborhood-green focus:ring-neighborhood-green" type="checkbox"/>
+<span class="font-body-md text-body-md">Address verification complete</span>
+</label>
+<label class="flex items-center gap-3 p-3 rounded-lg border border-outline-variant hover:bg-surface-container-low cursor-pointer transition-all">
+<input class="w-5 h-5 rounded border-outline text-primary focus:ring-primary" type="checkbox"/>
+<span class="font-body-md text-body-md">Liability coverage exceeds $1M</span>
+</label>
+<label class="flex items-center gap-3 p-3 rounded-lg border border-outline-variant hover:bg-surface-container-low cursor-pointer transition-all">
+<input class="w-5 h-5 rounded border-outline text-primary focus:ring-primary" type="checkbox"/>
+<span class="font-body-md text-body-md">Health permit is current</span>
+</label>
+</div>
+</div>
+<!-- Flags/Alerts -->
+<div class="p-4 bg-error-container/20 rounded-xl border border-error/20 space-y-2">
+<div class="flex items-center gap-2 text-error font-title-lg text-sm">
+<span class="material-symbols-outlined text-base">report</span>
+                                Potential Flag
+                            </div>
+<p class="font-body-md text-sm text-on-surface-variant">Merchant's bank account name varies slightly from the ID document (Marcus J. Chen vs Marcus Chen).</p>
+</div>
+<!-- Internal Notes -->
+<div class="space-y-2">
+<h4 class="font-label-sm text-label-sm text-on-surface-variant opacity-60 uppercase tracking-wider">REVIEWER NOTES</h4>
+<textarea class="w-full h-32 p-3 rounded-xl border border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary font-body-md text-body-md resize-none" placeholder="Add a private note for other admins..."></textarea>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="p-6 bg-surface-cream border-t border-outline-variant space-y-3">
+<button class="w-full py-4 bg-neighborhood-green text-white font-title-lg rounded-full shadow-lg shadow-neighborhood-green/20 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                            Approve Merchant
+                        </button>
+<div class="grid grid-cols-2 gap-3">
+<button class="py-3 bg-secondary text-white font-title-lg text-body-md rounded-full hover:opacity-90 active:scale-95 transition-all">
+                                Request Info
+                            </button>
+<button class="py-3 bg-white border border-error text-error font-title-lg text-body-md rounded-full hover:bg-error/5 active:scale-95 transition-all">
+                                Reject
+                            </button>
+</div>
+</div>
+</aside>
+</div>
+</main>
+</div>
+<!-- Micro-interaction Script -->
+<script>
+        // Simple interactive simulation
+        document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', (e) => {
+                const parent = e.target.closest('label');
+                if(e.target.checked) {
+                    parent.classList.add('bg-neighborhood-green/5', 'border-neighborhood-green/30');
+                } else {
+                    parent.classList.remove('bg-neighborhood-green/5', 'border-neighborhood-green/30');
+                }
+            });
+        });
+
+        // Button Ripple Effect
+        const buttons = document.querySelectorAll('button');
+        buttons.forEach(button => {
+            button.addEventListener('mousedown', function(e) {
+                const rect = this.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const ripple = document.createElement('span');
+                ripple.style.position = 'absolute';
+                ripple.style.width = '10px';
+                ripple.style.height = '10px';
+                ripple.style.background = 'rgba(255, 255, 255, 0.3)';
+                ripple.style.borderRadius = '50%';
+                ripple.style.left = `${x}px`;
+                ripple.style.top = `${y}px`;
+                ripple.style.transform = 'scale(0)';
+                ripple.style.transition = 'transform 0.6s linear, opacity 0.6s linear';
+                ripple.style.pointerEvents = 'none';
+                
+                this.style.position = 'relative';
+                this.style.overflow = 'hidden';
+                this.appendChild(ripple);
+                
+                requestAnimationFrame(() => {
+                    ripple.style.transform = 'scale(40)';
+                    ripple.style.opacity = '0';
+                });
+                
+                setTimeout(() => {
+                    ripple.remove();
+                }, 600);
+            });
+        });
+    </script>
+</body></html>

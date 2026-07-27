@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Checkout - DoorNext</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=Anybody:wght@700;800;900&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind Theme Configuration -->
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-container-highest": "#f7ddd4",
+            "surface-container": "#ffe9e2",
+            "inverse-on-surface": "#ffede7",
+            "on-surface": "#261813",
+            "warm-gray": "#736F6E",
+            "on-secondary-fixed-variant": "#474646",
+            "surface-tint": "#a63b00",
+            "neighborhood-green": "#2D6A4F",
+            "outline-variant": "#e1bfb3",
+            "secondary-fixed-dim": "#c9c6c5",
+            "on-tertiary-fixed-variant": "#004b6f",
+            "tertiary": "#006492",
+            "primary-container": "#f26522",
+            "on-surface-variant": "#594138",
+            "on-primary-container": "#4f1800",
+            "on-error-container": "#93000a",
+            "secondary-container": "#e5e2e1",
+            "surface-dim": "#eed5cc",
+            "secondary": "#5f5e5e",
+            "on-primary": "#ffffff",
+            "tertiary-fixed": "#cae6ff",
+            "surface-container-low": "#fff1ec",
+            "surface-bright": "#fff8f6",
+            "secondary-fixed": "#e5e2e1",
+            "on-secondary-fixed": "#1c1b1b",
+            "on-primary-fixed": "#370e00",
+            "surface-container-high": "#fde3da",
+            "surface-cream": "#FDFCFB",
+            "on-secondary-container": "#656464",
+            "on-secondary": "#ffffff",
+            "primary-fixed-dim": "#ffb599",
+            "tertiary-fixed-dim": "#8cceff",
+            "tertiary-container": "#009ade",
+            "on-error": "#ffffff",
+            "primary-fixed": "#ffdbce",
+            "on-primary-fixed-variant": "#7f2b00",
+            "surface": "#fff8f6",
+            "on-tertiary-container": "#002d45",
+            "background": "#fff8f6",
+            "primary": "#a63b00",
+            "on-background": "#261813",
+            "outline": "#8d7166",
+            "error-container": "#ffdad6",
+            "surface-variant": "#f7ddd4",
+            "surface-container-lowest": "#ffffff",
+            "inverse-surface": "#3c2d27",
+            "on-tertiary-fixed": "#001e2f",
+            "on-tertiary": "#ffffff",
+            "inverse-primary": "#ffb599",
+            "error": "#ba1a1a"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "section-gap": "4rem",
+            "gutter": "1.5rem",
+            "container-padding-mobile": "1.25rem",
+            "base": "8px",
+            "container-padding-desktop": "2.5rem"
+          },
+          "fontFamily": {
+            "title-lg": ["Plus Jakarta Sans"],
+            "body-lg": ["Plus Jakarta Sans"],
+            "display-lg": ["Anybody"],
+            "display-lg-mobile": ["Anybody"],
+            "headline-md-mobile": ["Anybody"],
+            "body-md": ["Plus Jakarta Sans"],
+            "label-sm": ["JetBrains Mono"],
+            "headline-md": ["Anybody"]
+          },
+          "fontSize": {
+            "title-lg": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+            "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+            "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+            "display-lg-mobile": ["36px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+            "headline-md-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}],
+            "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+            "label-sm": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "500"}],
+            "headline-md": ["32px", {"lineHeight": "1.2", "fontWeight": "700"}]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    body {
+      background-color: #fff8f6;
+      color: #261813;
+      -webkit-font-smoothing: antialiased;
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .checkout-card-shadow {
+      box-shadow: 0 4px 30px 0 rgba(166, 59, 0, 0.08);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-body-md overflow-x-hidden">
+<!-- Top App Bar (Transactional variant: No Nav) -->
+<header class="flex justify-between items-center w-full px-gutter h-16 fixed top-0 left-0 right-0 z-50 bg-surface">
+<div class="flex items-center gap-4">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors active:scale-95">
+<span class="material-symbols-outlined text-on-surface">arrow_back</span>
+</button>
+<h1 class="font-title-lg text-title-lg text-on-surface">Confirm Order</h1>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-neighborhood-green bg-neighborhood-green/10 px-3 py-1 rounded-full">SECURE</span>
+</div>
+</header>
+<main class="pt-20 pb-32 max-w-screen-md mx-auto px-container-padding-mobile md:px-container-padding-desktop">
+<!-- Hero Message -->
+<section class="mb-8">
+<h2 class="font-headline-md-mobile text-headline-md-mobile text-primary mb-2">Final Step, Neighbor!</h2>
+<p class="text-on-surface-variant font-body-md">Your artisan goodies are just one tap away from a fresh delivery.</p>
+</section>
+<!-- Bento-ish Grid for Checkout Details -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+<!-- Left Column: Items & Delivery -->
+<div class="md:col-span-7 space-y-6">
+<!-- Order Summary Card -->
+<div class="bg-surface-container-lowest rounded-xl p-5 border border-outline-variant/30 checkout-card-shadow">
+<div class="flex items-center gap-3 mb-4">
+<span class="material-symbols-outlined text-primary" data-icon="shopping_basket">shopping_basket</span>
+<h3 class="font-title-lg text-title-lg">Order Items</h3>
+</div>
+<div class="flex gap-4 items-center group">
+<div class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A warm, overhead close-up shot of a rustic loaf of Ancient Grain Sourdough bread with a deeply caramelized, scored crust resting on a clean white ceramic plate. The lighting is soft and golden, highlighting the texture of the grains. The aesthetic is clean, minimalist, and high-end, fitting a modern community-focused food delivery app." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBmc0qv37RdIy_4CEkMhYx5e9OcZ-II4dPhmjHpN8TOR1RImKKd6FyMudNJ8pqON31K9WAB5iZP2KLFPHN66ezwC6u_mFeZoRqub0Q29OMd2rIkHJHHY5c_Ho_knlebVHU_7n05g6LOzYxV6Z_a8PK7Rb01MJEAVZIW-9P5dnfCjeB6QhCxrHqJLvKZyeBMX1oGDgmUsj6fASe1EVK_vTxNUuuJz9PdChtnQ0LBvNNwDrD91anXXvRSfxe-pwAB_-1lT7NG-T3fVvsL"/>
+</div>
+<div class="flex-grow">
+<div class="flex justify-between items-start">
+<span class="font-title-lg text-body-md font-semibold">Ancient Grain Sourdough</span>
+<span class="font-label-sm text-label-sm text-on-surface">$9.00</span>
+</div>
+<p class="text-on-surface-variant text-sm">Large Loaf · Locally Milled</p>
+</div>
+</div>
+</div>
+<!-- Delivery Address Card -->
+<div class="bg-surface-container-lowest rounded-xl p-5 border border-outline-variant/30 checkout-card-shadow">
+<div class="flex justify-between items-center mb-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" data-icon="location_on">location_on</span>
+<h3 class="font-title-lg text-title-lg">Delivery to</h3>
+</div>
+<button class="text-primary font-label-sm text-label-sm hover:underline">CHANGE</button>
+</div>
+<div class="flex items-start gap-4 p-4 bg-surface-container-low rounded-lg">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container flex-shrink-0">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+</div>
+<div>
+<p class="font-title-lg text-body-md font-bold">Home</p>
+<p class="text-on-surface-variant text-sm">123 Maple St, North Hills</p>
+<p class="text-on-surface-variant text-xs mt-1 italic">"Ring the blue doorbell, please!"</p>
+</div>
+</div>
+</div>
+<!-- Payment Method Card -->
+<div class="bg-surface-container-lowest rounded-xl p-5 border border-outline-variant/30 checkout-card-shadow">
+<div class="flex justify-between items-center mb-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" data-icon="payments">payments</span>
+<h3 class="font-title-lg text-title-lg">Payment</h3>
+</div>
+<button class="text-primary font-label-sm text-label-sm hover:underline">EDIT</button>
+</div>
+<div class="flex items-center justify-between p-4 border border-outline-variant/20 rounded-lg group hover:border-primary/30 transition-colors">
+<div class="flex items-center gap-3">
+<div class="w-12 h-8 bg-inverse-surface rounded flex items-center justify-center text-white text-[10px] font-bold">VISA</div>
+<div>
+<p class="font-body-md text-on-surface">Visa ending in 4421</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">EXP 12/26</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">check_circle</span>
+</div>
+</div>
+</div>
+<!-- Right Column: Neighborly Pricing Breakdown -->
+<div class="md:col-span-5">
+<div class="bg-white rounded-2xl p-6 border border-primary/10 shadow-xl sticky top-24">
+<h3 class="font-headline-md-mobile text-headline-md-mobile mb-6">Order Total</h3>
+<div class="space-y-4 mb-8">
+<div class="flex justify-between items-center text-on-surface-variant">
+<span>Subtotal</span>
+<span class="font-label-sm text-label-sm">$9.00</span>
+</div>
+<div class="flex justify-between items-center text-on-surface-variant">
+<div class="flex items-center gap-1 group relative">
+<span>Service Fee</span>
+<span class="material-symbols-outlined text-sm cursor-help text-outline" data-icon="info">info</span>
+</div>
+<span class="font-label-sm text-label-sm">$1.99</span>
+</div>
+<div class="flex justify-between items-center text-on-surface-variant">
+<div class="flex items-center gap-1">
+<span>Distance-based Delivery</span>
+<span class="material-symbols-outlined text-sm text-neighborhood-green" data-icon="eco">eco</span>
+</div>
+<span class="font-label-sm text-label-sm">$2.50</span>
+</div>
+<div class="flex justify-between items-center pt-2 border-t border-outline-variant/30">
+<div class="flex flex-col">
+<span class="font-title-lg text-body-md">Nexter Tip</span>
+<span class="text-xs text-on-surface-variant">15% included</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-neighborhood-green font-bold">$1.35</span>
+<button class="text-primary font-label-sm text-[10px] hover:underline">EDIT</button>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-low rounded-xl p-4 mb-8">
+<div class="flex justify-between items-end">
+<span class="text-on-surface-variant font-body-md">Grand Total</span>
+<span class="font-display-lg-mobile text-display-lg-mobile text-primary leading-none">$14.84</span>
+</div>
+</div>
+<button class="w-full py-4 bg-primary text-on-primary font-title-lg text-title-lg rounded-full shadow-lg hover:translate-y-[-2px] active:translate-y-0 transition-all duration-200">
+            Confirm &amp; Pay
+          </button>
+<p class="text-center text-xs text-on-surface-variant mt-4 px-4 leading-relaxed">
+            By placing your order, you agree to DoorNext's neighborly terms. Your payment supports local DoorMakers and Nexters.
+          </p>
+</div>
+<!-- Community Impact Note -->
+<div class="mt-6 bg-neighborhood-green/5 rounded-xl p-4 border border-neighborhood-green/20 flex items-start gap-3">
+<span class="material-symbols-outlined text-neighborhood-green" data-icon="volunteer_activism">volunteer_activism</span>
+<div>
+<p class="text-neighborhood-green font-semibold text-sm">Community Impact</p>
+<p class="text-xs text-neighborhood-green/80">This order provides $11.85 directly into your neighborhood's economy.</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Interactive Logic for Micro-interactions -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const confirmBtn = document.querySelector('button.bg-primary');
+      
+      confirmBtn.addEventListener('click', function() {
+        this.innerHTML = `<div class="flex items-center justify-center gap-2">
+                            <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Processing...
+                          </div>`;
+        this.classList.add('pointer-events-none', 'opacity-90');
+        
+        setTimeout(() => {
+          this.innerHTML = `<div class="flex items-center justify-center gap-2">
+                              <span class="material-symbols-outlined">check_circle</span>
+                              Success!
+                            </div>`;
+          this.classList.remove('bg-primary');
+          this.classList.add('bg-neighborhood-green');
+        }, 2000);
+      });
+    });
+  </script>
+</body></html>

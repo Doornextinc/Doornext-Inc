@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>DoorNext | Rider Mode</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Anybody:wght@700;800&family=JetBrains+Mono:wght@500&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Anybody:wght@100..900&family=JetBrains+Mono:wght@100..900&family=Plus+Jakarta+Sans:wght@100..900&display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .role-badge-glow {
+            box-shadow: 0 0 15px rgba(45, 106, 79, 0.2);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-container": "#009ade",
+                        "on-surface-variant": "#594138",
+                        "surface-variant": "#f7ddd4",
+                        "on-primary-fixed": "#370e00",
+                        "outline-variant": "#e1bfb3",
+                        "on-secondary-container": "#656464",
+                        "surface-container-low": "#fff1ec",
+                        "on-primary-fixed-variant": "#7f2b00",
+                        "on-primary-container": "#4f1800",
+                        "on-surface": "#261813",
+                        "background": "#fff8f6",
+                        "tertiary-fixed-dim": "#8cceff",
+                        "surface-container-highest": "#f7ddd4",
+                        "error-container": "#ffdad6",
+                        "primary-fixed": "#ffdbce",
+                        "surface-dim": "#eed5cc",
+                        "on-error-container": "#93000a",
+                        "error": "#ba1a1a",
+                        "on-error": "#ffffff",
+                        "tertiary-fixed": "#cae6ff",
+                        "surface-bright": "#fff8f6",
+                        "inverse-surface": "#3c2d27",
+                        "neighborhood-green": "#2D6A4F",
+                        "secondary-container": "#e5e2e1",
+                        "secondary-fixed-dim": "#c9c6c5",
+                        "surface-container": "#ffe9e2",
+                        "secondary-fixed": "#e5e2e1",
+                        "surface-tint": "#a63b00",
+                        "on-tertiary": "#ffffff",
+                        "on-tertiary-container": "#002d45",
+                        "surface-container-high": "#fde3da",
+                        "on-secondary": "#ffffff",
+                        "outline": "#8d7166",
+                        "surface-cream": "#FDFCFB",
+                        "primary-fixed-dim": "#ffb599",
+                        "on-secondary-fixed": "#1c1b1b",
+                        "on-tertiary-fixed": "#001e2f",
+                        "warm-gray": "#736F6E",
+                        "secondary": "#5f5e5e",
+                        "primary-container": "#f26522",
+                        "tertiary": "#006492",
+                        "surface-container-lowest": "#ffffff",
+                        "on-background": "#261813",
+                        "inverse-on-surface": "#ffede7",
+                        "primary": "#a63b00",
+                        "surface": "#fff8f6",
+                        "on-primary": "#ffffff",
+                        "on-secondary-fixed-variant": "#474646",
+                        "inverse-primary": "#ffb599",
+                        "on-tertiary-fixed-variant": "#004b6f"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-padding-desktop": "2.5rem",
+                        "section-gap": "4rem",
+                        "gutter": "1.5rem",
+                        "container-padding-mobile": "1.25rem",
+                        "base": "8px"
+                    },
+                    "fontFamily": {
+                        "title-lg": ["Plus Jakarta Sans"],
+                        "display-lg": ["Anybody"],
+                        "label-sm": ["JetBrains Mono"],
+                        "headline-md": ["Anybody"],
+                        "display-lg-mobile": ["Anybody"],
+                        "body-md": ["Plus Jakarta Sans"],
+                        "body-lg": ["Plus Jakarta Sans"],
+                        "headline-md-mobile": ["Anybody"]
+                    },
+                    "fontSize": {
+                        "title-lg": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                        "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                        "label-sm": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "headline-md": ["32px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                        "display-lg-mobile": ["36px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                        "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "headline-md-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-cream text-on-surface font-body-md selection:bg-primary-fixed">
+<!-- Top Navigation -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-container-padding-mobile md:px-container-padding-desktop py-4 bg-surface dark:bg-on-surface">
+<div class="flex items-center gap-4">
+<button class="p-2 hover:bg-surface-variant transition-colors rounded-full flex items-center justify-center" onclick="toggleDrawer()">
+<span class="material-symbols-outlined text-primary-container">menu</span>
+</button>
+<h1 class="font-display-lg-mobile md:font-display-lg text-primary-container dark:text-primary-fixed">DoorNext</h1>
+</div>
+<div class="hidden md:flex items-center gap-8">
+<a class="text-primary-container dark:text-primary-fixed font-bold font-title-lg" href="#">Explore</a>
+<a class="text-on-surface-variant dark:text-outline-variant hover:bg-surface-variant transition-colors px-3 py-1 rounded-full" href="#">Orders</a>
+<a class="text-on-surface-variant dark:text-outline-variant hover:bg-surface-variant transition-colors px-3 py-1 rounded-full" href="#">Community</a>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary-container text-2xl">swap_horizontal_circle</span>
+<div class="w-10 h-10 rounded-full border-2 border-neighborhood-green p-0.5">
+<img class="w-full h-full object-cover rounded-full" data-alt="A friendly, high-resolution portrait of a smiling delivery rider wearing a warm, stylish orange jacket, illuminated by the soft golden hour light of a suburban neighborhood. The background is slightly blurred, showing a clean street with trees and modern houses, reinforcing a neighborly and reliable community vibe. The overall aesthetic is clean, professional, yet deeply human." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAjYrNt_coGA4-7oLXv1z1-5PJG7hdz94o0Eb_e5msLSYrswcVJ1w0QVf3iUZSoKv1D4zzPXid7H1lWV9NtQY8su3NNInoaP-e9xCTuPMmBun6sSUcO9FOV0A_FApFQNMhIaR13xyYivhynR7KWOr7vxPVqXWKRnRKoSe3niNVHbZjor46d00w_gpxUpADq7wzrOgN9zAYBoPvuzIoDVIuf4iQmqyVSplizI-ux5-kJuIOF75mGH02hNduah6ozZivRlxJZlfUm0LTJ"/>
+</div>
+</div>
+</header>
+<!-- Navigation Drawer (Hidden by default) -->
+<div class="fixed inset-0 bg-on-surface/40 backdrop-blur-sm z-[55] hidden transition-opacity duration-300 opacity-0" id="drawer-overlay" onclick="toggleDrawer()"></div>
+<aside class="fixed inset-y-0 left-0 z-[60] flex flex-col py-6 bg-background dark:bg-on-surface border-r border-outline-variant rounded-r-xl h-full w-80 -translate-x-full transition-transform duration-300 ease-in-out" id="nav-drawer">
+<div class="px-6 mb-8">
+<div class="flex items-center gap-4 mb-4">
+<img class="w-16 h-16 rounded-full object-cover border-2 border-primary" data-alt="A close-up shot of a neighborly profile avatar. The person has a kind, welcoming expression, lit by warm indoor morning light. Behind them, a cozy kitchen setting is visible but softly out of focus. The photography style is documentary-inspired, authentic, and avoids any corporate stock-photo feel, emphasizing local trust." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB-H3REtgOSJQQbxN_8jmbR8guI1-NeLGvnqVhljTBmu9lp3f4mUr5i3FpphiiMjQDP2BIk-Lizcn5djGbfeSGn-3uyvN5K93Ez5sr08OraDdsfnqw38J29ITIK1Tp3vlNmvcqvIy4Bps8Prr20FMfJe6GmGwXQl_0cm8gFE9sQhabxjcoLkdg1x1gck1DhxqXtLDU4si2wFFcsVZt9ZzUFAQQ2N4oDLBC9Z3gx_f7GVKJKnDeh69TlXpissxGpGIkScdM_Fyd-rFnq"/>
+<div>
+<h2 class="font-headline-md-mobile text-headline-md-mobile text-on-surface">Welcome back, Neighbor</h2>
+<p class="font-body-md text-on-surface-variant">Current Role: Rider</p>
+</div>
+</div>
+<div class="bg-surface-container-low rounded-lg px-3 py-1 inline-flex items-center gap-2">
+<span class="material-symbols-outlined text-neighborhood-green text-sm" style="font-variation-settings: 'FILL' 1;">stars</span>
+<span class="font-label-sm text-label-sm text-neighborhood-green">Trust Score: 4.9</span>
+</div>
+</div>
+<nav class="flex flex-col gap-1">
+<button class="flex items-center gap-4 text-on-surface-variant hover:bg-surface-container-low mx-2 px-4 py-3 rounded-lg hover:translate-x-1 transition-all">
+<span class="material-symbols-outlined">delivery_dining</span>
+<span class="font-body-md">Switch to Nexter</span>
+</button>
+<button class="flex items-center gap-4 text-on-surface-variant hover:bg-surface-container-low mx-2 px-4 py-3 rounded-lg hover:translate-x-1 transition-all">
+<span class="material-symbols-outlined">storefront</span>
+<span class="font-body-md">Switch to DoorMaker</span>
+</button>
+<hr class="my-4 border-outline-variant mx-4"/>
+<button class="flex items-center gap-4 text-on-surface-variant hover:bg-surface-container-low mx-2 px-4 py-3 rounded-lg hover:translate-x-1 transition-all">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-md">Account Settings</span>
+</button>
+<button class="flex items-center gap-4 text-on-surface-variant hover:bg-surface-container-low mx-2 px-4 py-3 rounded-lg hover:translate-x-1 transition-all">
+<span class="material-symbols-outlined">help</span>
+<span class="font-body-md">Help Center</span>
+</button>
+<button class="flex items-center gap-4 text-error mx-2 px-4 py-3 rounded-lg hover:bg-error-container transition-all mt-auto">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-body-md">Logout</span>
+</button>
+</nav>
+</aside>
+<main class="pt-24 pb-24 md:pb-8">
+<!-- Hero Section -->
+<section class="px-container-padding-mobile md:px-container-padding-desktop mb-section-gap">
+<div class="relative rounded-3xl overflow-hidden h-[400px] flex items-center bg-on-surface">
+<div class="absolute inset-0 z-0">
+<img class="w-full h-full object-cover opacity-70" data-alt="A wide, appetizing shot of a sunlit neighborhood kitchen counter where a variety of fresh, artisanal breads and colorful pupusas are being prepared. The steam rises gently into the golden sunlight, creating a warm, cozy, and inviting atmosphere. The focus is on the textures of the food and the authentic, handmade quality, utilizing soft shadows and high-end food styling." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDHMgYuLgC6X3EaHOOpw49p_yZgSBP-Y_FLsqDuR7izcXo53BWZh8k0_GzOfMmrg6HJeA6SSQ3HQnrZ34aQgy0UjZQJ2Qgvf8BENS_IQ-56lTRJs0TRpQlxebpI1tM4ctshtiIsPbmXYL0ITsh2gFiyOoX5dwxLTigM4knKt5wBBnQNxEbLSrI7b3J0wy3TOlj0b0FYTukj5ofAb3Wmht1hk8_nJaP4b_ZJO-kFWf4MLfPY6TGyvZ9BMkfJk56HqTqUaDHQevp7Gwow"/>
+</div>
+<div class="relative z-10 p-8 md:p-16 max-w-2xl">
+<div class="role-badge-glow bg-neighborhood-green text-white font-label-sm text-label-sm px-4 py-1.5 rounded-full inline-flex items-center gap-2 mb-6 uppercase tracking-widest">
+<span class="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+                        Active Rider Mode
+                    </div>
+<h2 class="font-display-lg-mobile md:font-display-lg text-white mb-4">Fresh from your neighbor's kitchen.</h2>
+<p class="font-body-lg text-white/90 mb-8 max-w-md">Real food, made by real people in your neighborhood. No ghost kitchens, just home-cooked magic.</p>
+<div class="flex flex-wrap gap-4">
+<button class="bg-primary-container text-white px-8 py-3 rounded-full font-title-lg hover:scale-105 transition-transform shadow-lg">Start Browsing</button>
+<button class="bg-white text-on-surface px-8 py-3 rounded-full font-title-lg hover:bg-surface-container transition-colors">See Local Perks</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Category Grid -->
+<section class="px-container-padding-mobile md:px-container-padding-desktop mb-section-gap">
+<div class="flex justify-between items-end mb-8">
+<div>
+<h3 class="font-headline-md-mobile md:font-headline-md text-on-surface">Neighborhood Categories</h3>
+<p class="text-on-surface-variant">The local favorites everyone's talking about.</p>
+</div>
+<button class="text-primary font-bold hover:underline">View All</button>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-gutter">
+<!-- Category Card 1 -->
+<div class="group cursor-pointer">
+<div class="relative aspect-square rounded-2xl overflow-hidden mb-3">
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" data-alt="Close up of steaming, golden-brown Salvadoran pupusas stacked on a rustic wooden plate. The focus is on the melted cheese oozing from the edges and the vibrant red curtido on the side. Warm, natural lighting captures the rich textures and authentic home-style presentation, inviting a sense of delicious comfort." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCSn78cswZTHz7Fd46QIYdBlxYdcMkZBCODvsDOB9Cr7Phxl1sQA3wZ3Srv0R4vg02Ru6FMthkrwoAUOg2wBBUZadpiksrIHC-6FlLnlb1piYDuRFB0Qjf-aKuOoo83gHnLFOzrpb6ZNRrBTz3mxHJfVkvSK0piDzDz9XKqEI4B_qFuE62WcsSGwAzIGRIOE-W0Xa2nH0SWtE9TxDNOj2AT29j1G9iW1txkU6o8DOfb7Udioc6bSEbhQM8ywSmOpLFNC-YSmrhkDYhn"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+<div class="absolute bottom-4 left-4 text-white">
+<span class="font-label-sm text-label-sm opacity-80 mb-1 block">LOCAL SPECIALTY</span>
+<p class="font-title-lg">Pupusas</p>
+</div>
+</div>
+</div>
+<!-- Category Card 2 -->
+<div class="group cursor-pointer">
+<div class="relative aspect-square rounded-2xl overflow-hidden mb-3">
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" data-alt="A basket of freshly baked, crusty sourdough bread and sweet Mexican pan dulce resting on a linen cloth in a bright, airy kitchen. The sunlight catches the flour dusting on the loaves, emphasizing the artisanal, handmade nature of the neighbor's bakery. The scene is wholesome, warm, and rich with organic detail." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDYQc_4qieVBgLujA_6GTTlxh3V3gD2EITRrqneTh0c-xhiuXSrbhqDcjR3Sy7PL9ywK_hdD8tYAzAo91q6pkBSCPW6XQn_fSadM7gK_OL4uHo50QCT355toTUYU086GNGii2PsRE0JmTOMAHUK6BZhrnj7ZaDj9PMXf7ZjC4ofzP9d096tbyRSEVGYKg81zRj65XpXzvb3pKjYtF8I4OKSf7QkmvSc0WmNfaYl2V0rd_JHDuSk-dmdnh_YMD2CjafTd-5vHeqy3ekF"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+<div class="absolute bottom-4 left-4 text-white">
+<span class="font-label-sm text-label-sm opacity-80 mb-1 block">DAILY BAKES</span>
+<p class="font-title-lg">Bread & Pastries</p>
+</div>
+</div>
+</div>
+<!-- Category Card 3 -->
+<div class="group cursor-pointer">
+<div class="relative aspect-square rounded-2xl overflow-hidden mb-3">
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" data-alt="A large, vibrant family-style meal spread on a colorful outdoor table. There are bowls of homemade pasta, fresh garden salads, and grilled chicken, all presented in a warm, communal way. The setting is a lush, sun-dappled backyard, evoking feelings of neighborly sharing and festive community gatherings." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_1ewiCCMAsTBzE-1vLBmVx4W8BR3mFtt-gHwwVGI1UFmnPNtvu53iK_2zlBOB37ELk3l1lObMt17WwOiNMZe-O49_3cttq6vuIc_0MAojbhAtMknLJVn_ebW3Bzwm5gCA9JzIhXXzJRQXjVCqbWNcNIR4jNQwzj_EHKTgBX5Nz2tRwZZ9sxwLTZwvBMpqb7fhD3T3BUoDmoWUeAnmy3ZTDThfmaqghXb-FYphCTaCLPbae6N6-46kjv-iUk3BbG_s2EnpCIauZMUB"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+<div class="absolute bottom-4 left-4 text-white">
+<span class="font-label-sm text-label-sm opacity-80 mb-1 block">FEEDS 4+</span>
+<p class="font-title-lg">Family Meals</p>
+</div>
+</div>
+</div>
+<!-- Category Card 4 -->
+<div class="group cursor-pointer">
+<div class="relative aspect-square rounded-2xl overflow-hidden mb-3">
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" data-alt="A selection of colorful, spicy homemade salsas and pickled vegetables in glass jars, arranged neatly on a stone countertop. The lighting is bright and crisp, highlighting the fresh ingredients like chilies, onions, and herbs. The aesthetic is clean, vibrant, and celebrates the art of home preservation and flavoring." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA8yXlUu2GzY_-5F1-k_zvS6yJJB50ZCAkYwnrssCSGzsPolcBbV-qdcY8otyaxZRZnigAS472yf9Y6hzuyLME9CULhLKbCdw65C-Al3JBinn6XlHdZiDHuKmZRLoUNmvc_Ksh-PjfdoR4f3o94k3ahs-0Mj4Q5yhglm3ldS7ptQx8ySaj4KdEi8UkYh8Xs9kRcr_epgIHq2B-nuDeskWWGD-AfqM5hrq_mvBewP_3xvsBD4R8I22FBBF6RgXq1qimPcMHnz8Ol4qI6"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+<div class="absolute bottom-4 left-4 text-white">
+<span class="font-label-sm text-label-sm opacity-80 mb-1 block">KITCHEN PANTRY</span>
+<p class="font-title-lg">Salsas & Sides</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Trending Makers (Bento Style) -->
+<section class="px-container-padding-mobile md:px-container-padding-desktop mb-section-gap">
+<h3 class="font-headline-md-mobile md:font-headline-md text-on-surface mb-8">Trending Local Makers</h3>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<!-- Large Featured Maker -->
+<div class="md:col-span-2 bg-white rounded-3xl p-8 border border-outline-variant shadow-sm flex flex-col md:flex-row gap-8 hover:shadow-xl transition-shadow">
+<div class="w-full md:w-1/2 aspect-[4/5] rounded-2xl overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A warm, candid portrait of a woman in her 50s with a beaming smile, wearing a flour-dusted apron in her sunlit home kitchen. She's holding a tray of freshly baked cookies. The environment is filled with plants and warm wooden tones, emphasizing her identity as a talented neighborhood 'DoorMaker' rather than a commercial chef." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBPDZe-uQ0l59cPhg10Mh76o8azCnIEgaqJee5IALpGwnuO0Xtu713Ipo4j3_T-kJw1WfD8u4IbA8vYmIWe3Y_uhoJ0FDS364HAzsrBJvcaqRwJr4L8yPx6LujnRmbbEdPFIzLL1oYtB61VaDkhe9GZlCBzUd0ALT-0yaHeHvD6S6aL9b0LnMcJVCXAplL3lKyO_Ui4IvgsC95gAvIuRqSpzwvAk57FizLeZxFFj-qbP-ZN1YZOh6w15xzobscCQ1-am8-gaA1Vu9P6"/>
+</div>
+<div class="flex-1 flex flex-col">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h4 class="font-headline-md-mobile text-on-surface">Elena’s Hearth</h4>
+<p class="text-neighborhood-green font-label-sm text-label-sm uppercase tracking-wider">Top Rated This Week</p>
+</div>
+<div class="bg-primary-fixed px-3 py-1 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-sm text-on-primary-fixed">4.9</span>
+</div>
+</div>
+<p class="text-on-surface-variant mb-6 line-clamp-3">"I've lived in the neighborhood for 20 years, and nothing brings me more joy than sharing my grandmother's sourdough recipes with all of you. Every loaf is proofed for 24 hours for that perfect tang."</p>
+<div class="mt-auto space-y-4">
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">schedule</span>
+<span class="font-label-sm text-label-sm">Next batch ready at 4:00 PM</span>
+</div>
+<button class="w-full bg-on-surface text-white py-4 rounded-full font-title-lg hover:opacity-90 transition-opacity">Order from Elena</button>
+</div>
+</div>
+</div>
+<!-- Secondary Maker Column -->
+<div class="space-y-gutter">
+<!-- Maker Small Card 1 -->
+<div class="bg-white rounded-3xl p-6 border border-outline-variant hover:border-primary-container transition-colors">
+<div class="flex gap-4 items-center mb-4">
+<img class="w-14 h-14 rounded-full object-cover" data-alt="A circular avatar of a young man with a friendly, energetic expression, standing in front of a colorful wall mural. He has a passion for cooking and a neighborhood-friendly vibe. The lighting is bright and modern, suggesting his creative approach to local street food favorites." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBpnzqIms6LR4wQAcEgHJy5Ss9mdM-l1kAvMs1FySsKTiOaS2l_ybJREOO0ulsyzJ6GrqB4iQbmVOpvbrRytZgAvPLHq6d8dlxftdpdg6I0KlvHO5IW8n0fImnlrBzjG0oTaZQ3BlPw_yKqKFIjyFHatbF2dQXXVQMNH-vmninBYRBRAI2Zw7AxNj527Ek4uN7HefD57xphQTTMJrcqdiaHloh9hp48PZ0QKU3P5j4S7u8UU-taCYrInJYlt8eTbwe1p0A8O0wuzBo6"/>
+<div>
+<h5 class="font-title-lg">Taco Theo</h5>
+<p class="font-label-sm text-label-sm text-on-surface-variant">2.4 miles away</p>
+</div>
+</div>
+<div class="flex gap-2 mb-4 overflow-x-auto hide-scrollbar">
+<span class="bg-surface-container px-3 py-1 rounded-full font-label-sm text-label-sm text-on-surface-variant">AL PASTOR</span>
+<span class="bg-surface-container px-3 py-1 rounded-full font-label-sm text-label-sm text-on-surface-variant">HAND-MADE</span>
+</div>
+<button class="w-full border border-on-surface py-2 rounded-full font-label-sm text-label-sm hover:bg-on-surface hover:text-white transition-all">Quick Add</button>
+</div>
+<!-- Maker Small Card 2 -->
+<div class="bg-white rounded-3xl p-6 border border-outline-variant hover:border-primary-container transition-colors">
+<div class="flex gap-4 items-center mb-4">
+<img class="w-14 h-14 rounded-full object-cover" data-alt="A portrait of an older gentleman with kind eyes, wearing a traditional chef's cap, in a cozy, well-loved kitchen filled with herbs. He looks like a seasoned pro who treats every meal like a work of art. The atmosphere is quiet, respectful, and deeply rooted in culinary tradition." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBhxIbbS5_8bCnNujvqDINKh5DXexTlYyXsmCzQUQ2qLAXMEimSRnF6TQMQVQJb3NQXQxc0NZiA32xeSSXv-ogGrRS0_A8XtMOe0OLxxZzQSSUZQ4y4_qaf22egAWqU69lMMgQc-JGPt3CK0m0MC9OgpGtWDiT6IKR-A9SrA9vqSnTjLDzb6fmyztJz_E5yVS9PXAMmNGB74hxUQKt2jgsyaqpHttNobDTU0aDgARORkaFyznQKuL3EnIfrLfI8dN9sChgk08Sdb1XW"/>
+<div>
+<h5 class="font-title-lg">Chef Amado</h5>
+<p class="font-label-sm text-label-sm text-on-surface-variant">0.8 miles away</p>
+</div>
+</div>
+<div class="flex gap-2 mb-4 overflow-x-auto hide-scrollbar">
+<span class="bg-surface-container px-3 py-1 rounded-full font-label-sm text-label-sm text-on-surface-variant">SLOW-COOKED</span>
+<span class="bg-surface-container px-3 py-1 rounded-full font-label-sm text-label-sm text-on-surface-variant">CURRY</span>
+</div>
+<button class="w-full border border-on-surface py-2 rounded-full font-label-sm text-label-sm hover:bg-on-surface hover:text-white transition-all">Quick Add</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Wallet / Earnings (Rider Specific) -->
+<section class="px-container-padding-mobile md:px-container-padding-desktop mb-section-gap">
+<div class="bg-on-surface rounded-3xl p-8 flex flex-col md:flex-row justify-between items-center text-white">
+<div class="mb-6 md:mb-0">
+<h3 class="font-headline-md-mobile text-white/70">Your Neighbor Earnings</h3>
+<div class="flex items-baseline gap-2">
+<span class="font-label-sm text-2xl text-primary-container">$</span>
+<span class="text-5xl font-label-sm text-primary-container tracking-tighter" style="font-family: 'JetBrains Mono';">428.50</span>
+</div>
+<p class="text-white/50 font-label-sm text-label-sm mt-2">Available for withdrawal</p>
+</div>
+<div class="flex gap-4 w-full md:w-auto">
+<button class="flex-1 md:flex-none bg-white text-on-surface px-8 py-4 rounded-full font-title-lg flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+                        Cash Out
+                    </button>
+<button class="flex-1 md:flex-none bg-primary-container text-white px-8 py-4 rounded-full font-title-lg flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">history</span>
+                        View History
+                    </button>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-safe pt-2 bg-surface-container-lowest dark:bg-inverse-surface shadow-lg rounded-t-xl">
+<button class="flex flex-col items-center justify-center bg-primary-fixed dark:bg-on-primary-fixed-variant text-on-primary-container dark:text-primary-fixed rounded-full px-5 py-1 scale-90">
+<span class="material-symbols-outlined">explore</span>
+<span class="font-label-sm text-label-sm">Explore</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim px-5 py-1 hover:text-primary transition-all">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="font-label-sm text-label-sm">Orders</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim px-5 py-1 hover:text-primary transition-all">
+<span class="material-symbols-outlined">groups</span>
+<span class="font-label-sm text-label-sm">Community</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim px-5 py-1 hover:text-primary transition-all">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-sm text-label-sm">Profile</span>
+</button>
+</nav>
+<!-- Micro-interaction Scripts -->
+<script>
+        function toggleDrawer() {
+            const drawer = document.getElementById('nav-drawer');
+            const overlay = document.getElementById('drawer-overlay');
+            const isHidden = drawer.classList.contains('-translate-x-full');
+
+            if (isHidden) {
+                drawer.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.add('opacity-100'), 10);
+            } else {
+                drawer.classList.add('-translate-x-full');
+                overlay.classList.remove('opacity-100');
+                setTimeout(() => overlay.classList.add('hidden'), 300);
+            }
+        }
+
+        // Active Role Ripple Effect Logic (Simulated)
+        const buttons = document.querySelectorAll('button');
+        buttons.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                if(this.classList.contains('active-scale')) {
+                   this.classList.add('scale-95');
+                   setTimeout(() => this.classList.remove('scale-95'), 150);
+                }
+            });
+        });
+
+        // Add active scaling interaction from JSON
+        document.querySelectorAll('nav button').forEach(navBtn => {
+            navBtn.classList.add('transition-all', 'duration-150', 'active:scale-95');
+        });
+    </script>
+</body></html>

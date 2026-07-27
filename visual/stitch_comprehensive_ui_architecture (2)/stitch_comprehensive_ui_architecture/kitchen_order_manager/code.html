@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>DoorNext Maker Hub - Order Manager</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=Anybody:wght@700;800;900&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary": "#ffffff",
+                    "surface-container-high": "#fde3da",
+                    "on-tertiary-container": "#002d45",
+                    "inverse-on-surface": "#ffede7",
+                    "on-tertiary-fixed-variant": "#004b6f",
+                    "on-background": "#261813",
+                    "surface-tint": "#a63b00",
+                    "on-primary-fixed": "#370e00",
+                    "surface-container": "#ffe9e2",
+                    "surface-bright": "#fff8f6",
+                    "on-secondary-fixed-variant": "#474646",
+                    "tertiary-fixed": "#cae6ff",
+                    "tertiary": "#006492",
+                    "on-secondary-fixed": "#1c1b1b",
+                    "inverse-primary": "#ffb599",
+                    "surface-dim": "#eed5cc",
+                    "surface-cream": "#FDFCFB",
+                    "background": "#fff8f6",
+                    "on-surface": "#261813",
+                    "primary": "#a63b00",
+                    "outline-variant": "#e1bfb3",
+                    "primary-container": "#f26522",
+                    "neighborhood-green": "#2D6A4F",
+                    "surface-container-low": "#fff1ec",
+                    "secondary": "#5f5e5e",
+                    "surface-variant": "#f7ddd4",
+                    "on-secondary-container": "#656464",
+                    "on-primary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "surface": "#fff8f6",
+                    "surface-container-highest": "#f7ddd4",
+                    "tertiary-container": "#009ade",
+                    "inverse-surface": "#3c2d27",
+                    "on-surface-variant": "#594138",
+                    "on-primary-fixed-variant": "#7f2b00",
+                    "on-tertiary": "#ffffff",
+                    "on-primary-container": "#4f1800",
+                    "on-error": "#ffffff",
+                    "error": "#ba1a1a",
+                    "warm-gray": "#736F6E",
+                    "secondary-fixed-dim": "#c9c6c5",
+                    "secondary-container": "#e5e2e1",
+                    "primary-fixed-dim": "#ffb599",
+                    "tertiary-fixed-dim": "#8cceff",
+                    "secondary-fixed": "#e5e2e1",
+                    "on-error-container": "#93000a",
+                    "outline": "#8d7166",
+                    "on-tertiary-fixed": "#001e2f",
+                    "primary-fixed": "#ffdbce"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "1.5rem",
+                    "container-padding-desktop": "2.5rem",
+                    "section-gap": "4rem",
+                    "container-padding-mobile": "1.25rem",
+                    "base": "8px"
+            },
+            "fontFamily": {
+                    "display-lg": ["Anybody"],
+                    "display-lg-mobile": ["Anybody"],
+                    "body-md": ["Plus Jakarta Sans"],
+                    "body-lg": ["Plus Jakarta Sans"],
+                    "label-sm": ["JetBrains Mono"],
+                    "headline-md-mobile": ["Anybody"],
+                    "title-lg": ["Plus Jakarta Sans"],
+                    "headline-md": ["Anybody"]
+            },
+            "fontSize": {
+                    "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "display-lg-mobile": ["36px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "headline-md-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "title-lg": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                    "headline-md": ["32px", {"lineHeight": "1.2", "fontWeight": "700"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #FDFCFB;
+        }
+        .order-card {
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+        }
+        .order-card:hover {
+            transform: translateY(-4px);
+        }
+        .status-pill {
+            transition: background-color 0.3s ease;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-on-surface bg-surface-cream">
+<!-- Top Navigation -->
+<header class="fixed top-0 w-full z-50 bg-surface flex justify-between items-center px-gutter h-16 shadow-sm">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center overflow-hidden border-2 border-primary-fixed">
+<img class="w-full h-full object-cover" data-alt="A warm, professional portrait of a smiling local chef in a bright, modern kitchen setting. The lighting is soft and natural, emphasizing a neighborhood feel. The image should use warm tones consistent with a friendly, local community service app. The background shows hints of a clean, organized kitchen workspace." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCtvxgmPUl9Z5FsRCWTKqfTsj9fkHwS4NhXlR946LTOBGI84zbbIGZUGWM4yfuOkqo6pLxxDT-b_LUW8-bwWY8-UppmMOpKUre5p8FnlwZIxnxiD2pbgMZb7EzBD6l68YcSAFgJ13exCWNpphQjtK3FjMtquTNcxxd4BjRbTXxHq0rMoiLKWspZYnYXl8TDlecYAtDEAJ3XK7ubXYSTsaRYTTQrJmJ_2zbXyivqyytO-I-Cb9D9svzOnmsZEi97J6YUfbNXQ_3uTIyc"/>
+</div>
+<h1 class="font-display-lg-mobile text-display-lg-mobile text-primary font-black">DoorNext</h1>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-primary hover:opacity-80 transition-all active:translate-y-0.5" data-icon="notifications">notifications</button>
+</div>
+</header>
+<!-- Sidebar (Desktop) -->
+<aside class="hidden md:flex flex-col fixed left-0 top-16 h-[calc(100vh-64px)] w-64 bg-surface-container-lowest border-r border-outline-variant p-4 gap-2 z-40">
+<div class="mb-8">
+<h2 class="font-display-lg text-primary text-xl font-bold">Control Hub</h2>
+<p class="font-body-md text-on-surface-variant text-sm">System Administrator</p>
+</div>
+<nav class="flex flex-col gap-2">
+<a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 p-3 bg-primary-container text-on-primary-container font-bold rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">shopping_bag</span>
+<span class="font-body-md">Orders</span>
+</a>
+<a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+<span class="font-body-md">Wallet</span>
+</a>
+<a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-md">Settings</span>
+</a>
+</nav>
+<div class="mt-auto pt-4 border-t border-outline-variant">
+<span class="font-label-sm text-on-surface-variant opacity-50">v1.0.2</span>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="pt-24 pb-24 md:pl-72 px-gutter min-h-screen">
+<div class="max-w-6xl mx-auto">
+<!-- Header Section -->
+<header class="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface mb-2">Active Orders</h2>
+<p class="text-on-surface-variant max-w-xl">Keep your neighbors happy! Update order statuses as you prepare their home-cooked meals.</p>
+</div>
+<div class="flex items-center gap-3 bg-surface p-1 rounded-full shadow-sm border border-outline-variant">
+<button class="px-6 py-2 rounded-full bg-primary text-white font-bold text-sm transition-all active:scale-95">Kanban View</button>
+<button class="px-6 py-2 rounded-full text-on-surface-variant font-bold text-sm hover:bg-surface-container transition-all active:scale-95">List View</button>
+</div>
+</header>
+<!-- Kanban Board -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+<!-- Preparing Column -->
+<section class="space-y-4">
+<div class="flex items-center justify-between px-2 mb-2">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-primary-container"></span>
+<h3 class="font-title-lg text-title-lg uppercase tracking-wider text-xs font-bold text-on-surface-variant">Preparing (3)</h3>
+</div>
+</div>
+<!-- Card 1 -->
+<div class="order-card bg-surface-container-lowest p-5 rounded-xl shadow-[0_4px_30px_0_rgba(166,59,0,0.04)] border border-outline-variant relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-primary-container"></div>
+<div class="flex justify-between items-start mb-4">
+<div>
+<span class="font-label-sm text-primary">#ORD-4501</span>
+<h4 class="font-title-lg text-on-surface">Artisan Sourdough Loaf</h4>
+</div>
+<span class="bg-surface-container px-2 py-1 rounded text-primary font-label-sm">8:30 PM</span>
+</div>
+<div class="flex items-center gap-3 mb-6">
+<div class="w-8 h-8 rounded-full bg-surface-variant overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A small circular profile avatar of a friendly neighborly customer. High-key lighting, bright and clean aesthetic. Part of a warm community-focused mobile app interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBDnzThfSvYtFSxvU82S0UY5PWQNAnrifGn1JBlqYm8dqedF36Aj7gMIUb6SndTUIXSnwv-CDpOoquQ7eo45AR1KrocGhSKxBAnx3OrcB6zhVFYoxzgBzLGSmRSwgv9k0Js5HSteDa1zhnhZqSAbISYZQhQJNRe8SneX3SeCmsUvpdok4xGzC7nyWXSOgUAt3aWpDPg2QIgM2V2YAXEvoP3mwvzc_l_ljFVLS_rYnlmwJ7G7qE8tm43hZZ_qKLdzOGVJxbSwFPC9ZNp"/>
+</div>
+<span class="text-on-surface font-semibold text-sm">Elena Rodriguez</span>
+</div>
+<div class="flex flex-col gap-2">
+<button class="w-full bg-primary py-3 rounded-full text-white font-bold text-sm shadow-lg shadow-primary/20 hover:translate-y-[-2px] active:translate-y-[1px] transition-all flex items-center justify-center gap-2" onclick="updateStatus(this, 'ready')">
+<span>Mark as Ready</span>
+<span class="material-symbols-outlined text-sm">check_circle</span>
+</button>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="order-card bg-surface-container-lowest p-5 rounded-xl shadow-[0_4px_30px_0_rgba(166,59,0,0.04)] border border-outline-variant relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-primary-container"></div>
+<div class="flex justify-between items-start mb-4">
+<div>
+<span class="font-label-sm text-primary">#ORD-4505</span>
+<h4 class="font-title-lg text-on-surface">3x Homemade Empanadas</h4>
+</div>
+<span class="bg-surface-container px-2 py-1 rounded text-primary font-label-sm">8:45 PM</span>
+</div>
+<div class="flex items-center gap-3 mb-6">
+<div class="w-8 h-8 rounded-full bg-surface-variant overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A portrait of a male customer, smiling and friendly, in a casual setting. The lighting is soft and warm, suggesting a neighborly interaction in a suburban neighborhood environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_MZe3qbMoFWfY4GUggUiiyI5R1VDlr4XJJzlirgcrrguYxpu2mLxe0zAgmkv7svfSne-zsAICMXFEYl3aIvzKcHjXAV5pWnH_LGIotnvKWfNJqOchdQN7eK-5ExaiVFEklyL1BEnRE1X9gXRb5CNyGaZg6r0SUNQXFM1MnvK2QSv1_Qg86wss1u25XR0z9lQSoZ8bsuQRAYcDRchjfTWsayuKdfuvE_JSUj7z4GoHMfTJliZ6IBHvQiu_hRu8oP5frxfCbWQPjowV"/>
+</div>
+<span class="text-on-surface font-semibold text-sm">Marcus Chen</span>
+</div>
+<button class="w-full bg-primary py-3 rounded-full text-white font-bold text-sm shadow-lg shadow-primary/20 hover:translate-y-[-2px] active:translate-y-[1px] transition-all flex items-center justify-center gap-2" onclick="updateStatus(this, 'ready')">
+<span>Mark as Ready</span>
+<span class="material-symbols-outlined text-sm">check_circle</span>
+</button>
+</div>
+</section>
+<!-- Ready for Pickup Column -->
+<section class="space-y-4">
+<div class="flex items-center justify-between px-2 mb-2">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-neighborhood-green"></span>
+<h3 class="font-title-lg text-title-lg uppercase tracking-wider text-xs font-bold text-on-surface-variant">Ready (1)</h3>
+</div>
+</div>
+<div class="order-card bg-surface-container-lowest p-5 rounded-xl shadow-[0_4px_30px_0_rgba(166,59,0,0.04)] border border-outline-variant relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-neighborhood-green"></div>
+<div class="flex justify-between items-start mb-4">
+<div>
+<span class="font-label-sm text-neighborhood-green">#ORD-4498</span>
+<h4 class="font-title-lg text-on-surface">Family Pasta Tray</h4>
+</div>
+<span class="bg-surface-container px-2 py-1 rounded text-neighborhood-green font-label-sm">READY</span>
+</div>
+<div class="flex items-center gap-3 mb-6">
+<div class="w-8 h-8 rounded-full bg-surface-variant overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A close-up shot of a diverse elderly woman smiling warmly, representing a regular customer. Bright, daylight photography style with natural warmth and soft focus background of a home patio." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCOEJtzSGKrx5HtwxiXJ9jvbyVPHOIpUGudTf2jBXgAsWxNB1kVrQuzVlZ7U1x0MMIUMBjVZJ9h3GKpxWBHbUDNXalkYtgoLiaRN3o-X6zFgM88SD9DO-b9dTvrHpbLugy0M4lAn4mrtT-NDYhAPRCFaSBtzjaghQFxfbwDNcef1Zoe5uHlN8Zd4Uc_IbarpGGNL130KInraLbpy61wrpWL7d7uDqz0j48jx9IJaKUbbDyp0hGFWFqWMGuKsnKM2bnELizL7gzG8jxg"/>
+</div>
+<span class="text-on-surface font-semibold text-sm">Mrs. Higgins</span>
+</div>
+<div class="bg-surface-container px-4 py-3 rounded-lg mb-4 flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-primary">local_shipping</span>
+</div>
+<div>
+<p class="text-xs text-on-surface-variant uppercase font-bold">Nexter Assigned</p>
+<p class="text-sm font-bold text-on-surface">Alex (2 mins away)</p>
+</div>
+</div>
+<button class="w-full bg-secondary py-3 rounded-full text-white font-bold text-sm shadow-md hover:translate-y-[-2px] active:translate-y-[1px] transition-all flex items-center justify-center gap-2" onclick="updateStatus(this, 'en-route')">
+<span>Handed to Nexter</span>
+<span class="material-symbols-outlined text-sm">handshake</span>
+</button>
+</div>
+</section>
+<!-- En Route Column -->
+<section class="space-y-4">
+<div class="flex items-center justify-between px-2 mb-2">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-tertiary"></span>
+<h3 class="font-title-lg text-title-lg uppercase tracking-wider text-xs font-bold text-on-surface-variant">En Route (2)</h3>
+</div>
+</div>
+<div class="order-card opacity-80 bg-surface-container-lowest p-5 rounded-xl shadow-sm border border-outline-variant relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-tertiary"></div>
+<div class="flex justify-between items-start mb-4">
+<div>
+<span class="font-label-sm text-tertiary">#ORD-4490</span>
+<h4 class="font-title-lg text-on-surface">Organic Berry Jam</h4>
+</div>
+<span class="bg-surface-container px-2 py-1 rounded text-tertiary font-label-sm">SHIPPED</span>
+</div>
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary text-lg">location_on</span>
+<span class="text-xs text-on-surface-variant">Oak Street (0.8 mi)</span>
+</div>
+<span class="font-label-sm text-neighborhood-green">ARRIVING SOON</span>
+</div>
+<div class="w-full bg-surface-container h-1 rounded-full overflow-hidden">
+<div class="bg-tertiary h-full w-[85%] animate-pulse"></div>
+</div>
+</div>
+<div class="order-card opacity-80 bg-surface-container-lowest p-5 rounded-xl shadow-sm border border-outline-variant relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-tertiary"></div>
+<div class="flex justify-between items-start mb-4">
+<div>
+<span class="font-label-sm text-tertiary">#ORD-4485</span>
+<h4 class="font-title-lg text-on-surface">Vegan Power Bowl</h4>
+</div>
+<span class="bg-surface-container px-2 py-1 rounded text-tertiary font-label-sm">SHIPPED</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary text-lg">location_on</span>
+<span class="text-xs text-on-surface-variant">Maple Ave (1.2 mi)</span>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar (Mobile only) -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 flex justify-around items-center px-4 pb-4 pt-2 shadow-[0_-4px_20px_0_rgba(166,59,0,0.08)] bg-surface rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-95 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">explore</span>
+<span class="font-label-sm text-label-sm">Explore</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 active:scale-95 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">shopping_bag</span>
+<span class="font-label-sm text-label-sm">Orders</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-95 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm">Wallet</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-95 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-sm text-label-sm">Profile</span>
+</a>
+</nav>
+<script>
+        function updateStatus(btn, nextStage) {
+            const card = btn.closest('.order-card');
+            
+            // Interaction effect
+            btn.classList.add('scale-95');
+            setTimeout(() => btn.classList.remove('scale-95'), 150);
+
+            // Simple visual feedback for the demo
+            if (nextStage === 'ready') {
+                btn.innerHTML = '<span>Handed Over</span> <span class="material-symbols-outlined text-sm">local_shipping</span>';
+                btn.classList.remove('bg-primary');
+                btn.classList.add('bg-secondary');
+                card.querySelector('.bg-primary-container').classList.replace('bg-primary-container', 'bg-neighborhood-green');
+            } else if (nextStage === 'en-route') {
+                card.style.opacity = '0.5';
+                btn.innerHTML = '<span>Out for Delivery</span> <span class="material-symbols-outlined text-sm">check</span>';
+                btn.disabled = true;
+            }
+        }
+    </script>
+</body></html>

@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Neighbor Profile | DoorNext</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600&amp;family=Anybody:wght@700;800&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-container": "#009ade",
+                        "on-surface-variant": "#594138",
+                        "surface-variant": "#f7ddd4",
+                        "on-primary-fixed": "#370e00",
+                        "outline-variant": "#e1bfb3",
+                        "on-secondary-container": "#656464",
+                        "surface-container-low": "#fff1ec",
+                        "on-primary-fixed-variant": "#7f2b00",
+                        "on-primary-container": "#4f1800",
+                        "on-surface": "#261813",
+                        "background": "#fff8f6",
+                        "tertiary-fixed-dim": "#8cceff",
+                        "surface-container-highest": "#f7ddd4",
+                        "error-container": "#ffdad6",
+                        "primary-fixed": "#ffdbce",
+                        "surface-dim": "#eed5cc",
+                        "on-error-container": "#93000a",
+                        "error": "#ba1a1a",
+                        "on-error": "#ffffff",
+                        "tertiary-fixed": "#cae6ff",
+                        "surface-bright": "#fff8f6",
+                        "inverse-surface": "#3c2d27",
+                        "neighborhood-green": "#2D6A4F",
+                        "secondary-container": "#e5e2e1",
+                        "secondary-fixed-dim": "#c9c6c5",
+                        "surface-container": "#ffe9e2",
+                        "secondary-fixed": "#e5e2e1",
+                        "surface-tint": "#a63b00",
+                        "on-tertiary": "#ffffff",
+                        "on-tertiary-container": "#002d45",
+                        "surface-container-high": "#fde3da",
+                        "on-secondary": "#ffffff",
+                        "outline": "#8d7166",
+                        "surface-cream": "#FDFCFB",
+                        "primary-fixed-dim": "#ffb599",
+                        "on-secondary-fixed": "#1c1b1b",
+                        "on-tertiary-fixed": "#001e2f",
+                        "warm-gray": "#736F6E",
+                        "secondary": "#5f5e5e",
+                        "primary-container": "#f26522",
+                        "tertiary": "#006492",
+                        "surface-container-lowest": "#ffffff",
+                        "on-background": "#261813",
+                        "inverse-on-surface": "#ffede7",
+                        "primary": "#a63b00",
+                        "surface": "#fff8f6",
+                        "on-primary": "#ffffff",
+                        "on-secondary-fixed-variant": "#474646",
+                        "inverse-primary": "#ffb599",
+                        "on-tertiary-fixed-variant": "#004b6f"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-padding-desktop": "2.5rem",
+                        "section-gap": "4rem",
+                        "gutter": "1.5rem",
+                        "container-padding-mobile": "1.25rem",
+                        "base": "8px"
+                    },
+                    "fontFamily": {
+                        "title-lg": ["Plus Jakarta Sans"],
+                        "display-lg": ["Anybody"],
+                        "label-sm": ["JetBrains Mono"],
+                        "headline-md": ["Anybody"],
+                        "display-lg-mobile": ["Anybody"],
+                        "body-md": ["Plus Jakarta Sans"],
+                        "body-lg": ["Plus Jakarta Sans"],
+                        "headline-md-mobile": ["Anybody"]
+                    },
+                    "fontSize": {
+                        "title-lg": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                        "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                        "label-sm": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "headline-md": ["32px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                        "display-lg-mobile": ["36px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                        "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "headline-md-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #FDFCFB;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 1.5rem;
+        }
+        .bento-item {
+            border: 1px solid #E5E5E5;
+            transition: all 0.3s ease;
+        }
+        .bento-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 30px 30px rgba(242, 101, 34, 0.08);
+        }
+        @media (max-width: 768px) {
+            .bento-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-on-surface">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-container-padding-mobile md:px-container-padding-desktop py-4 bg-surface dark:bg-on-surface">
+<div class="flex items-center gap-4">
+<div class="relative">
+<div class="w-10 h-10 rounded-full bg-surface-variant overflow-hidden border-2 border-primary ring-2 ring-primary-fixed">
+<img class="w-full h-full object-cover" data-alt="A warm, professional portrait of a friendly neighborhood courier with a bright, welcoming smile. The lighting is soft and golden, suggesting early morning in a leafy, upscale suburban neighborhood. The background shows a hint of a local organic bakery. The aesthetic is clean, modern, and human-centric with a warm color palette." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCKkmaswDhwsdR_znpxhFWeEwXL0NN4s5I42lXLpMquqe_OV0fOIIR-V8odHu49PH5DMNKkbY3t3buW0WmsbNA7QlY6hRBEswPMKVP1n38fLy8lXFQA0_zeCeCZTZUqyHEeX-ADFwo5suErdKDF0cqOwPjtJ_lK9StpFsXzRF7uSK5ZsSrEf8ai6AiBlNhwx5X4HIpF2NEmUu1JIo-dNImU8WWeRdz7fwJyqDEVWWjoMPxSpebwYAPbIp9NYzIWAEVvB0pibc0KpMgS"/>
+</div>
+<div class="absolute -bottom-1 -right-1 w-4 h-4 bg-neighborhood-green rounded-full border-2 border-surface"></div>
+</div>
+<h1 class="font-display-lg-mobile md:font-display-lg text-primary-container dark:text-primary-fixed">DoorNext</h1>
+</div>
+<div class="flex items-center gap-6">
+<nav class="hidden md:flex gap-8">
+<a class="text-on-surface-variant hover:bg-surface-variant transition-colors px-2 py-1 rounded-lg" href="#">Explore</a>
+<a class="text-on-surface-variant hover:bg-surface-variant transition-colors px-2 py-1 rounded-lg" href="#">Orders</a>
+<a class="text-on-surface-variant hover:bg-surface-variant transition-colors px-2 py-1 rounded-lg" href="#">Community</a>
+<a class="text-primary-container dark:text-primary-fixed font-bold" href="#">Profile</a>
+</nav>
+<button class="active:scale-95 duration-150 ease-in-out">
+<span class="material-symbols-outlined text-primary-container text-3xl">swap_horizontal_circle</span>
+</button>
+</div>
+</header>
+<main class="pt-24 pb-32 px-container-padding-mobile md:px-container-padding-desktop max-w-[1280px] mx-auto">
+<!-- Profile Hero Section -->
+<section class="mb-section-gap flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div>
+<span class="font-label-sm text-label-sm text-primary uppercase tracking-widest bg-surface-container rounded px-3 py-1">Neighbor Level: Rider</span>
+<h2 class="font-headline-md-mobile md:font-headline-md mt-2">Welcome back, Marcus!</h2>
+<p class="text-on-surface-variant mt-1">Spreading joy across Silver Lake since 2022.</p>
+</div>
+<div class="flex gap-3">
+<button class="px-6 py-3 bg-secondary rounded-full text-white font-semibold hover:translate-y-[-2px] transition-all flex items-center gap-2">
+<span class="material-symbols-outlined">edit</span>
+                    Edit Profile
+                </button>
+<button class="px-6 py-3 bg-primary-container rounded-full text-white font-semibold hover:translate-y-[-2px] transition-all flex items-center gap-2">
+<span class="material-symbols-outlined">share</span>
+                    Share Link
+                </button>
+</div>
+</section>
+<!-- Stats Bento Grid -->
+<div class="bento-grid mb-gutter">
+<!-- Total Impact Card -->
+<div class="bento-item col-span-1 md:col-span-8 bg-surface-container-lowest rounded-xl p-8 relative overflow-hidden">
+<div class="relative z-10">
+<h3 class="font-title-lg text-title-lg mb-6">Local Neighborhood Impact</h3>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant mb-1 uppercase">Support Hours</p>
+<p class="font-display-lg-mobile md:font-display-lg text-primary-container">1,240</p>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant mb-1 uppercase">Neighbors Served</p>
+<p class="font-display-lg-mobile md:font-display-lg text-neighborhood-green">482</p>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant mb-1 uppercase">DoorMiles</p>
+<p class="font-display-lg-mobile md:font-display-lg text-tertiary">3,120</p>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant mb-1 uppercase">Eco Savings</p>
+<p class="font-display-lg-mobile md:font-display-lg text-on-primary-fixed-variant">12kg</p>
+</div>
+</div>
+</div>
+<div class="absolute top-0 right-0 p-8 opacity-10">
+<span class="material-symbols-outlined text-[120px]">volunteer_activism</span>
+</div>
+</div>
+<!-- Earnings/Wallet Quick Look -->
+<div class="bento-item col-span-1 md:col-span-4 bg-inverse-surface text-white rounded-xl p-8 flex flex-col justify-between">
+<div>
+<h3 class="font-title-lg text-title-lg mb-2">Neighborhood Wallet</h3>
+<p class="text-outline-variant font-label-sm text-label-sm">Next payout: Friday, Oct 27</p>
+</div>
+<div class="mt-8">
+<p class="font-label-sm text-label-sm text-primary-fixed-dim uppercase tracking-widest mb-1">Current Balance</p>
+<p class="text-4xl font-label-sm text-primary-fixed">$1,482.50</p>
+</div>
+<button class="mt-8 w-full py-4 border border-outline-variant rounded-full font-semibold hover:bg-on-surface-variant transition-colors">
+                    Withdraw Funds
+                </button>
+</div>
+<!-- Role Management: Nexter -->
+<div class="bento-item col-span-1 md:col-span-4 bg-white rounded-xl p-6">
+<div class="flex items-center justify-between mb-6">
+<div class="w-12 h-12 bg-surface-container rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-3xl">delivery_dining</span>
+</div>
+<span class="bg-neighborhood-green/10 text-neighborhood-green font-label-sm text-label-sm px-3 py-1 rounded-full">Active Role</span>
+</div>
+<h4 class="font-title-lg text-title-lg mb-1">Nexter Level</h4>
+<p class="text-on-surface-variant mb-6 text-sm">Mastering the local routes. 5.0 Trust Score.</p>
+<div class="space-y-4">
+<div class="flex justify-between items-center text-sm">
+<span>Reliability</span>
+<div class="w-32 bg-surface-container rounded-full h-2">
+<div class="bg-neighborhood-green h-2 rounded-full" style="width: 98%"></div>
+</div>
+</div>
+<button class="w-full py-3 bg-secondary-container text-on-secondary-fixed rounded-lg font-semibold text-sm">Manage Deliveries</button>
+</div>
+</div>
+<!-- Role Management: Maker -->
+<div class="bento-item col-span-1 md:col-span-4 bg-white rounded-xl p-6 border-dashed border-2 border-outline-variant">
+<div class="flex items-center justify-between mb-6">
+<div class="w-12 h-12 bg-surface-container rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-3xl">storefront</span>
+</div>
+<span class="bg-on-surface-variant/10 text-on-surface-variant font-label-sm text-label-sm px-3 py-1 rounded-full">Inactive</span>
+</div>
+<h4 class="font-title-lg text-title-lg mb-1">DoorMaker Status</h4>
+<p class="text-on-surface-variant mb-6 text-sm">Sell your homemade crafts or kitchen delights.</p>
+<button class="w-full py-3 bg-primary-container text-white rounded-lg font-semibold text-sm">Apply to be a Maker</button>
+</div>
+<!-- Community Hub -->
+<div class="bento-item col-span-1 md:col-span-4 bg-tertiary-fixed rounded-xl p-6 flex flex-col justify-between">
+<div>
+<h4 class="font-title-lg text-title-lg text-on-tertiary-fixed mb-2">Community Rank</h4>
+<p class="text-on-tertiary-fixed-variant text-sm">You are in the top 5% of local supporters in Silver Lake!</p>
+</div>
+<div class="mt-6 flex -space-x-3">
+<div class="w-10 h-10 rounded-full border-2 border-white overflow-hidden bg-gray-200">
+<img class="w-full h-full object-cover" data-alt="Close up face portrait of a smiling older woman with grey hair and stylish glasses, warm outdoor lighting, neighborhood bakery background. Corporate modern aesthetic, soft focus." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAA1cfuIk68WVuJJgG43qD5DcHZIFBuJBo3HGWrzcuFhigCNSEv3zM2R4RqNIaKvwGxFp8a0IuaAaiREa9PVzAY5XmnS3mdHF4V5RQwAosUvze-4DLzW3vaSABA8FAa-pCYK0ikE8rOMANyelKuSuYVETLwW4P12in5Yi0GKd2dDgmhb_voUmT20nO3PwL8ckvJ0tEbvxy0goaFA2bSQOtPAcqIOVqE2r6naDv6omVhmI7pOxFvtkjiNHMYtIsL8JY0qr_27l7tF57K"/>
+</div>
+<div class="w-10 h-10 rounded-full border-2 border-white overflow-hidden bg-gray-200">
+<img class="w-full h-full object-cover" data-alt="Portrait of a young man with curly hair and a friendly expression wearing a green linen shirt. Natural lighting, city park background. Modern, neighborly feel." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBTR3l2T-xUmFpLE6NLRyBOYIenLA9kn8jeztxolokQnM3IY5vSe28sAPHnXjQGwRakSGRz7YdvoLnexdq0DpFdkDdMCJ8WLCGE3vXb_6xcZdo6fI7GmoZ2RT7e8Rjs7vmsjr1qVpRZkAGB4CuAu7r0UyBElObJrdp2fsbuMDAxn6jvH8Q5nfaYrzhFTQHBEa8932zhLryywb47vHfPGS3dChBVhYcL65ELq04MFLNWDctwq91GsSBLzI98wzWYb0qrbZ2WFpqC8Xkw"/>
+</div>
+<div class="w-10 h-10 rounded-full border-2 border-white overflow-hidden bg-gray-200">
+<img class="w-full h-full object-cover" data-alt="Portrait of a woman with braided hair and a cheerful smile, looking into the camera. Bright afternoon lighting in a residential street. Warm, high-end photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBE6vX7TMSSy7L13eNvpombzQ8_YhWHsazZ_6Up-c1ncypOddJY2MlCTl959jX143eSXw3aWu8iW_slFBAFT7S_M4V8XFV7vi6N0R9n0Hovg8bWdNeMR4_4aWuO7ZFdQxQudzsFbubFaQ1DUiQKG-5yDi0i8eoAJzt0ZPAM1ViScI1bhmnYvz52zCd8oegxCXToIVUni9F94SlYEiKO_Sa7fcFpnYrkY0MXhw7Q7VDim-Yz9ndkG6P68VZstRIl4S4LEJcx_BRuAJc9"/>
+</div>
+<div class="w-10 h-10 rounded-full border-2 border-white bg-tertiary text-white flex items-center justify-center font-label-sm text-xs">
+                        +84
+                    </div>
+</div>
+</div>
+</div>
+<!-- Account Settings Menu Section -->
+<section class="mt-section-gap grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<div class="space-y-4">
+<h3 class="font-headline-md-mobile text-headline-md-mobile mb-4">Account Essentials</h3>
+<div class="bg-white rounded-xl border border-outline-variant overflow-hidden">
+<a class="flex items-center justify-between p-5 hover:bg-surface-container-low transition-colors group" href="#">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary">person_check</span>
+<div>
+<p class="font-semibold">Personal Information</p>
+<p class="text-xs text-on-surface-variant">Update contact and address details</p>
+</div>
+</div>
+<span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">chevron_right</span>
+</a>
+<div class="h-[1px] bg-outline-variant mx-5"></div>
+<a class="flex items-center justify-between p-5 hover:bg-surface-container-low transition-colors group" href="#">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary">verified_user</span>
+<div>
+<p class="font-semibold">Verification &amp; Trust</p>
+<p class="text-xs text-on-surface-variant">Level 3 Background Check Completed</p>
+</div>
+</div>
+<span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">chevron_right</span>
+</a>
+<div class="h-[1px] bg-outline-variant mx-5"></div>
+<a class="flex items-center justify-between p-5 hover:bg-surface-container-low transition-colors group" href="#">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary">notifications</span>
+<div>
+<p class="font-semibold">Neighborhood Alerts</p>
+<p class="text-xs text-on-surface-variant">Manage push and SMS notifications</p>
+</div>
+</div>
+<span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">chevron_right</span>
+</a>
+</div>
+</div>
+<div class="space-y-4">
+<h3 class="font-headline-md-mobile text-headline-md-mobile mb-4">Support &amp; Legal</h3>
+<div class="bg-white rounded-xl border border-outline-variant overflow-hidden">
+<a class="flex items-center justify-between p-5 hover:bg-surface-container-low transition-colors group" href="#">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary">help_center</span>
+<div>
+<p class="font-semibold">Help Center</p>
+<p class="text-xs text-on-surface-variant">FAQs, guides, and neighbor support</p>
+</div>
+</div>
+<span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">chevron_right</span>
+</a>
+<div class="h-[1px] bg-outline-variant mx-5"></div>
+<a class="flex items-center justify-between p-5 hover:bg-surface-container-low transition-colors group" href="#">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary">policy</span>
+<div>
+<p class="font-semibold">Community Guidelines</p>
+<p class="text-xs text-on-surface-variant">Our neighborly code of conduct</p>
+</div>
+</div>
+<span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">chevron_right</span>
+</a>
+<div class="h-[1px] bg-outline-variant mx-5"></div>
+<button class="w-full flex items-center justify-between p-5 hover:bg-error-container/20 transition-colors group text-error">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined">logout</span>
+<div>
+<p class="font-semibold">Logout</p>
+<p class="text-xs opacity-70">Sign out of Silver Lake hub</p>
+</div>
+</div>
+</button>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-safe pt-2 bg-surface-container-lowest dark:bg-inverse-surface shadow-lg rounded-t-xl">
+<button class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim px-5 py-1 hover:text-primary transition-all">
+<span class="material-symbols-outlined">explore</span>
+<span class="font-label-sm text-label-sm">Explore</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim px-5 py-1 hover:text-primary transition-all">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="font-label-sm text-label-sm">Orders</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim px-5 py-1 hover:text-primary transition-all">
+<span class="material-symbols-outlined">groups</span>
+<span class="font-label-sm text-label-sm">Community</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-primary-fixed dark:bg-on-primary-fixed-variant text-on-primary-container dark:text-primary-fixed rounded-full px-5 py-1 scale-90 duration-200">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-sm text-label-sm">Profile</span>
+</button>
+</nav>
+<!-- Floating Action Button (Contextual for Profile - "Get Help") -->
+<button class="fixed bottom-24 right-6 w-14 h-14 bg-deep-black text-white rounded-full shadow-2xl flex items-center justify-center active:scale-95 transition-all z-40 md:bottom-10" style="background-color: #261813;">
+<span class="material-symbols-outlined">contact_support</span>
+</button>
+<script>
+        // Micro-interaction for role cards
+        document.querySelectorAll('.bento-item').forEach(item => {
+            item.addEventListener('mouseenter', () => {
+                const icon = item.querySelector('.material-symbols-outlined');
+                if (icon) {
+                    icon.style.transform = 'scale(1.1) rotate(5deg)';
+                    icon.style.transition = 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                }
+            });
+            item.addEventListener('mouseleave', () => {
+                const icon = item.querySelector('.material-symbols-outlined');
+                if (icon) {
+                    icon.style.transform = 'scale(1) rotate(0deg)';
+                }
+            });
+        });
+
+        // Theme sync or simulation could go here
+    </script>
+</body></html>

@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>DoorNext Community Feed</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Anybody:wght@400;600;700;800;900&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                "surface-container-lowest": "#ffffff",
+                "on-secondary": "#ffffff",
+                "surface-container-high": "#fde3da",
+                "on-tertiary-container": "#002d45",
+                "inverse-on-surface": "#ffede7",
+                "on-tertiary-fixed-variant": "#004b6f",
+                "on-background": "#261813",
+                "surface-tint": "#a63b00",
+                "on-primary-fixed": "#370e00",
+                "surface-container": "#ffe9e2",
+                "surface-bright": "#fff8f6",
+                "on-secondary-fixed-variant": "#474646",
+                "tertiary-fixed": "#cae6ff",
+                "tertiary": "#006492",
+                "on-secondary-fixed": "#1c1b1b",
+                "inverse-primary": "#ffb599",
+                "surface-dim": "#eed5cc",
+                "surface-cream": "#FDFCFB",
+                "background": "#fff8f6",
+                "on-surface": "#261813",
+                "primary": "#a63b00",
+                "outline-variant": "#e1bfb3",
+                "primary-container": "#f26522",
+                "neighborhood-green": "#2D6A4F",
+                "surface-container-low": "#fff1ec",
+                "secondary": "#5f5e5e",
+                "surface-variant": "#f7ddd4",
+                "on-secondary-container": "#656464",
+                "on-primary": "#ffffff",
+                "error-container": "#ffdad6",
+                "surface": "#fff8f6",
+                "surface-container-highest": "#f7ddd4",
+                "tertiary-container": "#009ade",
+                "inverse-surface": "#3c2d27",
+                "on-surface-variant": "#594138",
+                "on-primary-fixed-variant": "#7f2b00",
+                "on-tertiary": "#ffffff",
+                "on-primary-container": "#4f1800",
+                "on-error": "#ffffff",
+                "error": "#ba1a1a",
+                "warm-gray": "#736F6E",
+                "secondary-fixed-dim": "#c9c6c5",
+                "secondary-container": "#e5e2e1",
+                "primary-fixed-dim": "#ffb599",
+                "tertiary-fixed-dim": "#8cceff",
+                "secondary-fixed": "#e5e2e1",
+                "on-error-container": "#93000a",
+                "outline": "#8d7166",
+                "on-tertiary-fixed": "#001e2f",
+                "primary-fixed": "#ffdbce"
+              },
+              "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "full": "9999px"
+              },
+              "spacing": {
+                "gutter": "1.5rem",
+                "container-padding-desktop": "2.5rem",
+                "section-gap": "4rem",
+                "container-padding-mobile": "1.25rem",
+                "base": "8px"
+              },
+              "fontFamily": {
+                "display-lg": ["Anybody"],
+                "display-lg-mobile": ["Anybody"],
+                "body-md": ["Plus Jakarta Sans"],
+                "body-lg": ["Plus Jakarta Sans"],
+                "label-sm": ["JetBrains Mono"],
+                "headline-md-mobile": ["Anybody"],
+                "title-lg": ["Plus Jakarta Sans"],
+                "headline-md": ["Anybody"]
+              },
+              "fontSize": {
+                "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                "display-lg-mobile": ["36px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                "label-sm": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                "headline-md-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                "title-lg": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                "headline-md": ["32px", {"lineHeight": "1.2", "fontWeight": "700"}]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .scrolling-hide::-webkit-scrollbar { display: none; }
+        .scrolling-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        @media (min-width: 1024px) {
+            .bento-grid {
+                grid-template-columns: repeat(4, 1fr);
+                grid-auto-rows: minmax(180px, auto);
+            }
+            .bento-wide { grid-column: span 2; }
+            .bento-tall { grid-row: span 2; }
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-cream text-on-surface font-body-md selection:bg-primary-container selection:text-on-primary-container">
+<!-- Top AppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface dark:bg-surface-dim flex justify-between items-center px-container-padding-mobile md:px-gutter h-16">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary overflow-hidden border-2 border-primary-container">
+<img class="w-full h-full object-cover" data-alt="A warm and friendly professional portrait of a smiling community member with a blurred background of a cozy local kitchen. The lighting is soft and natural, emphasizing the neighborly vibe of DoorNext. The color palette features rich oranges and soft creams to match the brand identity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAvUyn62aTamTjmMxHGVMuhmIdTK0Xq_d0I5FRDG4XuaOM6tnuLgIsXM5FDb5XYeF7AFuaf731HykI5E5q3K853feLra5p9cT7INPIHDVEQQHvu8QId4h86romKKM9o_EBdMu_Jp2Yvgi68U3rlpXt5y6aODepzbMR7s72am9tfHAMdhkQbrFsC8hK-qWxOv5fET7IfSK_culDF_GMwP2oLykPulQpHlUJOGPGytJVVMpyL2tcd2irp6bbhdiMxxC7Ax2VkESZuaWMI"/>
+</div>
+<h1 class="font-display-lg-mobile text-display-lg-mobile text-primary font-black">DoorNext</h1>
+</div>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:opacity-80 active:translate-y-0.5 transition-all">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</header>
+<main class="pt-20 pb-28 px-container-padding-mobile md:px-container-padding-desktop max-w-7xl mx-auto">
+<!-- Neighborhood Impact Hero -->
+<section class="mb-10">
+<div class="relative overflow-hidden rounded-[2rem] bg-inverse-surface p-8 md:p-12 text-inverse-on-surface">
+<div class="absolute top-0 right-0 p-6">
+<span class="font-label-sm text-label-sm bg-neighborhood-green px-4 py-2 rounded-full text-white uppercase tracking-widest">Live Milestone</span>
+</div>
+<div class="relative z-10 max-w-2xl">
+<h2 class="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg mb-4 text-primary-fixed">100th delivery in Oakwood!</h2>
+<p class="font-body-lg text-body-lg opacity-90 mb-8">Sarah just delivered homemade sourdough from Mrs. Gable. Our neighborhood is thriving one bite at a time.</p>
+<div class="flex items-center gap-4">
+<div class="flex -space-x-3">
+<div class="w-12 h-12 rounded-full border-4 border-inverse-surface overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Close-up portrait of a local artisan baker, a woman in her 50s with a warm, genuine smile, wearing a flour-dusted apron. The background shows a rustic stone-walled kitchen with freshly baked bread. Warm sunlight filters through a window, creating a tactile and home-cooked atmosphere." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAl2fVwZE9ttHrfLP4E1gslt_hbeVa1FtHlW30AGQjbZEF-UZ5x72pijrXpeXv2QLAe4Q_e55mayKkgIR26_6MyGiuuoj_TUvPHJKhiWg_0GyU3qwizPVHROkSv3fmoE9l6zMyo0_jA-EO25IBpSVPV6YiW1ISQwDjDLpSlCBzykWQk9PSKPWVGpfFM4WUss_3dv9cFZMUgNaBBh_02qjTxN4IZyPwTfsmj_dkqDbA_BIWGt1Siu_AHkzwrv241p7DhOOu4ircGwqp7"/>
+</div>
+<div class="w-12 h-12 rounded-full border-4 border-inverse-surface overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A portrait of a cheerful delivery courier, a young adult with a friendly expression, standing on a leafy suburban sidewalk during the golden hour. They are holding a clean, paper delivery bag with the DoorNext logo. The mood is optimistic and professional yet approachable." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBKw6dbNHj2aiD3HgKJ7TncEXkU0mUrzunmX58WByo5CYUSgyLAmnzlGFx5Ox9hupzOn__MxupVapyJ3JJQbh-W-6ghp4xD719uDKzYnyhDZ-33CYjujFCIDCIBxm8cKL8mVJTnxWKrsVGQRRjnlMMbGeBFxFA8yuULsydJ3LhWI0mnYik-GlADwL5kjmqVZQ8zn0vNaD3o-XItGPEvs7xuNzLRTB9NhAFlBdWCKPTSEikk3b0nX_ccJgSSIX3B0Oj3VHW4qDA9Wj3o"/>
+</div>
+<div class="w-12 h-12 rounded-full border-4 border-inverse-surface bg-primary-container flex items-center justify-center font-bold text-on-primary-container">+42</div>
+</div>
+<span class="font-label-sm text-label-sm">Neighbors active now</span>
+</div>
+</div>
+<!-- Abstract visual element -->
+<div class="absolute bottom-[-10%] right-[-5%] w-64 h-64 bg-primary-container opacity-10 rounded-full blur-3xl"></div>
+</div>
+</section>
+<!-- The Community Feed: Bento Grid Layout -->
+<div class="bento-grid">
+<!-- Thank You Note Card -->
+<div class="bento-wide bg-surface-container-low rounded-[2rem] p-6 border border-outline-variant hover:shadow-lg transition-all duration-300">
+<div class="flex items-start justify-between mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A portrait of a smiling middle-aged man with kind eyes, sitting in a bright sunroom. He is dressed in casual, high-quality home wear. The image is bright and airy, with soft shadows and a high-end minimalist aesthetic that feels neighborly and warm." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgaXyI1RZeCfIO2tnlSXjyJMDQd4TyAArgLBPWAecJ1byJdRjYnpNzZ7Lq809KGQ2e431aGSr3hjiT2sGwldF5DujDymDtZK5N3u2CdWJRpz5pnSm6gHZGiZuJksrzs5492sWlmBsmoMxXLBcFGawoy58sfI111tk9fL_oGDt6kjSo66qn_DrIlV4I3z31Q2S5i4YX2PwVaivZa7ILUyEWI4jOsjm8JdbhME3PtaTAYM1xwJVB__Ap1mjEvLz-UD688bg-PFNDri_a"/>
+</div>
+<div>
+<p class="font-title-lg text-on-surface">Mark from Maple St.</p>
+<p class="text-xs text-on-surface-variant font-label-sm uppercase">TO: DOORMAKER ELENA</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">favorite</span>
+</div>
+<blockquote class="font-body-lg text-body-lg italic text-on-surface-variant mb-4">
+                    "The empanadas reminded me of my grandmother's kitchen. Elena, thank you for sharing your gift with us. The neighborhood is luckier for it!"
+                </blockquote>
+<div class="flex gap-2">
+<span class="bg-surface px-3 py-1 rounded-full text-[10px] font-label-sm border border-outline-variant">#Homemade</span>
+<span class="bg-surface px-3 py-1 rounded-full text-[10px] font-label-sm border border-outline-variant">#OakwoodEats</span>
+</div>
+</div>
+<!-- Meal Photo Card -->
+<div class="bento-tall bg-white rounded-[2rem] overflow-hidden border border-outline-variant group">
+<div class="relative h-[60%] overflow-hidden">
+<img class="group-hover:scale-105 transition-transform duration-500 w-full h-full object-cover" data-alt="A top-down, high-resolution food photograph of authentic Mexican tacos on a ceramic artisanal plate. Fresh cilantro, diced onions, and vibrant salsa verde are sprinkled over perfectly charred meat. The lighting is warm and directional, making the textures pop against a dark wooden table background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCPg_JHfEogZUC4DPPHbyTnsovWKqlhkFT2Lceksc6E7vfGiIhAEnZfSRi1At80pipmjhFBilhmBVW-Z5jXUflzRz6r7F9MyMVN8Xa2MZgLia00-vDTiFLE8z9WIH6I3HgeLoZfXHxaX7XobKgFEjFrIAcIJWy3x0Qhp2H4n6LP2pLgBG3ael8PWPpA5dgoFvu7KJ0QyHboKZPGy6lMdRGH9qROSiR-Uv4BLtP-6c_dfyJ-5XO-vY-YCs5lb3sn1TgA9Pa_w9URacCf"/>
+<div class="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full">
+<span class="font-label-sm text-[10px] text-primary">JUST ORDERED</span>
+</div>
+</div>
+<div class="p-6">
+<div class="flex items-center justify-between mb-2">
+<h3 class="font-title-lg text-title-lg">Street Tacos</h3>
+<span class="font-label-sm text-neighborhood-green">$12.50</span>
+</div>
+<p class="text-sm text-on-surface-variant mb-4">From "The Taco Queen" (2 blocks away)</p>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm text-on-surface-variant">location_on</span>
+<span class="text-xs font-label-sm">Highland Park</span>
+</div>
+</div>
+</div>
+<!-- Impact Metric Card -->
+<div class="bg-primary text-white rounded-[2rem] p-6 flex flex-col justify-between">
+<span class="material-symbols-outlined text-4xl opacity-50">eco</span>
+<div>
+<p class="font-display-lg text-display-lg mb-0">1.2k</p>
+<p class="font-label-sm text-xs uppercase tracking-widest opacity-80">CO2 Pounds Saved</p>
+</div>
+<p class="text-xs mt-4 opacity-70">By choosing Nexter bicycle deliveries this month.</p>
+</div>
+<!-- Community Invite Card -->
+<div class="bg-surface-container-highest rounded-[2rem] p-6 border-2 border-dashed border-primary/30 flex flex-col items-center justify-center text-center">
+<div class="w-16 h-16 rounded-full bg-white flex items-center justify-center mb-4 text-primary shadow-sm">
+<span class="material-symbols-outlined text-3xl">add_a_photo</span>
+</div>
+<h4 class="font-title-lg text-primary">Share your meal</h4>
+<p class="text-sm text-on-surface-variant mt-2 px-4">Inspire your neighbors with your latest find.</p>
+</div>
+<!-- Trending DoorMaker Card -->
+<div class="bento-wide bg-white rounded-[2rem] p-6 border border-outline-variant flex flex-col md:flex-row gap-6 items-center">
+<div class="w-32 h-32 flex-shrink-0 rounded-2xl overflow-hidden shadow-lg">
+<img class="w-full h-full object-cover" data-alt="A portrait of a young male baker with a friendly, modern look, standing in a brightly lit bakery studio. He is holding a basket of artisanal pastries. The background is clean and professional with soft, warm tones, reflecting a successful local business aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAeaeQDsa7C3UvZRXKHbAQs7Vz0H8bQB-_0eqKwpuIWJIaS_MUOEAc4OCiSHwppFMhQTUhIcSFoe1I9gMQq7_tYK1OVxN-Ec-JY8_Oyt9_2M3oHH9W-58-LW8r0uWVmgxF_fZBuO5ctKow47ymGmU6dqF6ujXsYyy8S4OUpF842fNNJh9DKaVw0syUsdrWyrbsawJRDTeFBcB6Iw6HDNDGD1TEUMahusqEiFgZ5wYIU8i3ramoAbf0F-8icY-_uz3jm2mHGpzEzs3s2"/>
+</div>
+<div class="flex-grow">
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-sm text-[10px] bg-surface-container px-2 py-1 rounded">TRENDING LOCAL</span>
+<div class="flex items-center text-primary">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-sm text-sm ml-1">4.9</span>
+</div>
+</div>
+<h3 class="font-display-lg-mobile text-on-surface">Chef Julian</h3>
+<p class="text-sm text-on-surface-variant mt-1">Specializing in French Pastries &amp; Sourdough. 15 neighbors ordered today!</p>
+<button class="mt-4 px-6 py-2 bg-primary text-white rounded-full font-label-sm hover:bg-on-primary-fixed-variant transition-colors active:scale-95">Visit Shop</button>
+</div>
+</div>
+<!-- Quick Poll Card -->
+<div class="bg-surface-cream border border-outline-variant rounded-[2rem] p-6">
+<h4 class="font-title-lg mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">poll</span>
+                    Neighbor Vote
+                </h4>
+<p class="text-sm mb-4">What should be next month's community focus?</p>
+<div class="space-y-2">
+<button class="w-full text-left px-4 py-3 rounded-xl bg-white border border-outline-variant hover:border-primary transition-all flex justify-between items-center group">
+<span class="text-sm">Zero-Waste Packaging</span>
+<span class="material-symbols-outlined text-primary opacity-0 group-hover:opacity-100">check_circle</span>
+</button>
+<button class="w-full text-left px-4 py-3 rounded-xl bg-white border border-outline-variant hover:border-primary transition-all flex justify-between items-center group">
+<span class="text-sm">New Farmers Market</span>
+<span class="material-symbols-outlined text-primary opacity-0 group-hover:opacity-100">check_circle</span>
+</button>
+</div>
+</div>
+<!-- Milestone Card -->
+<div class="bg-neighborhood-green text-white rounded-[2rem] p-6 flex flex-col justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-fixed">workspace_premium</span>
+<span class="font-label-sm text-[10px] uppercase tracking-tighter">Impact Level 4</span>
+</div>
+<div>
+<p class="font-title-lg">Top Neighborhood</p>
+<p class="text-sm opacity-80 mt-1">Oakwood is in the top 5% of local-first communities.</p>
+</div>
+<div class="mt-4 h-2 w-full bg-white/20 rounded-full overflow-hidden">
+<div class="h-full bg-primary-container w-3/4"></div>
+</div>
+</div>
+</div>
+</main>
+<!-- FAB: Post a Thank You -->
+<button class="fixed bottom-24 right-6 w-14 h-14 bg-primary text-white rounded-full shadow-2xl flex items-center justify-center active:scale-95 transition-transform z-[60]">
+<span class="material-symbols-outlined text-2xl">edit_note</span>
+</button>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 w-full z-50 bg-surface dark:bg-surface-dim flex justify-around items-center px-4 pb-4 pt-2 shadow-[0_-4px_20px_0_rgba(166,59,0,0.08)] rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-95 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">explore</span>
+<span class="font-label-sm text-label-sm">Explore</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 active:scale-95 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">diversity_3</span>
+<span class="font-label-sm text-label-sm">Community</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-95 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">shopping_bag</span>
+<span class="font-label-sm text-label-sm">Orders</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-95 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-sm text-label-sm">Profile</span>
+</a>
+</nav>
+<script>
+        // Simple intersection observer for reveal animations
+        const observerOptions = {
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('opacity-100', 'translate-y-0');
+                    entry.target.classList.remove('opacity-0', 'translate-y-4');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.bento-grid > div').forEach(card => {
+            card.classList.add('opacity-0', 'translate-y-4', 'transition-all', 'duration-700');
+            observer.observe(card);
+        });
+    </script>
+</body></html>

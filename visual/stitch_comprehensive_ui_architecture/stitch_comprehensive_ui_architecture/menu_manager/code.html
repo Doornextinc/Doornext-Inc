@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Menu Management | DoorNext</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Anybody:wght@700;800;900&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-highest": "#f7ddd4",
+                    "surface-container": "#ffe9e2",
+                    "inverse-on-surface": "#ffede7",
+                    "on-surface": "#261813",
+                    "warm-gray": "#736F6E",
+                    "on-secondary-fixed-variant": "#474646",
+                    "surface-tint": "#a63b00",
+                    "neighborhood-green": "#2D6A4F",
+                    "outline-variant": "#e1bfb3",
+                    "secondary-fixed-dim": "#c9c6c5",
+                    "on-tertiary-fixed-variant": "#004b6f",
+                    "tertiary": "#006492",
+                    "primary-container": "#f26522",
+                    "on-surface-variant": "#594138",
+                    "on-primary-container": "#4f1800",
+                    "on-error-container": "#93000a",
+                    "secondary-container": "#e5e2e1",
+                    "surface-dim": "#eed5cc",
+                    "secondary": "#5f5e5e",
+                    "on-primary": "#ffffff",
+                    "tertiary-fixed": "#cae6ff",
+                    "surface-container-low": "#fff1ec",
+                    "surface-bright": "#fff8f6",
+                    "secondary-fixed": "#e5e2e1",
+                    "on-secondary-fixed": "#1c1b1b",
+                    "on-primary-fixed": "#370e00",
+                    "surface-container-high": "#fde3da",
+                    "surface-cream": "#FDFCFB",
+                    "on-secondary-container": "#656464",
+                    "on-secondary": "#ffffff",
+                    "primary-fixed-dim": "#ffb599",
+                    "tertiary-fixed-dim": "#8cceff",
+                    "tertiary-container": "#009ade",
+                    "on-error": "#ffffff",
+                    "primary-fixed": "#ffdbce",
+                    "on-primary-fixed-variant": "#7f2b00",
+                    "surface": "#fff8f6",
+                    "on-tertiary-container": "#002d45",
+                    "background": "#fff8f6",
+                    "primary": "#a63b00",
+                    "on-background": "#261813",
+                    "outline": "#8d7166",
+                    "error-container": "#ffdad6",
+                    "surface-variant": "#f7ddd4",
+                    "surface-container-lowest": "#ffffff",
+                    "inverse-surface": "#3c2d27",
+                    "on-tertiary-fixed": "#001e2f",
+                    "on-tertiary": "#ffffff",
+                    "inverse-primary": "#ffb599",
+                    "error": "#ba1a1a"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "section-gap": "4rem",
+                    "gutter": "1.5rem",
+                    "container-padding-mobile": "1.25rem",
+                    "base": "8px",
+                    "container-padding-desktop": "2.5rem"
+            },
+            "fontFamily": {
+                    "title-lg": ["Plus Jakarta Sans"],
+                    "body-lg": ["Plus Jakarta Sans"],
+                    "display-lg": ["Anybody"],
+                    "display-lg-mobile": ["Anybody"],
+                    "headline-md-mobile": ["Anybody"],
+                    "body-md": ["Plus Jakarta Sans"],
+                    "label-sm": ["JetBrains Mono"],
+                    "headline-md": ["Anybody"]
+            },
+            "fontSize": {
+                    "title-lg": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "display-lg-mobile": ["36px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "headline-md-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "headline-md": ["32px", {"lineHeight": "1.2", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #2D6A4F; /* neighborhood-green */
+        }
+        .toggle-checkbox:checked + .toggle-label .toggle-dot {
+            transform: translateX(100%);
+        }
+        body {
+            background-color: #fff8f6;
+            color: #261813;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-body-md min-h-screen pb-24 lg:pb-0 lg:pl-64">
+<!-- Navigation Drawer (Desktop) -->
+<aside class="hidden md:flex fixed left-0 top-0 h-screen w-64 border-r border-outline-variant bg-surface-container-lowest flex-col p-4 gap-2 z-50" id="main-sidebar">
+<div class="font-display-lg text-display-lg text-primary mb-8 px-2">DoorNext</div>
+<div class="flex items-center gap-3 p-3 mb-6 bg-surface-container rounded-xl">
+<div class="w-12 h-12 rounded-full overflow-hidden border-2 border-primary">
+<img class="w-full h-full object-cover" data-alt="A warm, approachable portrait of Maya, a Latina chef in her late 30s wearing a clean white apron. She is standing in a brightly lit, homey kitchen with wooden shelves and potted herbs in the background. The photo is high-quality with a soft, neighborly glow, reflecting the brand's community-centric and tactile warmth style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD1CamJ200zlPPMWrlz5gmmz56b2lyglwCZE-XD6Q7x7dcCXYNO6lJ7MF5m-5Mctc17SGFmIR5ghc_5GZB7uYTsVMUOrMsvw9q-NaWjEC9EiBnDzulNsfWJ2gJAr_2h1KkvL4iz8h9MyG8AnstxHVsoKHxdq-fvOnDW8yNECHGlAL5xSPUHJa1ca67h4iVmTDK6p1D7wQTAkCBEOWx3nOs0FLO0LYWQKCCGQ1JPR5Lzhz8s6wlGmnLyCYnKPCb6fWc0W-Dj3sXTYnko"/>
+</div>
+<div>
+<p class="font-title-lg text-title-lg leading-tight">Control Hub</p>
+<p class="text-on-surface-variant text-sm">System Administrator</p>
+</div>
+</div>
+<nav class="space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-primary-container text-on-primary-container font-bold rounded-lg active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined">storefront</span>
+<span>Merchants</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">local_shipping</span>
+<span>Deliveries</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">leaderboard</span>
+<span>Analytics</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">contact_support</span>
+<span>Support</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span>Settings</span>
+</a>
+</nav>
+<div class="mt-auto p-4 text-xs text-on-surface-variant opacity-50">
+            v1.0.2
+        </div>
+</aside>
+<!-- Top App Bar (Mobile) -->
+<header class="md:hidden sticky top-0 z-40 bg-surface flex justify-between items-center w-full px-5 h-16">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full overflow-hidden bg-primary-container">
+<img class="w-full h-full object-cover" data-alt="Close up profile avatar of a smiling neighborly chef with a warm expression. High-key lighting, professional but accessible aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBOgpnEJj69vl4qqpmzi-m-E39JW5wN9fGLAtp5CqycWIeN7QrsPpAs1WntKhvHOHHlkADRVhv6jDoCIAXnWeH3BsvBthLJLDUkIb-sTeDcWXwcF3YBuZ4oxOGRRwtJ1UfLCSJgDl3NaVzY7P_PeXCQIF_5bJBuOdYinmQW96smwRBKfnsupskh2iksxQG38fR1mYD4IX6mXCXBUiwU2vY54WEQJeHK5cdnLHRGos0nvwfWUh9008-JGXKMq8yagqLfZ4sa_EAJoZWc"/>
+</div>
+<h1 class="font-display-lg-mobile text-display-lg-mobile text-primary font-black">DoorNext</h1>
+</div>
+<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:opacity-80 active:translate-y-0.5 transition-all">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="max-w-4xl mx-auto px-5 py-6 md:px-10 md:py-12">
+<!-- Welcome Header -->
+<section class="mb-section-gap">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<h2 class="font-headline-md-mobile md:font-headline-md text-headline-md-mobile md:text-headline-md text-on-surface mb-2">Menu Management</h2>
+<p class="text-on-surface-variant max-w-lg">Manage your neighborly offerings. Keep your availability updated so your customers know what's cooking today.</p>
+</div>
+<div class="flex items-center gap-2 bg-surface-container-high px-4 py-2 rounded-full">
+<span class="w-2 h-2 rounded-full bg-neighborhood-green animate-pulse"></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">KITCHEN OPEN</span>
+</div>
+</div>
+</section>
+<!-- Search & Filter (Bento Style) -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter mb-8">
+<div class="md:col-span-8 bg-white border border-outline-variant p-4 rounded-xl flex items-center gap-3">
+<span class="material-symbols-outlined text-outline">search</span>
+<input class="bg-transparent border-none focus:ring-0 w-full placeholder:text-outline" placeholder="Search your menu items..." type="text"/>
+</div>
+<div class="md:col-span-4 bg-white border border-outline-variant p-4 rounded-xl flex items-center justify-between">
+<span class="text-on-surface-variant font-medium">Sort by Category</span>
+<span class="material-symbols-outlined text-outline">filter_list</span>
+</div>
+</div>
+<!-- Menu List -->
+<div class="space-y-4">
+<!-- Category Header -->
+<div class="flex items-center gap-4 py-2">
+<span class="font-label-sm text-label-sm text-primary uppercase tracking-widest">Main Dishes</span>
+<div class="h-px bg-outline-variant flex-grow"></div>
+</div>
+<!-- Item Card 1 -->
+<div class="bg-white rounded-xl border border-outline-variant overflow-hidden hover:shadow-lg transition-shadow duration-300">
+<div class="p-4 md:p-6 flex flex-col md:flex-row gap-6">
+<div class="w-full md:w-48 h-32 md:h-auto shrink-0 rounded-lg overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A close-up, appetizing shot of Classic Chicken Tamales wrapped in vibrant green banana leaves. The corn masa is golden and fluffy, with a rich chicken filling peeking out. The lighting is warm and natural, suggesting a home-cooked meal on a wooden tabletop with a sprig of cilantro for garnish. Soft-focus background with a pristine white plate." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCi35Y-vs1hO4W3Q37GyINDTDdXajMv5IoeGmEj7zgod1QX46YxQLBUp7W0qGYCTgNwzNHIbq_Vwd9By4p3mw-xJ7o1kwhGjzbKIvokscgs-2mvgyMFwUm8XH5XBRhAA3yw1AvQaTRy0yXOmZnlKjlXR4-HFIBSODCRj2Mdq6W-DtIklthjRo1H1ZiPzwieIkymZEI5zrINvk41F3wFb15v3mToJk3TJ8q_-vbQrJwLLeDyEpuOVSJD4BjQI5wi2QIwgaLeeNa6i4AM"/>
+</div>
+<div class="flex-grow flex flex-col justify-between">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-title-lg text-title-lg text-on-surface">Classic Chicken Tamales</h3>
+<p class="text-on-surface-variant text-sm mt-1 line-clamp-2">Hand-made corn masa stuffed with slow-cooked shredded chicken and traditional red salsa.</p>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Available</span>
+<div class="relative inline-block w-12 h-6 transition duration-200 ease-in-out align-middle select-none">
+<input checked="" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-2 border-outline-variant appearance-none cursor-pointer focus:outline-none transition-transform duration-200 ease-in-out z-10" id="toggle-1" name="toggle" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-outline-variant cursor-pointer transition-colors duration-200" for="toggle-1"></label>
+</div>
+</div>
+</div>
+<div class="mt-6 flex flex-wrap items-center gap-4 border-t border-surface-container-highest pt-4">
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant">PRICE ($)</span>
+<input class="w-20 px-3 py-1 bg-surface-container rounded font-label-sm text-label-sm border-none focus:ring-2 focus:ring-primary text-right" type="text" value="12.00"/>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant">EST. TIME</span>
+<span class="bg-surface-cream px-3 py-1 rounded font-label-sm text-label-sm border border-outline-variant">25 MIN</span>
+</div>
+<div class="ml-auto flex gap-2">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">edit</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-error transition-colors">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Item Card 2 -->
+<div class="bg-white rounded-xl border border-outline-variant overflow-hidden hover:shadow-lg transition-shadow duration-300">
+<div class="p-4 md:p-6 flex flex-col md:flex-row gap-6">
+<div class="w-full md:w-48 h-32 md:h-auto shrink-0 rounded-lg overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="Two thick, freshly grilled Pupusas Revueltas served on a rustic clay plate. The golden-brown crust shows spots of melted cheese escaping from the edges. Beside them sits a small jar of vibrant curtido and tomato salsa. The setting is bright and sunny, highlighting the tactile texture of the food and the warm, welcoming neighborhood vibe." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDPDr3roTsoChyLxj0MFYRrRxZWjr_INVw1A-KDBHW-cw2uJN-XLX-YBtKeTHTNpPhaE-BTXmvnqH0_4Yv7cVxeu_bnK-rld1AmOU8ct8897hYHrV5f7oOt2d_bjm4_JSJZiv4LXn1xsP_53VKwEl2UxzwNb3LnNPtIicuJV4PxuY8fHo1l021w9JfJHEbxbGxqE-Jkdjf1pwBN4R06_e4tnheIBbE0cVorAb7LmhfnkvkCmAGPN64HZmLeLgoRE5VtPW6cDGgMI2bc"/>
+</div>
+<div class="flex-grow flex flex-col justify-between">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-title-lg text-title-lg text-on-surface">Pupusa Revuelta Duo</h3>
+<p class="text-on-surface-variant text-sm mt-1 line-clamp-2">Two thick handmade corn tortillas filled with a savory blend of cheese, beans, and pork. Served with Curtido.</p>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Available</span>
+<div class="relative inline-block w-12 h-6 transition duration-200 ease-in-out align-middle select-none">
+<input checked="" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-2 border-outline-variant appearance-none cursor-pointer focus:outline-none transition-transform duration-200 ease-in-out z-10" id="toggle-2" name="toggle" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-outline-variant cursor-pointer transition-colors duration-200" for="toggle-2"></label>
+</div>
+</div>
+</div>
+<div class="mt-6 flex flex-wrap items-center gap-4 border-t border-surface-container-highest pt-4">
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant">PRICE ($)</span>
+<input class="w-20 px-3 py-1 bg-surface-container rounded font-label-sm text-label-sm border-none focus:ring-2 focus:ring-primary text-right" type="text" value="8.50"/>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant">EST. TIME</span>
+<span class="bg-surface-cream px-3 py-1 rounded font-label-sm text-label-sm border border-outline-variant">15 MIN</span>
+</div>
+<div class="ml-auto flex gap-2">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">edit</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-error transition-colors">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Category Header -->
+<div class="flex items-center gap-4 py-2 mt-8">
+<span class="font-label-sm text-label-sm text-primary uppercase tracking-widest">Sweets &amp; Drinks</span>
+<div class="h-px bg-outline-variant flex-grow"></div>
+</div>
+<!-- Item Card 3 -->
+<div class="bg-white rounded-xl border border-outline-variant overflow-hidden hover:shadow-lg transition-shadow duration-300">
+<div class="p-4 md:p-6 flex flex-col md:flex-row gap-6">
+<div class="w-full md:w-48 h-32 md:h-auto shrink-0 rounded-lg overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A tall glass of ice-cold Horchata with a sprinkle of cinnamon on top, sweating with condensation. The creamy, off-white drink looks refreshing against a backdrop of a warm, sunlit outdoor patio. The aesthetic is clean, modern, and highlights the neighborhood utility and local pride of the DoorNext brand." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCD9VpvjPPIV7yt7yHhyakSfzIO9p9GBCw0D-2ZmCf6gWcpAydW8shReYTeJ59gK5p2jrsNL2Q96Jtfvp3TaOe9Vjg12YKik1zll_8CQTc0qIFLw2hqbX1l4x2G3emYNZrhzz_n3aw1S-ZaADY8ljOuyq050mxCBydIEx161uNzwxdXE5qp65cV-RNYY6bIc_UUUd5HHdVqPYrOhN2N5UFGUyccC5d7IcV1Ma53NXYNOYfYV175PZNEZMU8lFggNGCgeZq8ecLamsA5"/>
+</div>
+<div class="flex-grow flex flex-col justify-between">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-title-lg text-title-lg text-on-surface">Artisanal Horchata</h3>
+<p class="text-on-surface-variant text-sm mt-1 line-clamp-2">Authentic rice-based drink with cinnamon and vanilla. Made fresh every morning.</p>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Available</span>
+<div class="relative inline-block w-12 h-6 transition duration-200 ease-in-out align-middle select-none">
+<input class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-2 border-outline-variant appearance-none cursor-pointer focus:outline-none transition-transform duration-200 ease-in-out z-10" id="toggle-3" name="toggle" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-outline-variant cursor-pointer transition-colors duration-200" for="toggle-3"></label>
+</div>
+</div>
+</div>
+<div class="mt-6 flex flex-wrap items-center gap-4 border-t border-surface-container-highest pt-4">
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant">PRICE ($)</span>
+<input class="w-20 px-3 py-1 bg-surface-container rounded font-label-sm text-label-sm border-none focus:ring-2 focus:ring-primary text-right" type="text" value="4.00"/>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant">EST. TIME</span>
+<span class="bg-surface-cream px-3 py-1 rounded font-label-sm text-label-sm border border-outline-variant">5 MIN</span>
+</div>
+<div class="ml-auto flex gap-2">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">edit</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-error transition-colors">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Floating Action Button -->
+<button class="fixed bottom-24 right-6 md:bottom-8 md:right-8 w-16 h-16 bg-primary-container text-on-primary-container rounded-full shadow-[0_12px_40px_rgba(242,101,34,0.4)] flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50 group">
+<span class="material-symbols-outlined font-bold text-3xl">add</span>
+<span class="absolute right-full mr-4 bg-on-surface text-white px-3 py-1 rounded-lg text-sm opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">Add New Item</span>
+</button>
+<!-- Bottom Nav Bar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 flex justify-around items-center px-4 pb-4 pt-2 shadow-[0_-4px_20px_0_rgba(166,59,0,0.08)] bg-surface rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-95 duration-200" href="#">
+<span class="material-symbols-outlined">explore</span>
+<span class="font-label-sm text-label-sm">Explore</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 active:scale-95 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">shopping_bag</span>
+<span class="font-label-sm text-label-sm">Orders</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-95 duration-200" href="#">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm">Wallet</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-95 duration-200" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-sm text-label-sm">Profile</span>
+</a>
+</nav>
+<script>
+        // Micro-interactions for toggles
+        document.querySelectorAll('.toggle-checkbox').forEach(toggle => {
+            toggle.addEventListener('change', function() {
+                const statusLabel = this.closest('.flex').querySelector('span');
+                if (this.checked) {
+                    statusLabel.textContent = 'Available';
+                    statusLabel.classList.remove('text-on-surface-variant');
+                    statusLabel.classList.add('text-neighborhood-green');
+                } else {
+                    statusLabel.textContent = 'Sold Out';
+                    statusLabel.classList.add('text-on-surface-variant');
+                    statusLabel.classList.remove('text-neighborhood-green');
+                }
+            });
+        });
+
+        // Price input formatting
+        document.querySelectorAll('input[type="text"]').forEach(input => {
+            input.addEventListener('blur', function() {
+                if(this.value && !isNaN(this.value)) {
+                    this.value = parseFloat(this.value).toFixed(2);
+                }
+            });
+        });
+    </script>
+</body></html>

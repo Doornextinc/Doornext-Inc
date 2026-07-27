@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Nexter | Delivery Request</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Anybody:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Anybody:wght@100..900&family=JetBrains+Mono:wght@100..900&family=Plus+Jakarta+Sans:wght@100..900&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "surface-container-high": "#fde3da",
+                        "on-tertiary-container": "#002d45",
+                        "inverse-on-surface": "#ffede7",
+                        "on-tertiary-fixed-variant": "#004b6f",
+                        "on-background": "#261813",
+                        "surface-tint": "#a63b00",
+                        "on-primary-fixed": "#370e00",
+                        "surface-container": "#ffe9e2",
+                        "surface-bright": "#fff8f6",
+                        "on-secondary-fixed-variant": "#474646",
+                        "tertiary-fixed": "#cae6ff",
+                        "tertiary": "#006492",
+                        "on-secondary-fixed": "#1c1b1b",
+                        "inverse-primary": "#ffb599",
+                        "surface-dim": "#eed5cc",
+                        "surface-cream": "#FDFCFB",
+                        "background": "#fff8f6",
+                        "on-surface": "#261813",
+                        "primary": "#a63b00",
+                        "outline-variant": "#e1bfb3",
+                        "primary-container": "#f26522",
+                        "neighborhood-green": "#2D6A4F",
+                        "surface-container-low": "#fff1ec",
+                        "secondary": "#5f5e5e",
+                        "surface-variant": "#f7ddd4",
+                        "on-secondary-container": "#656464",
+                        "on-primary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "surface": "#fff8f6",
+                        "surface-container-highest": "#f7ddd4",
+                        "tertiary-container": "#009ade",
+                        "inverse-surface": "#3c2d27",
+                        "on-surface-variant": "#594138",
+                        "on-primary-fixed-variant": "#7f2b00",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-container": "#4f1800",
+                        "on-error": "#ffffff",
+                        "error": "#ba1a1a",
+                        "warm-gray": "#736F6E",
+                        "secondary-fixed-dim": "#c9c6c5",
+                        "secondary-container": "#e5e2e1",
+                        "primary-fixed-dim": "#ffb599",
+                        "tertiary-fixed-dim": "#8cceff",
+                        "secondary-fixed": "#e5e2e1",
+                        "on-error-container": "#93000a",
+                        "outline": "#8d7166",
+                        "on-tertiary-fixed": "#001e2f",
+                        "primary-fixed": "#ffdbce"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "1.5rem",
+                        "container-padding-desktop": "2.5rem",
+                        "section-gap": "4rem",
+                        "container-padding-mobile": "1.25rem",
+                        "base": "8px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Anybody"],
+                        "display-lg-mobile": ["Anybody"],
+                        "body-md": ["Plus Jakarta Sans"],
+                        "body-lg": ["Plus Jakarta Sans"],
+                        "label-sm": ["JetBrains Mono"],
+                        "headline-md-mobile": ["Anybody"],
+                        "title-lg": ["Plus Jakarta Sans"],
+                        "headline-md": ["Anybody"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                        "display-lg-mobile": ["36px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                        "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "label-sm": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "headline-md-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                        "title-lg": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                        "headline-md": ["32px", {"lineHeight": "1.2", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .swipe-slider {
+            touch-action: none;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(166, 59, 0, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 15px rgba(166, 59, 0, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(166, 59, 0, 0); }
+        }
+        .timer-ring {
+            animation: pulse-ring 2s infinite;
+        }
+        /* Custom hide scrollbar */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-cream text-on-surface font-body-md selection:bg-primary-fixed selection:text-on-primary-fixed-variant overflow-hidden">
+<!-- TopAppBar Shell (Suppressed as this is a focused task) -->
+<!-- The prompt describes a focused "Offer Screen", which qualifies as a transactional/focused journey where the global nav is hidden to prioritize the canvas. -->
+<main class="relative h-screen w-full flex flex-col">
+<!-- Map Background with Tonal Overlay -->
+<div class="absolute inset-0 z-0">
+<div class="w-full h-full bg-cover bg-center opacity-80 mix-blend-multiply grayscale-[20%]" data-location="Los Angeles" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD75BTgYsb-HDOVZ9jHQXEffEolveRV82OUxWDV5nG5RlA2K7ak7_g1P5uExFmnbVKjNHf1G0YJxqogbyBi6bHD6qY__KCwqBPXQ_1HRnSkoOb03VdjL-5PRI_wFLGxBiOeNSTDStcoTMcww8TWe0qTv5FUBmlGWey1eS46MLN_7YR-Gypz-8UKT7DrJ_ww2462JaYgyxPb0_maBYAkYjQ4D5v6Pjm1QvvN_BT9cUeENhX_0CnN3Loi4YVgOlGLQCl3R7e6O5IlbAxv')"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-cream via-transparent to-transparent"></div>
+</div>
+<!-- Timer Header -->
+<div class="relative z-10 pt-container-padding-mobile flex justify-between items-start px-container-padding-mobile">
+<div class="bg-surface-container-lowest/90 backdrop-blur-md p-4 rounded-full flex items-center gap-3 shadow-lg border border-outline/10">
+<div class="relative">
+<div class="timer-ring absolute inset-0 rounded-full bg-primary/20"></div>
+<div class="h-10 w-10 rounded-full border-4 border-primary flex items-center justify-center font-label-sm text-label-sm text-primary bg-white relative z-10">
+                        15s
+                    </div>
+</div>
+<div>
+<h1 class="font-headline-md-mobile text-headline-md-mobile text-primary leading-none">New Offer</h1>
+<p class="font-label-sm text-label-sm text-secondary uppercase tracking-wider mt-1">Accept soon</p>
+</div>
+</div>
+<button class="bg-surface-container-lowest/90 backdrop-blur-md h-12 w-12 rounded-full flex items-center justify-center text-on-surface active:scale-95 transition-all shadow-md">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Main Content Canvas: Asymmetric Layout -->
+<div class="relative z-10 flex-1 flex flex-col justify-end p-container-padding-mobile pb-8 space-y-4">
+<!-- Earnings Bento Card -->
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-inverse-surface p-gutter rounded-xl shadow-[0_20px_40px_rgba(0,0,0,0.1)] flex flex-col justify-between">
+<span class="font-label-sm text-label-sm text-primary-fixed uppercase">Earnings</span>
+<div class="mt-2 flex flex-baseline gap-1">
+<span class="font-label-sm text-label-sm text-primary-fixed-dim">$</span>
+<span class="font-label-sm text-[32px] text-neighborhood-green font-bold tracking-tight">7.36</span>
+</div>
+</div>
+<div class="bg-white p-gutter rounded-xl shadow-lg border border-outline-variant flex flex-col justify-between">
+<span class="font-label-sm text-label-sm text-secondary uppercase">Distance</span>
+<div class="mt-2 flex flex-baseline gap-1">
+<span class="font-display-lg-mobile text-display-lg-mobile text-on-surface">2.4</span>
+<span class="font-label-sm text-label-sm text-secondary">mi</span>
+</div>
+</div>
+</div>
+<!-- Route Details Card -->
+<div class="bg-white rounded-xl shadow-2xl p-gutter border border-outline-variant relative overflow-hidden">
+<!-- Neighborhood Green Accent Bar -->
+<div class="absolute left-0 top-0 bottom-0 w-1.5 bg-neighborhood-green"></div>
+<div class="space-y-6">
+<!-- Pickup -->
+<div class="flex gap-4">
+<div class="flex flex-col items-center">
+<div class="h-6 w-6 rounded-full border-2 border-primary flex items-center justify-center bg-white">
+<div class="h-2 w-2 rounded-full bg-primary"></div>
+</div>
+<div class="w-px h-full border-l-2 border-dashed border-outline-variant my-1"></div>
+</div>
+<div class="pb-2">
+<p class="font-label-sm text-label-sm text-secondary uppercase">Pickup</p>
+<h3 class="font-title-lg text-title-lg text-on-surface">Mama’s Pupuseria</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">1242 Neighborhood Way</p>
+</div>
+</div>
+<!-- Drop-off -->
+<div class="flex gap-4">
+<div class="flex flex-col items-center">
+<div class="h-6 w-6 rounded-full bg-neighborhood-green flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px] text-white" style="font-variation-settings: 'FILL' 1;">location_on</span>
+</div>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-secondary uppercase">Drop-off</p>
+<h3 class="font-title-lg text-title-lg text-on-surface">Echo Park</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Residential • Gate Code #1234</p>
+</div>
+</div>
+</div>
+<!-- DoorMaker Insight -->
+<div class="mt-6 pt-6 border-t border-outline-variant flex items-center gap-3">
+<img class="h-10 w-10 rounded-full object-cover" data-alt="A warm, smiling portrait of a middle-aged Latina woman in a clean kitchen apron, lit by soft natural morning light. The style is neighborly and authentic, using a soft depth of field that emphasizes her friendly expression. The background shows hints of a vibrant, home-cooked food environment with warm orange and cream tones reflecting the Nexter brand identity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAIPFjLjMxX0oOsiUfhue7h0o6IpPL-65VPePn4eQ8stRcHhOm5hU50orlwdBUxSd0apz43Vrimn7SJ7PYMnNrj6zD3797t_fTSfkt9Mfv34DsGS-pINQStEd5UXATFJBCEwiplC41KRAPfIS1g_iQ8amU0qhz32F36bHuy04OfHac0KLJG7y0Ztp3DZmSn8vCGLgrzFl7UZ8i6yvcgJdGw3fVk-7ryzrVLL-jriNaWfwc4BO-xxEgQb0Nglbm3JRBOTfJqRiIfIXVj"/>
+<p class="font-body-md text-body-md text-on-surface-variant italic">"Mama's food is ready for pickup!"</p>
+</div>
+</div>
+<!-- Swipe Action Component -->
+<div class="relative w-full h-20 bg-inverse-surface rounded-full p-2 flex items-center shadow-xl overflow-hidden group">
+<!-- Track text -->
+<div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+<p class="font-headline-md-mobile text-headline-md-mobile text-on-secondary/30 uppercase tracking-widest transition-opacity group-active:opacity-10">Swipe to Accept</p>
+</div>
+<!-- Animated background glow -->
+<div class="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent pointer-events-none"></div>
+<!-- Slider Thumb -->
+<div class="swipe-slider relative z-20 h-16 w-16 bg-primary rounded-full flex items-center justify-center cursor-pointer shadow-lg active:scale-105 transition-transform duration-150" id="slider-thumb">
+<span class="material-symbols-outlined text-white text-[32px]">keyboard_double_arrow_right</span>
+</div>
+</div>
+</div>
+</main>
+<!-- Success Feedback Overlay (Hidden by default) -->
+<div class="fixed inset-0 z-[100] bg-neighborhood-green flex flex-col items-center justify-center transform translate-y-full transition-transform duration-500 ease-out p-gutter text-center" id="success-overlay">
+<div class="h-32 w-32 bg-white/20 rounded-full flex items-center justify-center mb-8">
+<span class="material-symbols-outlined text-[80px] text-white">check_circle</span>
+</div>
+<h2 class="font-display-lg-mobile text-display-lg-mobile text-white mb-4">Request Accepted!</h2>
+<p class="font-body-lg text-body-lg text-white/90 max-w-xs">Drive safely. Mama’s Pupuseria is expecting you in 8 minutes.</p>
+<div class="mt-12 w-full max-w-xs space-y-4">
+<button class="w-full bg-white text-neighborhood-green font-bold py-4 rounded-full shadow-lg active:scale-95 transition-transform">
+                Navigate to Pickup
+            </button>
+</div>
+</div>
+<script>
+        const slider = document.getElementById('slider-thumb');
+        const container = slider.parentElement;
+        const overlay = document.getElementById('success-overlay');
+        let isDragging = false;
+        let startX = 0;
+        let currentX = 0;
+
+        const onStart = (e) => {
+            isDragging = true;
+            startX = (e.type === 'touchstart' ? e.touches[0].clientX : e.clientX) - currentX;
+            slider.style.transition = 'none';
+        };
+
+        const onMove = (e) => {
+            if (!isDragging) return;
+            const x = (e.type === 'touchmove' ? e.touches[0].clientX : e.clientX) - startX;
+            const max = container.offsetWidth - slider.offsetWidth - 16; // 16 for padding
+            
+            if (x >= 0 && x <= max) {
+                currentX = x;
+                slider.style.transform = `translateX(${x}px)`;
+                // Visual feedback: dim the background text as user swipes
+                const text = container.querySelector('p');
+                text.style.opacity = 1 - (x / max);
+            }
+        };
+
+        const onEnd = () => {
+            if (!isDragging) return;
+            isDragging = false;
+            const max = container.offsetWidth - slider.offsetWidth - 16;
+
+            if (currentX > max * 0.8) {
+                // Accept Logic
+                currentX = max;
+                slider.style.transition = 'transform 0.2s ease-out';
+                slider.style.transform = `translateX(${max}px)`;
+                
+                // Haptic simulation / Visual feedback
+                setTimeout(() => {
+                    overlay.style.transform = 'translateY(0)';
+                }, 200);
+            } else {
+                // Snap back
+                currentX = 0;
+                slider.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                slider.style.transform = `translateX(0px)`;
+                container.querySelector('p').style.opacity = 1;
+            }
+        };
+
+        slider.addEventListener('mousedown', onStart);
+        slider.addEventListener('touchstart', onStart);
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('touchmove', onMove);
+        window.addEventListener('mouseup', onEnd);
+        window.addEventListener('touchend', onEnd);
+
+        // Micro-interaction for closing
+        document.querySelector('button:has(span:contains("close"))')?.addEventListener('click', () => {
+            document.body.style.opacity = '0';
+            document.body.style.transition = 'opacity 0.3s ease';
+            setTimeout(() => {
+                // In a real app, this would route back to dashboard
+                location.reload(); 
+            }, 300);
+        });
+    </script>
+</body></html>

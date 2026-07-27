@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>DoorNext | Tracking Your Order</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=Anybody:wght@700;800;900&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Theme Config -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-highest": "#f7ddd4",
+                    "surface-container": "#ffe9e2",
+                    "inverse-on-surface": "#ffede7",
+                    "on-surface": "#261813",
+                    "warm-gray": "#736F6E",
+                    "on-secondary-fixed-variant": "#474646",
+                    "surface-tint": "#a63b00",
+                    "neighborhood-green": "#2D6A4F",
+                    "outline-variant": "#e1bfb3",
+                    "secondary-fixed-dim": "#c9c6c5",
+                    "on-tertiary-fixed-variant": "#004b6f",
+                    "tertiary": "#006492",
+                    "primary-container": "#f26522",
+                    "on-surface-variant": "#594138",
+                    "on-primary-container": "#4f1800",
+                    "on-error-container": "#93000a",
+                    "secondary-container": "#e5e2e1",
+                    "surface-dim": "#eed5cc",
+                    "secondary": "#5f5e5e",
+                    "on-primary": "#ffffff",
+                    "tertiary-fixed": "#cae6ff",
+                    "surface-container-low": "#fff1ec",
+                    "surface-bright": "#fff8f6",
+                    "secondary-fixed": "#e5e2e1",
+                    "on-secondary-fixed": "#1c1b1b",
+                    "on-primary-fixed": "#370e00",
+                    "surface-container-high": "#fde3da",
+                    "surface-cream": "#FDFCFB",
+                    "on-secondary-container": "#656464",
+                    "on-secondary": "#ffffff",
+                    "primary-fixed-dim": "#ffb599",
+                    "tertiary-fixed-dim": "#8cceff",
+                    "tertiary-container": "#009ade",
+                    "on-error": "#ffffff",
+                    "primary-fixed": "#ffdbce",
+                    "on-primary-fixed-variant": "#7f2b00",
+                    "surface": "#fff8f6",
+                    "on-tertiary-container": "#002d45",
+                    "background": "#fff8f6",
+                    "primary": "#a63b00",
+                    "on-background": "#261813",
+                    "outline": "#8d7166",
+                    "error-container": "#ffdad6",
+                    "surface-variant": "#f7ddd4",
+                    "surface-container-lowest": "#ffffff",
+                    "inverse-surface": "#3c2d27",
+                    "on-tertiary-fixed": "#001e2f",
+                    "on-tertiary": "#ffffff",
+                    "inverse-primary": "#ffb599",
+                    "error": "#ba1a1a"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "section-gap": "4rem",
+                    "gutter": "1.5rem",
+                    "container-padding-mobile": "1.25rem",
+                    "base": "8px",
+                    "container-padding-desktop": "2.5rem"
+            },
+            "fontFamily": {
+                    "title-lg": ["Plus Jakarta Sans"],
+                    "body-lg": ["Plus Jakarta Sans"],
+                    "display-lg": ["Anybody"],
+                    "display-lg-mobile": ["Anybody"],
+                    "headline-md-mobile": ["Anybody"],
+                    "body-md": ["Plus Jakarta Sans"],
+                    "label-sm": ["JetBrains Mono"],
+                    "headline-md": ["Anybody"]
+            },
+            "fontSize": {
+                    "title-lg": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "display-lg-mobile": ["36px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "headline-md-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "headline-md": ["32px", {"lineHeight": "1.2", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .map-gradient-overlay {
+            background: linear-gradient(to top, rgba(255,248,246,1) 0%, rgba(255,248,246,0) 20%);
+        }
+        @keyframes pulse-soft {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+        }
+        .pulse-marker {
+            animation: pulse-soft 2s infinite ease-in-out;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col font-body-md overflow-x-hidden">
+<!-- TopAppBar -->
+<nav class="flex justify-between items-center w-full px-gutter h-16 bg-surface z-50 sticky top-0">
+<div class="flex items-center gap-3">
+<button class="hover:opacity-80 active:translate-y-0.5 transition-all text-on-surface-variant">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h1 class="font-display-lg-mobile text-display-lg-mobile text-primary font-black">DoorNext</h1>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary hover:opacity-80 active:translate-y-0.5 transition-all cursor-pointer">notifications</span>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden border border-outline-variant">
+<img class="w-full h-auto" data-alt="A warm, professional headshot of a smiling local user in a sunlit kitchen, wearing a casual sweater. The image is bright, high-key, and emphasizes neighborly trust and accessibility, consistent with a community-focused mobile app identity. The background is softly blurred to keep focus on the human connection." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCTynpGD876GGZ8_i622pnRe8cShR5nj2cW-qp1wWBbkBZ8hBWNMLdG4MqHAIv_Hi_JKXQcINDLjRKf8BOD32SCJViIAOdMcfWgQAxhMpkoA6Dk4I5_AkNCQdhE9jW7UtZ-HXo-J3b2LNrw0yUrsqS0Vs8lONF_SNrBU22jVWiCVeUE9Fb0jo5DnNjtgApA44S614PFPW2jnnTWkraMiX8hJHyNNlhjaCpbphgZXoZepvMJpbwfWEYulLvAAHbSEuyhoYEIOYy1jY2d"/>
+</div>
+</div>
+</nav>
+<main class="flex-grow flex flex-col md:flex-row md:max-w-[1280px] md:mx-auto w-full">
+<!-- Live Map Section (Bento Canvas) -->
+<section class="relative w-full h-[397px] md:h-auto md:flex-grow overflow-hidden shadow-inner">
+<div class="absolute inset-0 z-0 bg-surface-container">
+<!-- Map Background -->
+<div class="w-full h-full grayscale-[0.2]" data-alt="A clean, minimalist high-angle satellite or map view of a modern suburban neighborhood with winding streets and green parks. The lighting is bright afternoon sun, casting soft shadows. The aesthetic is clean and functional with warm tones, avoiding sterile gray maps for a more neighborly, accessible feeling. Professional cartography style." data-location="Austin, Texas" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAlJ1ZN0b0eSp6okuISQ8OJajSvM_jcR_a9M-pBjZ1IQqNm35DQGPCpUjAYw1yLfisd9n1YqcZDFPV-scNI4sgs4nTEMM10mWtG6m7P1slcbi77Ytv4Oh1gYS5L5EZ4fRkmnIJzN_YkaEQtdDBDjTsyTupWSEMc6sPp08C8WfWNYdKCHTRd0uQz649fTCo_3YTvza8r64a1N8bJnljbhv5qqFrg8U65lDrwapSDUEJHwPA7Y7Qzdfv-YX9Dgqdp1M0JPjOfT6QBCcWT')">
+</div>
+<!-- Nexter Animated Marker -->
+<div class="absolute top-1/2 left-1/3 pulse-marker flex flex-col items-center">
+<div class="bg-primary text-white p-2 rounded-full shadow-lg border-2 border-white">
+<span class="material-symbols-outlined">directions_bike</span>
+</div>
+<div class="mt-1 bg-white px-2 py-0.5 rounded-full shadow-sm border border-outline-variant">
+<span class="font-label-sm text-label-sm text-primary">Alex</span>
+</div>
+</div>
+<!-- Delivery Point -->
+<div class="absolute top-1/3 right-1/4 flex flex-col items-center">
+<div class="bg-neighborhood-green text-white p-2 rounded-full shadow-lg border-2 border-white">
+<span class="material-symbols-outlined">home</span>
+</div>
+</div>
+<div class="map-gradient-overlay absolute inset-0 pointer-events-none"></div>
+</div>
+<!-- Floating Overlay Information (Mobile-only quick view) -->
+<div class="absolute top-4 left-4 right-4 z-10 md:hidden">
+<div class="bg-white/90 backdrop-blur-md p-4 rounded-xl shadow-[0_4px_30px_0_rgba(166,59,0,0.08)] border border-outline-variant flex justify-between items-center">
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Estimated Arrival</p>
+<p class="font-headline-md-mobile text-headline-md-mobile text-primary">8 mins</p>
+</div>
+<div class="text-right">
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Distance</p>
+<p class="font-title-lg text-title-lg text-on-surface">1.2 miles</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Tracking Details Panel -->
+<aside class="w-full md:w-[420px] bg-white md:bg-surface-cream px-gutter py-8 md:px-10 flex flex-col gap-8 md:border-l border-outline-variant z-20">
+<!-- Neighborly Intro -->
+<div class="flex items-center gap-4">
+<div class="relative">
+<div class="w-16 h-16 rounded-full overflow-hidden border-2 border-primary-container shadow-md">
+<img class="w-full h-full object-cover" data-alt="Close up portrait of a friendly man in his early 30s named Alex, representing a neighborly delivery driver. He has a warm, approachable smile and is wearing a simple branded cap. The background is a vibrant outdoor street scene with warm, natural sunlight. Authentic and anti-corporate aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC018Ns_LnTm8V0DNKh7-gT-lBbndDt4BifgEk8-XxJEJa5jNyBd_SVpdIVOWDJxM-gjkcZX2OlDXyGuG2BVDZk5B4wj50j7Yt_90Wpb_OZrq3-H9I67p1Oy1VyIuBle36B0474DukGKu3YMBBFyZNvL2zjtNYOXCI5RRlLnKibAuUydhrnSGcWdkEuJu4PzJJM7-zQjrJ0usoftk2phs6kBeVKYvAmAaBbAQdanOKa-h1p3EeV1aklwbpFOzyEnTp1l-gMOHYJ1g1S"/>
+</div>
+<div class="absolute -bottom-1 -right-1 bg-neighborhood-green text-white rounded-full p-1 border-2 border-white">
+<span class="material-symbols-outlined text-[14px]">verified</span>
+</div>
+</div>
+<div>
+<h2 class="font-title-lg text-title-lg text-on-surface">Your neighbor Alex is on their way!</h2>
+<p class="text-on-surface-variant font-body-md">Nexter since 2021 • 4.9 ★</p>
+</div>
+</div>
+<!-- Action Cluster -->
+<div class="grid grid-cols-2 gap-4">
+<button class="bg-primary text-white px-6 py-4 rounded-full font-title-lg flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-transform hover:bg-on-primary-fixed-variant">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">chat</span>
+<span>Chat</span>
+</button>
+<button class="bg-secondary-container text-on-secondary-container px-6 py-4 rounded-full font-title-lg flex items-center justify-center gap-2 hover:bg-outline-variant active:scale-95 transition-transform">
+<span class="material-symbols-outlined">call</span>
+<span>Call</span>
+</button>
+</div>
+<hr class="border-outline-variant"/>
+<!-- Progress Timeline -->
+<div class="flex flex-col gap-6">
+<h3 class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">Delivery Progress</h3>
+<div class="relative flex flex-col gap-8">
+<!-- Vertical Line -->
+<div class="absolute left-[11px] top-4 bottom-4 w-0.5 bg-outline-variant"></div>
+<div class="absolute left-[11px] top-4 h-2/3 w-0.5 bg-neighborhood-green"></div>
+<!-- Timeline Item: Ordered -->
+<div class="flex items-center gap-4 relative z-10">
+<div class="w-6 h-6 rounded-full bg-neighborhood-green flex items-center justify-center border-4 border-surface-container-low">
+<span class="material-symbols-outlined text-white text-[12px]" style="font-variation-settings: 'FILL' 1;">check</span>
+</div>
+<div class="flex flex-col">
+<span class="font-title-lg text-title-lg text-on-surface opacity-60">Order Received</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">12:30 PM</span>
+</div>
+</div>
+<!-- Timeline Item: Preparing -->
+<div class="flex items-center gap-4 relative z-10">
+<div class="w-6 h-6 rounded-full bg-neighborhood-green flex items-center justify-center border-4 border-surface-container-low">
+<span class="material-symbols-outlined text-white text-[12px]" style="font-variation-settings: 'FILL' 1;">check</span>
+</div>
+<div class="flex flex-col">
+<span class="font-title-lg text-title-lg text-on-surface opacity-60">DoorMaker is preparing</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">12:45 PM</span>
+</div>
+</div>
+<!-- Timeline Item: On its way (ACTIVE) -->
+<div class="flex items-center gap-4 relative z-10">
+<div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center border-4 border-primary-fixed shadow-[0_0_15px_rgba(166,59,0,0.3)] animate-pulse">
+</div>
+<div class="flex flex-col">
+<span class="font-title-lg text-title-lg text-primary font-bold">On its way!</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Alex is 1.2 mi away</span>
+</div>
+</div>
+<!-- Timeline Item: Delivered -->
+<div class="flex items-center gap-4 relative z-10">
+<div class="w-6 h-6 rounded-full bg-outline-variant flex items-center justify-center border-4 border-surface-container-low">
+</div>
+<div class="flex flex-col">
+<span class="font-title-lg text-title-lg text-on-surface-variant">Delivered</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Estimated 1:10 PM</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Order Summary Card -->
+<div class="bg-surface-container-low rounded-xl p-5 border border-outline-variant mt-4">
+<div class="flex justify-between items-start mb-4">
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase">Order from</p>
+<p class="font-title-lg text-title-lg text-on-surface">Mama’s Kitchen</p>
+</div>
+<div class="bg-white p-2 rounded-lg border border-outline-variant">
+<span class="font-label-sm text-label-sm text-neighborhood-green">#4492</span>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<div class="flex justify-between text-body-md">
+<span class="text-on-surface-variant">2x Homemade Pupusas</span>
+<span class="font-label-sm">$12.00</span>
+</div>
+<div class="flex justify-between text-body-md">
+<span class="text-on-surface-variant">1x Curtido Extra</span>
+<span class="font-label-sm">$2.50</span>
+</div>
+<div class="border-t border-outline-variant pt-2 mt-2 flex justify-between font-bold">
+<span>Total Paid</span>
+<span class="text-primary font-label-sm text-label-sm">$17.50</span>
+</div>
+</div>
+</div>
+<!-- Footer Message -->
+<p class="text-center text-on-surface-variant text-label-sm italic opacity-80 pb-8">
+                Helping neighbors thrive, one delivery at a time.
+            </p>
+</aside>
+</main>
+<!-- BottomNavBar (Only on Mobile) -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 flex justify-around items-center px-4 pb-4 pt-2 bg-surface shadow-[0_-4px_20px_0_rgba(166,59,0,0.08)]">
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-95 transition-transform duration-200">
+<span class="material-symbols-outlined">explore</span>
+<span class="font-label-sm text-label-sm">Explore</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 active:scale-95 transition-transform duration-200">
+<span class="material-symbols-outlined">shopping_bag</span>
+<span class="font-label-sm text-label-sm">Orders</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-95 transition-transform duration-200">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm">Wallet</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-95 transition-transform duration-200">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-sm text-label-sm">Profile</span>
+</button>
+</nav>
+<script>
+        // Simple Interaction logic for Chat button
+        document.querySelector('button.bg-primary').addEventListener('click', () => {
+            alert('Opening secure chat with Alex...');
+        });
+
+        // Simulating the Nexter movement
+        const bikeMarker = document.querySelector('.pulse-marker');
+        let pos = 33;
+        setInterval(() => {
+            pos += 0.05;
+            if(pos > 75) pos = 33;
+            bikeMarker.style.left = pos + '%';
+        }, 100);
+    </script>
+</body></html>

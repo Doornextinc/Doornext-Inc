@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Nexter Driver Profile</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Anybody:wght@700;800&family=Plus+Jakarta+Sans:wght@400;600&family=JetBrains+Mono:wght@500&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Anybody:wght@100..900&family=JetBrains+Mono:wght@100..900&family=Plus+Jakarta+Sans:wght@100..900&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary-fixed": "#ffdbce",
+                    "background": "#fff8f6",
+                    "on-tertiary-container": "#002d45",
+                    "on-surface-variant": "#594138",
+                    "on-surface": "#261813",
+                    "warm-gray": "#736F6E",
+                    "surface-bright": "#fff8f6",
+                    "surface": "#fff8f6",
+                    "secondary-container": "#e5e2e1",
+                    "primary": "#a63b00",
+                    "on-tertiary-fixed": "#001e2f",
+                    "surface-variant": "#f7ddd4",
+                    "on-primary-container": "#4f1800",
+                    "on-secondary-container": "#656464",
+                    "secondary-fixed-dim": "#c9c6c5",
+                    "surface-container-low": "#fff1ec",
+                    "inverse-on-surface": "#ffede7",
+                    "on-background": "#261813",
+                    "on-secondary": "#ffffff",
+                    "surface-container-lowest": "#ffffff",
+                    "error": "#ba1a1a",
+                    "on-primary": "#ffffff",
+                    "outline-variant": "#e1bfb3",
+                    "secondary-fixed": "#e5e2e1",
+                    "on-primary-fixed": "#370e00",
+                    "tertiary-container": "#009ade",
+                    "surface-cream": "#FDFCFB",
+                    "inverse-surface": "#3c2d27",
+                    "secondary": "#5f5e5e",
+                    "on-secondary-fixed-variant": "#474646",
+                    "on-error": "#ffffff",
+                    "outline": "#8d7166",
+                    "inverse-primary": "#ffb599",
+                    "on-primary-fixed-variant": "#7f2b00",
+                    "neighborhood-green": "#2D6A4F",
+                    "surface-container-highest": "#f7ddd4",
+                    "on-secondary-fixed": "#1c1b1b",
+                    "tertiary-fixed-dim": "#8cceff",
+                    "error-container": "#ffdad6",
+                    "tertiary": "#006492",
+                    "surface-dim": "#eed5cc",
+                    "on-tertiary-fixed-variant": "#004b6f",
+                    "surface-container": "#ffe9e2",
+                    "primary-fixed-dim": "#ffb599",
+                    "on-tertiary": "#ffffff",
+                    "surface-container-high": "#fde3da",
+                    "primary-container": "#f26522",
+                    "tertiary-fixed": "#cae6ff",
+                    "on-error-container": "#93000a",
+                    "surface-tint": "#a63b00"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "container-padding-desktop": "2.5rem",
+                    "container-padding-mobile": "1.25rem",
+                    "base": "8px",
+                    "section-gap": "4rem",
+                    "gutter": "1.5rem"
+            },
+            "fontFamily": {
+                    "display-lg": ["Anybody"],
+                    "title-lg": ["Plus Jakarta Sans"],
+                    "body-lg": ["Plus Jakarta Sans"],
+                    "label-sm": ["JetBrains Mono"],
+                    "headline-md-mobile": ["Anybody"],
+                    "display-lg-mobile": ["Anybody"],
+                    "body-md": ["Plus Jakarta Sans"],
+                    "headline-md": ["Anybody"]
+            },
+            "fontSize": {
+                    "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "title-lg": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "headline-md-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "display-lg-mobile": ["36px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "headline-md": ["32px", {"lineHeight": "1.2", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .active-dot {
+            animation: pulse-green 2s infinite;
+        }
+        @keyframes pulse-green {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(45, 106, 79, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(45, 106, 79, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(45, 106, 79, 0); }
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md min-h-screen pb-32">
+<!-- Top App Bar -->
+<header class="fixed top-0 w-full z-50 bg-surface dark:bg-on-surface flex justify-between items-center px-container-padding-mobile h-16 w-full">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary-fixed">
+<img class="w-full h-full object-cover" data-alt="A warm, professional headshot of a friendly man named Marcus in his late 30s. He has a kind smile and is wearing a neat casual polo shirt. The background is a soft-focus neighborhood street with warm afternoon sunlight filtering through trees. The overall aesthetic is clean, human-centric, and trustworthy, matching a community-focused logistics brand." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDAAjQ5-K5NMZigywoR8hoUbMedvfzxiEeJx2rb1z0YKDBFJ8OBWNxHkYVEpYKEjmeDhxYbCCVYP-VjRpfvollT2m3FVffqbK6Xh4_dOzm9hHvNBo4RXS66UMYAVyIy-bp5tWcL9-7x-p2khOxRmvOvCoTpH4KzcQTKzNRmrBHPa7Nj8Z5S73ZO2O8BjtXDmVrcVrYtl2yup-ca8XUYi0sCA3g-_0DcL38NTghfOPUz9nKDsvjdP4zL5hik0Lc-pF0tg5VL7rh0ocB3"/>
+</div>
+<span class="font-display-lg-mobile text-display-lg-mobile text-primary dark:text-primary-fixed-dim">Nexter</span>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-variant transition-colors text-primary">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</header>
+<main class="mt-20 px-container-padding-mobile max-w-2xl mx-auto space-y-gutter">
+<!-- Profile Hero Card -->
+<section class="bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-outline-variant/30">
+<div class="flex items-center justify-between mb-6">
+<div class="flex items-center gap-4">
+<div class="w-20 h-20 rounded-full overflow-hidden border-4 border-primary-container shadow-lg">
+<img class="w-full h-full object-cover" data-alt="Close up portrait of Marcus, a friendly neighborhood delivery partner. He is smiling warmly with genuine expression. The lighting is bright and natural, set in a clean modern environment with soft cream and orange tones that align with a warm community utility brand identity. The image feels high-end yet accessible." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDqlXnIKGUXWRDhnTP1d4y-1sZ0KKWQwXpojuZbW5EjB9VA9LQDXGg_bXeGFcf-y_PdUC-vSxkUsIgE7Y55Gruf7xnNkTII-KqS1tH11W8QUcz853KHX0OzyUBsgWt713REGruX592a5p_kABxbnvNHJ_7ASpdUd3as-Oy3pR-d-DHUcuxXkLJ0O_jUdaHzIqESB7qZ23XeUl2CAgImVbusQxde_bDMa6JJezoML-uZKo25U6poqWk1CYCQhDTmiQ5FkWzR40omV33o"/>
+</div>
+<div>
+<h1 class="font-headline-md-mobile text-headline-md-mobile text-on-surface">Marcus Jenkins</h1>
+<div class="flex items-center gap-1 text-primary">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-sm text-label-sm">4.9 RATING</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col items-end">
+<div class="flex items-center gap-2 bg-neighborhood-green/10 text-neighborhood-green px-3 py-1 rounded-full">
+<div class="w-2 h-2 rounded-full bg-neighborhood-green active-dot"></div>
+<span class="font-label-sm text-label-sm">ACTIVE SHIFT</span>
+</div>
+</div>
+</div>
+<!-- Bento Stats -->
+<div class="grid grid-cols-2 gap-3">
+<div class="bg-surface-container p-4 rounded-xl">
+<p class="text-on-surface-variant text-xs font-semibold mb-1">TOTAL DELIVERIES</p>
+<p class="font-label-sm text-xl text-primary">1,428</p>
+</div>
+<div class="bg-surface-container p-4 rounded-xl">
+<p class="text-on-surface-variant text-xs font-semibold mb-1">THIS WEEK</p>
+<p class="font-label-sm text-xl text-primary">$842.50</p>
+</div>
+</div>
+</section>
+<!-- Vehicle Information -->
+<section class="space-y-3">
+<h2 class="font-title-lg text-title-lg-mobile px-1">Vehicle Info</h2>
+<div class="bg-surface-container-lowest rounded-xl p-4 flex items-center gap-4 border border-outline-variant/30">
+<div class="bg-surface-variant p-3 rounded-lg text-primary">
+<span class="material-symbols-outlined">directions_car</span>
+</div>
+<div class="flex-1">
+<p class="font-title-lg text-on-surface">Toyota Prius</p>
+<p class="text-on-surface-variant text-sm">Silver • Plate: NX-8842</p>
+</div>
+<button class="text-primary hover:underline font-label-sm text-xs">EDIT</button>
+</div>
+</section>
+<!-- Payouts / Bank -->
+<section class="space-y-3">
+<h2 class="font-title-lg text-title-lg-mobile px-1">Payout Settings</h2>
+<div class="bg-inverse-surface text-surface rounded-xl p-6 shadow-xl relative overflow-hidden">
+<!-- Abstract bank card glow -->
+<div class="absolute -right-10 -top-10 w-40 h-40 bg-primary opacity-20 blur-3xl rounded-full"></div>
+<div class="flex justify-between items-start mb-8 relative z-10">
+<span class="material-symbols-outlined text-primary-fixed text-4xl">account_balance</span>
+<span class="font-label-sm text-label-sm text-surface-variant">LINKED BANK</span>
+</div>
+<div class="space-y-1 relative z-10">
+<p class="font-label-sm text-lg tracking-widest">•••• •••• •••• 9921</p>
+<p class="text-surface-variant text-xs uppercase tracking-wider">Community First National</p>
+</div>
+<div class="mt-6 flex justify-between items-center relative z-10">
+<div>
+<p class="text-xs text-surface-variant">NEXT PAYOUT</p>
+<p class="font-label-sm text-primary-fixed">OCT 24, 2023</p>
+</div>
+<button class="bg-primary text-white font-label-sm text-xs px-4 py-2 rounded-full hover:scale-105 active:scale-95 transition-all">MANAGE</button>
+</div>
+</div>
+</section>
+<!-- Preferences & Status -->
+<section class="space-y-3">
+<h2 class="font-title-lg text-title-lg-mobile px-1">Preferences</h2>
+<div class="bg-surface-container-lowest rounded-xl divide-y divide-outline-variant/20 border border-outline-variant/30 overflow-hidden">
+<!-- Toggle Item 1 -->
+<div class="p-4 flex items-center justify-between hover:bg-surface-container-low transition-colors">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">notifications_active</span>
+<span class="font-body-md text-on-surface">Push Notifications</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-secondary-container peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<!-- Toggle Item 2 -->
+<div class="p-4 flex items-center justify-between hover:bg-surface-container-low transition-colors">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">history_toggle_off</span>
+<span class="font-body-md text-on-surface">Active Shift Status</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-secondary-container peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-neighborhood-green"></div>
+</label>
+</div>
+<!-- Nav Link 1 -->
+<button class="w-full p-4 flex items-center justify-between hover:bg-surface-container-low transition-colors text-left">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">security</span>
+<span class="font-body-md text-on-surface">Privacy & Security</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+</button>
+<!-- Nav Link 2 -->
+<button class="w-full p-4 flex items-center justify-between hover:bg-surface-container-low transition-colors text-left">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">help</span>
+<span class="font-body-md text-on-surface">Support Center</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+</button>
+</div>
+</section>
+<!-- Logout Button -->
+<button class="w-full py-4 bg-surface-container-highest text-error font-title-lg rounded-xl hover:bg-error/10 transition-colors flex items-center justify-center gap-2 mb-12">
+<span class="material-symbols-outlined">logout</span>
+            Logout
+        </button>
+</main>
+<!-- Navigation Drawer (Hidden on mobile usually, but keeping structure for layout coherence) -->
+<!-- Not rendered in mobile view based on Shell Visibility & Relevance -->
+<!-- Bottom Nav Bar -->
+<nav class="fixed bottom-0 left-0 w-full bg-surface-container-lowest dark:bg-inverse-surface flex justify-around items-center pt-2 pb-6 px-4 z-50 rounded-t-xl shadow-[0_-4px_30px_rgba(166,59,0,0.08)]">
+<a class="flex flex-col items-center justify-center text-secondary hover:text-primary transition-colors scale-90 active:scale-110 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">local_shipping</span>
+<span class="font-label-sm text-label-sm">Dispatch</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary hover:text-primary transition-colors scale-90 active:scale-110 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm">Wallet</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary hover:text-primary transition-colors scale-90 active:scale-110 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">history</span>
+<span class="font-label-sm text-label-sm">History</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-fixed text-on-primary-fixed-variant rounded-full px-4 py-1 scale-90 active:scale-110 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="font-label-sm text-label-sm">Account</span>
+</a>
+</nav>
+<script>
+        // Simple micro-interaction for toggle feedback
+        document.querySelectorAll('input[type="checkbox"]').forEach(toggle => {
+            toggle.addEventListener('change', function() {
+                const parent = this.closest('.p-4');
+                if (this.checked) {
+                    parent.style.backgroundColor = 'var(--tw-bg-opacity, #fff1ec)';
+                } else {
+                    parent.style.backgroundColor = 'transparent';
+                }
+            });
+        });
+
+        // Hover effect for stats
+        document.querySelectorAll('.bg-surface-container').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.classList.add('shadow-md', '-translate-y-0.5');
+                card.style.transition = 'all 0.3s ease';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.classList.remove('shadow-md', '-translate-y-0.5');
+            });
+        });
+    </script>
+</body></html>

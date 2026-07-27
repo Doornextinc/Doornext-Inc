@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>DoorNext Support - Neighborly Care</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Anybody:wght@700;800;900&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<!-- Icons -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-cream": "#FDFCFB",
+                        "on-primary-container": "#4f1800",
+                        "on-tertiary-fixed-variant": "#004b6f",
+                        "on-background": "#261813",
+                        "surface-container-highest": "#f7ddd4",
+                        "primary-container": "#f26522",
+                        "tertiary-fixed": "#cae6ff",
+                        "surface-container-low": "#fff1ec",
+                        "outline-variant": "#e1bfb3",
+                        "on-primary-fixed-variant": "#7f2b00",
+                        "tertiary": "#006492",
+                        "on-primary-fixed": "#370e00",
+                        "secondary-fixed": "#e5e2e1",
+                        "surface-tint": "#a63b00",
+                        "on-secondary-fixed-variant": "#474646",
+                        "tertiary-container": "#009ade",
+                        "warm-gray": "#736F6E",
+                        "on-primary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "primary": "#a63b00",
+                        "primary-fixed-dim": "#ffb599",
+                        "on-secondary": "#ffffff",
+                        "surface-bright": "#fff8f6",
+                        "background": "#fff8f6",
+                        "neighborhood-green": "#2D6A4F",
+                        "primary-fixed": "#ffdbce",
+                        "surface-container-high": "#fde3da",
+                        "surface-variant": "#f7ddd4",
+                        "surface-container": "#ffe9e2",
+                        "surface": "#fff8f6",
+                        "secondary-container": "#e5e2e1",
+                        "error": "#ba1a1a",
+                        "on-tertiary-container": "#002d45",
+                        "on-tertiary-fixed": "#001e2f",
+                        "on-secondary-container": "#656464",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-primary": "#ffb599",
+                        "secondary": "#5f5e5e",
+                        "outline": "#8d7166",
+                        "on-error-container": "#93000a",
+                        "tertiary-fixed-dim": "#8cceff",
+                        "on-error": "#ffffff",
+                        "inverse-on-surface": "#ffede7",
+                        "surface-dim": "#eed5cc",
+                        "secondary-fixed-dim": "#c9c6c5",
+                        "inverse-surface": "#3c2d27",
+                        "on-surface-variant": "#594138",
+                        "on-surface": "#261813",
+                        "on-secondary-fixed": "#1c1b1b",
+                        "on-tertiary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "base": "8px",
+                        "section-gap": "4rem",
+                        "container-padding-desktop": "2.5rem",
+                        "container-padding-mobile": "1.25rem",
+                        "gutter": "1.5rem"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Anybody"],
+                        "body-lg": ["Plus Jakarta Sans"],
+                        "headline-md-mobile": ["Anybody"],
+                        "headline-md": ["Anybody"],
+                        "display-lg-mobile": ["Anybody"],
+                        "label-sm": ["JetBrains Mono"],
+                        "title-lg": ["Plus Jakarta Sans"],
+                        "body-md": ["Plus Jakarta Sans"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "headline-md-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                        "headline-md": ["32px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                        "display-lg-mobile": ["36px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                        "label-sm": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "title-lg": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Subtle micro-interaction */
+        .card-tap:active { transform: scale(0.98); transition: transform 0.1s ease; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-cream text-on-surface font-body-md selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- Top Navigation Anchor (Shared Component: TopAppBar) -->
+<header class="fixed top-0 w-full z-50 bg-surface flex justify-between items-center px-gutter h-16">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A warm, professional headshot of a friendly neighbor in their 40s, smiling kindly. The lighting is soft and natural, with a background showing a cozy local neighborhood street. High-end, soft-focus portrait photography that evokes trust and community warmth." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC8Gc8iITaUTeuinsOkAs6fod5g2yxDO42z4h3_mgy9QLNTfcyQWIJ5qhXFYMlJvafI_-cqUEaIyU2Nsb-4Gx8hWIxe76H3wG0GtoGyzYQHt6u6cuY6ksHZzOD285s1HayblF198P95dd_v68iD-_hQcnd7iw3seKJei3sb_n3_JnpzB0I_j272Y-dqtfeaWJKQvzyLmvJbzq2OjGuZ2WY4Dnz_dt8iJlIvYjeGenYeN2QDVKJW4xHyaPpghM6-BZqDPY_8b-WF4UZ2"/>
+</div>
+<h1 class="font-display-lg-mobile text-display-lg-mobile text-primary font-black tracking-tighter">DoorNext</h1>
+</div>
+<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:opacity-80 active:translate-y-0.5 transition-all">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</header>
+<main class="pt-20 pb-32 px-container-padding-mobile">
+<!-- Header Hero Section -->
+<section class="mb-8">
+<h2 class="font-headline-md-mobile text-headline-md-mobile text-on-background mb-2">How can we help today?</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">We're here to keep the neighborhood moving smoothly. Chat with a local Nexter or find answers below.</p>
+</section>
+<!-- Quick Action Grid (Asymmetric Layout) -->
+<div class="grid grid-cols-2 gap-4 mb-10">
+<!-- Major Action: Chat -->
+<div class="col-span-2 bg-primary-container p-6 rounded-xl shadow-[0_12px_24px_-8px_rgba(242,101,34,0.3)] relative overflow-hidden card-tap" onclick="toggleChat()">
+<div class="relative z-10">
+<span class="material-symbols-outlined text-on-primary-container text-4xl mb-2" style="font-variation-settings: 'FILL' 1;">chat_bubble</span>
+<h3 class="font-title-lg text-title-lg text-on-primary-container">Chat with Nexter Support</h3>
+<p class="font-body-md text-body-md text-on-primary-container opacity-90">Instant help from a real human neighbor.</p>
+</div>
+<!-- Abstract Texture Placeholder -->
+<div class="absolute -right-4 -bottom-4 opacity-10">
+<span class="material-symbols-outlined text-[120px]">volunteer_activism</span>
+</div>
+</div>
+<!-- Minor Action: Report Missing -->
+<div class="bg-surface-container-low border border-outline-variant p-4 rounded-xl card-tap">
+<span class="material-symbols-outlined text-primary mb-2">inventory_2</span>
+<h4 class="font-title-lg text-[16px] leading-tight text-on-background">Missing Items</h4>
+</div>
+<!-- Minor Action: Late Delivery -->
+<div class="bg-surface-container-low border border-outline-variant p-4 rounded-xl card-tap">
+<span class="material-symbols-outlined text-primary mb-2">schedule</span>
+<h4 class="font-title-lg text-[16px] leading-tight text-on-background">Late Delivery</h4>
+</div>
+</div>
+<!-- Featured FAQ Section (Bento Style) -->
+<section class="mb-10">
+<div class="flex items-center justify-between mb-4">
+<h3 class="font-title-lg text-title-lg text-on-surface">Community Guide</h3>
+<button class="text-primary font-label-sm text-label-sm uppercase tracking-widest">See All</button>
+</div>
+<div class="space-y-4">
+<!-- FAQ Item 1: Cottage Food -->
+<div class="bg-surface-container-lowest border border-outline-variant p-5 rounded-xl group transition-all hover:border-primary">
+<div class="flex gap-4">
+<div class="flex-shrink-0 w-12 h-12 bg-surface-container-high rounded-full flex items-center justify-center text-neighborhood-green">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">restaurant</span>
+</div>
+<div class="flex-grow">
+<h4 class="font-title-lg text-[18px] text-on-surface mb-1 group-hover:text-primary transition-colors">Understanding Cottage Food Laws</h4>
+<p class="font-body-md text-body-md text-on-surface-variant">Learn how our neighbors cook safely and legally in home kitchens.</p>
+</div>
+<div class="flex-shrink-0 self-center">
+<span class="material-symbols-outlined text-on-surface-variant opacity-40">chevron_right</span>
+</div>
+</div>
+</div>
+<!-- FAQ Item 2: Delivery Fees -->
+<div class="bg-surface-container-lowest border border-outline-variant p-5 rounded-xl group transition-all hover:border-primary">
+<div class="flex gap-4">
+<div class="flex-shrink-0 w-12 h-12 bg-surface-container-high rounded-full flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">payments</span>
+</div>
+<div class="flex-grow">
+<h4 class="font-title-lg text-[18px] text-on-surface mb-1 group-hover:text-primary transition-colors">Where do delivery fees go?</h4>
+<p class="font-body-md text-body-md text-on-surface-variant">100% of delivery fees and tips go directly to your neighbor driver.</p>
+</div>
+<div class="flex-shrink-0 self-center">
+<span class="material-symbols-outlined text-on-surface-variant opacity-40">chevron_right</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Earnings/Wallet Teaser (Minimalist Utility Row) -->
+<section class="bg-inverse-surface text-inverse-on-surface p-6 rounded-2xl mb-8 flex items-center justify-between">
+<div>
+<p class="font-label-sm text-label-sm uppercase tracking-widest opacity-70 mb-1">Nexter Balance</p>
+<h3 class="font-display-lg-mobile text-[24px] text-primary-fixed-dim">$42.80</h3>
+</div>
+<button class="bg-primary text-white font-body-md px-6 py-2 rounded-full active:scale-95 transition-transform">
+                View Wallet
+            </button>
+</section>
+</main>
+<!-- Chat Overlay (Hidden by Default) -->
+<div class="fixed inset-0 z-[60] bg-surface translate-y-full transition-transform duration-300 ease-in-out flex flex-col" id="chat-window">
+<!-- Chat Header -->
+<div class="h-20 bg-surface-container-lowest border-b border-outline-variant flex items-center px-gutter gap-4">
+<button class="p-2 -ml-2 text-on-surface" onclick="toggleChat()">
+<span class="material-symbols-outlined">close</span>
+</button>
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container">
+<span class="material-symbols-outlined">support_agent</span>
+</div>
+<div>
+<h3 class="font-title-lg text-on-surface leading-none">Sarah P.</h3>
+<p class="font-label-sm text-label-sm text-neighborhood-green">Online • Neighbors Helping Neighbors</p>
+</div>
+</div>
+</div>
+<!-- Chat Content -->
+<div class="flex-grow overflow-y-auto p-gutter space-y-6 bg-surface-cream">
+<!-- Support Message -->
+<div class="flex flex-col items-start max-w-[80%]">
+<div class="bg-white p-4 rounded-t-2xl rounded-br-2xl shadow-sm border border-outline-variant">
+<p class="font-body-md">Hi there! I'm Sarah, your local support Nexter today. I see you had an order from "Mamma's Kitchen" recently. Is everything okay with that delivery?</p>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant mt-2 px-1">10:42 AM</span>
+</div>
+<!-- User Message (Placeholder) -->
+<div class="flex flex-col items-end self-end max-w-[80%]">
+<div class="bg-primary text-white p-4 rounded-t-2xl rounded-bl-2xl shadow-md">
+<p class="font-body-md">Yes, the food was great but the sauce was missing from the bag!</p>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant mt-2 px-1">10:44 AM</span>
+</div>
+</div>
+<!-- Chat Input -->
+<div class="p-gutter bg-surface-container-lowest border-t border-outline-variant">
+<div class="flex gap-2 items-center">
+<input class="flex-grow bg-surface-variant border-none rounded-full px-5 py-3 focus:ring-2 focus:ring-primary font-body-md" placeholder="Type a message..." type="text"/>
+<button class="w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-all">
+<span class="material-symbols-outlined">send</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Navigation Shell (Shared Component: BottomNavBar) -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-4 pb-4 pt-2 bg-surface shadow-[0_-4px_20px_0_rgba(166,59,0,0.08)]">
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-95 duration-200" href="#">
+<span class="material-symbols-outlined">explore</span>
+<span class="font-label-sm text-label-sm mt-1">Explore</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-95 duration-200" href="#">
+<span class="material-symbols-outlined">shopping_bag</span>
+<span class="font-label-sm text-label-sm mt-1">Orders</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-95 duration-200" href="#">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm mt-1">Wallet</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 active:scale-95 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="font-label-sm text-label-sm mt-1">Profile</span>
+</a>
+</nav>
+<!-- FAB Suppression Rule: FAB is removed on Details/Support screens to prioritize task focus -->
+<script>
+        function toggleChat() {
+            const chatWindow = document.getElementById('chat-window');
+            if (chatWindow.classList.contains('translate-y-full')) {
+                chatWindow.classList.remove('translate-y-full');
+                chatWindow.classList.add('translate-y-0');
+                document.body.style.overflow = 'hidden';
+            } else {
+                chatWindow.classList.add('translate-y-full');
+                chatWindow.classList.remove('translate-y-0');
+                document.body.style.overflow = 'auto';
+            }
+        }
+    </script>
+</body></html>

@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>DoorNext Control Hub | Admin Support</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Anybody:wght@700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Anybody:wght@100..900&family=JetBrains+Mono:wght@100..900&family=Plus+Jakarta+Sans:wght@100..900&display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #e1bfb3;
+            border-radius: 10px;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-cream": "#FDFCFB",
+                        "on-primary-container": "#4f1800",
+                        "on-tertiary-fixed-variant": "#004b6f",
+                        "on-background": "#261813",
+                        "surface-container-highest": "#f7ddd4",
+                        "primary-container": "#f26522",
+                        "tertiary-fixed": "#cae6ff",
+                        "surface-container-low": "#fff1ec",
+                        "outline-variant": "#e1bfb3",
+                        "on-primary-fixed-variant": "#7f2b00",
+                        "tertiary": "#006492",
+                        "on-primary-fixed": "#370e00",
+                        "secondary-fixed": "#e5e2e1",
+                        "surface-tint": "#a63b00",
+                        "on-secondary-fixed-variant": "#474646",
+                        "tertiary-container": "#009ade",
+                        "warm-gray": "#736F6E",
+                        "on-primary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "primary": "#a63b00",
+                        "primary-fixed-dim": "#ffb599",
+                        "on-secondary": "#ffffff",
+                        "surface-bright": "#fff8f6",
+                        "background": "#fff8f6",
+                        "neighborhood-green": "#2D6A4F",
+                        "primary-fixed": "#ffdbce",
+                        "surface-container-high": "#fde3da",
+                        "surface-variant": "#f7ddd4",
+                        "surface-container": "#ffe9e2",
+                        "surface": "#fff8f6",
+                        "secondary-container": "#e5e2e1",
+                        "error": "#ba1a1a",
+                        "on-tertiary-container": "#002d45",
+                        "on-tertiary-fixed": "#001e2f",
+                        "on-secondary-container": "#656464",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-primary": "#ffb599",
+                        "secondary": "#5f5e5e",
+                        "outline": "#8d7166",
+                        "on-error-container": "#93000a",
+                        "tertiary-fixed-dim": "#8cceff",
+                        "on-error": "#ffffff",
+                        "inverse-on-surface": "#ffede7",
+                        "surface-dim": "#eed5cc",
+                        "secondary-fixed-dim": "#c9c6c5",
+                        "inverse-surface": "#3c2d27",
+                        "on-surface-variant": "#594138",
+                        "on-surface": "#261813",
+                        "on-secondary-fixed": "#1c1b1b",
+                        "on-tertiary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "base": "8px",
+                        "section-gap": "4rem",
+                        "container-padding-desktop": "2.5rem",
+                        "container-padding-mobile": "1.25rem",
+                        "gutter": "1.5rem"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Anybody"],
+                        "body-lg": ["Plus Jakarta Sans"],
+                        "headline-md": ["Anybody"],
+                        "label-sm": ["JetBrains Mono"],
+                        "title-lg": ["Plus Jakarta Sans"],
+                        "body-md": ["Plus Jakarta Sans"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "headline-md": ["32px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                        "label-sm": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "title-lg": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-surface-cream text-on-surface font-body-md selection:bg-primary-fixed">
+<div class="flex h-screen overflow-hidden">
+<!-- NavigationDrawer (The Anchor) -->
+<aside class="flex flex-col h-full p-4 gap-2 bg-surface-container-lowest border-r border-outline-variant w-64 shrink-0">
+<div class="font-display-lg text-display-lg text-primary mb-8 px-2">DoorNext</div>
+<div class="flex flex-col gap-4 mb-8 px-2">
+<div class="flex items-center gap-3">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="A professional headshot of a diverse woman in her late 30s, acting as a system administrator. She has a confident, friendly smile and is wearing casual professional attire. The background is a soft-focus modern office with warm wooden textures and neighborhood-green plants, creating an approachable yet authoritative community-leader vibe." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDhADTsYlj38Q1cJebSE11Llqc9dOF5vm87NPfRC6pCrljZihyAeVuxrGMNcFJxeK2CfiPJeAJ5Y2dZi8BSuuJ7nUQRXqUtVUa4HD-hiL2ouy5MWTgu2zDUoPHJ6z2ii-hyvPgAbqDKDA2GTxJA5zYJGDqOKd0h2irqpO9OcpF3kVHQKjzuTYBAu0DS0Dc5MfcakfqfZX70MiWorlUouEnuxQyv8I-s_haBOqKejp_62BpKfrElk7z1VUZ781f11E8l238ypFGOKNwK"/>
+<div class="flex flex-col">
+<span class="font-title-lg text-on-surface leading-tight">Control Hub</span>
+<span class="font-label-sm text-secondary">System Administrator</span>
+</div>
+</div>
+</div>
+<nav class="flex-1 flex flex-col gap-1">
+<a class="text-on-surface-variant hover:bg-surface-container flex items-center gap-3 px-4 py-3 rounded-lg transition-all active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body-md">Dashboard</span>
+</a>
+<a class="text-on-surface-variant hover:bg-surface-container flex items-center gap-3 px-4 py-3 rounded-lg transition-all active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined">storefront</span>
+<span class="font-body-md">Merchants</span>
+</a>
+<a class="text-on-surface-variant hover:bg-surface-container flex items-center gap-3 px-4 py-3 rounded-lg transition-all active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined">local_shipping</span>
+<span class="font-body-md">Deliveries</span>
+</a>
+<a class="text-on-surface-variant hover:bg-surface-container flex items-center gap-3 px-4 py-3 rounded-lg transition-all active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined">leaderboard</span>
+<span class="font-body-md">Analytics</span>
+</a>
+<a class="bg-primary-container text-on-primary-container font-bold rounded-lg flex items-center gap-3 px-4 py-3 transition-all active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined">contact_support</span>
+<span class="font-body-md">Support</span>
+</a>
+<a class="text-on-surface-variant hover:bg-surface-container flex items-center gap-3 px-4 py-3 rounded-lg transition-all active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-md">Settings</span>
+</a>
+</nav>
+<div class="pt-4 border-t border-outline-variant px-4">
+<span class="font-label-sm text-secondary">v1.0.2</span>
+</div>
+</aside>
+<!-- Main Canvas -->
+<main class="flex-1 flex flex-col overflow-hidden">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center w-full px-gutter h-16 bg-surface shrink-0">
+<div class="flex items-center gap-4">
+<h1 class="font-headline-md text-on-surface">Support Center</h1>
+<div class="bg-surface-container-high px-3 py-1 rounded-full flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-neighborhood-green animate-pulse"></span>
+<span class="font-label-sm text-neighborhood-green">14 ACTIVE AGENTS</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined">search</span>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-surface-container transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full"></span>
+</button>
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-bold">
+                        A
+                    </div>
+</div>
+</header>
+<!-- Dashboard Content -->
+<div class="flex-1 flex overflow-hidden p-6 gap-6">
+<!-- Ticket List Sidebar -->
+<section class="w-80 flex flex-col gap-4 overflow-y-auto custom-scrollbar">
+<div class="flex flex-col gap-2">
+<h2 class="font-label-sm text-secondary uppercase tracking-widest px-1">Ticket Filters</h2>
+<div class="grid grid-cols-1 gap-2">
+<button class="flex items-center justify-between px-4 py-3 bg-white rounded-xl border border-outline-variant shadow-sm hover:border-primary transition-all group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">inbox</span>
+<span class="font-title-lg text-on-surface">Open</span>
+</div>
+<span class="bg-primary text-white text-[10px] px-2 py-1 rounded-full font-bold">12</span>
+</button>
+<button class="flex items-center justify-between px-4 py-3 bg-white/50 rounded-xl border border-transparent hover:bg-white hover:shadow-sm transition-all">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-warm-gray">pending_actions</span>
+<span class="font-title-lg text-on-surface">Pending</span>
+</div>
+<span class="font-label-sm text-secondary">08</span>
+</button>
+<button class="flex items-center justify-between px-4 py-3 bg-white/50 rounded-xl border border-transparent hover:bg-white hover:shadow-sm transition-all">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-neighborhood-green">task_alt</span>
+<span class="font-title-lg text-on-surface">Resolved</span>
+</div>
+<span class="font-label-sm text-secondary">142</span>
+</button>
+</div>
+</div>
+<div class="flex flex-col gap-3">
+<h2 class="font-label-sm text-secondary uppercase tracking-widest px-1">Active Tickets</h2>
+<!-- Ticket Card: High Priority -->
+<div class="bg-white p-4 rounded-xl border-l-4 border-l-error shadow-sm cursor-pointer hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label-sm text-error bg-error-container px-2 py-0.5 rounded">HIGH PRIORITY</span>
+<span class="font-label-sm text-secondary">2m ago</span>
+</div>
+<h3 class="font-title-lg text-on-surface mb-1 truncate">Payment Dispute #9281</h3>
+<p class="font-body-md text-on-surface-variant line-clamp-2 mb-3">Rider claims they were charged twice for the "Auntie Mae's Tamales" order...</p>
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-secondary-container"></div>
+<span class="font-label-sm text-on-surface-variant italic">Assigned to: You</span>
+</div>
+</div>
+<!-- Ticket Card: Medium -->
+<div class="bg-white p-4 rounded-xl border border-outline-variant shadow-sm cursor-pointer hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label-sm text-primary bg-primary-fixed px-2 py-0.5 rounded">MEDIUM</span>
+<span class="font-label-sm text-secondary">14m ago</span>
+</div>
+<h3 class="font-title-lg text-on-surface mb-1 truncate">Missing Item #9275</h3>
+<p class="font-body-md text-on-surface-variant line-clamp-2 mb-3">Driver 'Nexter Sam' says the kitchen was out of stock for the beverage...</p>
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-outline-variant"></div>
+<span class="font-label-sm text-on-surface-variant">Unassigned</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Dispute Detail View (Bento Layout) -->
+<section class="flex-1 flex flex-col gap-6 overflow-y-auto custom-scrollbar">
+<!-- Header Info -->
+<div class="bg-white p-6 rounded-2xl border border-outline-variant shadow-sm">
+<div class="flex flex-wrap items-center justify-between gap-4">
+<div class="flex items-center gap-4">
+<div class="w-16 h-16 rounded-2xl bg-primary-fixed flex items-center justify-center text-primary">
+<span class="material-symbols-outlined !text-4xl">gavel</span>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<h2 class="font-headline-md text-on-surface">Dispute: Payment Dispute #9281</h2>
+<span class="px-3 py-1 rounded-full bg-error-container text-error font-label-sm">URGENT</span>
+</div>
+<p class="text-on-surface-variant">Reported by <span class="font-bold">Marco Rossi (Rider)</span> • Order #DOOR-X9A2</p>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="px-6 py-2 rounded-full border border-outline font-title-lg text-on-surface hover:bg-surface-container transition-colors">Contact Seller</button>
+<button class="px-6 py-2 rounded-full bg-primary text-white font-title-lg shadow-lg shadow-primary/20 hover:-translate-y-0.5 transition-all active:translate-y-0">Approve Refund</button>
+</div>
+</div>
+</div>
+<!-- Details Grid -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Chat History Transcripts -->
+<div class="col-span-8 flex flex-col gap-4">
+<div class="bg-white rounded-2xl border border-outline-variant shadow-sm flex flex-col h-[500px]">
+<div class="p-4 border-b border-outline-variant flex justify-between items-center bg-surface-container-low rounded-t-2xl">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary">forum</span>
+<span class="font-title-lg">Rider & Driver Interaction Log</span>
+</div>
+<button class="text-primary font-label-sm flex items-center gap-1">
+<span class="material-symbols-outlined !text-sm">download</span> SAVE TRANSCRIPT
+                                    </button>
+</div>
+<div class="flex-1 overflow-y-auto p-6 flex flex-col gap-6 custom-scrollbar">
+<!-- Rider Message -->
+<div class="flex flex-col gap-1 items-start max-w-[80%]">
+<div class="flex items-center gap-2 mb-1">
+<span class="font-label-sm font-bold">MARCO (RIDER)</span>
+<span class="text-[10px] text-secondary">11:42 AM</span>
+</div>
+<div class="bg-surface-container-high p-4 rounded-2xl rounded-tl-none text-on-surface-variant shadow-sm">
+                                            Hey, I think the app glitched. It says I was charged $42.50 but the receipt shows $21.25. Can you check this?
+                                        </div>
+</div>
+<!-- Driver Message -->
+<div class="flex flex-col gap-1 items-end ml-auto max-w-[80%] text-right">
+<div class="flex items-center gap-2 mb-1 flex-row-reverse">
+<span class="font-label-sm font-bold text-neighborhood-green">NEXTER SAM (DRIVER)</span>
+<span class="text-[10px] text-secondary">11:43 AM</span>
+</div>
+<div class="bg-neighborhood-green text-white p-4 rounded-2xl rounded-tr-none shadow-md">
+                                            I'm just the driver, Marco. I don't see the charges on my end, only the delivery fee. You'll need to contact support.
+                                        </div>
+</div>
+<!-- System Alert -->
+<div class="flex justify-center">
+<div class="bg-surface-container text-secondary font-label-sm px-4 py-1 rounded-full border border-outline-variant italic">
+                                            Driver marked order as 'Delivered' at 11:45 AM
+                                        </div>
+</div>
+<!-- Rider Message -->
+<div class="flex flex-col gap-1 items-start max-w-[80%]">
+<div class="flex items-center gap-2 mb-1">
+<span class="font-label-sm font-bold">MARCO (RIDER)</span>
+<span class="text-[10px] text-secondary">11:46 AM</span>
+</div>
+<div class="bg-surface-container-high p-4 rounded-2xl rounded-tl-none text-on-surface-variant shadow-sm">
+                                            Okay, I'll talk to support. Thanks anyway.
+                                        </div>
+</div>
+</div>
+<div class="p-4 border-t border-outline-variant">
+<div class="flex gap-2">
+<input class="flex-1 bg-surface-container-low border-none rounded-full px-6 py-2 focus:ring-2 focus:ring-primary" placeholder="Send a message to both parties..." type="text"/>
+<button class="w-10 h-10 rounded-full bg-deep-black bg-[#1c1b1b] text-white flex items-center justify-center hover:opacity-90">
+<span class="material-symbols-outlined">send</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Sidebar Stats/Metadata -->
+<div class="col-span-4 flex flex-col gap-6">
+<!-- Wallet/Ledger Card -->
+<div class="bg-inverse-surface p-6 rounded-2xl text-white shadow-xl">
+<div class="flex justify-between items-center mb-4">
+<span class="font-label-sm uppercase tracking-tighter opacity-70">Order Ledger</span>
+<span class="material-symbols-outlined text-primary-fixed">account_balance_wallet</span>
+</div>
+<div class="space-y-3">
+<div class="flex justify-between border-b border-white/10 pb-2">
+<span class="text-white/60">Subtotal</span>
+<span class="font-label-sm">$18.00</span>
+</div>
+<div class="flex justify-between border-b border-white/10 pb-2">
+<span class="text-white/60">Delivery Fee</span>
+<span class="font-label-sm">$3.25</span>
+</div>
+<div class="flex justify-between pt-2">
+<span class="text-white font-bold">Total Charged</span>
+<span class="font-label-sm text-primary-fixed text-xl">$42.50</span>
+</div>
+<div class="mt-4 p-3 bg-white/5 rounded-lg border border-white/10">
+<div class="flex items-center gap-2 text-error">
+<span class="material-symbols-outlined !text-sm">warning</span>
+<span class="font-label-sm">DUPLICATE CHARGE DETECTED</span>
+</div>
+</div>
+</div>
+</div>
+<!-- User Profiles -->
+<div class="bg-white p-5 rounded-2xl border border-outline-variant shadow-sm flex flex-col gap-4">
+<h4 class="font-label-sm text-secondary uppercase tracking-widest">Involved Parties</h4>
+<div class="flex items-center gap-3">
+<img class="w-10 h-10 rounded-full border border-outline-variant" data-alt="A warm, approachable avatar photo of a young man with glasses, looking like a friendly neighborhood food enthusiast. Soft studio lighting, warm skin tones, with a simple neutral background that feels like a clean profile photo." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAhGtkRxpxRKTdTNk3G9xnHq529lCuZ0B-gR622WUZFQFWNY7EUeBThW1XSGKOene6tGx0ATH6PXFeXV3q2IjR1iwIcaji913tmF9G--MOr6crQcQ0n6dmZ9PluMnfvizie9s4PAlhpII4h7wXpjzC-dbOgH5m9TMOx25ho2BWo2JK9Np4f8ah2pXZ5PMLemC7CuWP_y7Dolt5RHquv-7pWSF7lgjMjADgFVECcCHr55p_EIuUdDf1qd32wMFJa-YunNYe3zBWf_cw4"/>
+<div class="flex-1">
+<p class="font-bold text-on-surface leading-none">Marco Rossi</p>
+<p class="font-label-sm text-secondary">Rider • 4.9★</p>
+</div>
+<button class="material-symbols-outlined text-secondary hover:text-primary">mail</button>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-neighborhood-green/10 flex items-center justify-center text-neighborhood-green">
+<span class="material-symbols-outlined">person</span>
+</div>
+<div class="flex-1">
+<p class="font-bold text-on-surface leading-none">Nexter Sam</p>
+<p class="font-label-sm text-secondary">Driver • 4.8★</p>
+</div>
+<button class="material-symbols-outlined text-secondary hover:text-primary">mail</button>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-cover bg-center" data-alt="A macro shot of delicious, steam-rising authentic corn tamales wrapped in husks on a rustic wooden platter. Warm sunlight streams in, highlighting the texture of the corn and the vibrant colors. High-end food photography style with shallow depth of field." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBNzZhaYXR_ml7UTudeZZS9H52HZJKHJEqgnk3JEJV7mFtfBiNbkgz19ilBAUDyyC9AgUlEX9_KLy-oUA5fhzZZ5qBINpb1Magxdt07jynSyy_E8UqYn3xhfzGL89f-ORAaSbMJ1LO2KE08oHkx9S79r_16RYxJkgJxKn9MEZY8Wjf6cpfSOHWcrMsXEkNCggYyWitHac4jTsQa9SNTO9ulEsCyEtbCFOxI6r18CY_4BG9duhunrq0X4bRp5J2QDnEkCaObLKdIz9cM')"></div>
+<div class="flex-1">
+<p class="font-bold text-on-surface leading-none">Auntie Mae's</p>
+<p class="font-label-sm text-secondary">DoorMaker • Verified</p>
+</div>
+<button class="material-symbols-outlined text-secondary hover:text-primary">storefront</button>
+</div>
+</div>
+<!-- Quick Actions -->
+<div class="flex flex-col gap-2">
+<button class="w-full flex items-center gap-3 px-4 py-3 bg-secondary-container rounded-xl text-on-secondary-container hover:bg-outline-variant transition-colors group">
+<span class="material-symbols-outlined group-hover:rotate-12 transition-transform">history</span>
+<span class="font-title-lg">View User History</span>
+</button>
+<button class="w-full flex items-center gap-3 px-4 py-3 bg-error-container rounded-xl text-error hover:bg-error/10 transition-colors group">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">block</span>
+<span class="font-title-lg">Flag Transaction</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+</div>
+<!-- Background Elements -->
+<div class="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
+<div class="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-primary/5 blur-[120px] rounded-full"></div>
+<div class="absolute bottom-[-5%] left-[-5%] w-[40%] h-[40%] bg-neighborhood-green/5 blur-[100px] rounded-full"></div>
+</div>
+<script>
+        // Micro-interaction for active states
+        const filterButtons = document.querySelectorAll('section aside button');
+        filterButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterButtons.forEach(b => b.classList.remove('bg-white', 'border-primary', 'shadow-sm'));
+                btn.classList.add('bg-white', 'border-primary', 'shadow-sm');
+            });
+        });
+    </script>
+</body></html>

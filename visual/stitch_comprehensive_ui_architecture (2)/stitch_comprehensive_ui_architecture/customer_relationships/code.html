@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Customer Insights | DoorNext</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Anybody:wght@700;800;900&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary": "#ffffff",
+                    "surface-container-high": "#fde3da",
+                    "on-tertiary-container": "#002d45",
+                    "inverse-on-surface": "#ffede7",
+                    "on-tertiary-fixed-variant": "#004b6f",
+                    "on-background": "#261813",
+                    "surface-tint": "#a63b00",
+                    "on-primary-fixed": "#370e00",
+                    "surface-container": "#ffe9e2",
+                    "surface-bright": "#fff8f6",
+                    "on-secondary-fixed-variant": "#474646",
+                    "tertiary-fixed": "#cae6ff",
+                    "tertiary": "#006492",
+                    "on-secondary-fixed": "#1c1b1b",
+                    "inverse-primary": "#ffb599",
+                    "surface-dim": "#eed5cc",
+                    "surface-cream": "#FDFCFB",
+                    "background": "#fff8f6",
+                    "on-surface": "#261813",
+                    "primary": "#a63b00",
+                    "outline-variant": "#e1bfb3",
+                    "primary-container": "#f26522",
+                    "neighborhood-green": "#2D6A4F",
+                    "surface-container-low": "#fff1ec",
+                    "secondary": "#5f5e5e",
+                    "surface-variant": "#f7ddd4",
+                    "on-secondary-container": "#656464",
+                    "on-primary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "surface": "#fff8f6",
+                    "surface-container-highest": "#f7ddd4",
+                    "tertiary-container": "#009ade",
+                    "inverse-surface": "#3c2d27",
+                    "on-surface-variant": "#594138",
+                    "on-primary-fixed-variant": "#7f2b00",
+                    "on-tertiary": "#ffffff",
+                    "on-primary-container": "#4f1800",
+                    "on-error": "#ffffff",
+                    "error": "#ba1a1a",
+                    "warm-gray": "#736F6E",
+                    "secondary-fixed-dim": "#c9c6c5",
+                    "secondary-container": "#e5e2e1",
+                    "primary-fixed-dim": "#ffb599",
+                    "tertiary-fixed-dim": "#8cceff",
+                    "secondary-fixed": "#e5e2e1",
+                    "on-error-container": "#93000a",
+                    "outline": "#8d7166",
+                    "on-tertiary-fixed": "#001e2f",
+                    "primary-fixed": "#ffdbce"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "1.5rem",
+                    "container-padding-desktop": "2.5rem",
+                    "section-gap": "4rem",
+                    "container-padding-mobile": "1.25rem",
+                    "base": "8px"
+            },
+            "fontFamily": {
+                    "display-lg": ["Anybody"],
+                    "display-lg-mobile": ["Anybody"],
+                    "body-md": ["Plus Jakarta Sans"],
+                    "body-lg": ["Plus Jakarta Sans"],
+                    "label-sm": ["JetBrains Mono"],
+                    "headline-md-mobile": ["Anybody"],
+                    "title-lg": ["Plus Jakarta Sans"],
+                    "headline-md": ["Anybody"]
+            },
+            "fontSize": {
+                    "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "display-lg-mobile": ["36px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "headline-md-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "title-lg": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                    "headline-md": ["32px", {"lineHeight": "1.2", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 1.5rem;
+        }
+        @media (max-width: 768px) {
+            .bento-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e1bfb3; border-radius: 10px; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-cream text-on-background font-body-md min-h-screen pb-24 md:pb-0">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center w-full px-gutter h-16 bg-surface sticky top-0 z-50">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary">
+<img class="w-full h-full object-cover" data-alt="A warm, professional headshot of a friendly local food artisan in a sunlit kitchen. The image has a soft-focus background with a vibrant, high-end feel. The person is smiling warmly, looking directly at the camera, embodying the neighborly and trust-filled energy of the brand. Natural morning light filters through, highlighting a clean, modern aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuANF6HwqTuJTLRgku-9M8qsMiY5PZhRkr-iJlvp2S0k3UXELDY0C0HKxLXhTGIh5oRfLwPwrM3-fAUsLU3FW_1mhMPVojkm_FddKNA6-AE9y51S4C1aReY5Q5dz4excfDcwi05oKyCza9O2pDMTNFv97GzplbV70ZMAFlV9DyTcK_qve7wZQoSCKEhsI8JXWW7K0Pe1HN9onPaqzh-pBTYbUHGX-VXyqCubHSe19IaJS2_kYGvOkZ3XyorhHVTGe-Pw4Kn-HEyNcV5u"/>
+</div>
+<h1 class="font-display-lg-mobile text-display-lg-mobile text-primary font-black">DoorNext</h1>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 text-on-surface-variant hover:opacity-80 active:translate-y-0.5 transition-all">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</div>
+</header>
+<main class="max-w-[1280px] mx-auto px-container-padding-mobile md:px-container-padding-desktop py-8">
+<!-- Header Section -->
+<div class="mb-8">
+<h2 class="font-headline-md text-headline-md text-on-surface mb-2">Customer Insights</h2>
+<p class="text-on-surface-variant max-w-2xl">Understand your regulars better. Build community by acknowledging the people who keep your kitchen running.</p>
+</div>
+<div class="bento-grid">
+<!-- Top Spenders / Regulars (Bento Large) -->
+<section class="md:col-span-8 bg-surface-container-lowest rounded-xl border border-outline-variant p-6 shadow-sm">
+<div class="flex justify-between items-end mb-6">
+<div>
+<h3 class="font-title-lg text-title-lg text-on-surface">Neighbor Hall of Fame</h3>
+<p class="text-on-surface-variant font-body-md">Your top-spending supporters this month.</p>
+</div>
+<div class="hidden md:block">
+<span class="font-label-sm text-label-sm bg-surface-container px-3 py-1 rounded-full text-secondary">UPDATED 2H AGO</span>
+</div>
+</div>
+<div class="space-y-4">
+<!-- Regular Item 1 -->
+<div class="flex items-center justify-between p-4 bg-surface-cream rounded-xl hover:shadow-md transition-shadow group">
+<div class="flex items-center gap-4">
+<div class="relative">
+<img class="w-14 h-14 rounded-full object-cover border-2 border-white shadow-sm" data-alt="A close-up portrait of a cheerful neighbor, a young professional woman with a warm expression, sitting in a bright home office. The lighting is soft and airy, emphasizing a friendly, approachable atmosphere. High-end photography style with a shallow depth of field, vibrant colors, and a clean white background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDqBIlEbtBI7iLG-Qklm93uP-zUDfKobKelSrsMdAJdG8vngaRc1YUcSB4BSthLLtvk0EhbP4a_MP-mgBJPAoWdPR3TYOa7bW01AzkslPyURvquP1sVrctNA9q0prxX-EEKKgs73VnNggyQ2X8ZoJg0azJ8pjCUItioLmoSB7reYjul2ZcMU6XQlXcXZCovvd6uNpCogxVeQmPZXlG21aRPc2PMEH7Jfk6Ky11SlWecRZMxWF4UNNNhTpPaZ61XVD9OvTKZme2r0ZWt"/>
+<div class="absolute -bottom-1 -right-1 bg-neighborhood-green text-white w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold">12</div>
+</div>
+<div>
+<h4 class="font-title-lg text-on-surface leading-none">Sarah Jenkins</h4>
+<p class="text-on-surface-variant text-sm mt-1">"The best sourdough in town!"</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-label-sm text-label-sm text-neighborhood-green mb-1">TOTAL SPEND</p>
+<p class="font-display-lg-mobile text-display-lg-mobile text-primary leading-none">$482.50</p>
+</div>
+</div>
+<!-- Regular Item 2 -->
+<div class="flex items-center justify-between p-4 bg-surface-cream rounded-xl hover:shadow-md transition-shadow group">
+<div class="flex items-center gap-4">
+<div class="relative">
+<img class="w-14 h-14 rounded-full object-cover border-2 border-white shadow-sm" data-alt="A portrait of a kind-looking older man with silver hair, wearing a casual linen shirt, standing in a lush green garden. The mood is peaceful and neighborly. The aesthetic is clean and vibrant, with natural lighting creating a warm, community-focused feel. High-quality editorial style photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAOOPQuXEmidheq_RoObURWPghzX-W9bOkQn_5HoSo7ELcm5-Ad-f7XZgBUuQ-t0Vdp9nloNFS0oQaSQ0n8Ykk8mQ0lghYcgLmmjUUS39SuXPHRYy8YqpigdRM6GzEKX9vuRHzihK1p-PCBfWBb2Et6RCOuATmGFHrA8_pTscruf0FthEferuJPNKHbstLc5HksIqSvj2w4M1aNPXRaxs2NsN6uuzupRHngHOa4pxOXD86R408NyyGAYlcgJMrrUDFhwy6NAko8AYT2"/>
+<div class="absolute -bottom-1 -right-1 bg-neighborhood-green text-white w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold">8</div>
+</div>
+<div>
+<h4 class="font-title-lg text-on-surface leading-none">Marcus Thompson</h4>
+<p class="text-on-surface-variant text-sm mt-1">Frequent morning pastry buyer.</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-label-sm text-label-sm text-neighborhood-green mb-1">TOTAL SPEND</p>
+<p class="font-display-lg-mobile text-display-lg-mobile text-primary leading-none">$294.00</p>
+</div>
+</div>
+<!-- Regular Item 3 -->
+<div class="flex items-center justify-between p-4 bg-surface-cream rounded-xl hover:shadow-md transition-shadow group">
+<div class="flex items-center gap-4">
+<div class="relative">
+<img class="w-14 h-14 rounded-full object-cover border-2 border-white shadow-sm" data-alt="A portrait of a trendy young man with glasses, looking thoughtful and happy in a modern cafe setting. Soft window light illuminates the scene, giving it a high-end, fresh aesthetic. The colors are warm and inviting, fitting a neighborly community app theme. Professional photography with high clarity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCTikF6fkug5yX9ipRmDyvNkkH5VPeqjhofIGhErIyi8qNn5zaMAiWAL2jvvCN2WH94CdGPjl0exQ8rDgmwJ9lEzBMH7U5k1NJlks93P1euHp1aEdmKFVeE9EI9UAGKFNbhKdY9mNAySc2K_GBcwPRGTKYMfneznoGxYeSTHsFIOxg9b8PBm4JV8btMBp5MGOzdIXTFHwIaemyyIMv7bJLiaYtfIi-6gxvn3TTAWGGMMVV0puzmXE3jaIUXeh9LPzLTAa_j6g34dFFp"/>
+<div class="absolute -bottom-1 -right-1 bg-neighborhood-green text-white w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold">5</div>
+</div>
+<div>
+<h4 class="font-title-lg text-on-surface leading-none">Leo Chen</h4>
+<p class="text-on-surface-variant text-sm mt-1">Regular weekend brunch orders.</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-label-sm text-label-sm text-neighborhood-green mb-1">TOTAL SPEND</p>
+<p class="font-display-lg-mobile text-display-lg-mobile text-primary leading-none">$185.20</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Order Frequency Pulse (Bento Small) -->
+<section class="md:col-span-4 bg-inverse-surface text-white rounded-xl p-6 flex flex-col justify-between">
+<div>
+<h3 class="font-title-lg text-title-lg mb-2">Order Frequency</h3>
+<p class="text-surface-variant opacity-80 text-sm">When your regulars are hungriest.</p>
+</div>
+<div class="flex items-end justify-between h-32 gap-2 mt-6">
+<div class="w-full bg-primary h-[40%] rounded-t-lg transition-all hover:scale-x-110"></div>
+<div class="w-full bg-primary h-[25%] rounded-t-lg transition-all hover:scale-x-110"></div>
+<div class="w-full bg-primary h-[60%] rounded-t-lg transition-all hover:scale-x-110"></div>
+<div class="w-full bg-primary h-[90%] rounded-t-lg transition-all hover:scale-x-110"></div>
+<div class="w-full bg-primary h-[75%] rounded-t-lg transition-all hover:scale-x-110"></div>
+<div class="w-full bg-primary h-[45%] rounded-t-lg transition-all hover:scale-x-110"></div>
+<div class="w-full bg-primary h-[30%] rounded-t-lg transition-all hover:scale-x-110"></div>
+</div>
+<div class="flex justify-between mt-2 text-[10px] font-label-sm text-surface-variant">
+<span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
+</div>
+<div class="mt-8 bg-surface-container-highest/10 p-4 rounded-lg">
+<p class="font-label-sm text-label-sm text-primary-fixed leading-tight uppercase mb-2">PRO TIP</p>
+<p class="text-sm opacity-90">Most regulars order on <span class="font-bold text-primary-fixed">Thursdays</span>. Consider a "Weekend Warmup" special!</p>
+</div>
+</section>
+<!-- Private Feedback Feed (Bento Wide) -->
+<section class="md:col-span-12 bg-white rounded-xl border border-outline-variant p-6">
+<div class="flex items-center gap-3 mb-6">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">favorite</span>
+<h3 class="font-title-lg text-title-lg text-on-surface">Private Feedback</h3>
+</div>
+<div class="grid md:grid-cols-3 gap-6">
+<!-- Feedback Card 1 -->
+<div class="bg-surface-container-low p-5 rounded-xl border border-outline-variant/30 flex flex-col gap-4">
+<div class="flex items-center gap-3">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="A portrait of a smiling young woman with curly hair, wearing a cozy knit sweater in a bright, modern interior. The lighting is warm and natural. The vibe is genuine, local, and trustworthy. Professional photography style with rich textures and a neighborhood feel." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCRGxwq4RL9wUc0y86yMBX86wgEJMsFLLkmKWDjlJpVOdR35YHoOEbo3WSlP-ykgXqnx93_0jsbXXWR8_Bq9CDENs68tMSdgQ5nq82I1bs_VE9Jt6xlN2wX23eMozZUzFy2ZzswS94Ow-2DWDljveipBghZs2zwi2vGiJ057es0jmSzap0udlAY80mrSgnwkOrHTtP-MNY95_sOGu_DWohwtI_YHkrvgntDCSZPzNzVqN8uO-N-bMiXiLOinXdDiB3UlIXg2lU5pa54"/>
+<div>
+<p class="font-bold text-on-surface">Sarah J.</p>
+<p class="text-xs text-on-surface-variant">2 days ago</p>
+</div>
+</div>
+<p class="text-on-surface-variant italic">"Your gluten-free options are a lifesaver for my family. Please never stop making those muffins!"</p>
+<div class="mt-auto pt-4 flex justify-end">
+<button class="text-primary font-bold text-sm flex items-center gap-1 hover:underline">
+                                Send a Thank You <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Feedback Card 2 -->
+<div class="bg-surface-container-low p-5 rounded-xl border border-outline-variant/30 flex flex-col gap-4">
+<div class="flex items-center gap-3">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="A portrait of a friendly man in his 40s with a neat beard, wearing a denim shirt, standing against a rustic wooden background. The scene is warmly lit with a tactile, human-centric quality. The style is clean, modern, and high-end. Vivid colors and crisp details." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD8EVLwWqignBjApgTv7QRm23RqbBQJAM7oP28gl9rRGBNaIuFUoOB9cEtRZOTryeojII9faYw__8bvH06Z8HDs3rMjzWmpCnOw7BKEszuV-0H1gr8x8vIYbEBFRQISSSUW5dDeU2cLur7F7YPfJr31cZKF5Da9_zIOPHIOShese66kzQbpfkOVjERM0g7O7J56DfO-LR6ilLmqUdU2cVvuA9Clf3bSgfHgjQowAAFsb03OnPep6S_C5PRS18p4SbZAnRD-rsJgI0pO"/>
+<div>
+<p class="font-bold text-on-surface">Marcus T.</p>
+<p class="text-xs text-on-surface-variant">4 days ago</p>
+</div>
+</div>
+<p class="text-on-surface-variant italic">"The packaging was so cute today. It really brightened up my morning delivery. Thanks for the extra care."</p>
+<div class="mt-auto pt-4 flex justify-end">
+<button class="text-primary font-bold text-sm flex items-center gap-1 hover:underline">
+                                Send a Thank You <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Feedback Card 3 -->
+<div class="bg-surface-container-low p-5 rounded-xl border border-outline-variant/30 flex flex-col gap-4">
+<div class="flex items-center gap-3">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="A portrait of a happy young man with a bright smile, wearing a casual t-shirt in a sunlit urban kitchen environment. The mood is high-energy, positive, and community-driven. High-end, soft-focus photography with clean lines and vibrant neighborly colors." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCGANDWQW2DpPsJtdgeDe6T6iHgqJDtq9nUl3E9XOvyqg03gRxIRV-wmYpFTdFuVrl8Vd59JWMU1Q2s-FbO4csauVrEcuarx9wGdysRigtgIv6l8YFjPbY6FHL0zI7nktHAB8F-dFTTThjB0kDcHOV7v7SHGS0JJx0xHgn0yv0obN9FoXuoSsM0jsHSwKx2UFathJevb7F73kDWom32boKbIrFyiqRkLebRKOrfKbwCMherAwS4tmczQbp6Ef5cf6yaeXZyK6t17IsJ"/>
+<div>
+<p class="font-bold text-on-surface">Leo C.</p>
+<p class="text-xs text-on-surface-variant">1 week ago</p>
+</div>
+</div>
+<p class="text-on-surface-variant italic">"That new spice blend on the chicken is perfect. My housemates are now obsessed too!"</p>
+<div class="mt-auto pt-4 flex justify-end">
+<button class="text-primary font-bold text-sm flex items-center gap-1 hover:underline">
+                                Send a Thank You <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 flex justify-around items-center px-4 pb-4 pt-2 shadow-[0_-4px_20px_0_rgba(166,59,0,0.08)] bg-surface">
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors px-4 py-1 rounded-full" href="#">
+<span class="material-symbols-outlined">explore</span>
+<span class="font-label-sm text-label-sm">Explore</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors px-4 py-1 rounded-full" href="#">
+<span class="material-symbols-outlined">shopping_bag</span>
+<span class="font-label-sm text-label-sm">Orders</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors px-4 py-1 rounded-full" href="#">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm">Wallet</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="font-label-sm text-label-sm">Profile</span>
+</a>
+</nav>
+<!-- Desktop Navigation Drawer (Simulated) -->
+<aside class="hidden md:flex fixed left-0 top-0 h-screen w-64 border-r border-outline-variant bg-surface-container-lowest flex-col p-4 gap-2">
+<h1 class="font-display-lg text-display-lg text-primary mb-8">DoorNext</h1>
+<div class="flex items-center gap-3 p-4 bg-surface-container rounded-xl mb-4">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="A small, high-quality circular avatar of a professional chef wearing a clean white apron. The lighting is bright and clear, with a minimalist, clean background. The aesthetic is modern and trustworthy." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAwijj4V0AuLbkBQ_jXHN0c_mEDCx24aLR-5oHZEbTHH0knw5dKwZWpp_3nof4KMR-KeXM577tb2Mqv1U6oSM32ns8HzgbfZ-Pp_ruZcLfSaynuTGI_aJNNnnbNuVAa_EB56QYLE3zBmM2xYTaPXTgaGsZuCmVGN4TDVx8ak8Qzqw88ZbeGVwY0D6EgYkWqPqI_fe8aIDmHULRTjbPDFzvrmwyrjhStEZwinRfjgwINz20luCs2oZjwOFVRQ3nw3cbBCk9T5plnKh9-"/>
+<div>
+<p class="font-bold text-on-surface">Kitchen Hub</p>
+<p class="text-xs text-on-surface-variant">DoorMaker Pro</p>
+</div>
+</div>
+<nav class="flex flex-col gap-1">
+<a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">storefront</span>
+<span class="font-body-md">My Shop</span>
+</a>
+<a class="flex items-center gap-3 p-3 bg-primary-container text-on-primary-container font-bold rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">leaderboard</span>
+<span class="font-body-md">Insights</span>
+</a>
+<a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">contact_support</span>
+<span class="font-body-md">Support</span>
+</a>
+<a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container rounded-lg transition-all mt-auto" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-md">Settings</span>
+</a>
+</nav>
+</aside>
+<script>
+        // Micro-interactions for the order frequency bars
+        document.querySelectorAll('.md\\:col-span-4 .bg-primary').forEach(bar => {
+            bar.addEventListener('mouseenter', () => {
+                bar.style.filter = 'brightness(1.2)';
+            });
+            bar.addEventListener('mouseleave', () => {
+                bar.style.filter = 'brightness(1)';
+            });
+        });
+
+        // Simple observer for reveal animation
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('opacity-100', 'translate-y-0');
+                    entry.target.classList.remove('opacity-0', 'translate-y-4');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('section').forEach(section => {
+            section.classList.add('transition-all', 'duration-700', 'opacity-0', 'translate-y-4');
+            observer.observe(section);
+        });
+    </script>
+</body></html>

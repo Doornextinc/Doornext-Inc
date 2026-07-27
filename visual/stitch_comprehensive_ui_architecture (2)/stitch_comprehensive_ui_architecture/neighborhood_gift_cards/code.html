@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Anybody:wght@700;800;900&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        .gift-card-shine {
+            background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 50%, rgba(255,255,255,0.2) 100%);
+        }
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: auto;
+            gap: 1.5rem;
+        }
+        @media (max-width: 768px) {
+            .bento-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-cream text-on-surface font-body-md min-h-screen pb-24">
+<!-- TopAppBar -->
+<header class="bg-surface flex justify-between items-center w-full px-gutter h-16 fixed top-0 z-50">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden bg-primary-container flex items-center justify-center">
+<img class="w-full h-full object-cover" data-alt="A warm, professional headshot of a friendly local community member with a bright smile, captured in soft, natural morning light. The background is a slightly blurred neighborhood street with cozy houses and greenery, evoking a sense of trust and neighborly connection. The image has a warm, high-end feel with a soft focus and vibrant colors that match a modern community-focused brand." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCNlMw5EzrTJORX3mwaXqSjC1uULoeoVIQNjbHwnf6aGpfRrz5HthV9WsgJEua2hpsCCFq4p0nYWcw8NuJPxjxZFljo-Rb7fW0Cuomx_RjbMcxHgZM4Iw63r2eVlOZAoJ7Yax1ZSCBJhOHB88NiLPuOg9WK-u7HRYCv3jVetRo7kgUF60dcurvaEUFZzRDtvahFPGdwRlsu3ZPFKTgBQ5ldUE9Z2o_Fpf7OmYYWKHjINAoBnJ0UBxbPek8wmywwuzolez37L0wS1mpf"/>
+</div>
+<span class="font-display-lg-mobile text-display-lg-mobile text-primary font-black">DoorNext</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-surface-variant hover:opacity-80 active:translate-y-0.5 transition-all">notifications</button>
+</div>
+</header>
+<main class="pt-24 px-container-mobile md:px-container-desktop max-w-[1280px] mx-auto">
+<!-- Hero Section -->
+<section class="mb-section-gap relative overflow-hidden rounded-[2rem] bg-inverse-surface p-8 md:p-12 text-inverse-on-surface">
+<div class="relative z-10 max-w-2xl">
+<span class="font-label-sm text-label-sm text-primary-fixed-dim uppercase tracking-widest mb-4 block">Neighborhood Spirit</span>
+<h1 class="font-display-lg text-display-lg mb-6">Give the Gift of a Home-Cooked Meal</h1>
+<p class="font-body-lg text-body-lg mb-8 opacity-90">Support local DoorMakers and Nexters by sharing credits with your neighbors. The perfect way to say "Welcome to the Block" or "Happy Holidays."</p>
+<div class="flex flex-wrap gap-4">
+<button class="bg-primary-container text-on-primary-container px-8 py-4 rounded-full font-bold hover:scale-105 transition-transform shadow-lg shadow-primary/20">Buy a Gift Card</button>
+<button class="bg-surface-container-lowest text-on-surface px-8 py-4 rounded-full font-bold hover:bg-surface-container-high transition-colors">Redeem Code</button>
+</div>
+</div>
+<!-- Decorative Element -->
+<div class="absolute -right-20 -bottom-20 w-80 h-80 bg-primary opacity-20 rounded-full blur-[100px]"></div>
+<div class="absolute right-12 top-1/2 -translate-y-1/2 hidden lg:block w-72 h-48 rotate-12 rounded-xl bg-primary-container shadow-2xl p-6 gift-card-shine border border-white/20">
+<div class="flex justify-between items-start mb-12">
+<span class="font-display-lg text-white opacity-80">DN</span>
+<span class="font-label-sm text-white">NEIGHBORHOOD GIFT</span>
+</div>
+<div class="font-label-sm text-white/60 tracking-[0.2em]">**** **** **** 2024</div>
+</div>
+</section>
+<!-- Main Bento Content -->
+<div class="bento-grid">
+<!-- Amount Selection (Large) -->
+<div class="col-span-1 md:col-span-2 bg-white rounded-[2rem] p-8 border border-outline-variant shadow-sm">
+<h3 class="font-title-lg text-title-lg mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">card_giftcard</span>
+                    Select Amount
+                </h3>
+<div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+<button class="p-6 border-2 border-outline-variant rounded-2xl hover:border-primary hover:bg-primary-container/10 transition-all group active:scale-95">
+<div class="font-label-sm text-label-sm text-secondary mb-1">SNACK</div>
+<div class="font-display-lg text-primary group-hover:scale-110 transition-transform">$25</div>
+</button>
+<button class="p-6 border-2 border-primary bg-primary-container/5 rounded-2xl relative overflow-hidden active:scale-95">
+<div class="absolute top-0 right-0 bg-primary text-white font-label-sm px-2 py-1 rounded-bl-lg">POPULAR</div>
+<div class="font-label-sm text-label-sm text-secondary mb-1">FEAST</div>
+<div class="font-display-lg text-primary">$50</div>
+</button>
+<button class="p-6 border-2 border-outline-variant rounded-2xl hover:border-primary hover:bg-primary-container/10 transition-all group active:scale-95">
+<div class="font-label-sm text-label-sm text-secondary mb-1">HOST</div>
+<div class="font-display-lg text-primary group-hover:scale-110 transition-transform">$100</div>
+</button>
+<button class="col-span-full mt-4 p-4 bg-surface-container-low rounded-xl flex items-center justify-between">
+<span class="font-body-md text-on-surface-variant px-2">Custom Amount</span>
+<div class="flex items-center gap-2 bg-white rounded-lg px-4 py-2 border border-outline-variant">
+<span class="text-secondary">$</span>
+<input class="border-none bg-transparent p-0 focus:ring-0 w-20 font-bold text-on-surface" placeholder="0.00" type="number"/>
+</div>
+</button>
+</div>
+</div>
+<!-- Visual Style / Theme (Tall) -->
+<div class="col-span-1 md:col-span-2 lg:col-span-1 bg-white rounded-[2rem] p-8 border border-outline-variant shadow-sm flex flex-col h-full">
+<h3 class="font-title-lg text-title-lg mb-6">Choose Design</h3>
+<div class="space-y-4 flex-grow overflow-y-auto pr-2 custom-scrollbar">
+<div class="relative cursor-pointer group">
+<div class="w-full h-24 bg-cover bg-center rounded-xl border-2 border-primary" data-alt="A cozy, vibrant flat illustration of a bustling neighborhood street in autumn. Friendly neighbors are exchanging baskets of warm bread and colorful produce. The style is warm and tactile with soft textures and a color palette of oranges, greens, and deep browns, emphasizing a community-first and neighborly vibe." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD4GXTiF4i5Zfp_qpLwdZYOMi65w1lvsUVL5J9y54MnTv9AMYEbvplTL_bGYLMk1T06EvQIuOFs6QvpNCO372H_D0oHswZ3Z3RrSJgorI55zDHfbzOhPb_3zauDEvq8yfrbtTK5OK_nverVIXZrNu4GndZDoHWEQCPm58Ayh-31PnlNN58KODEyaH3_RB5biAl6C08meiZRhsn8JH7pFVV76zrAmBqKcXDLuh3GPuhRismf1LKMhiwLErkjzydgku845Thw6jR7DvRV')"></div>
+<div class="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<p class="text-xs mt-1 font-medium text-primary">Harvest Community</p>
+</div>
+<div class="relative cursor-pointer group">
+<div class="w-full h-24 bg-cover bg-center rounded-xl border-2 border-transparent" data-alt="A high-end, minimalist aesthetic background featuring a close-up of artisanal, home-made pasta being crafted by hands dusted with flour. The lighting is soft and warm, highlighting the tactile texture of the dough. The colors are dominated by cream, gold, and earthy tones, giving it a premium, neighborly utility feel." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBM4syoeQfvrHr5ZfTgkifYTL8peV1p2Iy1X8FC8GE9NhvHi40y__ZkdW1akBnatL0xVjXB-bfHIXKmvVeyHUJNe4ucx_MxvCWeUGBrKcTF1AsDICgco56I6oT0sE8XukBL97VbLbY3hSIivZ3ZakTi0VvU94s3_zd7z3jcGEP3aaM7gEncN6Ymp5FxyucCPnT1gh1-HVJsSNVX6QpOGbyivTB4Iu7CMSol9nsDShShvaJsWaVPBNHfc9O3p13Phl9hhz2YGl9QtHA7')"></div>
+<p class="text-xs mt-1 font-medium text-secondary">The Kitchen Window</p>
+</div>
+<div class="relative cursor-pointer group">
+<div class="w-full h-24 bg-cover bg-center rounded-xl border-2 border-transparent" data-alt="A celebratory, festive scene with soft-focus neighborhood lights and a warm, glowing lantern in the foreground. The background shows silhouettes of people gathering in a cozy backyard setting. The image uses soft bokeh effects and a rich palette of deep primary orange and neighborhood green." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDvBl5VUs9Mcest_G5-J9qZB5lfDOY518tqS2YGdeaBMWW0MJ0m50mLHAy4QrJMHg_1Bh2sPeh6-si5GFZzdW8iyn4kS9Kwx_j_dt93Vl74YCJ60ODN0Hm2w0NqVBeXDi331K7SlmdrUrWr-z6zrReiA2dG_zZN4rMZ73xG2pyTzEd07SPtzw6sU4rejzDYhMFfmTy44sFZtCjrZrRW8Jabxi1bMbGnJ0a2VBrUmHO4TkyLHJbjVg6qihKqUSxhWlghvO3Hp6YPe89H')"></div>
+<p class="text-xs mt-1 font-medium text-secondary">Festive Neighbors</p>
+</div>
+</div>
+</div>
+<!-- Wallet Balance (Compact) -->
+<div class="col-span-1 bg-inverse-surface rounded-[2rem] p-8 flex flex-col justify-between text-white">
+<div>
+<h3 class="font-label-sm text-label-sm text-primary-fixed-dim mb-4 tracking-widest">YOUR BALANCE</h3>
+<div class="font-display-lg text-display-lg text-primary-container">$142.80</div>
+</div>
+<div class="mt-6 pt-6 border-t border-white/10">
+<button class="w-full py-3 bg-white/10 hover:bg-white/20 rounded-xl font-label-sm text-label-sm transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">history</span>
+                        View History
+                    </button>
+</div>
+</div>
+<!-- Message Card (Medium) -->
+<div class="col-span-1 md:col-span-2 bg-white rounded-[2rem] p-8 border border-outline-variant shadow-sm flex flex-col">
+<h3 class="font-title-lg text-title-lg mb-6">Personal Message</h3>
+<textarea class="w-full bg-surface-container-low rounded-2xl border-none focus:ring-2 focus:ring-primary p-4 text-on-surface resize-none mb-6" placeholder="Write a neighborly note..." rows="4"></textarea>
+<div class="flex items-center gap-4">
+<div class="flex -space-x-3">
+<img class="w-10 h-10 rounded-full border-2 border-white object-cover" data-alt="Close-up portrait of a cheerful elderly neighbor with silver hair and kind eyes, wearing a knitted sweater, in a softly lit domestic setting. High-end, warm photography style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCFyhyMROi4u-aSCaOH20cXmg8Pqerr7T44F0bT0jiQByZqqtmW02sI13Maw8EMRRWj4_R--znKafJ-keAtnj-PTy2AQH0ixiUHCH7ImAjpcS1476dbeTN3CMaJmj6pAMCDSFUDJhEeCr5ahFe1AUBeJ4BO5__X0CabR5L7qG7_7CbqDsQmONbNS9iY8zghr_CKAQsJ5A7EnF0Fjw8vKX4eD4uFQ-tiJqPQOPXefo6SG7EPk5-qRDk_jrqG-vfW9EHDcrY6N5TZlRQe"/>
+<img class="w-10 h-10 rounded-full border-2 border-white object-cover" data-alt="A friendly young woman with curly hair and glasses, laughing, wearing a bright yellow apron. Warm, natural lighting, high-quality photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBGKolxlHR0v5Sh3vqqPF5amZWIlldHlyU0tpKyJGZyjXNTZcFeOVQH4Fkt9bNxvA2pzmWVJ-OCQcs3r-aAkp92ryrRxbSLIEfkOy8cNVjemQ1aPr0clRoW70380sColP1rIsQ2jYoOkhvabGuUc4dZAwyQgkrRKZrCb1smR22W77MIz0K22DP2vvhVR2HPV1API-N8LG1w-aWPzr19lFJkhDP0hRkFfHLgbK1UmTp4L4yJ9ME-CFmtQdlaX9eelJoccXdIeNJ1vRrR"/>
+<div class="w-10 h-10 rounded-full border-2 border-white bg-primary-container text-on-primary-container flex items-center justify-center text-xs font-bold">+12</div>
+</div>
+<span class="text-xs text-on-surface-variant font-medium">Join 400+ neighbors gifting today</span>
+</div>
+</div>
+<!-- Summary & Pay (Small) -->
+<div class="col-span-1 md:col-span-2 lg:col-span-1 bg-surface-container p-8 rounded-[2rem] border border-primary-container/20 flex flex-col justify-between">
+<div>
+<h3 class="font-title-lg text-title-lg mb-4">Summary</h3>
+<div class="space-y-3 mb-6">
+<div class="flex justify-between text-body-md">
+<span class="text-on-surface-variant">Gift Value</span>
+<span class="font-bold text-on-surface">$50.00</span>
+</div>
+<div class="flex justify-between text-body-md">
+<span class="text-on-surface-variant">Delivery fee</span>
+<span class="font-bold text-neighborhood-green">FREE</span>
+</div>
+<div class="flex justify-between pt-3 border-t border-outline-variant font-display-lg text-2xl">
+<span>Total</span>
+<span class="text-primary">$50.00</span>
+</div>
+</div>
+</div>
+<button class="w-full bg-primary text-white py-4 rounded-full font-bold shadow-lg shadow-primary/20 active:translate-y-1 transition-all">
+                    Send Gift Card
+                </button>
+</div>
+</div>
+<!-- FAQs or Mission -->
+<section class="mt-section-gap mb-12">
+<h2 class="font-display-lg text-display-lg-mobile md:text-display-lg text-center mb-12">Why Gift DoorNext?</h2>
+<div class="grid md:grid-cols-3 gap-8">
+<div class="text-center p-6">
+<div class="w-16 h-16 bg-primary-container/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
+<span class="material-symbols-outlined text-primary text-3xl">home</span>
+</div>
+<h4 class="font-title-lg text-title-lg mb-3">Hyperlocal Impact</h4>
+<p class="text-on-surface-variant">100% of the food credit goes to your neighbor's kitchen. No hidden corporate fees.</p>
+</div>
+<div class="text-center p-6">
+<div class="w-16 h-16 bg-primary-container/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
+<span class="material-symbols-outlined text-primary text-3xl">volunteer_activism</span>
+</div>
+<h4 class="font-title-lg text-title-lg mb-3">Build Community</h4>
+<p class="text-on-surface-variant">Sharing a meal is the oldest way to build a bond. We make it digital and easy.</p>
+</div>
+<div class="text-center p-6">
+<div class="w-16 h-16 bg-primary-container/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
+<span class="material-symbols-outlined text-primary text-3xl">eco</span>
+</div>
+<h4 class="font-title-lg text-title-lg mb-3">Zero Waste</h4>
+<p class="text-on-surface-variant">Digital cards mean zero plastic waste. Neighborhood kindness, sustainably delivered.</p>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-4 pb-4 pt-2 bg-surface shadow-[0_-4px_20px_0_rgba(166,59,0,0.08)] md:hidden">
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-95 duration-200" href="#">
+<span class="material-symbols-outlined">explore</span>
+<span class="font-label-sm text-label-sm">Explore</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-95 duration-200" href="#">
+<span class="material-symbols-outlined">shopping_bag</span>
+<span class="font-label-sm text-label-sm">Orders</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 active:scale-95 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm">Wallet</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-95 duration-200" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-sm text-label-sm">Profile</span>
+</a>
+</nav>
+<script>
+        // Micro-interactions for buttons and inputs
+        document.querySelectorAll('button').forEach(button => {
+            button.addEventListener('mousedown', () => {
+                button.classList.add('scale-95');
+            });
+            button.addEventListener('mouseup', () => {
+                button.classList.remove('scale-95');
+            });
+        });
+
+        // Simple animation for the credit card element on load
+        window.addEventListener('load', () => {
+            const card = document.querySelector('.lg\\:block');
+            if(card) {
+                card.style.transition = 'transform 1s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                card.style.transform = 'translateY(-10px) rotate(8deg)';
+                setTimeout(() => {
+                    card.style.transform = 'translateY(0) rotate(12deg)';
+                }, 1000);
+            }
+        });
+    </script>
+</body></html>

@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Anybody:wght@700;800;900&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-cream": "#FDFCFB",
+            "on-primary-container": "#4f1800",
+            "on-tertiary-fixed-variant": "#004b6f",
+            "on-background": "#261813",
+            "surface-container-highest": "#f7ddd4",
+            "primary-container": "#f26522",
+            "tertiary-fixed": "#cae6ff",
+            "surface-container-low": "#fff1ec",
+            "outline-variant": "#e1bfb3",
+            "on-primary-fixed-variant": "#7f2b00",
+            "tertiary": "#006492",
+            "on-primary-fixed": "#370e00",
+            "secondary-fixed": "#e5e2e1",
+            "surface-tint": "#a63b00",
+            "on-secondary-fixed-variant": "#474646",
+            "tertiary-container": "#009ade",
+            "warm-gray": "#736F6E",
+            "on-primary": "#ffffff",
+            "error-container": "#ffdad6",
+            "primary": "#a63b00",
+            "primary-fixed-dim": "#ffb599",
+            "on-secondary": "#ffffff",
+            "surface-bright": "#fff8f6",
+            "background": "#fff8f6",
+            "neighborhood-green": "#2D6A4F",
+            "primary-fixed": "#ffdbce",
+            "surface-container-high": "#fde3da",
+            "surface-variant": "#f7ddd4",
+            "surface-container": "#ffe9e2",
+            "surface": "#fff8f6",
+            "secondary-container": "#e5e2e1",
+            "error": "#ba1a1a",
+            "on-tertiary-container": "#002d45",
+            "on-tertiary-fixed": "#001e2f",
+            "on-secondary-container": "#656464",
+            "surface-container-lowest": "#ffffff",
+            "inverse-primary": "#ffb599",
+            "secondary": "#5f5e5e",
+            "outline": "#8d7166",
+            "on-error-container": "#93000a",
+            "tertiary-fixed-dim": "#8cceff",
+            "on-error": "#ffffff",
+            "inverse-on-surface": "#ffede7",
+            "surface-dim": "#eed5cc",
+            "secondary-fixed-dim": "#c9c6c5",
+            "inverse-surface": "#3c2d27",
+            "on-surface-variant": "#594138",
+            "on-surface": "#261813",
+            "on-secondary-fixed": "#1c1b1b",
+            "on-tertiary": "#ffffff"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "base": "8px",
+            "section-gap": "4rem",
+            "container-padding-desktop": "2.5rem",
+            "container-padding-mobile": "1.25rem",
+            "gutter": "1.5rem"
+          },
+          "fontFamily": {
+            "display-lg": ["Anybody"],
+            "body-lg": ["Plus Jakarta Sans"],
+            "headline-md-mobile": ["Anybody"],
+            "headline-md": ["Anybody"],
+            "display-lg-mobile": ["Anybody"],
+            "label-sm": ["JetBrains Mono"],
+            "title-lg": ["Plus Jakarta Sans"],
+            "body-md": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+            "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+            "headline-md-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}],
+            "headline-md": ["32px", {"lineHeight": "1.2", "fontWeight": "700"}],
+            "display-lg-mobile": ["36px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+            "label-sm": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "500"}],
+            "title-lg": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+            "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    body {
+      background-color: #FDFCFB;
+      color: #261813;
+    }
+    .earnings-card-shadow {
+      box-shadow: 0 10px 30px 0 rgba(166, 59, 0, 0.08);
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-body-md selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- Top App Bar -->
+<header class="fixed top-0 w-full z-50 bg-surface flex justify-between items-center px-container-mobile h-16">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary-container">
+<img class="w-full h-full object-cover" data-alt="A friendly, high-resolution portrait of a smiling local delivery driver in their 30s. They are wearing a clean, modern orange polo shirt against a blurred neighborhood background. The lighting is warm and natural, suggesting a bright morning. The overall aesthetic is approachable, professional, and community-oriented, aligning with a premium service brand." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCTm_X3QXVoFni2viwpavJKjgM1-jpSyV03VWXfgKPiIoECdHSR4fbNjOsCyexrtecZ9IOGnhUr0w_K0hpCEWrlc66WNY5WcDdFm_mcTJjtf2YFEXfLGyCJcOTf3tuATMQFFX_IpbG-1UZ-ttkMX06nHyoejVnzR53U8mB0ZUqinfEOCY73i6v4RmPvfut9f3P2ln8YKKmnzf2s3fZvppPB574Qy6p5aK87GPPpNcX2nS_mfSjtvM_1m9mcK__6oZ99HUUkPiKKFFJK"/>
+</div>
+<h1 class="font-display-lg-mobile text-display-lg-mobile text-primary font-black tracking-tight">DoorNext</h1>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container hover:opacity-80 active:translate-y-0.5 transition-all">
+<span class="material-symbols-outlined text-on-surface-variant">notifications</span>
+</button>
+</header>
+<main class="pt-20 pb-28 px-container-mobile space-y-6">
+<!-- Lifetime Earnings Section (Bento Style) -->
+<section class="space-y-4">
+<div class="flex items-center justify-between">
+<h2 class="font-title-lg text-title-lg text-on-surface">Earning Summary</h2>
+<span class="font-label-sm text-label-sm text-neighborhood-green bg-neighborhood-green/10 px-3 py-1 rounded-full uppercase tracking-widest">Active Shift</span>
+</div>
+<div class="grid grid-cols-1 gap-4">
+<!-- Lifetime Card -->
+<div class="bg-inverse-surface p-6 rounded-3xl earnings-card-shadow relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-9xl">account_balance_wallet</span>
+</div>
+<p class="font-label-sm text-label-sm text-on-primary-container/60 mb-2">LIFETIME EARNINGS</p>
+<div class="flex items-baseline gap-1">
+<span class="font-display-lg text-display-lg text-primary-fixed-dim">$</span>
+<span class="font-display-lg text-display-lg text-white">4,892.40</span>
+</div>
+<div class="mt-6 flex gap-3">
+<button class="flex-1 bg-primary text-white font-semibold py-3 px-6 rounded-full hover:shadow-lg active:scale-95 transition-all text-center">
+              Instant Cashout
+            </button>
+</div>
+</div>
+<!-- Shift Breakdown Grid -->
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-surface-container-low p-4 rounded-2xl border border-outline-variant/30">
+<p class="font-label-sm text-label-sm text-on-surface-variant mb-1">CURRENT SHIFT</p>
+<p class="font-display-lg-mobile text-display-lg-mobile text-on-surface font-black">$142.50</p>
+<p class="text-xs text-neighborhood-green font-medium mt-1">+12% vs last shift</p>
+</div>
+<div class="bg-white p-4 rounded-2xl border border-outline-variant/30 flex flex-col justify-center">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-primary text-sm">schedule</span>
+<span class="text-sm font-semibold">4h 12m</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-sm">distance</span>
+<span class="text-sm font-semibold">24.8 mi</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Earnings Breakdown -->
+<section class="bg-white p-6 rounded-3xl border border-outline-variant/50">
+<h3 class="font-title-lg text-title-lg mb-4">Shift Breakdown</h3>
+<div class="space-y-4">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-sm">payments</span>
+</div>
+<span class="font-body-md">Base Pay</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface">$58.00</span>
+</div>
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-sm">route</span>
+</div>
+<span class="font-body-md">Distance Pay</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface">$32.40</span>
+</div>
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-neighborhood-green/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-neighborhood-green text-sm">volunteer_activism</span>
+</div>
+<span class="font-body-md font-bold text-neighborhood-green">100% of Tips</span>
+</div>
+<span class="font-label-sm text-label-sm text-neighborhood-green font-bold">$52.10</span>
+</div>
+<div class="pt-4 mt-2 border-t border-outline-variant flex justify-between items-center">
+<span class="font-bold">Total</span>
+<span class="font-display-lg-mobile text-display-lg-mobile text-primary">$142.50</span>
+</div>
+</div>
+</section>
+<!-- Recent Deliveries -->
+<section class="space-y-4">
+<div class="flex items-center justify-between">
+<h2 class="font-title-lg text-title-lg text-on-surface">Recent Deliveries</h2>
+<button class="text-primary font-semibold text-sm hover:underline">View All</button>
+</div>
+<div class="space-y-4">
+<!-- Delivery Card 1 -->
+<div class="bg-white rounded-2xl overflow-hidden border border-outline-variant/50 hover:shadow-md transition-shadow">
+<div class="h-32 w-full relative">
+<img class="w-full h-full object-cover" data-location="Los Angeles, California" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDd-PriSqtvLLYBOy4gdQPTqnUz4gIFyR9FRxG3yabmL5rQzLnLTd1mS5rIfTf13-Dby83KjLGgW1CAG5LHdHbGbMg4US9IQYR-KsV64CJ5O9C-f5djoTyowfN5wYBc2YFRTMm5jawI90GvPmIvlqwq5_zup-p8V1MJAjLQ51JXe0ioK3XKxT28otrtP2pbnViXBj2e_OAmozlklAPGULTpVoCdBHzDf89uQIadJcUPcNbxT7AUC4c6HPZK8f7wcB6pGUU6dnsFxx5R"/>
+<div class="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent"></div>
+<div class="absolute bottom-2 left-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-xs text-primary">verified</span>
+<span class="text-xs font-bold uppercase tracking-tight">Completed</span>
+</div>
+</div>
+<div class="p-4 flex justify-between items-start">
+<div class="space-y-1">
+<h4 class="font-bold text-on-surface">Maria's Home Kitchen</h4>
+<p class="text-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">location_on</span>
+                4.2 miles • 18 mins
+              </p>
+</div>
+<div class="text-right">
+<p class="font-label-sm text-label-sm text-on-surface">$18.50</p>
+<p class="text-[10px] text-neighborhood-green font-bold uppercase">+$5.00 Tip</p>
+</div>
+</div>
+</div>
+<!-- Delivery Card 2 -->
+<div class="bg-white rounded-2xl overflow-hidden border border-outline-variant/50 hover:shadow-md transition-shadow">
+<div class="h-32 w-full relative">
+<img class="w-full h-full object-cover" data-location="Santa Monica, California" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCdDJ3hSoo2PQUWRnZUgYG7GLzBWEJ1t7Njz_BxGMS6uBbdqe1BoECVd7NPTk98Ywh3iHQkRG7gGT8Ji2lXaJ7soazuhjX-pgloj-T9yT6BNLYsQJ4SGvGBdWX3IkAXKAOyfu2iiE3KTDTRlqcWjD-bvkM7RAUdnZJBco4vWveH0KV-wUtwEYfNBvw8pG2f5ljYXCltITPuOYB1gRsDgpuqld9W94jvajd6yKi3xi-u6qsLycACrN0yqvUVyV_Ei7mRYQK-G562t-Js"/>
+<div class="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent"></div>
+<div class="absolute bottom-2 left-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-xs text-primary">verified</span>
+<span class="text-xs font-bold uppercase tracking-tight">Completed</span>
+</div>
+</div>
+<div class="p-4 flex justify-between items-start">
+<div class="space-y-1">
+<h4 class="font-bold text-on-surface">The Taco Stand (Neighbor)</h4>
+<p class="text-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">location_on</span>
+                1.8 miles • 9 mins
+              </p>
+</div>
+<div class="text-right">
+<p class="font-label-sm text-label-sm text-on-surface">$12.20</p>
+<p class="text-[10px] text-neighborhood-green font-bold uppercase">+$3.50 Tip</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-4 pb-4 pt-2 bg-surface shadow-[0_-4px_20px_0_rgba(166,59,0,0.08)]">
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors px-4 py-1" href="#">
+<span class="material-symbols-outlined">explore</span>
+<span class="font-label-sm text-label-sm">Explore</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors px-4 py-1" href="#">
+<span class="material-symbols-outlined">shopping_bag</span>
+<span class="font-label-sm text-label-sm">Orders</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 transition-transform active:scale-95 duration-200" href="#">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm">Wallet</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors px-4 py-1" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-sm text-label-sm">Profile</span>
+</a>
+</nav>
+<!-- FAB for Go Offline/Online -->
+<button class="fixed right-6 bottom-24 bg-secondary text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-all">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">power_settings_new</span>
+</button>
+<script>
+    // Micro-interactions for touch feedback
+    document.querySelectorAll('button, a').forEach(elem => {
+      elem.addEventListener('touchstart', () => {
+        elem.classList.add('opacity-70');
+      });
+      elem.addEventListener('touchend', () => {
+        elem.classList.remove('opacity-70');
+      });
+    });
+  </script>
+</body></html>

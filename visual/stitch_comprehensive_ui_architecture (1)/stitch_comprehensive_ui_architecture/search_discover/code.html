@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>Neighborly Search &amp; Discovery</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=Anybody:wght@700;800&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-variant": "#f7ddd4",
+                    "surface-tint": "#a63b00",
+                    "tertiary": "#006492",
+                    "on-primary-container": "#4f1800",
+                    "primary-fixed-dim": "#ffb599",
+                    "on-tertiary-container": "#002d45",
+                    "surface-container": "#ffe9e2",
+                    "error": "#ba1a1a",
+                    "background": "#fff8f6",
+                    "secondary": "#5f5e5e",
+                    "surface-container-lowest": "#ffffff",
+                    "inverse-on-surface": "#ffede7",
+                    "on-tertiary": "#ffffff",
+                    "outline": "#8d7166",
+                    "surface-bright": "#fff8f6",
+                    "on-secondary-container": "#656464",
+                    "surface-container-low": "#fff1ec",
+                    "surface": "#fff8f6",
+                    "tertiary-container": "#009ade",
+                    "on-tertiary-fixed-variant": "#004b6f",
+                    "warm-gray": "#736F6E",
+                    "secondary-fixed": "#e5e2e1",
+                    "on-secondary-fixed": "#1c1b1b",
+                    "on-surface": "#261813",
+                    "primary": "#a63b00",
+                    "on-surface-variant": "#594138",
+                    "error-container": "#ffdad6",
+                    "secondary-container": "#e5e2e1",
+                    "on-primary": "#ffffff",
+                    "on-error": "#ffffff",
+                    "on-primary-fixed-variant": "#7f2b00",
+                    "on-secondary-fixed-variant": "#474646",
+                    "on-error-container": "#93000a",
+                    "primary-fixed": "#ffdbce",
+                    "outline-variant": "#e1bfb3",
+                    "on-secondary": "#ffffff",
+                    "on-background": "#261813",
+                    "surface-container-high": "#fde3da",
+                    "inverse-surface": "#3c2d27",
+                    "tertiary-fixed-dim": "#8cceff",
+                    "surface-container-highest": "#f7ddd4",
+                    "neighborhood-green": "#2D6A4F",
+                    "tertiary-fixed": "#cae6ff",
+                    "surface-dim": "#eed5cc",
+                    "secondary-fixed-dim": "#c9c6c5",
+                    "on-tertiary-fixed": "#001e2f",
+                    "on-primary-fixed": "#370e00",
+                    "surface-cream": "#FDFCFB",
+                    "primary-container": "#f26522",
+                    "inverse-primary": "#ffb599"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "1.5rem",
+                    "section-gap": "4rem",
+                    "container-padding-mobile": "1.25rem",
+                    "container-padding-desktop": "2.5rem",
+                    "base": "8px"
+            },
+            "fontFamily": {
+                    "title-lg": ["Plus Jakarta Sans"],
+                    "body-lg": ["Plus Jakarta Sans"],
+                    "headline-md-mobile": ["Anybody"],
+                    "label-sm": ["JetBrains Mono"],
+                    "headline-md": ["Anybody"],
+                    "body-md": ["Plus Jakarta Sans"],
+                    "display-lg-mobile": ["Anybody"],
+                    "display-lg": ["Anybody"]
+            },
+            "fontSize": {
+                    "title-lg": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "headline-md-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "label-sm": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "headline-md": ["32px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "display-lg-mobile": ["36px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-auto-rows: 160px;
+            gap: 16px;
+        }
+        .bento-item-large {
+            grid-row: span 2;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="w-full sticky top-0 z-40 bg-surface dark:bg-background shadow-sm">
+<div class="flex justify-between items-center px-container-padding-mobile md:px-container-padding-desktop h-16 w-full">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary/20">
+<img class="w-full h-full object-cover" data-alt="A warm and friendly close-up portrait of a local neighbor with a kind smile, captured in soft, natural morning light. The background is a blurred, cozy home kitchen with warm wooden textures. The aesthetic is organic and human-centric, featuring soft skin tones and a vibrant, approachable community feel." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCJdRKTKXJw4nPLT8Epzm4WT9ExUtgexJXPifwPdCMqGL45yVDiQO2IQFTDVn4Y8lkjtQm7HvkKI5RGKTXrd-QRSapIht3wDFfXlnaMMsRrbjjtXdsjWzQBmPlhXHp_k6GdY5WUQaYubr8TRQYSnq2OEIfmd3MjwceeL_7Pkv3ORgX-VNTt3Lo-NyMBNrW6YjZ_MpJ_AT2g_scaEIa9KnS8F4EcRefizbdBEacrETsCOreNzWJPnvP1LNM84CZZ_JUxMrNfa5P1Hq3Y"/>
+</div>
+<span class="font-display-lg-mobile text-display-lg-mobile text-primary dark:text-primary-fixed-dim">Neighborly</span>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-variant/20 transition-colors active:scale-95 duration-200">
+<span class="material-symbols-outlined text-primary">notifications</span>
+</button>
+</div>
+</header>
+<main class="max-w-[1280px] mx-auto px-container-padding-mobile md:px-container-padding-desktop mt-6 space-y-8">
+<!-- Search Section -->
+<section class="space-y-4">
+<div class="relative group">
+<div class="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline">search</span>
+</div>
+<input class="w-full h-14 pl-12 pr-4 bg-surface-container-low border-none rounded-xl focus:ring-2 focus:ring-primary font-body-lg text-on-surface placeholder-on-surface-variant/60 transition-all shadow-sm" placeholder="Search for homemade goodness..." type="text"/>
+</div>
+<div class="flex flex-wrap gap-2 items-center">
+<span class="font-label-sm text-label-sm text-on-secondary-fixed-variant mr-1">RECENT:</span>
+<button class="bg-surface-variant/30 px-4 py-1.5 rounded-full font-label-sm text-label-sm text-on-surface-variant hover:bg-primary-fixed transition-colors">pupusas</button>
+<button class="bg-surface-variant/30 px-4 py-1.5 rounded-full font-label-sm text-label-sm text-on-surface-variant hover:bg-primary-fixed transition-colors">sourdough</button>
+<button class="bg-surface-variant/30 px-4 py-1.5 rounded-full font-label-sm text-label-sm text-on-surface-variant hover:bg-primary-fixed transition-colors">tacos</button>
+</div>
+</section>
+<!-- Browse by Category: Bento Grid -->
+<section class="space-y-4">
+<h2 class="font-headline-md-mobile text-headline-md-mobile md:font-headline-md md:text-headline-md text-on-surface">Browse Categories</h2>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 h-[340px] md:h-[220px]">
+<!-- Bakery -->
+<div class="relative rounded-2xl overflow-hidden group cursor-pointer shadow-sm">
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
+<img class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A macro shot of artisanal sourdough bread with a perfectly crisped, golden-brown crust and a light dusting of flour. The setting is a rustic wooden table with soft side-lighting that emphasizes the texture of the bread. The mood is warm, tactile, and wholesome, evoking the smell of fresh home-baked goods." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAabZze3Q_3vYR55045aps42Fdd515ARIL4_mKExu_UFJclwhf3g6hqyuG4PC9dVQ9UIjEOQD_CupzyvQd--jKkHnEdxVn6YGwJAES8R9djmBDwk3A038RCXGxNFgt7wh7iNMPiXpCffMKGz4IOTBqHM129lv8KwqOgojwhM-GigIV6ZJ5bJdXaEeXU1R5LZ75ePLSXMCsR81pGGe4BLgsz3mJkh0GRQ7Y4jzjara-lSbnqFwSblUlj474QmjjSTMbvA-l-IgB-61wX"/>
+<div class="absolute bottom-4 left-4 z-20">
+<p class="font-title-lg text-white">Bakery</p>
+</div>
+</div>
+<!-- Hot Meals -->
+<div class="relative rounded-2xl overflow-hidden group cursor-pointer shadow-sm">
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
+<img class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A steaming plate of vibrant, colorful homemade food featuring fresh vegetables and perfectly cooked proteins. Steam rises softly against a dark, moody background, highlighted by warm golden rim lighting. The style is high-end food photography with deep contrast and a focus on steam and freshness." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDYwaNOQYfYf_aNshC83k7GsWp3AHdLoxLSdcevYddmIgjX8uU7iTKIVBI2Q1he5pbApGg4prf2_WEdMfbBpI6zK4ZQpZ7OcOWgZtsCqUsBft4nNQPRVJv0I49HW6s5-xhZNW4BWLLnI9XoJgiuOVjka6k4OC9S-o978mdjgEs2vbwvfdLmIMXZoGp0Qh6wEZs58tfLr1e_25R49Vc7xCnTsu2Pg5OR6X1po9wScouFBPgHi44bz2zhj5vkv1rxqxgEQYI6x4sdebqN"/>
+<div class="absolute bottom-4 left-4 z-20">
+<p class="font-title-lg text-white">Hot Meals</p>
+</div>
+</div>
+<!-- Sweets -->
+<div class="relative rounded-2xl overflow-hidden group cursor-pointer shadow-sm">
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
+<img class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Close-up of decadent, colorful handcrafted desserts like macarons or tarts, arranged artfully on a marble surface. The lighting is soft and high-key, creating a bright, celebratory feel. The color palette features pastels and rich creams, emphasizing a luxurious yet home-made aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7MSxe44Md4SiYr_nwJlQXs-9ToYxSlUIV4us0BmpN8-VfLH1PI9IN-sbBvWt5X0uFVeiUhM-0_9hUrrMB1TqKVcTjwL2FomsOf3WX3znPDbMZAWIn9lzIItGSh56Gww8noMSCKoxuE70HNlHjeR-Vr2SYUWCXxsoXEfLJiAHACrRe3eksfSVCpU7A0SSj14PBvosJc8FkdeTZeO2YMBoJgIJIOzak1oAxOPQNqu_7K1zHZcD9aWQn0x9JDaPACH0DoOF5btW5uW14"/>
+<div class="absolute bottom-4 left-4 z-20">
+<p class="font-title-lg text-white">Sweets</p>
+</div>
+</div>
+<!-- Groceries -->
+<div class="relative rounded-2xl overflow-hidden group cursor-pointer shadow-sm">
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
+<img class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A top-down view of a rustic wooden crate filled with vibrant, fresh local produce: deep green kale, bright red tomatoes, and orange carrots still with their soil-dusted roots. The lighting is natural and bright, suggesting an outdoor farmer's market. The aesthetic is earthy, fresh, and grounded in local pride." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBxlCPlVEUXA89DGxDu98HG2tRug5a8Djx6mew7jIMd0oEILjtAOnigHMxPAS82jvFYVMSKRtlReBA44EiKJCe-qWp8xpVSExlKAYeQYV1MWyVOVPSboi-B54wd209x-hmtURuF4GSR57Tb7IRbAb4ACDHOv-chQ666P-Pu89m2U4AIBXFvfkWPU4KRuwdzCyinxdZn2SChtjFDcPcmFyREu1FHRWEnycJTr3eGs7Zb2dcaMMLTzGokQUPGOwsS2rIFC4sTRH3UPtg8"/>
+<div class="absolute bottom-4 left-4 z-20">
+<p class="font-title-lg text-white">Groceries</p>
+</div>
+</div>
+</div>
+</section>
+<!-- New Neighbors Section -->
+<section class="space-y-4">
+<div class="flex justify-between items-end">
+<div class="space-y-1">
+<h2 class="font-headline-md-mobile text-headline-md-mobile md:font-headline-md md:text-headline-md text-on-surface">New Neighbors</h2>
+<p class="font-body-md text-on-surface-variant">Fresh faces joining the community</p>
+</div>
+<button class="text-primary font-title-lg text-sm hover:underline">See all</button>
+</div>
+<div class="flex gap-4 overflow-x-auto pb-4 hide-scrollbar snap-x snap-mandatory">
+<!-- Seller 1 -->
+<div class="min-w-[280px] bg-white rounded-2xl p-4 border border-outline-variant/30 shadow-sm snap-start hover:shadow-md transition-shadow">
+<div class="flex items-center gap-3 mb-4">
+<div class="w-12 h-12 rounded-full overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A friendly portrait of a middle-aged female artisan baker in her home studio, wearing a clean linen apron. She is smiling warmly at the camera. The background shows professional baking equipment and baskets of fresh bread. The lighting is soft and golden, emphasizing a trustworthy and local neighborhood feel." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCR6tg_pTC81q_CyS9nDgdOHa7I_I0NXxnrimNBND2I-oIGy9YnKCafj0udyjzWvxCJmAHJ3nDSRkuxGvB7fzggXMl97U41c6SxKzle1J9GcCndL5r3UJTxzK4ZhZIY8pNPRw5O8NJ9ZKQkzSnontRhf3_PPWWmHpFMO6ZOchn83AmCRmX7w-7QFQ5S4G5TtIZJpe_MrITPdlZRRDrK2AtIaSuCaz5OzdZ4PmeRkrrcL8tCL9b0oRwnyHHJGdq3LN6rS3_OMSrLvLyP"/>
+</div>
+<div>
+<p class="font-title-lg text-on-surface">Maria's Kitchen</p>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-xs text-primary" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-sm text-xs text-on-surface-variant">NEW · 0.8 mi</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-2 h-20">
+<img class="w-full h-full object-cover rounded-lg" data-alt="A close-up of golden pupusas being flipped on a hot griddle, with steam rising and melted cheese oozing from the edges. High-key lighting, vibrant colors." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBJO_CjDvGJUzP0cWFaQik0j-q_jnbEEr84_LCn8MkAIMOuoIa5zKxSFNK9XFbmjcA7BAt7jG_o2OyvlnJN6vBc3g0KU6w1OGmpSf9Lh26TufvenB7LZpdN-rGKf0GFGq3aR412GzjFJlXGMti6RiMNspzKSGaLcuTtWbDjX0sj8uxDydAi8vmIw3cV-Ddc8DTikdnUCGEKlWRf66hFg7ho1fUii58dOCm7ZMuZPCmdNNLnqG8ooKXQ29DJ-SwLytCgGF5RMyCb3bj3"/>
+<img class="w-full h-full object-cover rounded-lg" data-alt="Freshly made salsa verde in a stone mortar, surrounded by cilantro and lime wedges on a wooden surface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDvsWS3EtxrW5Vxb8gE7P8Dgqa4gue-L0qyrz0Zato76F7HN_4xDwBIFX0FhaH4w0j2KQnjN17Uh-kBViSCHwYA6RuqoJ7CTz0UiZxzdYyw7cuwJddoxlqj-PsCOucB0eKiXneYAYNQhxvnioNXBcHAeIiultBhPhfWMEiFL_DjfXRzMKA6snT_HzeA-xinUTPpJ-cxY5q3q22NFOPE7pUz5EQYE_OJX8FmwOeMJ9ooP8TZM5qbzR492yyw5saePw3BejAlLf_mIeuf"/>
+<div class="relative rounded-lg overflow-hidden flex items-center justify-center bg-surface-variant/20">
+<span class="font-label-sm text-on-surface-variant text-xs text-center">8+<br/>Items</span>
+</div>
+</div>
+</div>
+<!-- Seller 2 -->
+<div class="min-w-[280px] bg-white rounded-2xl p-4 border border-outline-variant/30 shadow-sm snap-start hover:shadow-md transition-shadow">
+<div class="flex items-center gap-3 mb-4">
+<div class="w-12 h-12 rounded-full overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A portrait of a young male chef with a focused but pleasant expression, wearing a minimalist black chef coat. He is standing in a brightly lit, modern home kitchen. The aesthetic is clean, professional, and high-end, featuring cool natural lighting and a minimalist background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBGi3a7yI_kCIqATWmn0geE8sn_war00wHk1DHqeYAbUf5aehBo4KxKpGAQigRnsntksNU4EWSBbk5biK1jz6IHfwV8NS5j0GLcyvOQLicZ0uRmlOK5-i2SZay32mYYGYI_Tf_mI2uJCFgPcbjIUR8blkZM01Aqru5WzQfB2wUFqueLWHD3mRZAJKid0Y-w-t-OWbH61NJbUZmwJrfP5CfH1t14yOB-W1AzO1hk9Fyw5_Iqtmam3ulp0K7td2kvaltkdPwYjjXwbiXr"/>
+</div>
+<div>
+<p class="font-title-lg text-on-surface">Chef Julian</p>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-xs text-primary" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-sm text-xs text-on-surface-variant">NEW · 1.2 mi</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-2 h-20">
+<img class="w-full h-full object-cover rounded-lg" data-alt="A beautifully plated gourmet pasta dish with fresh herbs and shaved parmesan, set on a dark ceramic plate." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDoWfmrVUI36tgxAW30sDOiH9UsNsnbdiWWKmR1dMaYiL_6j87Hu__fPcqy4L1L1SmqGWQX9sm1FokubeovNvWoH-Joj2H8baIzQypmsCBplP98pqC9LfABMQKdyIKpcM_y8Ir_IAcZFdGzBGLQ87_FvOcwlP1ls91I_jypD-olCUmLVCOxXEjUPmJ_9joocywB2c9KSZ6ppYuWCpHp6e2XpCidLUJqF8Hzc2mpAzOXRQP2hG89S2p6xKvagSSRaftIvbFFpx_5FPyO"/>
+<img class="w-full h-full object-cover rounded-lg" data-alt="A vibrant salad with edible flowers and a light vinaigrette, photographed in bright, airy natural light." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD0rHrceKkHKdQ2vkbsfpLiQ4m2ujmzAscK_vx9Sr3yX6DG2k40S0fcLwdEHjh6eCPBPH_wu5QKKDFjOMH9OVpFMQ9rgNgcj2fEf8cJkcvllwcj_dfn1S7mJKCzImB3m_zQCOS7cSxNClMUn7C3DDhWIo0mH5aLKFFzCvwgf-zR_JbXf_1z9QFdFZzc0UrcDVh4kCb-q1DqHczjpF7_3QXiCvK4Z1dcgys_exdDPACWQnGV3iE0LIFTzj7ExcdOhuqu4tkdncOtlPpB"/>
+<div class="relative rounded-lg overflow-hidden flex items-center justify-center bg-surface-variant/20">
+<span class="font-label-sm text-on-surface-variant text-xs text-center">12+<br/>Items</span>
+</div>
+</div>
+</div>
+<!-- Seller 3 -->
+<div class="min-w-[280px] bg-white rounded-2xl p-4 border border-outline-variant/30 shadow-sm snap-start hover:shadow-md transition-shadow">
+<div class="flex items-center gap-3 mb-4">
+<div class="w-12 h-12 rounded-full overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A cheerful elderly woman in a cozy, sun-drenched sunroom, holding a jar of homemade jam. She wears a floral print dress and has silver hair. The atmosphere is nostalgic, warm, and inviting, with soft-focus greenery in the background and gentle light highlighting the vibrant colors of the fruit preserves." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCXxUKGDlv8ii2QG2Zq_FOC-9hESCCTd8i03FRVQqOkHbWO6ISYvWaxJA1mm0QjG0Ceoy2sZ38lR39FVYITRejkErJOqqgGnZiVpMWSnk6dB2QbleY4LViv-ucZPwjkGBbFONbLE9M18G3Kioz6SU4OSoUgOdiGL5XgTWc683j9fVQilwKBbhD_W_WAReIltR9ITosGWROEFaROB0RyffYppLM6lNUOSlTHqdy0E1k7CG6rSHJkMHehVHDip_8UZsmU8ptQktGf4Q5U"/>
+</div>
+<div>
+<p class="font-title-lg text-on-surface">Granny's Jam</p>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-xs text-primary" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-sm text-xs text-on-surface-variant">NEW · 2.5 mi</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-2 h-20">
+<img class="w-full h-full object-cover rounded-lg" data-alt="Rows of glass jars filled with colorful strawberry and apricot jams, sunlight glowing through the translucent fruit." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBchXEXcS5gQafeQe-mPLnmI1xoXwGkVwYe2jLSTm8poug7u9NMLQ0eIA6wtOrrHJuoT68MKNgqZeox-0amPFkKUiOgbWgHxKg8yORFdYLUpX_H1lIn-9kJnFcHz0HEJ_NC2sl_28LrU9YmHgIXPDfJFrwrntzhbj3yi4iBFV7KV9d73Vru400sXDpzIzWIEQ_zge8sIMlTqMZ-rvhgoRghLSkMhceM0iqeAa-5AqKxJUbHw_L7On_aprqKoqtASqYg-SwZPs9IC2CN"/>
+<img class="w-full h-full object-cover rounded-lg" data-alt="A slice of toast with a thick layer of dark berry jam, shot in macro detail to show the fruit chunks." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDupdGQVZvZJvE2y2eXc9l-KCkkiZZXH-MW01IPZEUZq2I2vnDSIh61ie3w9yDif0H-MeOADHEL3k5tA3nek2hPVQx-NNypXjMi-6sijZkOQrWWJ43-LpVxQ9Yv15c82y8qZs0lox1lc-D9Qx6qrKl_vXU7TGiGFC-mJ3sB7gSnqEZQxaB3mQkdUms0ApD3HAZLIZ7awocN-d6eozoSJzkfq-daCuMfsrcQBh0pEwxGoblIVYhtp98ngfCgteqCZu1-lZEllvslxrCu"/>
+<div class="relative rounded-lg overflow-hidden flex items-center justify-center bg-surface-variant/20">
+<span class="font-label-sm text-on-surface-variant text-xs text-center">5+<br/>Items</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Floating Atmosphere/Promo -->
+<section class="mt-8">
+<div class="relative w-full h-48 rounded-3xl overflow-hidden shadow-lg bg-primary">
+
+<div class="absolute inset-0 flex flex-col items-center justify-center text-center p-6 space-y-2">
+<h3 class="font-display-lg-mobile text-display-lg-mobile text-white drop-shadow-md">Support Local</h3>
+<p class="font-body-lg text-white/90 max-w-xs">Buy from neighbors. Support your local community ecosystem.</p>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 rounded-t-xl bg-surface-container-lowest dark:bg-inverse-surface shadow-[0_-4px_20px_-2px_rgba(166,59,0,0.08)] border-t border-outline-variant/30">
+<div class="flex justify-around items-center py-3 pb-safe px-4">
+<!-- Explore (Active) -->
+<a class="flex flex-col items-center justify-center bg-primary-container dark:bg-primary text-on-primary-container dark:text-on-primary rounded-full px-4 py-1 active:scale-90 duration-150 group" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">home_app_logo</span>
+<span class="font-label-sm text-label-sm">Explore</span>
+</a>
+<!-- Orders -->
+<a class="flex flex-col items-center justify-center text-on-secondary-fixed-variant dark:text-secondary-fixed-dim px-4 py-1 hover:text-primary transition-all active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="font-label-sm text-label-sm">Orders</span>
+</a>
+<!-- Wallet -->
+<a class="flex flex-col items-center justify-center text-on-secondary-fixed-variant dark:text-secondary-fixed-dim px-4 py-1 hover:text-primary transition-all active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm">Wallet</span>
+</a>
+<!-- Profile (Placeholder for user context) -->
+<a class="flex flex-col items-center justify-center text-on-secondary-fixed-variant dark:text-secondary-fixed-dim px-4 py-1 hover:text-primary transition-all active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-sm text-label-sm">Profile</span>
+</a>
+</div>
+</nav>
+<script>
+        // Micro-interactions for search bar focus
+        const searchInput = document.querySelector('input[type="text"]');
+        const recentButtons = document.querySelectorAll('button.font-label-sm');
+
+        searchInput.addEventListener('focus', () => {
+            searchInput.parentElement.classList.add('scale-[1.02]');
+            searchInput.parentElement.style.transition = 'transform 0.3s ease';
+        });
+
+        searchInput.addEventListener('blur', () => {
+            searchInput.parentElement.classList.remove('scale-[1.02]');
+        });
+
+        // Click recent tag to fill search
+        recentButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                searchInput.value = btn.innerText;
+                searchInput.focus();
+            });
+        });
+    </script>
+</body></html>

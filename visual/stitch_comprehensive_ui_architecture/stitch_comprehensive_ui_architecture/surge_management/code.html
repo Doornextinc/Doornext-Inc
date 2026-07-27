@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>DoorNext Control Hub | Surge Management</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts: Plus Jakarta Sans, Anybody, JetBrains Mono -->
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=Anybody:wght@700;800;900&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-highest": "#f7ddd4",
+                        "surface-container": "#ffe9e2",
+                        "inverse-on-surface": "#ffede7",
+                        "on-surface": "#261813",
+                        "warm-gray": "#736F6E",
+                        "on-secondary-fixed-variant": "#474646",
+                        "surface-tint": "#a63b00",
+                        "neighborhood-green": "#2D6A4F",
+                        "outline-variant": "#e1bfb3",
+                        "secondary-fixed-dim": "#c9c6c5",
+                        "on-tertiary-fixed-variant": "#004b6f",
+                        "tertiary": "#006492",
+                        "primary-container": "#f26522",
+                        "on-surface-variant": "#594138",
+                        "on-primary-container": "#4f1800",
+                        "on-error-container": "#93000a",
+                        "secondary-container": "#e5e2e1",
+                        "surface-dim": "#eed5cc",
+                        "secondary": "#5f5e5e",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed": "#cae6ff",
+                        "surface-container-low": "#fff1ec",
+                        "surface-bright": "#fff8f6",
+                        "secondary-fixed": "#e5e2e1",
+                        "on-secondary-fixed": "#1c1b1b",
+                        "on-primary-fixed": "#370e00",
+                        "surface-container-high": "#fde3da",
+                        "surface-cream": "#FDFCFB",
+                        "on-secondary-container": "#656464",
+                        "on-secondary": "#ffffff",
+                        "primary-fixed-dim": "#ffb599",
+                        "tertiary-fixed-dim": "#8cceff",
+                        "tertiary-container": "#009ade",
+                        "on-error": "#ffffff",
+                        "primary-fixed": "#ffdbce",
+                        "on-primary-fixed-variant": "#7f2b00",
+                        "surface": "#fff8f6",
+                        "on-tertiary-container": "#002d45",
+                        "background": "#fff8f6",
+                        "primary": "#a63b00",
+                        "on-background": "#261813",
+                        "outline": "#8d7166",
+                        "error-container": "#ffdad6",
+                        "surface-variant": "#f7ddd4",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-surface": "#3c2d27",
+                        "on-tertiary-fixed": "#001e2f",
+                        "on-tertiary": "#ffffff",
+                        "inverse-primary": "#ffb599",
+                        "error": "#ba1a1a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "section-gap": "4rem",
+                        "gutter": "1.5rem",
+                        "container-padding-mobile": "1.25rem",
+                        "base": "8px",
+                        "container-padding-desktop": "2.5rem"
+                    },
+                    "fontFamily": {
+                        "title-lg": ["Plus Jakarta Sans"],
+                        "body-lg": ["Plus Jakarta Sans"],
+                        "display-lg": ["Anybody"],
+                        "display-lg-mobile": ["Anybody"],
+                        "headline-md-mobile": ["Anybody"],
+                        "body-md": ["Plus Jakarta Sans"],
+                        "label-sm": ["JetBrains Mono"],
+                        "headline-md": ["Anybody"]
+                    },
+                    "fontSize": {
+                        "title-lg": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                        "display-lg-mobile": ["36px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                        "headline-md-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                        "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "label-sm": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "headline-md": ["32px", {"lineHeight": "1.2", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .filled-icon {
+            font-variation-settings: 'FILL' 1;
+        }
+        body {
+            background-color: #fff8f6;
+            color: #261813;
+        }
+        .map-container {
+            mask-image: linear-gradient(to bottom, black 90%, transparent 100%);
+        }
+        .polygon-overlay {
+            pointer-events: none;
+            mix-blend-mode: multiply;
+        }
+        .custom-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #e1bfb3;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+<!-- NavigationDrawer (Shared Component) -->
+<aside class="hidden md:flex flex-col h-full p-4 gap-2 bg-surface-container-lowest dark:bg-inverse-surface h-screen w-64 border-r border-outline-variant shadow-sm z-50">
+<div class="font-display-lg text-display-lg text-primary mb-8 px-2">DoorNext</div>
+<div class="flex items-center gap-3 p-3 mb-6 bg-surface-container rounded-xl">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-bold shadow-sm">
+<span class="material-symbols-outlined">shield_person</span>
+</div>
+<div class="flex flex-col">
+<span class="font-title-lg text-[14px] leading-tight">Control Hub</span>
+<span class="text-on-surface-variant text-[12px]">System Admin</span>
+</div>
+</div>
+<nav class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-body-md text-body-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-primary-container text-on-primary-container font-bold rounded-lg transition-all active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined" data-icon="leaderboard">leaderboard</span>
+<span class="font-body-md text-body-md">Analytics</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="storefront">storefront</span>
+<span class="font-body-md text-body-md">Merchants</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="local_shipping">local_shipping</span>
+<span class="font-body-md text-body-md">Deliveries</span>
+</a>
+<div class="my-2 border-t border-outline-variant mx-4"></div>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="contact_support">contact_support</span>
+<span class="font-body-md text-body-md">Support</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-body-md text-body-md">Settings</span>
+</a>
+</nav>
+<div class="mt-auto p-4 text-on-surface-variant opacity-50 font-label-sm text-label-sm">
+            v1.0.2 • System Secure
+        </div>
+</aside>
+<!-- Main Canvas -->
+<main class="flex-1 flex flex-col relative overflow-hidden bg-surface">
+<!-- TopAppBar (Shared Component) -->
+<header class="flex justify-between items-center w-full px-gutter h-16 bg-surface z-40">
+<div class="flex items-center gap-4">
+<div class="md:hidden font-display-lg-mobile text-display-lg-mobile text-primary font-black">DoorNext</div>
+<h1 class="hidden md:block font-headline-md text-headline-md text-on-surface">Surge Management</h1>
+<div class="hidden md:flex items-center gap-2 bg-neighborhood-green/10 text-neighborhood-green px-3 py-1 rounded-full border border-neighborhood-green/20">
+<span class="w-2 h-2 bg-neighborhood-green rounded-full animate-pulse"></span>
+<span class="font-label-sm text-label-sm uppercase tracking-wider">Live System</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex flex-col items-end hidden sm:flex">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Active Nexters</span>
+<span class="font-label-sm text-label-sm text-primary font-bold">1,284 Online</span>
+</div>
+<button class="p-2 rounded-full hover:bg-surface-container transition-all active:translate-y-0.5">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<div class="w-10 h-10 rounded-full border-2 border-primary overflow-hidden shadow-md">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a diverse woman with a confident smile, wearing a modern charcoal blazer, set against a clean, warm-toned architectural background with soft bokeh lighting to match the premium community utility aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB-0ruy8TJ1hv08Zh68krAeVIAk0aT_O6XIw_9l65Htkydpno528rVbxsoLBltC-BcY5BMsG8_W1W1yARS1_jJdB2AJaBR3YUyAb__Le14ppfb06HfYF-sMoVTqFAcyZyX5rth-_3AqdBA8kprmjOJwb_nvhhLHknIWAAa9WTWdxM-gs1unkO6vP5a22RPHTNG2hWAuOoBw38UzUby_zos_rIbDQVAwFMc7TNTvfGbN8x1YXvh5f9OTovjoQ1Ih202-8tez-aKFmyfx"/>
+</div>
+</div>
+</header>
+<!-- Toolbars Overlay -->
+<div class="absolute top-20 left-6 z-30 flex flex-col gap-4">
+<!-- Search & Controls -->
+<div class="bg-surface-container-lowest p-4 rounded-2xl shadow-xl border border-outline-variant w-80">
+<div class="flex flex-col gap-4">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-2.5 text-outline" data-icon="search">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface rounded-lg border-none focus:ring-2 focus:ring-primary text-body-md font-body-md" placeholder="Search neighborhood..." type="text"/>
+</div>
+<div class="flex items-center justify-between">
+<span class="font-title-lg text-[14px]">Map Layers</span>
+<button class="text-primary font-label-sm text-label-sm">Reset</button>
+</div>
+<div class="grid grid-cols-2 gap-2">
+<button class="flex items-center gap-2 p-2 rounded-lg bg-primary text-on-primary shadow-sm text-[12px] font-medium">
+<span class="material-symbols-outlined text-sm" data-icon="draw">draw</span>
+                            Draw Zone
+                        </button>
+<button class="flex items-center gap-2 p-2 rounded-lg bg-surface-container-high text-on-surface-variant text-[12px] font-medium border border-outline-variant hover:bg-primary-fixed transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="layers">layers</span>
+                            Heatmap
+                        </button>
+</div>
+</div>
+</div>
+<!-- Stats Mini-Panel -->
+<div class="bg-inverse-surface text-inverse-on-surface p-4 rounded-2xl shadow-xl w-80">
+<div class="flex items-center justify-between mb-3">
+<h3 class="font-title-lg text-[16px] text-white">Zone Metrics</h3>
+<span class="bg-primary px-2 py-0.5 rounded text-[10px] font-bold uppercase">Real-time</span>
+</div>
+<div class="space-y-3">
+<div class="flex justify-between items-center">
+<span class="text-on-surface-variant text-[13px] text-primary-fixed">Active Surges</span>
+<span class="font-label-sm text-label-sm">12 Zones</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-on-surface-variant text-[13px] text-primary-fixed">Avg. Multiplier</span>
+<span class="font-label-sm text-label-sm">1.45x</span>
+</div>
+<div class="h-2 w-full bg-white/10 rounded-full overflow-hidden">
+<div class="h-full bg-primary-container w-3/4"></div>
+</div>
+<p class="text-[11px] text-primary-fixed italic">System capacity at 78%</p>
+</div>
+</div>
+</div>
+<!-- Map Viewport -->
+<div class="flex-1 relative bg-surface-dim overflow-hidden map-container">
+<!-- Mock Map Background -->
+<div class="absolute inset-0 z-0">
+<img class="w-full h-full object-cover grayscale-[20%] opacity-90" data-alt="A high-resolution, detailed satellite and street-map hybrid view of Midtown Atlanta during a clear day. The map shows lush green city blocks, arterial roads highlighted in soft oranges and creams, and tiny animated-style vehicle icons representing Nexters. The aesthetic is clean, minimalist, and functional with a warm neighborhood feel." data-location="Midtown Atlanta" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBFlcRdhkBOkL_AHqkRSctQfxcyphcf0muxyLUaj7b2-aQvykrnNSkdA2OYxJ64bkJSJdy7PK0iFeKIM8Jq_prsOb2NiPTVvSnTeQyvCXS7iMcxthIGvK9sJlrMTStgyIvY8KguZO1lYxUsm0ewHmitAYbRB1II5iu2Lbd31JQsCHgETejJk7sKR_fkuYAIBXorwYW6UgAHuvhDeipmfQoDQ4yJdcYHzpRtLoK9Y-A99sGXPkEOf7Hf5Vkj72dFdkDvZstO0S1MCde-"/>
+</div>
+<!-- SVG Polygons Layer -->
+<svg class="absolute inset-0 z-10 w-full h-full" preserveaspectratio="none" viewbox="0 0 1000 1000">
+<!-- Zone 1: Midtown (Active Surge) -->
+<polygon class="fill-primary/20 stroke-primary stroke-[3] hover:fill-primary/40 cursor-pointer transition-all duration-300" points="400,300 600,250 650,450 420,500"></polygon>
+<!-- Zone 2: Buckhead (Normal) -->
+<polygon class="fill-neighborhood-green/10 stroke-neighborhood-green/40 stroke-[2] stroke-dasharray-4 hover:fill-neighborhood-green/20 cursor-pointer transition-all" points="200,100 350,80 380,220 180,250"></polygon>
+<!-- Nexter Pins (Mockup) -->
+<circle class="fill-neighborhood-green animate-pulse" cx="450" cy="350" r="4"></circle>
+<circle class="fill-neighborhood-green animate-pulse" cx="480" cy="400" r="4" style="animation-delay: 0.5s"></circle>
+<circle class="fill-neighborhood-green animate-pulse" cx="550" cy="320" r="4" style="animation-delay: 1.2s"></circle>
+<circle class="fill-neighborhood-green animate-pulse" cx="580" cy="410" r="4" style="animation-delay: 0.8s"></circle>
+</svg>
+<!-- Floating Zone Card -->
+<div class="absolute top-[35%] left-[55%] z-20 w-72 bg-surface-container-lowest rounded-2xl shadow-[0_30px_60px_-15px_rgba(166,59,0,0.2)] p-5 border border-primary/20 transform -translate-x-1/2 -translate-y-1/2">
+<div class="flex items-center justify-between mb-4">
+<div>
+<h2 class="font-headline-md-mobile text-headline-md-mobile">Midtown</h2>
+<p class="text-on-surface-variant text-[13px]">Active Surge Zone</p>
+</div>
+<div class="bg-primary-container text-on-primary-container px-3 py-1 rounded-full font-label-sm text-label-sm font-bold">
+                        1.5x
+                    </div>
+</div>
+<div class="grid grid-cols-2 gap-4 mb-5">
+<div class="bg-surface p-3 rounded-xl">
+<div class="flex items-center gap-1 text-on-surface-variant mb-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="shopping_bag">shopping_bag</span>
+<span class="text-[11px] font-bold uppercase tracking-wider">Demand</span>
+</div>
+<div class="font-label-sm text-label-sm text-[18px]">42 <span class="text-[12px] opacity-60">Reqs</span></div>
+</div>
+<div class="bg-surface p-3 rounded-xl border border-neighborhood-green/30">
+<div class="flex items-center gap-1 text-neighborhood-green mb-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="person_pin">person_pin</span>
+<span class="text-[11px] font-bold uppercase tracking-wider">Supply</span>
+</div>
+<div class="font-label-sm text-label-sm text-[18px]">18 <span class="text-[12px] opacity-60">Online</span></div>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-[11px] font-bold uppercase text-on-surface-variant px-1">Adjust Multiplier</label>
+<div class="flex items-center gap-3">
+<button class="w-8 h-8 rounded-full border border-outline flex items-center justify-center hover:bg-surface-variant transition-colors">−</button>
+<div class="flex-1 text-center font-display-lg text-[24px] leading-none py-1">1.5</div>
+<button class="w-8 h-8 rounded-full border border-outline flex items-center justify-center hover:bg-surface-variant transition-colors">+</button>
+</div>
+</div>
+<button class="w-full mt-5 bg-deep-black text-white py-3 rounded-full font-title-lg text-[14px] hover:opacity-90 active:scale-95 transition-all bg-[#1c1b1b]">
+                    Update Zone Multiplier
+                </button>
+</div>
+</div>
+<!-- Right Side Panel: Activity Feed -->
+<aside class="absolute right-6 top-20 bottom-6 w-80 bg-surface-container-lowest/90 backdrop-blur-md border border-outline-variant rounded-3xl z-30 flex flex-col shadow-2xl overflow-hidden">
+<div class="p-6 border-b border-outline-variant">
+<h3 class="font-headline-md-mobile text-headline-md-mobile mb-1">Live Feed</h3>
+<p class="text-on-surface-variant text-[14px]">System adjustments &amp; alerts</p>
+</div>
+<div class="flex-1 overflow-y-auto p-4 space-y-4 custom-scroll">
+<!-- Feed Item -->
+<div class="p-4 rounded-2xl bg-surface-container-low border border-outline-variant/30 flex gap-3">
+<div class="w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0"></div>
+<div>
+<p class="text-[14px] font-medium leading-tight mb-1">Surge automated in Old Fourth Ward</p>
+<p class="text-[12px] text-on-surface-variant mb-2">Demand spiked +24% in 10 mins</p>
+<span class="text-[11px] font-label-sm text-primary bg-primary-fixed px-2 py-0.5 rounded">AUTO: 1.2x</span>
+</div>
+</div>
+<!-- Feed Item -->
+<div class="p-4 rounded-2xl bg-surface-container-low border border-outline-variant/30 flex gap-3">
+<div class="w-2 h-2 rounded-full bg-neighborhood-green mt-1.5 shrink-0"></div>
+<div>
+<p class="text-[14px] font-medium leading-tight mb-1">Supply rebalancing complete</p>
+<p class="text-[12px] text-on-surface-variant mb-2">12 Nexters moved to Midtown</p>
+<span class="text-[11px] font-label-sm text-on-surface-variant bg-surface-container-highest px-2 py-0.5 rounded">LOGISTICS</span>
+</div>
+</div>
+<!-- Feed Item -->
+<div class="p-4 rounded-2xl bg-surface-container-low border border-outline-variant/30 flex gap-3">
+<div class="w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0"></div>
+<div>
+<p class="text-[14px] font-medium leading-tight mb-1">Buckhead manual surge expiring</p>
+<p class="text-[12px] text-on-surface-variant mb-2">Reseting to 1.0x base rate</p>
+<button class="text-[11px] font-bold text-primary mt-2">EXTEND 30M</button>
+</div>
+</div>
+<!-- Feed Item -->
+<div class="p-4 rounded-2xl bg-surface-container-low border border-outline-variant/30 flex gap-3 opacity-60">
+<div class="w-2 h-2 rounded-full bg-on-surface-variant mt-1.5 shrink-0"></div>
+<div>
+<p class="text-[14px] font-medium leading-tight mb-1">System Audit: Peak Hours</p>
+<p class="text-[12px] text-on-surface-variant">Daily surge analysis generated</p>
+</div>
+</div>
+</div>
+<div class="p-4 bg-surface-container">
+<button class="w-full flex items-center justify-center gap-2 py-3 bg-white border border-outline-variant rounded-xl font-body-md text-[14px] hover:bg-surface-cream transition-colors">
+<span class="material-symbols-outlined text-[18px]" data-icon="file_download">file_download</span>
+                    Export Live Report
+                </button>
+</div>
+</aside>
+</main>
+<!-- Bottom Navigation (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 flex justify-around items-center px-4 pb-4 pt-2 bg-surface shadow-[0_-4px_20px_0_rgba(166,59,0,0.08)] rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors px-4 py-1 rounded-full" href="#">
+<span class="material-symbols-outlined" data-icon="explore">explore</span>
+<span class="font-label-sm text-label-sm">Explore</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors px-4 py-1 rounded-full" href="#">
+<span class="material-symbols-outlined" data-icon="shopping_bag">shopping_bag</span>
+<span class="font-label-sm text-label-sm">Orders</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 active:scale-95 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined filled-icon" data-icon="leaderboard">leaderboard</span>
+<span class="font-label-sm text-label-sm">Stats</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors px-4 py-1 rounded-full" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-sm text-label-sm">Profile</span>
+</a>
+</nav>
+<!-- Interactive Layer: Drawing Logic -->
+<script>
+        // Simple micro-interaction for the UI elements
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('mouseenter', () => {
+                btn.classList.add('translate-y-[-2px]');
+            });
+            btn.addEventListener('mouseleave', () => {
+                btn.classList.remove('translate-y-[-2px]');
+            });
+        });
+
+        // Heatmap toggle simulation
+        let heatmapOn = false;
+        const toggleHeatmap = () => {
+            heatmapOn = !heatmapOn;
+            const poly = document.querySelector('polygon');
+            if (heatmapOn) {
+                poly.classList.remove('fill-primary/20');
+                poly.classList.add('fill-primary/60');
+            } else {
+                poly.classList.remove('fill-primary/60');
+                poly.classList.add('fill-primary/20');
+            }
+        };
+    </script>
+</body></html>

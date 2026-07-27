@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Nexter Partner Onboarding</title>
+<link href="https://fonts.googleapis.com/css2?family=Anybody:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Anybody:wght@100..900&family=JetBrains+Mono:wght@100..900&family=Plus+Jakarta+Sans:wght@100..900&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary-fixed": "#ffdbce",
+                    "background": "#fff8f6",
+                    "on-tertiary-container": "#002d45",
+                    "on-surface-variant": "#594138",
+                    "on-surface": "#261813",
+                    "warm-gray": "#736F6E",
+                    "surface-bright": "#fff8f6",
+                    "surface": "#fff8f6",
+                    "secondary-container": "#e5e2e1",
+                    "primary": "#a63b00",
+                    "on-tertiary-fixed": "#001e2f",
+                    "surface-variant": "#f7ddd4",
+                    "on-primary-container": "#4f1800",
+                    "on-secondary-container": "#656464",
+                    "secondary-fixed-dim": "#c9c6c5",
+                    "surface-container-low": "#fff1ec",
+                    "inverse-on-surface": "#ffede7",
+                    "on-background": "#261813",
+                    "on-secondary": "#ffffff",
+                    "surface-container-lowest": "#ffffff",
+                    "error": "#ba1a1a",
+                    "on-primary": "#ffffff",
+                    "outline-variant": "#e1bfb3",
+                    "secondary-fixed": "#e5e2e1",
+                    "on-primary-fixed": "#370e00",
+                    "tertiary-container": "#009ade",
+                    "surface-cream": "#FDFCFB",
+                    "inverse-surface": "#3c2d27",
+                    "secondary": "#5f5e5e",
+                    "on-secondary-fixed-variant": "#474646",
+                    "on-error": "#ffffff",
+                    "outline": "#8d7166",
+                    "inverse-primary": "#ffb599",
+                    "on-primary-fixed-variant": "#7f2b00",
+                    "neighborhood-green": "#2D6A4F",
+                    "surface-container-highest": "#f7ddd4",
+                    "on-secondary-fixed": "#1c1b1b",
+                    "tertiary-fixed-dim": "#8cceff",
+                    "error-container": "#ffdad6",
+                    "tertiary": "#006492",
+                    "surface-dim": "#eed5cc",
+                    "on-tertiary-fixed-variant": "#004b6f",
+                    "surface-container": "#ffe9e2",
+                    "primary-fixed-dim": "#ffb599",
+                    "on-tertiary": "#ffffff",
+                    "surface-container-high": "#fde3da",
+                    "primary-container": "#f26522",
+                    "tertiary-fixed": "#cae6ff",
+                    "on-error-container": "#93000a",
+                    "surface-tint": "#a63b00"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "container-padding-desktop": "2.5rem",
+                    "container-padding-mobile": "1.25rem",
+                    "base": "8px",
+                    "section-gap": "4rem",
+                    "gutter": "1.5rem"
+            },
+            "fontFamily": {
+                    "display-lg": ["Anybody"],
+                    "title-lg": ["Plus Jakarta Sans"],
+                    "body-lg": ["Plus Jakarta Sans"],
+                    "label-sm": ["JetBrains Mono"],
+                    "headline-md-mobile": ["Anybody"],
+                    "display-lg-mobile": ["Anybody"],
+                    "body-md": ["Plus Jakarta Sans"],
+                    "headline-md": ["Anybody"]
+            },
+            "fontSize": {
+                    "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "title-lg": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "headline-md-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "display-lg-mobile": ["36px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "headline-md": ["32px", {"lineHeight": "1.2", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #fff8f6;
+            color: #261813;
+        }
+        .step-active {
+            box-shadow: 0 10px 30px rgba(166, 59, 0, 0.08);
+        }
+        @keyframes pulse-soft {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+        .animate-pulse-soft {
+            animation: pulse-soft 2s infinite ease-in-out;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen flex flex-col font-body-md text-body-md pb-24">
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 w-full z-50 bg-surface h-16 flex justify-between items-center px-container-padding-mobile">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A friendly, smiling local driver wearing a casual polo shirt, photographed with warm natural lighting in a bright, modern setting. The style is professional yet accessible, avoiding sterile studio backgrounds in favor of a soft-focus neighborhood vibe with warm cream and orange undertones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDQGr34Gcyom23pu-nSAYBdWXMH8WptQe3niqyktVlRteK1kO5WRCEbR1ZjvjbUo5cA3mOzDlYprACps3hTcYQcdMFOxJT8C_tGjqBnD5S4drr1DXHS3rfH1aF5wCCHZEp38GPgP_0b6TDmGAI22wh1Oe4FiYUNwAAG4pfP6Kf2LUesHPn-q82uKFmbIRVgbRULoFjqwKYuMO-M30xIVYNv-Gkcw76bJF_hW-R5VMgVyGEu4LOJMB4dsYbVzBMD4JxnN6JyKJZgBvPT"/>
+</div>
+<span class="font-display-lg-mobile text-display-lg-mobile text-primary">Nexter</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-primary hover:bg-surface-variant transition-colors p-2 rounded-full">notifications</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow pt-24 px-container-padding-mobile md:px-container-padding-desktop max-w-2xl mx-auto w-full">
+<!-- Header Section -->
+<section class="mb-10 text-center">
+<h1 class="font-headline-md-mobile text-headline-md-mobile mb-2 text-on-surface">Almost there, Partner!</h1>
+<p class="text-on-surface-variant max-w-xs mx-auto">We're verifying your documents to get you on the road. You can start accepting deliveries soon.</p>
+</section>
+<!-- Progress Overview Card -->
+<div class="bg-surface-container-lowest rounded-xl p-6 mb-8 border border-outline-variant/30 flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider mb-1">Overall Progress</span>
+<span class="font-title-lg text-title-lg text-on-surface">50% Completed</span>
+</div>
+<div class="relative w-16 h-16">
+<svg class="w-full h-full -rotate-90" viewbox="0 0 36 36">
+<circle cx="18" cy="18" fill="none" r="16" stroke="#e5e2e1" stroke-width="3"></circle>
+<circle cx="18" cy="18" fill="none" r="16" stroke="#a63b00" stroke-dasharray="50, 100" stroke-linecap="round" stroke-width="3"></circle>
+</svg>
+<div class="absolute inset-0 flex items-center justify-center">
+<span class="font-label-sm text-label-sm text-primary">2/4</span>
+</div>
+</div>
+</div>
+<!-- Vertical Timeline/Checklist -->
+<div class="space-y-6">
+<!-- Step 1: Complete -->
+<div class="relative flex gap-4">
+<div class="flex flex-col items-center">
+<div class="w-10 h-10 rounded-full bg-neighborhood-green text-white flex items-center justify-center z-10">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div class="w-0.5 h-full bg-neighborhood-green/30 absolute top-10 left-[19px]"></div>
+</div>
+<div class="bg-white border border-outline-variant/20 rounded-xl p-5 flex-grow mb-2 transition-all">
+<div class="flex justify-between items-start mb-1">
+<h3 class="font-title-lg text-title-lg text-on-surface">Identity Verification</h3>
+<span class="bg-neighborhood-green/10 text-neighborhood-green font-label-sm text-[10px] px-2 py-0.5 rounded-full uppercase">Complete</span>
+</div>
+<p class="text-on-surface-variant text-body-md text-sm">Your national ID has been successfully verified.</p>
+</div>
+</div>
+<!-- Step 2: Complete -->
+<div class="relative flex gap-4">
+<div class="flex flex-col items-center">
+<div class="w-10 h-10 rounded-full bg-neighborhood-green text-white flex items-center justify-center z-10">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div class="w-0.5 h-full bg-neighborhood-green/30 absolute top-10 left-[19px]"></div>
+</div>
+<div class="bg-white border border-outline-variant/20 rounded-xl p-5 flex-grow mb-2 transition-all">
+<div class="flex justify-between items-start mb-1">
+<h3 class="font-title-lg text-title-lg text-on-surface">Driver's License</h3>
+<span class="bg-neighborhood-green/10 text-neighborhood-green font-label-sm text-[10px] px-2 py-0.5 rounded-full uppercase">Complete</span>
+</div>
+<p class="text-on-surface-variant text-body-md text-sm">Active license confirmed. Ready for logistics operations.</p>
+</div>
+</div>
+<!-- Step 3: Pending -->
+<div class="relative flex gap-4">
+<div class="flex flex-col items-center">
+<div class="w-10 h-10 rounded-full bg-primary-fixed text-primary flex items-center justify-center z-10 border-2 border-primary ring-4 ring-background">
+<span class="material-symbols-outlined animate-pulse-soft">hourglass_top</span>
+</div>
+<div class="w-0.5 h-full bg-outline-variant/30 absolute top-10 left-[19px]"></div>
+</div>
+<div class="bg-white border-2 border-primary/20 step-active rounded-xl p-5 flex-grow mb-2 transition-all">
+<div class="flex justify-between items-start mb-1">
+<h3 class="font-title-lg text-title-lg text-primary">Vehicle Insurance</h3>
+<span class="bg-primary-fixed text-on-primary-fixed-variant font-label-sm text-[10px] px-2 py-0.5 rounded-full uppercase">Pending Review</span>
+</div>
+<p class="text-on-surface-variant text-body-md text-sm">We are reviewing your insurance policy documents. This usually takes 4-6 hours.</p>
+</div>
+</div>
+<!-- Step 4: In Progress -->
+<div class="relative flex gap-4">
+<div class="flex flex-col items-center">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest text-secondary flex items-center justify-center z-10">
+<span class="material-symbols-outlined">description</span>
+</div>
+</div>
+<div class="bg-surface-container-low/50 border border-outline-variant/20 rounded-xl p-5 flex-grow mb-2 opacity-70">
+<div class="flex justify-between items-start mb-1">
+<h3 class="font-title-lg text-title-lg text-on-surface-variant">Background Check</h3>
+<span class="bg-secondary-container text-on-secondary-container font-label-sm text-[10px] px-2 py-0.5 rounded-full uppercase">In Progress</span>
+</div>
+<p class="text-on-surface-variant text-body-md text-sm">Automated screening started. This will update once Insurance is cleared.</p>
+</div>
+</div>
+</div>
+<!-- Support Section -->
+<div class="mt-12 p-6 bg-surface-cream rounded-xl border border-dashed border-outline text-center">
+<h4 class="font-title-lg text-on-surface mb-2">Need help with documents?</h4>
+<p class="text-on-surface-variant text-sm mb-4">Our neighborhood support team is here to assist you 24/7.</p>
+<button class="bg-secondary text-white px-6 py-2 rounded-full font-title-lg text-sm hover:bg-on-surface transition-all active:scale-95">Contact Support</button>
+</div>
+</main>
+<!-- Bottom Navigation Bar (Mobile) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full flex justify-around items-center pt-2 pb-6 px-4 bg-surface-container-lowest shadow-[0_-4px_30px_rgba(166,59,0,0.08)] rounded-t-xl z-50">
+<a class="flex flex-col items-center justify-center text-secondary hover:text-primary transition-colors scale-90 active:scale-110 duration-200" href="#">
+<span class="material-symbols-outlined">local_shipping</span>
+<span class="font-label-sm text-label-sm">Dispatch</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary hover:text-primary transition-colors scale-90 active:scale-110 duration-200" href="#">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm">Wallet</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary hover:text-primary transition-colors scale-90 active:scale-110 duration-200" href="#">
+<span class="material-symbols-outlined">history</span>
+<span class="font-label-sm text-label-sm">History</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-fixed text-on-primary-fixed-variant rounded-full px-4 py-1 scale-90 active:scale-110 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-sm text-label-sm">Account</span>
+</a>
+</nav>
+<script>
+        // Simple micro-interaction for checklist hover
+        document.querySelectorAll('.rounded-xl').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                if(!card.classList.contains('opacity-70')) {
+                    card.style.transform = 'translateY(-2px)';
+                }
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0px)';
+            });
+        });
+    </script>
+</body></html>

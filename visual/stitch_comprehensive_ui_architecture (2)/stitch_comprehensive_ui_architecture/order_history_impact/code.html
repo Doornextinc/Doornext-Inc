@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Order History | DoorNext</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=Anybody:wght@700;800;900&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary": "#ffffff",
+                    "surface-container-high": "#fde3da",
+                    "on-tertiary-container": "#002d45",
+                    "inverse-on-surface": "#ffede7",
+                    "on-tertiary-fixed-variant": "#004b6f",
+                    "on-background": "#261813",
+                    "surface-tint": "#a63b00",
+                    "on-primary-fixed": "#370e00",
+                    "surface-container": "#ffe9e2",
+                    "surface-bright": "#fff8f6",
+                    "on-secondary-fixed-variant": "#474646",
+                    "tertiary-fixed": "#cae6ff",
+                    "tertiary": "#006492",
+                    "on-secondary-fixed": "#1c1b1b",
+                    "inverse-primary": "#ffb599",
+                    "surface-dim": "#eed5cc",
+                    "surface-cream": "#FDFCFB",
+                    "background": "#fff8f6",
+                    "on-surface": "#261813",
+                    "primary": "#a63b00",
+                    "outline-variant": "#e1bfb3",
+                    "primary-container": "#f26522",
+                    "neighborhood-green": "#2D6A4F",
+                    "surface-container-low": "#fff1ec",
+                    "secondary": "#5f5e5e",
+                    "surface-variant": "#f7ddd4",
+                    "on-secondary-container": "#656464",
+                    "on-primary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "surface": "#fff8f6",
+                    "surface-container-highest": "#f7ddd4",
+                    "tertiary-container": "#009ade",
+                    "inverse-surface": "#3c2d27",
+                    "on-surface-variant": "#594138",
+                    "on-primary-fixed-variant": "#7f2b00",
+                    "on-tertiary": "#ffffff",
+                    "on-primary-container": "#4f1800",
+                    "on-error": "#ffffff",
+                    "error": "#ba1a1a",
+                    "warm-gray": "#736F6E",
+                    "secondary-fixed-dim": "#c9c6c5",
+                    "secondary-container": "#e5e2e1",
+                    "primary-fixed-dim": "#ffb599",
+                    "tertiary-fixed-dim": "#8cceff",
+                    "secondary-fixed": "#e5e2e1",
+                    "on-error-container": "#93000a",
+                    "outline": "#8d7166",
+                    "on-tertiary-fixed": "#001e2f",
+                    "primary-fixed": "#ffdbce"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "1.5rem",
+                    "container-padding-desktop": "2.5rem",
+                    "section-gap": "4rem",
+                    "container-padding-mobile": "1.25rem",
+                    "base": "8px"
+            },
+            "fontFamily": {
+                    "display-lg": ["Anybody"],
+                    "display-lg-mobile": ["Anybody"],
+                    "body-md": ["Plus Jakarta Sans"],
+                    "body-lg": ["Plus Jakarta Sans"],
+                    "label-sm": ["JetBrains Mono"],
+                    "headline-md-mobile": ["Anybody"],
+                    "title-lg": ["Plus Jakarta Sans"],
+                    "headline-md": ["Anybody"]
+            },
+            "fontSize": {
+                    "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "display-lg-mobile": ["36px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "headline-md-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "title-lg": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                    "headline-md": ["32px", {"lineHeight": "1.2", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #FDFCFB;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 1.5rem;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(229, 229, 229, 0.5);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-on-surface">
+<!-- TopAppBar (From Shared Components) -->
+<header class="fixed top-0 w-full z-50 bg-surface flex justify-between items-center px-container-padding-mobile md:px-gutter h-16">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary-container">
+<img class="w-full h-full object-cover" data-alt="A warm, professional headshot of a smiling community member in their late 20s, set against a soft bokeh background of a local neighborhood street. The lighting is golden hour, highlighting a friendly and trustworthy persona. High-end lifestyle photography style consistent with a modern community-driven brand." src="https://lh3.googleusercontent.com/aida-public/AB6AXuALRBzCe6iOkiJxZW1lrsT3SH3G7Jx6J5dZmTa-9VwJCNQdRumB2Q5SgVVyM_pG4any0fFva1uoKjhX31cJ8s6HcPOU-39UKNxTaJeNGGSG9QsAtAB8RxEv9YaGn0zOzzB5l1arTeCnqWxWrmBSHC2p0oUtZ8qLm7zj1IRyQvt9OmVUPxkwJC5rfMol4-yuscDyVAuEjMuEhFHLm_Pe5KB0d9RF1GKIZ1vzBYdsXCP5rg9roz0fy8iG-ROpYmklBseoB7xlpj5Vwsin"/>
+</div>
+<h1 class="font-display-lg-mobile text-display-lg-mobile text-primary font-black">DoorNext</h1>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-surface-variant hover:opacity-80 active:translate-y-0.5 transition-all" data-icon="notifications">notifications</button>
+</div>
+</header>
+<main class="pt-24 pb-32 px-container-padding-mobile md:px-container-padding-desktop max-w-[1280px] mx-auto">
+<!-- Impact Stats Header -->
+<section class="mb-12">
+<div class="mb-6">
+<h2 class="font-headline-md-mobile md:font-headline-md text-headline-md-mobile md:text-headline-md text-on-background mb-2">Your Neighborhood Impact</h2>
+<p class="text-on-surface-variant max-w-xl">Every order supports a local DoorMaker. Here is how your choices have shaped our community this month.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Stat Card 1 -->
+<div class="bg-primary-container text-on-primary-container p-6 rounded-xl shadow-lg transform transition-hover hover:-translate-y-1">
+<span class="material-symbols-outlined text-4xl mb-4" data-icon="volunteer_activism">volunteer_activism</span>
+<h3 class="font-label-sm text-label-sm uppercase tracking-widest opacity-80 mb-1">Local Support</h3>
+<p class="font-display-lg-mobile text-display-lg-mobile font-black">$482.50</p>
+<p class="font-body-md mt-2 opacity-90">Stayed within your zip code</p>
+</div>
+<!-- Stat Card 2 -->
+<div class="bg-surface-container-high p-6 rounded-xl border border-outline-variant transform transition-hover hover:-translate-y-1">
+<span class="material-symbols-outlined text-4xl text-neighborhood-green mb-4" data-icon="eco">eco</span>
+<h3 class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-1">Carbon Saved</h3>
+<p class="font-display-lg-mobile text-display-lg-mobile text-neighborhood-green font-black">12.4kg</p>
+<p class="font-body-md text-on-surface-variant mt-2">Short-distance nexter deliveries</p>
+</div>
+<!-- Stat Card 3 -->
+<div class="bg-surface p-6 rounded-xl border border-outline-variant transform transition-hover hover:-translate-y-1">
+<span class="material-symbols-outlined text-4xl text-primary mb-4" data-icon="restaurant">restaurant</span>
+<h3 class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-1">DoorMakers Helped</h3>
+<p class="font-display-lg-mobile text-display-lg-mobile text-on-surface font-black">8</p>
+<p class="font-body-md text-on-surface-variant mt-2">Independent neighborhood chefs</p>
+</div>
+</div>
+</section>
+<!-- Orders History Section -->
+<section>
+<div class="flex justify-between items-end mb-8">
+<div>
+<h2 class="font-headline-md-mobile text-headline-md-mobile text-on-background">Order History</h2>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-1">LATEST 30 DAYS</p>
+</div>
+<button class="flex items-center gap-2 text-primary font-bold hover:underline">
+<span class="material-symbols-outlined" data-icon="filter_list">filter_list</span>
+<span>Filter</span>
+</button>
+</div>
+<!-- Orders List -->
+<div class="space-y-6">
+<!-- Order Card 1: Completed -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+<div class="p-5 flex flex-col md:flex-row gap-6">
+<!-- Seller Info -->
+<div class="flex gap-4 md:w-1/3">
+<div class="w-16 h-16 rounded-xl overflow-hidden shrink-0 border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A macro close-up of artisanal sourdough bread with a golden-brown crust, dusted with flour. The background is a rustic wooden table with scattered herbs. Professional food photography lighting emphasizing texture and warmth, inviting and home-made aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAaNjFdaFhQNnRR9xBV4_QLJCxwmPRzrUJ3VLCvJvanJo5kj8w35JlApNjaS4gCKDoUroLMIXjz3Nz7o2Te0y__Xtsjc-DgUMWwpAkbHTeirHJ6maWjbXIKzc5aXxSr-ktN3a8zo0XKTAbC2oiFmeXQ_wJqNr1R0dLOXnWHrXQUpnhwrulvy62AKISTQ1Q1pZE30pnoyrHkOoRTjmmzizyw05UvFZg0iP-TF3HnYKPUE_HAvZFvZGzlyV0VHEDDZBHqvZLew9OVhX6r"/>
+</div>
+<div>
+<h4 class="font-title-lg text-title-lg text-on-background">Maria's Sourdough</h4>
+<p class="text-on-surface-variant text-sm">Order #DN-88291</p>
+<p class="text-on-surface-variant text-sm">Oct 24, 2023 • 11:30 AM</p>
+</div>
+</div>
+<!-- Status & Price -->
+<div class="flex flex-col justify-center md:items-center md:w-1/4">
+<span class="bg-neighborhood-green/10 text-neighborhood-green px-3 py-1 rounded-full font-label-sm text-label-sm w-fit mb-2">COMPLETED</span>
+<p class="font-label-sm text-label-sm text-on-surface-variant">TOTAL: <span class="font-body-md text-on-surface font-bold text-lg">$34.20</span></p>
+</div>
+<!-- Impact Snippet -->
+<div class="md:w-1/4 flex flex-col justify-center">
+<div class="flex items-center gap-2 text-neighborhood-green">
+<span class="material-symbols-outlined text-sm" data-icon="favorite">favorite</span>
+<span class="font-label-sm text-label-sm">$28.50 Local Impact</span>
+</div>
+<p class="text-xs text-on-surface-variant mt-1 italic">Nexter: Julian R.</p>
+</div>
+<!-- Actions -->
+<div class="flex md:flex-col gap-3 md:w-1/6 justify-center">
+<button class="flex-1 bg-primary text-white py-2 px-4 rounded-full font-bold hover:bg-on-primary-fixed-variant transition-colors active:scale-95 text-sm">Reorder</button>
+<button class="flex-1 border border-outline text-on-surface py-2 px-4 rounded-full font-bold hover:bg-surface-variant transition-colors text-sm flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-lg" data-icon="receipt_long">receipt_long</span> Receipt
+                            </button>
+</div>
+</div>
+</div>
+<!-- Order Card 2: Refunded -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm">
+<div class="p-5 flex flex-col md:flex-row gap-6 opacity-80">
+<!-- Seller Info -->
+<div class="flex gap-4 md:w-1/3">
+<div class="w-16 h-16 rounded-xl overflow-hidden shrink-0 border border-outline-variant grayscale">
+<img class="w-full h-full object-cover" data-alt="A vibrant bowl of authentic Mexican street tacos with fresh cilantro and lime wedges on a colorful patterned ceramic plate. High-contrast lighting, sharp focus on the ingredients. Professional food styling reflecting local culinary pride and community flavor." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBuU5J6Jsgniz-J3a2o0ORF93L0EobsaUUydxc1Lc2HdVfiQMyVs7aU0HvNMEErJgapD2GggGGcl4OhNZrUc4JEqwFZNeS0oUIK5gJw0xJQZfsCNXlAVRtUggRcQYQKYtxPaf4qDfkaMX1IYMr5qoPMI9LiOyPcnMfyyifHgsjYnmVw9jFYaxOPZEDdYHXwUV0749KTZQoErvEDLETj_mzWCedMDnpev-xdYpEyNdLbJR6oe6RLVxXt-c1vxSDyf4wAtoAqrHOL5iyn"/>
+</div>
+<div>
+<h4 class="font-title-lg text-title-lg text-on-background">Taco Neighborhood</h4>
+<p class="text-on-surface-variant text-sm">Order #DN-88210</p>
+<p class="text-on-surface-variant text-sm">Oct 20, 2023 • 6:15 PM</p>
+</div>
+</div>
+<!-- Status & Price -->
+<div class="flex flex-col justify-center md:items-center md:w-1/4">
+<span class="bg-error-container text-on-error-container px-3 py-1 rounded-full font-label-sm text-label-sm w-fit mb-2">REFUNDED</span>
+<p class="font-label-sm text-label-sm text-on-surface-variant">TOTAL: <span class="font-body-md text-on-surface font-bold text-lg strike-through">$22.00</span></p>
+</div>
+<!-- Impact Snippet -->
+<div class="md:w-1/4 flex flex-col justify-center">
+<p class="text-xs text-on-surface-variant italic">Store closed early. Refunded to Wallet.</p>
+</div>
+<!-- Actions -->
+<div class="flex md:flex-col gap-3 md:w-1/6 justify-center">
+<button class="flex-1 bg-secondary text-white py-2 px-4 rounded-full font-bold hover:opacity-80 transition-opacity active:scale-95 text-sm">Help</button>
+<button class="flex-1 border border-outline text-on-surface py-2 px-4 rounded-full font-bold hover:bg-surface-variant transition-colors text-sm flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-lg" data-icon="receipt_long">receipt_long</span> Receipt
+                            </button>
+</div>
+</div>
+</div>
+<!-- Order Card 3: Completed -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+<div class="p-5 flex flex-col md:flex-row gap-6">
+<!-- Seller Info -->
+<div class="flex gap-4 md:w-1/3">
+<div class="w-16 h-16 rounded-xl overflow-hidden shrink-0 border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A high-end glass bottle of cold brew coffee with a minimalist craft label, placed next to a glass of ice. The setting is a bright, airy sunlit kitchen with marble countertops. Sophisticated lighting with clean reflections, portraying a premium but accessible local product." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBY9SChvFJtaN0bMXrIhcuZrMaSgZXUtiu2cqwiQdjc7lxnzeooTdw4s_vo50DtLZrFl4CJNyCqXw_qtSnrnyXBt-6ql6f4qHf1ThjrKp6o2Jy1BRwlVwPwMQKIbxyzGdDz-MptK4InLrIKB1vBjfvG05mB-qe4oi0kJT-lLUdEBOIaCRFvUIeUIAdZtMKTFX774Qu5G5kPADyg3OOFkVLK_9NJd1nEGOFlGHWrNbnOmfBtF6WTrlfMsejGM2xhEryuP7ll5A34NE1q"/>
+</div>
+<div>
+<h4 class="font-title-lg text-title-lg text-on-background">Sunrise Roasters</h4>
+<p class="text-on-surface-variant text-sm">Order #DN-88155</p>
+<p class="text-on-surface-variant text-sm">Oct 18, 2023 • 08:45 AM</p>
+</div>
+</div>
+<!-- Status & Price -->
+<div class="flex flex-col justify-center md:items-center md:w-1/4">
+<span class="bg-neighborhood-green/10 text-neighborhood-green px-3 py-1 rounded-full font-label-sm text-label-sm w-fit mb-2">COMPLETED</span>
+<p class="font-label-sm text-label-sm text-on-surface-variant">TOTAL: <span class="font-body-md text-on-surface font-bold text-lg">$18.75</span></p>
+</div>
+<!-- Impact Snippet -->
+<div class="md:w-1/4 flex flex-col justify-center">
+<div class="flex items-center gap-2 text-neighborhood-green">
+<span class="material-symbols-outlined text-sm" data-icon="favorite">favorite</span>
+<span class="font-label-sm text-label-sm">$15.20 Local Impact</span>
+</div>
+<p class="text-xs text-on-surface-variant mt-1 italic">Nexter: Sarah L.</p>
+</div>
+<!-- Actions -->
+<div class="flex md:flex-col gap-3 md:w-1/6 justify-center">
+<button class="flex-1 bg-primary text-white py-2 px-4 rounded-full font-bold hover:bg-on-primary-fixed-variant transition-colors active:scale-95 text-sm">Reorder</button>
+<button class="flex-1 border border-outline text-on-surface py-2 px-4 rounded-full font-bold hover:bg-surface-variant transition-colors text-sm flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-lg" data-icon="receipt_long">receipt_long</span> Receipt
+                            </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Empty State Simulation / Pagination -->
+<div class="mt-12 text-center">
+<button class="text-primary font-bold hover:underline flex items-center gap-2 mx-auto">
+                    View older orders <span class="material-symbols-outlined" data-icon="expand_more">expand_more</span>
+</button>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (From Shared Components) -->
+<!-- Determined active tab: "Orders" based on screen context -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-4 pb-4 pt-2 shadow-[0_-4px_20px_0_rgba(166,59,0,0.08)] bg-surface rounded-t-xl md:hidden">
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-95 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="explore">explore</span>
+<span class="font-label-sm text-label-sm">Explore</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="shopping_bag">shopping_bag</span>
+<span class="font-label-sm text-label-sm">Orders</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-95 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="account_balance_wallet">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm">Wallet</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors active:scale-95 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-sm text-label-sm">Profile</span>
+</a>
+</nav>
+<!-- Desktop Sidebar/Nav (Shared Components Logic) -->
+<div class="hidden md:flex fixed left-0 top-0 h-screen w-64 border-r border-outline-variant bg-surface-container-lowest flex-col p-4 gap-2 z-50">
+<h2 class="font-display-lg text-display-lg text-primary mb-8 px-2">DoorNext</h2>
+<a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined" data-icon="explore">explore</span>
+<span class="font-body-md">Explore</span>
+</a>
+<a class="flex items-center gap-3 p-3 bg-primary-container text-on-primary-container font-bold rounded-lg transition-all active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined" data-icon="shopping_bag">shopping_bag</span>
+<span class="font-body-md">Orders</span>
+</a>
+<a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined" data-icon="account_balance_wallet">account_balance_wallet</span>
+<span class="font-body-md">Wallet</span>
+</a>
+<a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-body-md">Profile</span>
+</a>
+<div class="mt-auto pt-4 border-t border-outline-variant flex items-center gap-3 p-2">
+<div class="w-10 h-10 rounded-full overflow-hidden bg-primary-fixed">
+<img class="w-full h-full object-cover" data-alt="Close-up of a user avatar, a smiling person with glasses, professional lighting, warm community vibe." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCH1b-nNTIU6FfpLVPfCmAjVFmJkTuTq-I9DHd7gVvh385RSLIjB8XRJHi4JVKwFIAcLpsutQmaQfwMngYR5fa2zCWMBOaKT-6hSdoY_ixPf66RYZCNo7NxAcGB_IasnK2M7GNex6kZ9DjvUYna7VdVpvuX0nL_X_xgbEsF_pre2HfIc5_7p4gt5Nz3QLqofv5U6zUgLKAQNeflbdfgbxUj1KJfk8M3r2SJDdJVmQzO2pVvfUM5XYd9svw-0Tf0WvqwWYT6YhJBQpSb"/>
+</div>
+<div class="overflow-hidden">
+<p class="font-bold text-sm truncate">Alex Johnson</p>
+<p class="text-xs text-on-surface-variant">Neighbor since 2022</p>
+</div>
+</div>
+</div>
+<!-- Background Atmospheric micro-interaction script -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const cards = document.querySelectorAll('.bg-surface-container-lowest');
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', () => {
+                    card.style.transform = 'translateY(-2px)';
+                    card.style.transition = 'all 0.3s ease';
+                });
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = 'translateY(0)';
+                });
+            });
+        });
+    </script>
+</body></html>
