@@ -259,20 +259,20 @@ export default function NotificationsPage() {
   }, [userId, load])
 
   return (
-    <div className="flex flex-col min-h-full bg-[#080808]">
+    <div className="flex flex-col min-h-full bg-background">
       <AppHeader title="Notifications" showBack backHref="/" />
 
       {loading ? (
         <div className="p-4 space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-16 bg-[#1A1A1A] rounded-2xl animate-pulse" />
+            <div key={i} className="h-16 bg-surface-container-high rounded-2xl animate-pulse" />
           ))}
         </div>
       ) : items.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center px-6">
           <span className="text-5xl mb-4">🔔</span>
-          <h3 className="text-xl font-bold text-white">All caught up</h3>
-          <p className="text-zinc-500 text-sm mt-1">No notifications or messages yet</p>
+          <h3 className="text-xl font-bold text-on-surface">All caught up</h3>
+          <p className="text-on-surface-variant text-sm mt-1">No notifications or messages yet</p>
         </div>
       ) : (
         <div className="p-4 space-y-2">
@@ -282,22 +282,22 @@ export default function NotificationsPage() {
                 <button
                   key={it.id}
                   onClick={() => router.push(`/messages/${it.id}`)}
-                  className={`w-full text-left bg-[#111111] border rounded-2xl px-4 py-3 flex items-start gap-3 transition-colors active:bg-white/5
-                    ${it.unread > 0 ? 'border-[#FF7A50]/40' : 'border-white/6'}
+                  className={`w-full text-left bg-surface-container border rounded-2xl px-4 py-3 flex items-start gap-3 transition-colors active:bg-surface-container-low
+                    ${it.unread > 0 ? 'border-primary-container/40' : 'border-outline-variant/30'}
                   `}
                 >
                   <span className="text-xl mt-0.5 flex-shrink-0">💬</span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
-                      <p className="text-sm font-bold text-white leading-snug truncate">{it.title}</p>
-                      <p className="text-[11px] text-zinc-600 flex-shrink-0 mt-0.5">
+                      <p className="text-sm font-bold text-on-surface leading-snug truncate">{it.title}</p>
+                      <p className="text-[11px] text-outline flex-shrink-0 mt-0.5">
                         {it.timestamp > 0 ? timeAgo(it.timestamp) : ''}
                       </p>
                     </div>
-                    <p className="text-xs text-zinc-400 mt-0.5 truncate">{it.body}</p>
+                    <p className="text-xs text-on-surface-variant mt-0.5 truncate">{it.body}</p>
                   </div>
                   {it.unread > 0 && (
-                    <span className="min-w-[18px] h-[18px] px-1 bg-[#FF7A50] rounded-full text-white text-[10px] font-black flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="min-w-[18px] h-[18px] px-1 bg-primary-container rounded-full text-on-primary text-[10px] font-black flex items-center justify-center flex-shrink-0 mt-0.5">
                       {it.unread > 9 ? '9+' : it.unread}
                     </span>
                   )}
@@ -312,21 +312,21 @@ export default function NotificationsPage() {
                 key={it.id}
                 disabled={!dest}
                 onClick={() => dest && router.push(dest)}
-                className={`w-full text-left bg-[#111111] border rounded-2xl px-4 py-3 flex items-start gap-3 transition-colors
-                  ${!it.read ? 'border-[#FF7A50]/40' : 'border-white/6'}
-                  ${dest ? 'active:bg-white/5 cursor-pointer' : 'cursor-default'}
+                className={`w-full text-left bg-surface-container border rounded-2xl px-4 py-3 flex items-start gap-3 transition-colors
+                  ${!it.read ? 'border-primary-container/40' : 'border-outline-variant/30'}
+                  ${dest ? 'active:bg-surface-container-low cursor-pointer' : 'cursor-default'}
                 `}
               >
                 <span className="text-xl mt-0.5 flex-shrink-0">{typeIcon(it.type)}</span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
-                    <p className="text-sm font-bold text-white leading-snug">{it.title}</p>
-                    <p className="text-[11px] text-zinc-600 flex-shrink-0 mt-0.5">{timeAgo(it.timestamp)}</p>
+                    <p className="text-sm font-bold text-on-surface leading-snug">{it.title}</p>
+                    <p className="text-[11px] text-outline flex-shrink-0 mt-0.5">{timeAgo(it.timestamp)}</p>
                   </div>
-                  <p className="text-xs text-zinc-400 mt-0.5">{it.body}</p>
+                  <p className="text-xs text-on-surface-variant mt-0.5">{it.body}</p>
                 </div>
                 {!it.read && (
-                  <span className="w-2 h-2 bg-[#FF7A50] rounded-full flex-shrink-0 mt-1.5" />
+                  <span className="w-2 h-2 bg-primary-container rounded-full flex-shrink-0 mt-1.5" />
                 )}
               </button>
             )

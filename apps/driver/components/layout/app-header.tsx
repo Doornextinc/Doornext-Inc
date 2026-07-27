@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useDriverStore } from '@/store/driver-store'
 import { getStreamClient, connectStreamUser } from '@/lib/stream'
+import { ChevronLeft, Bell } from 'lucide-react'
 
 interface AppHeaderProps {
   /** Custom greeting title (home page only) */
@@ -114,52 +115,52 @@ export function AppHeader({ greeting, title, showBack, backHref }: AppHeaderProp
   const totalUnread = unreadNotifs + unreadChats
 
   return (
-    <header className="sticky top-0 z-40 bg-[#0A0A0A] border-b border-white/8" style={{ boxShadow: '0 1px 0 rgba(255,255,255,0.04), 0 4px 20px rgba(0,0,0,0.4)' }}>
-      <div className="flex items-center justify-between px-4 h-[60px]">
+    <header className="sticky top-0 z-40 bg-surface">
+      <div className="flex items-center justify-between px-5 h-16">
 
         {/* Left side */}
         <div className="flex items-center gap-3">
           {showBack && (
             <button
               onClick={() => backHref ? router.push(backHref) : router.back()}
-              className="w-10 h-10 rounded-2xl bg-[#161616] border border-white/8 flex items-center justify-center active:scale-95 transition-transform"
+              className="w-10 h-10 rounded-full flex items-center justify-center text-primary active:bg-surface-variant transition-colors -ml-2"
               aria-label="Back"
             >
-              <span className="text-zinc-300 text-lg" aria-hidden>‹</span>
+              <ChevronLeft size={24} />
             </button>
           )}
 
           {greeting ? (
             <div>
-              <p className="text-xs text-zinc-500 leading-none mb-0.5">Good {greeting.time},</p>
-              <h1 className="text-xl font-black text-white leading-tight tracking-tight">{greeting.name} 👋</h1>
+              <p className="text-xs text-on-surface-variant leading-none mb-1">Good {greeting.time},</p>
+              <h1 className="font-display text-2xl font-bold text-on-surface leading-tight tracking-tight">{greeting.name}</h1>
             </div>
           ) : (
-            <h1 className="text-[22px] font-black text-white tracking-tight leading-none">{title}</h1>
+            <h1 className="font-display text-2xl font-bold text-on-surface tracking-tight leading-none">{title}</h1>
           )}
         </div>
 
         {/* Right side: unified notification bell + avatar.
             Messages icon was merged into the bell — chat previews now live in
-            the /notifications feed. See finding from this audit session. */}
-        <div className="flex items-center gap-2">
+            the /notifications feed. */}
+        <div className="flex items-center gap-1">
           <Link href="/notifications" aria-label="Notifications and messages">
-            <div className="relative w-10 h-10 rounded-2xl bg-[#161616] border border-white/8 flex items-center justify-center active:scale-95 transition-transform">
-              <span className="text-base" aria-hidden>🔔</span>
+            <div className="relative w-10 h-10 rounded-full flex items-center justify-center text-primary active:bg-surface-variant transition-colors">
+              <Bell size={22} />
               {totalUnread > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-[#FF7A50] rounded-full border-2 border-[#0A0A0A] text-white text-[10px] font-black flex items-center justify-center">
+                <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 bg-primary-container rounded-full border-2 border-surface text-white text-[10px] font-black flex items-center justify-center">
                   {totalUnread > 9 ? '9+' : totalUnread}
                 </span>
               )}
             </div>
           </Link>
-          <Link href="/profile" aria-label="Profile">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#D4622B] to-[#E07545] flex items-center justify-center overflow-hidden active:scale-95 transition-transform">
+          <Link href="/account" aria-label="Account">
+            <div className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden bg-primary-fixed border-2 border-primary-container active:scale-95 transition-transform">
               {avatarUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
               ) : (
-                <span className="text-white font-black text-sm">{initials}</span>
+                <span className="font-display text-on-primary-fixed font-extrabold text-sm">{initials}</span>
               )}
             </div>
           </Link>

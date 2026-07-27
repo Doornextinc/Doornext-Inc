@@ -35,7 +35,7 @@ const ID_OPTIONS: Array<{ value: IdType; label: string; emoji: string; twoSides:
 const NEEDS_INSURANCE = (v: string) => ['car', 'motorbike'].includes(v)
 
 function inputClass(hasError = false) {
-  return `w-full bg-slate-800 border ${hasError ? 'border-red-500' : 'border-slate-700'} rounded-xl px-4 py-3 text-white placeholder:text-slate-500 focus:border-[#FF6B35] focus:ring-2 focus:ring-[#FF6B35]/20 transition-all outline-none`
+  return `w-full bg-slate-800 border ${hasError ? 'border-red-500' : 'border-slate-700'} rounded-xl px-4 py-3 text-on-surface placeholder:text-slate-500 focus:border-[#FF6B35] focus:ring-2 focus:ring-[#FF6B35]/20 transition-all outline-none`
 }
 
 function getProgressStep(step: Step, needsInsurance: boolean): number {
@@ -448,7 +448,7 @@ export default function OnboardingPage() {
           <Clock size={36} className="text-yellow-400" />
         </div>
         <div>
-          <h1 className="text-2xl font-black text-white">Under Review</h1>
+          <h1 className="text-2xl font-black text-on-surface">Under Review</h1>
           <p className="text-slate-400 text-sm mt-2 max-w-xs mx-auto">Your application is being reviewed. This typically takes 24–48 hours.</p>
         </div>
         <div className="bg-slate-800 rounded-2xl p-4 border border-slate-700/40 text-left space-y-3">
@@ -457,14 +457,14 @@ export default function OnboardingPage() {
               <div className="w-5 h-5 rounded-full bg-yellow-500/20 border border-yellow-500/30 flex items-center justify-center flex-shrink-0">
                 <div className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
               </div>
-              <span className="text-slate-300">{item}</span>
+              <span className="text-on-surface">{item}</span>
             </div>
           ))}
         </div>
         <button
           onClick={() => checkStatus()}
           disabled={checking}
-          className="flex items-center gap-2 mx-auto px-5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-700 transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 mx-auto px-5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm font-semibold text-on-surface hover:bg-slate-700 transition-colors disabled:opacity-50"
         >
           <RefreshCw size={14} className={checking ? 'animate-spin' : ''} />
           {checking ? 'Checking…' : 'Check Status'}
@@ -478,21 +478,21 @@ export default function OnboardingPage() {
     return (
       <div className="text-center py-8 space-y-6">
         <div className="mx-auto w-20 h-20 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
-          <AlertCircle size={36} className="text-red-400" />
+          <AlertCircle size={36} className="text-error" />
         </div>
         <div>
-          <h1 className="text-2xl font-black text-white">Verification Declined</h1>
+          <h1 className="text-2xl font-black text-on-surface">Verification Declined</h1>
           <p className="text-slate-400 text-sm mt-2">We were unable to verify your identity.</p>
         </div>
         {reviewNotes && (
           <div className="bg-red-900/20 border border-red-700/30 rounded-2xl p-4 text-left">
-            <p className="text-xs text-red-400 font-bold uppercase tracking-wide mb-1">Reason</p>
-            <p className="text-sm text-slate-300">{reviewNotes}</p>
+            <p className="text-xs text-error font-bold uppercase tracking-wide mb-1">Reason</p>
+            <p className="text-sm text-on-surface">{reviewNotes}</p>
           </div>
         )}
         <button
           onClick={() => { setFrontFile(null); setFrontPreview(''); setBackFile(null); setBackPreview(''); setInsuranceFile(null); setInsurancePreview(''); setSelfieFile(null); setSelfiePreview(''); setIdType(null); setStep('intro') }}
-          className="w-full bg-[#FF6B35] text-white rounded-2xl py-4 font-bold shadow-lg shadow-[#FF6B35]/20"
+          className="w-full bg-[#FF6B35] text-on-surface rounded-2xl py-4 font-bold shadow-lg shadow-[#FF6B35]/20"
         >
           Resubmit Application
         </button>
@@ -535,7 +535,7 @@ export default function OnboardingPage() {
               <Shield size={36} className="text-[#FF6B35]" />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-white">Verify Your Identity</h1>
+              <h1 className="text-2xl font-black text-on-surface">Verify Your Identity</h1>
               <p className="text-slate-400 text-sm mt-2">Required before you can start delivering</p>
             </div>
           </div>
@@ -552,7 +552,7 @@ export default function OnboardingPage() {
               <div key={i} className="flex items-start gap-3 bg-slate-800/60 rounded-2xl p-4 border border-slate-700/40">
                 <span className="text-2xl mt-0.5">{item.icon}</span>
                 <div>
-                  <p className="font-bold text-white text-sm">{item.title}</p>
+                  <p className="font-bold text-on-surface text-sm">{item.title}</p>
                   <p className="text-xs text-slate-400 mt-0.5">{item.desc}</p>
                 </div>
               </div>
@@ -561,12 +561,12 @@ export default function OnboardingPage() {
           <div className="flex items-center justify-center gap-1.5 text-xs text-slate-500">
             <Clock size={12} /> Takes about {needsInsurance ? '5' : '4'} minutes
           </div>
-          <button onClick={() => setStep('personal-info')} className="w-full bg-[#FF6B35] text-white rounded-2xl py-4 font-black text-base shadow-lg shadow-[#FF6B35]/20 flex items-center justify-center gap-2">
+          <button onClick={() => setStep('personal-info')} className="w-full bg-[#FF6B35] text-on-surface rounded-2xl py-4 font-black text-base shadow-lg shadow-[#FF6B35]/20 flex items-center justify-center gap-2">
             Start Verification <ChevronRight size={18} />
           </button>
           <button
             onClick={() => router.push('/')}
-            className="w-full text-slate-500 text-sm py-3 font-semibold hover:text-slate-300 transition-colors"
+            className="w-full text-slate-500 text-sm py-3 font-semibold hover:text-on-surface transition-colors"
           >
             Skip for now — continue to dashboard
           </button>
@@ -577,29 +577,29 @@ export default function OnboardingPage() {
       {step === 'personal-info' && (
         <div className="space-y-5">
           <div className="border-b border-slate-700/50 pb-4">
-            <h2 className="text-xl font-black text-white">Applicant Information</h2>
+            <h2 className="text-xl font-black text-on-surface">Applicant Information</h2>
             <p className="text-sm text-slate-400 mt-1">Must match exactly what's on your government-issued ID.</p>
           </div>
-          {error && <div className="flex items-start gap-2 p-3 bg-red-900/20 border border-red-700/30 rounded-xl text-sm text-red-400"><AlertCircle size={15} className="mt-0.5 flex-shrink-0" />{error}</div>}
+          {error && <div className="flex items-start gap-2 p-3 bg-red-900/20 border border-red-700/30 rounded-xl text-sm text-error"><AlertCircle size={15} className="mt-0.5 flex-shrink-0" />{error}</div>}
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Full Legal Name <span className="text-red-400">*</span></label>
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Full Legal Name <span className="text-error">*</span></label>
               <input type="text" value={personalInfo.fullName} onChange={e => setPersonalInfo(p => ({ ...p, fullName: e.target.value }))} placeholder="As it appears on your ID" className={inputClass()} maxLength={100} />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Date of Birth <span className="text-red-400">*</span></label>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Date of Birth <span className="text-error">*</span></label>
                 <input type="date" value={personalInfo.dateOfBirth} onChange={e => setPersonalInfo(p => ({ ...p, dateOfBirth: e.target.value }))} className={inputClass()} />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">SSN Last 4 <span className="text-red-400">*</span></label>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">SSN Last 4 <span className="text-error">*</span></label>
                 <input type="text" inputMode="numeric" value={personalInfo.ssnLast4} onChange={e => setPersonalInfo(p => ({ ...p, ssnLast4: e.target.value.replace(/\D/g, '').slice(0, 4) }))} placeholder="••••" maxLength={4} className={`${inputClass()} font-mono tracking-[0.4em] text-center`} />
               </div>
             </div>
             {/* ── Residential Address — multi-field with Places autocomplete ── */}
             <div className="space-y-2">
               <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Residential Address <span className="text-red-400">*</span>
+                Residential Address <span className="text-error">*</span>
               </label>
 
               {/* Street — autocomplete attaches here */}
@@ -617,7 +617,7 @@ export default function OnboardingPage() {
                   className={`${inputClass()} ${addressConfirmedRef.current ? 'border-green-500/60 focus:border-green-500' : ''}`}
                 />
                 {addressConfirmedRef.current && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-green-400 pointer-events-none">
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-neighborhood-green pointer-events-none">
                     <CheckCircle size={15} />
                     <span className="text-[11px] font-bold">Confirmed</span>
                   </div>
@@ -667,7 +667,7 @@ export default function OnboardingPage() {
               <p className="text-[10px] text-slate-600">Must match the address on your ID document</p>
             </div>
           </div>
-          <button onClick={handlePersonalInfoNext} className="w-full bg-[#FF6B35] text-white rounded-2xl py-4 font-bold shadow-lg shadow-[#FF6B35]/20 flex items-center justify-center gap-2">
+          <button onClick={handlePersonalInfoNext} className="w-full bg-[#FF6B35] text-on-surface rounded-2xl py-4 font-bold shadow-lg shadow-[#FF6B35]/20 flex items-center justify-center gap-2">
             Continue <ChevronRight size={18} />
           </button>
         </div>
@@ -677,26 +677,26 @@ export default function OnboardingPage() {
       {step === 'select-id' && (
         <div className="space-y-5">
           <div className="flex items-center gap-3">
-            <button onClick={() => setStep('personal-info')} className="text-slate-400 hover:text-white"><ChevronLeft size={20} /></button>
+            <button onClick={() => setStep('personal-info')} className="text-slate-400 hover:text-on-surface"><ChevronLeft size={20} /></button>
             <div>
-              <h2 className="text-xl font-black text-white">Select ID Document</h2>
+              <h2 className="text-xl font-black text-on-surface">Select ID Document</h2>
               <p className="text-sm text-slate-400">Government-issued photo ID</p>
             </div>
           </div>
-          {error && <div className="flex items-start gap-2 p-3 bg-red-900/20 border border-red-700/30 rounded-xl text-sm text-red-400"><AlertCircle size={15} className="mt-0.5 flex-shrink-0" />{error}</div>}
+          {error && <div className="flex items-start gap-2 p-3 bg-red-900/20 border border-red-700/30 rounded-xl text-sm text-error"><AlertCircle size={15} className="mt-0.5 flex-shrink-0" />{error}</div>}
           <div className="space-y-3">
             {ID_OPTIONS.map(opt => (
               <button key={opt.value} onClick={() => setIdType(opt.value)} className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-left ${idType === opt.value ? 'border-[#FF6B35] bg-[#FF6B35]/5' : 'border-slate-700 bg-slate-800 hover:border-slate-600'}`}>
                 <div className={`w-14 h-14 rounded-xl flex items-center justify-center text-3xl flex-shrink-0 ${idType === opt.value ? 'bg-[#FF6B35]/10' : 'bg-slate-700/60'}`}>{opt.emoji}</div>
                 <div className="flex-1">
-                  <p className="font-bold text-white">{opt.label}</p>
+                  <p className="font-bold text-on-surface">{opt.label}</p>
                   <p className="text-xs text-slate-400 mt-0.5">{opt.desc}</p>
                 </div>
                 {idType === opt.value && <CheckCircle size={20} className="text-[#FF6B35] flex-shrink-0" />}
               </button>
             ))}
           </div>
-          <button onClick={handleIdTypeNext} disabled={!idType} className="w-full bg-[#FF6B35] text-white rounded-2xl py-4 font-bold shadow-lg shadow-[#FF6B35]/20 flex items-center justify-center gap-2 disabled:opacity-50">
+          <button onClick={handleIdTypeNext} disabled={!idType} className="w-full bg-[#FF6B35] text-on-surface rounded-2xl py-4 font-bold shadow-lg shadow-[#FF6B35]/20 flex items-center justify-center gap-2 disabled:opacity-50">
             Continue <ChevronRight size={18} />
           </button>
         </div>
@@ -706,9 +706,9 @@ export default function OnboardingPage() {
       {step === 'scan-front' && (
         <div className="space-y-5">
           <div className="flex items-center gap-3">
-            <button onClick={() => { stopCamera(); setStep('select-id') }} className="text-slate-400 hover:text-white"><ChevronLeft size={20} /></button>
+            <button onClick={() => { stopCamera(); setStep('select-id') }} className="text-slate-400 hover:text-on-surface"><ChevronLeft size={20} /></button>
             <div>
-              <div className="flex items-center gap-2"><FileCheck size={16} className="text-[#FF6B35]" /><h2 className="text-xl font-black text-white">Document — Front</h2></div>
+              <div className="flex items-center gap-2"><FileCheck size={16} className="text-[#FF6B35]" /><h2 className="text-xl font-black text-on-surface">Document — Front</h2></div>
               <p className="text-sm text-slate-400">{selectedId?.label} · {selectedId?.twoSides ? 'Step 1 of 2' : 'Single side'}</p>
             </div>
           </div>
@@ -725,7 +725,7 @@ export default function OnboardingPage() {
                     else stopCamera()
                   }}
                   className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-colors ${
-                    frontScanMode === mode ? 'bg-[#FF6B35] text-white' : 'text-slate-400'
+                    frontScanMode === mode ? 'bg-[#FF6B35] text-on-surface' : 'text-slate-400'
                   }`}
                 >
                   {mode === 'camera' ? <><Eye size={12} /> Use Camera</> : <><Upload size={12} /> Upload File</>}
@@ -736,14 +736,14 @@ export default function OnboardingPage() {
 
           {error && (
             <div className="space-y-2">
-              <div className="flex items-start gap-2 p-3 bg-red-900/20 border border-red-700/30 rounded-xl text-sm text-red-400">
+              <div className="flex items-start gap-2 p-3 bg-red-900/20 border border-red-700/30 rounded-xl text-sm text-error">
                 <AlertCircle size={15} className="mt-0.5 flex-shrink-0" />
                 <span>{error}</span>
               </div>
               {frontScanMode === 'camera' && (
                 <button
                   onClick={() => openCamera('environment')}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-slate-700 bg-slate-800 text-slate-300 text-sm font-semibold active:scale-[0.98] transition-all"
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-slate-700 bg-slate-800 text-on-surface text-sm font-semibold active:scale-[0.98] transition-all"
                 >
                   <RefreshCw size={14} /> Try Again
                 </button>
@@ -760,7 +760,7 @@ export default function OnboardingPage() {
                   <div key={i} className={`absolute w-8 h-8 border-[#FF6B35] ${cls}`} />
                 ))}
               </div>
-              <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-md flex items-center gap-1.5 uppercase tracking-wider"><Eye size={10} /> Live</div>
+              <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-sm text-on-surface text-[10px] font-bold px-2.5 py-1 rounded-md flex items-center gap-1.5 uppercase tracking-wider"><Eye size={10} /> Live</div>
               {cameraActive && (
                 <div className="absolute bottom-4 left-0 right-0 flex justify-center">
                   <button onClick={() => capture('front')} className="w-16 h-16 rounded-full bg-white border-4 border-slate-400 hover:scale-95 active:scale-90 transition-transform shadow-xl" />
@@ -779,7 +779,7 @@ export default function OnboardingPage() {
                 <Upload size={24} className="text-slate-400" />
               </div>
               <div className="text-center">
-                <p className="font-bold text-white text-sm">Upload Front of {selectedId?.label ?? 'ID'}</p>
+                <p className="font-bold text-on-surface text-sm">Upload Front of {selectedId?.label ?? 'ID'}</p>
                 <p className="text-xs text-slate-500 mt-1">Photo or PDF · JPEG, PNG, WebP</p>
               </div>
             </button>
@@ -791,14 +791,14 @@ export default function OnboardingPage() {
               {frontFile?.type === 'application/pdf' ? (
                 <div className="w-full h-full flex flex-col items-center justify-center gap-3">
                   <FileText size={40} className="text-[#FF6B35]" />
-                  <p className="font-bold text-white text-sm">{frontFile.name}</p>
+                  <p className="font-bold text-on-surface text-sm">{frontFile.name}</p>
                   <p className="text-xs text-slate-500">PDF ready</p>
                 </div>
               ) : (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={frontPreview} alt="Front of ID" className="w-full h-full object-cover" />
               )}
-              <div className="absolute bottom-3 left-3 bg-[#FF6B35] text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5"><CheckCircle size={13} /> Captured</div>
+              <div className="absolute bottom-3 left-3 bg-[#FF6B35] text-on-surface text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5"><CheckCircle size={13} /> Captured</div>
             </div>
           )}
 
@@ -810,12 +810,12 @@ export default function OnboardingPage() {
                   if (frontScanMode === 'camera') openCamera('environment')
                   else frontInputRef.current?.click()
                 }}
-                className="flex-1 border border-slate-700 bg-slate-800 text-slate-300 rounded-2xl py-3.5 font-semibold flex items-center justify-center gap-2 hover:border-slate-600"
+                className="flex-1 border border-slate-700 bg-slate-800 text-on-surface rounded-2xl py-3.5 font-semibold flex items-center justify-center gap-2 hover:border-slate-600"
               >
                 <RefreshCw size={15} /> {frontScanMode === 'camera' ? 'Retake' : 'Replace'}
               </button>
             )}
-            <button onClick={handleFrontNext} disabled={!frontFile} className="flex-1 bg-[#FF6B35] text-white rounded-2xl py-3.5 font-bold flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-[#FF6B35]/20">
+            <button onClick={handleFrontNext} disabled={!frontFile} className="flex-1 bg-[#FF6B35] text-on-surface rounded-2xl py-3.5 font-bold flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-[#FF6B35]/20">
               Next <ChevronRight size={18} />
             </button>
           </div>
@@ -826,9 +826,9 @@ export default function OnboardingPage() {
       {step === 'scan-back' && (
         <div className="space-y-5">
           <div className="flex items-center gap-3">
-            <button onClick={() => { stopCamera(); setStep('scan-front') }} className="text-slate-400 hover:text-white"><ChevronLeft size={20} /></button>
+            <button onClick={() => { stopCamera(); setStep('scan-front') }} className="text-slate-400 hover:text-on-surface"><ChevronLeft size={20} /></button>
             <div>
-              <div className="flex items-center gap-2"><FileCheck size={16} className="text-[#FF6B35]" /><h2 className="text-xl font-black text-white">Document — Back</h2></div>
+              <div className="flex items-center gap-2"><FileCheck size={16} className="text-[#FF6B35]" /><h2 className="text-xl font-black text-on-surface">Document — Back</h2></div>
               <p className="text-sm text-slate-400">Flip your {selectedId?.label} · Step 2 of 2</p>
             </div>
           </div>
@@ -845,7 +845,7 @@ export default function OnboardingPage() {
                     else stopCamera()
                   }}
                   className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-colors ${
-                    backScanMode === mode ? 'bg-[#FF6B35] text-white' : 'text-slate-400'
+                    backScanMode === mode ? 'bg-[#FF6B35] text-on-surface' : 'text-slate-400'
                   }`}
                 >
                   {mode === 'camera' ? <><Eye size={12} /> Use Camera</> : <><Upload size={12} /> Upload File</>}
@@ -856,14 +856,14 @@ export default function OnboardingPage() {
 
           {error && (
             <div className="space-y-2">
-              <div className="flex items-start gap-2 p-3 bg-red-900/20 border border-red-700/30 rounded-xl text-sm text-red-400">
+              <div className="flex items-start gap-2 p-3 bg-red-900/20 border border-red-700/30 rounded-xl text-sm text-error">
                 <AlertCircle size={15} className="mt-0.5 flex-shrink-0" />
                 <span>{error}</span>
               </div>
               {backScanMode === 'camera' && (
                 <button
                   onClick={() => openCamera('environment')}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-slate-700 bg-slate-800 text-slate-300 text-sm font-semibold active:scale-[0.98] transition-all"
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-slate-700 bg-slate-800 text-on-surface text-sm font-semibold active:scale-[0.98] transition-all"
                 >
                   <RefreshCw size={14} /> Try Again
                 </button>
@@ -880,7 +880,7 @@ export default function OnboardingPage() {
                   <div key={i} className={`absolute w-8 h-8 border-[#FF6B35] ${cls}`} />
                 ))}
               </div>
-              <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-md flex items-center gap-1.5 uppercase tracking-wider"><Eye size={10} /> Live</div>
+              <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-sm text-on-surface text-[10px] font-bold px-2.5 py-1 rounded-md flex items-center gap-1.5 uppercase tracking-wider"><Eye size={10} /> Live</div>
               {cameraActive && (
                 <div className="absolute bottom-4 left-0 right-0 flex justify-center">
                   <button onClick={() => capture('back')} className="w-16 h-16 rounded-full bg-white border-4 border-slate-400 hover:scale-95 active:scale-90 transition-transform shadow-xl" />
@@ -899,7 +899,7 @@ export default function OnboardingPage() {
                 <Upload size={24} className="text-slate-400" />
               </div>
               <div className="text-center">
-                <p className="font-bold text-white text-sm">Upload Back of {selectedId?.label ?? 'ID'}</p>
+                <p className="font-bold text-on-surface text-sm">Upload Back of {selectedId?.label ?? 'ID'}</p>
                 <p className="text-xs text-slate-500 mt-1">Photo or PDF · JPEG, PNG, WebP</p>
               </div>
             </button>
@@ -911,14 +911,14 @@ export default function OnboardingPage() {
               {backFile?.type === 'application/pdf' ? (
                 <div className="w-full h-full flex flex-col items-center justify-center gap-3">
                   <FileText size={40} className="text-[#FF6B35]" />
-                  <p className="font-bold text-white text-sm">{backFile.name}</p>
+                  <p className="font-bold text-on-surface text-sm">{backFile.name}</p>
                   <p className="text-xs text-slate-500">PDF ready</p>
                 </div>
               ) : (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={backPreview} alt="Back of ID" className="w-full h-full object-cover" />
               )}
-              <div className="absolute bottom-3 left-3 bg-[#FF6B35] text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5"><CheckCircle size={13} /> Captured</div>
+              <div className="absolute bottom-3 left-3 bg-[#FF6B35] text-on-surface text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5"><CheckCircle size={13} /> Captured</div>
             </div>
           )}
 
@@ -930,12 +930,12 @@ export default function OnboardingPage() {
                   if (backScanMode === 'camera') openCamera('environment')
                   else backInputRef.current?.click()
                 }}
-                className="flex-1 border border-slate-700 bg-slate-800 text-slate-300 rounded-2xl py-3.5 font-semibold flex items-center justify-center gap-2 hover:border-slate-600"
+                className="flex-1 border border-slate-700 bg-slate-800 text-on-surface rounded-2xl py-3.5 font-semibold flex items-center justify-center gap-2 hover:border-slate-600"
               >
                 <RefreshCw size={15} /> {backScanMode === 'camera' ? 'Retake' : 'Replace'}
               </button>
             )}
-            <button onClick={handleBackNext} disabled={!backFile} className="flex-1 bg-[#FF6B35] text-white rounded-2xl py-3.5 font-bold flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-[#FF6B35]/20">
+            <button onClick={handleBackNext} disabled={!backFile} className="flex-1 bg-[#FF6B35] text-on-surface rounded-2xl py-3.5 font-bold flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-[#FF6B35]/20">
               Next <ChevronRight size={18} />
             </button>
           </div>
@@ -946,9 +946,9 @@ export default function OnboardingPage() {
       {step === 'insurance' && (
         <div className="space-y-5">
           <div className="flex items-center gap-3">
-            <button onClick={() => setStep(selectedId?.twoSides ? 'scan-back' : 'scan-front')} className="text-slate-400 hover:text-white"><ChevronLeft size={20} /></button>
+            <button onClick={() => setStep(selectedId?.twoSides ? 'scan-back' : 'scan-front')} className="text-slate-400 hover:text-on-surface"><ChevronLeft size={20} /></button>
             <div>
-              <div className="flex items-center gap-2"><Car size={16} className="text-[#FF6B35]" /><h2 className="text-xl font-black text-white">Insurance Document</h2></div>
+              <div className="flex items-center gap-2"><Car size={16} className="text-[#FF6B35]" /><h2 className="text-xl font-black text-on-surface">Insurance Document</h2></div>
               <p className="text-sm text-slate-400">Required for {vehicleType === 'motorbike' ? 'motorbike' : 'car'} drivers</p>
             </div>
           </div>
@@ -958,7 +958,7 @@ export default function OnboardingPage() {
             <p className="text-xs text-yellow-200/70">Current insurance card or declaration page showing your name, vehicle, and coverage dates. Must be valid and not expired.</p>
           </div>
 
-          {error && <div className="flex items-start gap-2 p-3 bg-red-900/20 border border-red-700/30 rounded-xl text-sm text-red-400"><AlertCircle size={15} className="mt-0.5 flex-shrink-0" />{error}</div>}
+          {error && <div className="flex items-start gap-2 p-3 bg-red-900/20 border border-red-700/30 rounded-xl text-sm text-error"><AlertCircle size={15} className="mt-0.5 flex-shrink-0" />{error}</div>}
 
           <input ref={insuranceInputRef} type="file" accept="image/*,application/pdf" onChange={handleInsuranceFileChange} className="hidden" />
 
@@ -971,7 +971,7 @@ export default function OnboardingPage() {
                 <Upload size={24} className="text-slate-400" />
               </div>
               <div className="text-center">
-                <p className="font-bold text-white text-sm">Upload Insurance Card</p>
+                <p className="font-bold text-on-surface text-sm">Upload Insurance Card</p>
                 <p className="text-xs text-slate-500 mt-1">Photo or PDF · Tap to browse files</p>
               </div>
             </button>
@@ -981,7 +981,7 @@ export default function OnboardingPage() {
                 <div className="w-full h-full flex flex-col items-center justify-center gap-3">
                   <FileText size={40} className="text-[#FF6B35]" />
                   <div className="text-center">
-                    <p className="font-bold text-white text-sm">{insuranceFile.name}</p>
+                    <p className="font-bold text-on-surface text-sm">{insuranceFile.name}</p>
                     <p className="text-xs text-slate-500 mt-1">PDF document ready</p>
                   </div>
                 </div>
@@ -989,7 +989,7 @@ export default function OnboardingPage() {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={insurancePreview} alt="Insurance document" className="w-full h-full object-cover" />
               )}
-              <div className="absolute bottom-3 left-3 bg-[#FF6B35] text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5"><CheckCircle size={13} /> Document Ready</div>
+              <div className="absolute bottom-3 left-3 bg-[#FF6B35] text-on-surface text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5"><CheckCircle size={13} /> Document Ready</div>
             </div>
           )}
 
@@ -997,11 +997,11 @@ export default function OnboardingPage() {
 
           <div className="flex gap-3">
             {insurancePreview && (
-              <button onClick={() => { setInsuranceFile(null); setInsurancePreview(''); insuranceInputRef.current?.click() }} className="flex-1 border border-slate-700 bg-slate-800 text-slate-300 rounded-2xl py-3.5 font-semibold flex items-center justify-center gap-2 hover:border-slate-600">
+              <button onClick={() => { setInsuranceFile(null); setInsurancePreview(''); insuranceInputRef.current?.click() }} className="flex-1 border border-slate-700 bg-slate-800 text-on-surface rounded-2xl py-3.5 font-semibold flex items-center justify-center gap-2 hover:border-slate-600">
                 <RefreshCw size={15} /> Replace
               </button>
             )}
-            <button onClick={handleInsuranceNext} disabled={!insuranceFile} className="flex-1 bg-[#FF6B35] text-white rounded-2xl py-3.5 font-bold flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-[#FF6B35]/20">
+            <button onClick={handleInsuranceNext} disabled={!insuranceFile} className="flex-1 bg-[#FF6B35] text-on-surface rounded-2xl py-3.5 font-bold flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-[#FF6B35]/20">
               Next <ChevronRight size={18} />
             </button>
           </div>
@@ -1012,18 +1012,18 @@ export default function OnboardingPage() {
       {step === 'bg-check' && (
         <div className="space-y-5">
           <div className="flex items-center gap-3">
-            <button onClick={() => needsInsurance ? setStep('insurance') : setStep(selectedId?.twoSides ? 'scan-back' : 'scan-front')} className="text-slate-400 hover:text-white"><ChevronLeft size={20} /></button>
+            <button onClick={() => needsInsurance ? setStep('insurance') : setStep(selectedId?.twoSides ? 'scan-back' : 'scan-front')} className="text-slate-400 hover:text-on-surface"><ChevronLeft size={20} /></button>
             <div>
-              <div className="flex items-center gap-2"><Shield size={16} className="text-[#FF6B35]" /><h2 className="text-xl font-black text-white">Background Check</h2></div>
+              <div className="flex items-center gap-2"><Shield size={16} className="text-[#FF6B35]" /><h2 className="text-xl font-black text-on-surface">Background Check</h2></div>
               <p className="text-sm text-slate-400">Required for all delivery partners</p>
             </div>
           </div>
 
-          {error && <div className="flex items-start gap-2 p-3 bg-red-900/20 border border-red-700/30 rounded-xl text-sm text-red-400"><AlertCircle size={15} className="mt-0.5 flex-shrink-0" />{error}</div>}
+          {error && <div className="flex items-start gap-2 p-3 bg-red-900/20 border border-red-700/30 rounded-xl text-sm text-error"><AlertCircle size={15} className="mt-0.5 flex-shrink-0" />{error}</div>}
 
           <div className="bg-slate-800 rounded-2xl border border-slate-700/40 p-5 space-y-4">
             <div>
-              <p className="font-bold text-white mb-2">What we check</p>
+              <p className="font-bold text-on-surface mb-2">What we check</p>
               <div className="space-y-2.5">
                 {[
                   { icon: '🔍', text: 'Criminal history (county, state, federal)' },
@@ -1033,7 +1033,7 @@ export default function OnboardingPage() {
                 ].map((item, i) => (
                   <div key={i} className="flex items-center gap-3">
                     <span className="text-base">{item.icon}</span>
-                    <p className="text-sm text-slate-300">{item.text}</p>
+                    <p className="text-sm text-on-surface">{item.text}</p>
                   </div>
                 ))}
               </div>
@@ -1050,14 +1050,14 @@ export default function OnboardingPage() {
             className={`w-full flex items-start gap-4 p-4 rounded-2xl border-2 transition-all text-left ${bgCheckConsent ? 'border-[#FF6B35] bg-[#FF6B35]/5' : 'border-slate-700 bg-slate-800'}`}
           >
             <div className={`w-6 h-6 rounded-lg border-2 flex-shrink-0 mt-0.5 flex items-center justify-center transition-all ${bgCheckConsent ? 'border-[#FF6B35] bg-[#FF6B35]' : 'border-slate-600'}`}>
-              {bgCheckConsent && <CheckCircle size={14} className="text-white" />}
+              {bgCheckConsent && <CheckCircle size={14} className="text-on-surface" />}
             </div>
-            <p className="text-sm text-slate-300 leading-relaxed">
+            <p className="text-sm text-on-surface leading-relaxed">
               I consent to a background check and certify that the information I've provided is accurate and complete.
             </p>
           </button>
 
-          <button onClick={handleBgCheckNext} disabled={!bgCheckConsent} className="w-full bg-[#FF6B35] text-white rounded-2xl py-4 font-bold shadow-lg shadow-[#FF6B35]/20 flex items-center justify-center gap-2 disabled:opacity-50">
+          <button onClick={handleBgCheckNext} disabled={!bgCheckConsent} className="w-full bg-[#FF6B35] text-on-surface rounded-2xl py-4 font-bold shadow-lg shadow-[#FF6B35]/20 flex items-center justify-center gap-2 disabled:opacity-50">
             Continue <ChevronRight size={18} />
           </button>
         </div>
@@ -1067,9 +1067,9 @@ export default function OnboardingPage() {
       {step === 'scan-selfie' && (
         <div className="space-y-5">
           <div className="flex items-center gap-3">
-            <button onClick={() => { stopCamera(); setStep('bg-check') }} className="text-slate-400 hover:text-white"><ChevronLeft size={20} /></button>
+            <button onClick={() => { stopCamera(); setStep('bg-check') }} className="text-slate-400 hover:text-on-surface"><ChevronLeft size={20} /></button>
             <div>
-              <div className="flex items-center gap-2"><Fingerprint size={16} className="text-[#FF6B35]" /><h2 className="text-xl font-black text-white">Biometric Match</h2></div>
+              <div className="flex items-center gap-2"><Fingerprint size={16} className="text-[#FF6B35]" /><h2 className="text-xl font-black text-on-surface">Biometric Match</h2></div>
               <p className="text-sm text-slate-400">Face must match your ID photo</p>
             </div>
           </div>
@@ -1087,7 +1087,7 @@ export default function OnboardingPage() {
                     else stopCamera()
                   }}
                   className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-colors ${
-                    selfieScanMode === mode ? 'bg-[#FF6B35] text-white' : 'text-slate-400'
+                    selfieScanMode === mode ? 'bg-[#FF6B35] text-on-surface' : 'text-slate-400'
                   }`}
                 >
                   {mode === 'camera' ? <><Eye size={12} /> Use Camera</> : <><Upload size={12} /> Upload Photo</>}
@@ -1098,14 +1098,14 @@ export default function OnboardingPage() {
 
           {error && (
             <div className="space-y-2">
-              <div className="flex items-start gap-2 p-3 bg-red-900/20 border border-red-700/30 rounded-xl text-sm text-red-400">
+              <div className="flex items-start gap-2 p-3 bg-red-900/20 border border-red-700/30 rounded-xl text-sm text-error">
                 <AlertCircle size={15} className="mt-0.5 flex-shrink-0" />
                 <span>{error}</span>
               </div>
               {selfieScanMode === 'camera' && (
                 <button
                   onClick={() => openCamera('user')}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-slate-700 bg-slate-800 text-slate-300 text-sm font-semibold active:scale-[0.98] transition-all"
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-slate-700 bg-slate-800 text-on-surface text-sm font-semibold active:scale-[0.98] transition-all"
                 >
                   <RefreshCw size={14} /> Try Again
                 </button>
@@ -1129,7 +1129,7 @@ export default function OnboardingPage() {
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                   <div className="w-44 h-60 border-2 border-white/40 rounded-full shadow-[0_0_60px_rgba(255,107,53,0.1)]" />
                 </div>
-                <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-md flex items-center gap-1.5 uppercase tracking-wider"><Eye size={10} /> Biometric</div>
+                <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-sm text-on-surface text-[10px] font-bold px-2.5 py-1 rounded-md flex items-center gap-1.5 uppercase tracking-wider"><Eye size={10} /> Biometric</div>
                 {cameraActive && (
                   <div className="absolute bottom-4 left-0 right-0 flex justify-center">
                     <button onClick={() => capture('selfie')} className="w-16 h-16 rounded-full bg-white border-4 border-slate-400 hover:scale-95 active:scale-90 transition-transform shadow-xl" />
@@ -1145,7 +1145,7 @@ export default function OnboardingPage() {
                   <Upload size={24} className="text-slate-400" />
                 </div>
                 <div className="text-center">
-                  <p className="font-bold text-white text-sm">Upload a Photo of Your Face</p>
+                  <p className="font-bold text-on-surface text-sm">Upload a Photo of Your Face</p>
                   <p className="text-xs text-slate-500 mt-1">Clear, well-lit photo · JPEG, PNG, WebP</p>
                 </div>
               </button>
@@ -1154,7 +1154,7 @@ export default function OnboardingPage() {
             <div className="relative rounded-2xl overflow-hidden aspect-square border border-slate-700/40">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={selfiePreview} alt="Selfie" className="w-full h-full object-cover" />
-              <div className="absolute bottom-3 left-3 bg-[#FF6B35] text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5"><CheckCircle size={13} /> Captured</div>
+              <div className="absolute bottom-3 left-3 bg-[#FF6B35] text-on-surface text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5"><CheckCircle size={13} /> Captured</div>
             </div>
           )}
 
@@ -1166,12 +1166,12 @@ export default function OnboardingPage() {
             {selfiePreview && (
               <button
                 onClick={() => retake('selfie')}
-                className="flex-1 border border-slate-700 bg-slate-800 text-slate-300 rounded-2xl py-3.5 font-semibold flex items-center justify-center gap-2 hover:border-slate-600"
+                className="flex-1 border border-slate-700 bg-slate-800 text-on-surface rounded-2xl py-3.5 font-semibold flex items-center justify-center gap-2 hover:border-slate-600"
               >
                 <RefreshCw size={15} /> {selfieScanMode === 'camera' ? 'Retake' : 'Replace'}
               </button>
             )}
-            <button onClick={handleSubmit} disabled={!selfieFile} className="flex-1 bg-[#FF6B35] text-white rounded-2xl py-3.5 font-bold flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-[#FF6B35]/20">
+            <button onClick={handleSubmit} disabled={!selfieFile} className="flex-1 bg-[#FF6B35] text-on-surface rounded-2xl py-3.5 font-bold flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-[#FF6B35]/20">
               <ShieldCheck size={18} /> Submit
             </button>
           </div>
@@ -1185,7 +1185,7 @@ export default function OnboardingPage() {
             <Shield size={44} className="text-[#FF6B35] animate-pulse" />
           </div>
           <div>
-            <h2 className="text-2xl font-black text-white">Processing…</h2>
+            <h2 className="text-2xl font-black text-on-surface">Processing…</h2>
             <p className="text-slate-400 text-sm mt-2">Securely uploading and encrypting your documents</p>
           </div>
           <div className="space-y-3">
@@ -1202,11 +1202,11 @@ export default function OnboardingPage() {
       {/* ── SUBMITTED ── */}
       {step === 'submitted' && (
         <div className="text-center py-8 space-y-6">
-          <div className="mx-auto w-20 h-20 rounded-2xl bg-green-500/10 border border-green-500/20 flex items-center justify-center">
-            <ShieldCheck size={36} className="text-green-400" />
+          <div className="mx-auto w-20 h-20 rounded-2xl bg-neighborhood-green/10 border border-green-500/20 flex items-center justify-center">
+            <ShieldCheck size={36} className="text-neighborhood-green" />
           </div>
           <div>
-            <h1 className="text-2xl font-black text-white">Application Submitted</h1>
+            <h1 className="text-2xl font-black text-on-surface">Application Submitted</h1>
             <p className="text-slate-400 text-sm mt-2 max-w-xs mx-auto">Your identity verification is under review. We'll notify you within 24–48 hours.</p>
           </div>
           <div className="bg-slate-800 rounded-2xl p-4 border border-slate-700/40 text-left space-y-3">
@@ -1220,8 +1220,8 @@ export default function OnboardingPage() {
               { label: 'Account activation', done: false },
             ].map((item, i) => (
               <div key={i} className="flex items-center gap-3 text-sm">
-                {item.done ? <CheckCircle size={16} className="text-green-400 flex-shrink-0" /> : <div className="w-4 h-4 rounded-full border-2 border-slate-600 flex-shrink-0" />}
-                <span className={item.done ? 'text-slate-300' : 'text-slate-600'}>{item.label}</span>
+                {item.done ? <CheckCircle size={16} className="text-neighborhood-green flex-shrink-0" /> : <div className="w-4 h-4 rounded-full border-2 border-slate-600 flex-shrink-0" />}
+                <span className={item.done ? 'text-on-surface' : 'text-slate-600'}>{item.label}</span>
               </div>
             ))}
           </div>

@@ -31,11 +31,11 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#080808] flex flex-col items-center justify-center px-6">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
       <div className="w-full max-w-sm">
         <Link
           href="/login"
-          className="inline-flex items-center gap-1.5 text-zinc-400 hover:text-white text-sm mb-8 transition-colors"
+          className="inline-flex items-center gap-1.5 text-on-surface-variant hover:text-on-surface text-sm mb-8 transition-colors"
         >
           <ChevronLeft size={16} />
           Back to sign in
@@ -44,24 +44,24 @@ export default function ForgotPasswordPage() {
         {!sent ? (
           <>
             <div className="mb-8">
-              <div className="w-12 h-12 rounded-2xl bg-[#FF7A50]/20 flex items-center justify-center mb-4">
-                <Mail size={22} className="text-[#FF7A50]" />
+              <div className="w-12 h-12 rounded-2xl bg-primary-container/20 flex items-center justify-center mb-4">
+                <Mail size={22} className="text-primary" />
               </div>
-              <h1 className="text-2xl font-black text-white">Forgot password?</h1>
-              <p className="text-zinc-400 text-sm mt-2">
+              <h1 className="text-2xl font-black text-on-surface">Forgot password?</h1>
+              <p className="text-on-surface-variant text-sm mt-2">
                 Enter your email and we&apos;ll send you a reset link.
               </p>
             </div>
 
             {error && (
-              <div className="mb-4 p-3 bg-red-900/30 border border-red-700/40 rounded-xl text-sm text-red-400 text-center">
+              <div className="mb-4 p-3 bg-error-container border border-error/30 rounded-xl text-sm text-error text-center">
                 {error}
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-zinc-300 block mb-1.5">Email Address</label>
+                <label className="text-sm font-medium text-on-surface block mb-1.5">Email Address</label>
                 <input
                   type="email"
                   value={email}
@@ -69,13 +69,13 @@ export default function ForgotPasswordPage() {
                   required
                   autoFocus
                   placeholder="driver@example.com"
-                  className="w-full bg-[#141414] border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-zinc-500 focus:border-[#FF7A50] focus:ring-2 focus:ring-[#FF7A50]/20 transition-all"
+                  className="w-full bg-surface-container-lowest border border-outline-variant/40 rounded-xl px-4 py-3 text-on-surface placeholder:text-outline focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-all"
                 />
               </div>
               <button
                 type="submit"
                 disabled={loading || !email.trim()}
-                className="w-full bg-[#FF7A50] text-white rounded-xl py-4 font-bold text-base disabled:opacity-60 active:bg-[#E86B40] transition-colors flex items-center justify-center gap-2"
+                className="w-full bg-primary-container text-on-primary rounded-xl py-4 font-bold text-base disabled:opacity-60 active:bg-primary transition-colors flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
@@ -90,18 +90,18 @@ export default function ForgotPasswordPage() {
         ) : (
           <div className="text-center py-6">
             <div className="w-20 h-20 bg-green-900/30 border border-green-700/30 rounded-full flex items-center justify-center mx-auto mb-6">
-              <CheckCircle2 size={40} className="text-green-400" />
+              <CheckCircle2 size={40} className="text-neighborhood-green" />
             </div>
-            <h1 className="text-2xl font-black text-white mb-2">Check your inbox</h1>
-            <p className="text-zinc-400 text-sm mb-2">We sent a password reset link to</p>
-            <p className="font-bold text-white mb-6">{email}</p>
-            <p className="text-xs text-zinc-500 mb-6">
+            <h1 className="text-2xl font-black text-on-surface mb-2">Check your inbox</h1>
+            <p className="text-on-surface-variant text-sm mb-2">We sent a password reset link to</p>
+            <p className="font-bold text-on-surface mb-6">{email}</p>
+            <p className="text-xs text-on-surface-variant mb-6">
               Didn&apos;t get it? Check your spam or{' '}
-              <button onClick={() => setSent(false)} className="text-[#FF7A50] font-semibold">
+              <button onClick={() => setSent(false)} className="text-primary font-semibold">
                 try again
               </button>
             </p>
-            <Link href="/login" className="text-[#FF7A50] font-semibold text-sm hover:underline">
+            <Link href="/login" className="text-primary font-semibold text-sm hover:underline">
               Back to sign in
             </Link>
           </div>

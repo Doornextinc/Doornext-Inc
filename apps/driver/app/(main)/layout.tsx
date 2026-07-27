@@ -13,7 +13,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const isHome = pathname === '/'
 
   return (
-    <div className="flex flex-col min-h-screen max-w-[430px] mx-auto relative bg-[#080808]">
+    <div className="flex flex-col min-h-screen max-w-[430px] mx-auto relative bg-background">
       <main className={isHome ? 'flex-1' : 'flex-1 pb-nav'}>{children}</main>
       {!isHome && <BottomNav />}
     </div>

@@ -13,7 +13,7 @@ const VEHICLE_OPTIONS = [
   { value: 'foot',      label: '🚶', name: 'On Foot',   desc: 'Walking delivery' },
 ]
 
-const inp = 'w-full bg-[#141414] border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-zinc-500 focus:border-[#FF7A50] focus:ring-2 focus:ring-[#FF7A50]/20 transition-all outline-none'
+const inp = 'w-full bg-surface-container-lowest border border-outline-variant/40 rounded-xl px-4 py-3 text-on-surface placeholder:text-outline focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-all outline-none'
 
 export default function DriverSignupPage() {
   const router = useRouter()
@@ -56,54 +56,54 @@ export default function DriverSignupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#080808] flex flex-col items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
-        <Link href="/welcome" className="inline-flex items-center gap-1.5 text-zinc-400 hover:text-white text-sm mb-8 transition-colors">
+        <Link href="/welcome" className="inline-flex items-center gap-1.5 text-on-surface-variant hover:text-on-surface text-sm mb-8 transition-colors">
           <ChevronLeft size={16} /> Back
         </Link>
 
         <div className="mb-8">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#FF7A50] to-[#FF9C78] flex items-center justify-center mb-4">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary-container to-primary-fixed-dim flex items-center justify-center mb-4">
             <span className="text-2xl">🛵</span>
           </div>
-          <h1 className="text-2xl font-black text-white">Create driver account</h1>
-          <p className="text-zinc-400 text-sm mt-1">You'll verify your identity in the next step</p>
+          <h1 className="text-2xl font-black text-on-surface">Create driver account</h1>
+          <p className="text-on-surface-variant text-sm mt-1">You'll verify your identity in the next step</p>
         </div>
 
         {error && (
-          <div className="mb-5 p-4 bg-red-900/30 border border-red-700/40 rounded-xl text-sm text-red-400">{error}</div>
+          <div className="mb-5 p-4 bg-error-container border border-error/30 rounded-xl text-sm text-error">{error}</div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Full Name</label>
+              <label className="block text-sm font-medium text-on-surface mb-1.5">Full Name</label>
               <input type="text" required value={form.fullName} onChange={e => set('fullName', e.target.value)} placeholder="Jane Smith" className={inp} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Phone</label>
+              <label className="block text-sm font-medium text-on-surface mb-1.5">Phone</label>
               <input type="tel" required value={form.phone} onChange={e => set('phone', e.target.value)} placeholder="+1 555-0100" className={inp} />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Email</label>
+            <label className="block text-sm font-medium text-on-surface mb-1.5">Email</label>
             <input type="email" required value={form.email} onChange={e => set('email', e.target.value)} placeholder="jane@example.com" className={inp} />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Password</label>
+              <label className="block text-sm font-medium text-on-surface mb-1.5">Password</label>
               <input type="password" required value={form.password} onChange={e => set('password', e.target.value)} placeholder="Min 6 chars" className={inp} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Confirm</label>
+              <label className="block text-sm font-medium text-on-surface mb-1.5">Confirm</label>
               <input type="password" required value={form.confirmPassword} onChange={e => set('confirmPassword', e.target.value)} placeholder="Repeat" className={inp} />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-2">Vehicle Type</label>
+            <label className="block text-sm font-medium text-on-surface mb-2">Vehicle Type</label>
             <div className="grid grid-cols-2 gap-2">
               {VEHICLE_OPTIONS.map(({ value, label, name, desc }) => (
                 <button
@@ -112,14 +112,14 @@ export default function DriverSignupPage() {
                   onClick={() => set('vehicleType', value)}
                   className={`flex items-center gap-3 p-3 rounded-xl border text-left transition-colors ${
                     form.vehicleType === value
-                      ? 'border-[#FF7A50] bg-[#FF7A50]/10'
-                      : 'border-white/10 bg-[#141414] hover:border-slate-600'
+                      ? 'border-primary-container bg-primary-fixed'
+                      : 'border-outline-variant/40 bg-surface-container-lowest hover:border-slate-600'
                   }`}
                 >
                   <span className="text-2xl leading-none">{label}</span>
                   <div>
-                    <p className={`text-sm font-bold leading-tight ${form.vehicleType === value ? 'text-[#FF7A50]' : 'text-white'}`}>{name}</p>
-                    <p className="text-[11px] text-zinc-500 mt-0.5">{desc}</p>
+                    <p className={`text-sm font-bold leading-tight ${form.vehicleType === value ? 'text-primary' : 'text-on-surface'}`}>{name}</p>
+                    <p className="text-[11px] text-on-surface-variant mt-0.5">{desc}</p>
                   </div>
                 </button>
               ))}
@@ -134,15 +134,15 @@ export default function DriverSignupPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#FF7A50] hover:bg-[#E86B40] text-white rounded-xl py-4 font-bold text-base disabled:opacity-60 transition-colors mt-2 shadow-lg shadow-[#FF7A50]/20"
+            className="w-full bg-primary-container hover:bg-primary text-on-primary rounded-xl py-4 font-bold text-base disabled:opacity-60 transition-colors mt-2 shadow-lg shadow-primary-container/20"
           >
             {loading ? 'Creating account…' : 'Create Account & Continue'}
           </button>
         </form>
 
-        <p className="text-center text-zinc-500 text-sm mt-6">
+        <p className="text-center text-on-surface-variant text-sm mt-6">
           Already have an account?{' '}
-          <Link href="/login" className="text-[#FF7A50] font-semibold hover:underline">Sign in</Link>
+          <Link href="/login" className="text-primary font-semibold hover:underline">Sign in</Link>
         </p>
       </div>
     </div>

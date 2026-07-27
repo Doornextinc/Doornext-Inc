@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useDriverStore } from '@/store/driver-store'
 import { Package, MapPin, Clock, ChevronRight } from 'lucide-react'
 import { AppHeader } from '@/components/layout/app-header'
-import { SegmentedControl, StatCard } from '@/components/ui/list'
+import { Screen, SegmentedControl, StatCard } from '@/components/ui/kit'
 
 
 type Delivery = {
@@ -85,11 +85,11 @@ export default function HistoryPage() {
   const groups = groupByDate(filtered)
 
   return (
-    <div className="flex flex-col min-h-full bg-[#080808]">
-      <AppHeader title="Delivery History" showBack backHref="/" />
+    <Screen>
+      <AppHeader title="History" showBack backHref="/account" />
 
       {/* Period filter */}
-      <div className="px-4 py-3">
+      <div className="px-5 py-3">
         <SegmentedControl
           options={(Object.keys(PERIOD_LABELS) as Period[]).map((p) => ({ value: p, label: PERIOD_LABELS[p] }))}
           value={period}
@@ -98,11 +98,11 @@ export default function HistoryPage() {
       </div>
 
       {loading ? (
-        <div className="p-4 space-y-3">
-          {[1, 2, 3, 4].map(i => <div key={i} className="h-20 bg-[#111] rounded-2xl animate-pulse" />)}
+        <div className="px-5 space-y-3">
+          {[1, 2, 3, 4].map(i => <div key={i} className="h-20 bg-surface-container rounded-xl animate-pulse" />)}
         </div>
       ) : (
-        <div className="flex-1 p-4 space-y-5">
+        <div className="px-5 pb-6 space-y-5">
           {/* Summary */}
           <div className="grid grid-cols-2 gap-3">
             <StatCard value={`$${totalEarnings.toFixed(2)}`} label="Total Earned" accent />
@@ -111,51 +111,51 @@ export default function HistoryPage() {
 
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="w-16 h-16 rounded-full bg-[#111] border border-white/5 flex items-center justify-center mb-4">
-                <Package size={28} className="text-zinc-600" />
+              <div className="w-16 h-16 rounded-full bg-surface-container flex items-center justify-center mb-4">
+                <Package size={28} className="text-on-surface-variant" />
               </div>
-              <p className="text-zinc-400 font-semibold">No deliveries yet</p>
-              <p className="text-zinc-600 text-sm mt-1">Your completed deliveries will appear here</p>
+              <p className="text-on-surface font-semibold">No deliveries yet</p>
+              <p className="text-on-surface-variant text-sm mt-1">Your completed deliveries will appear here</p>
             </div>
           ) : (
             Object.entries(groups).map(([date, items]) => (
               <section key={date}>
-                <div className="flex items-center justify-between mb-2">
-                  <h2 className="text-xs font-bold text-zinc-500 uppercase tracking-wide">{date}</h2>
-                  <span className="text-xs font-semibold text-zinc-500">
+                <div className="flex items-center justify-between mb-2 px-1">
+                  <h2 className="font-mono text-xs font-semibold text-on-surface-variant uppercase tracking-wide">{date}</h2>
+                  <span className="font-mono text-xs font-semibold text-primary">
                     ${items.reduce((s, d) => s + (d.driver_payout ?? 0), 0).toFixed(2)}
                   </span>
                 </div>
-                <div className="bg-[#111] rounded-2xl overflow-hidden border border-white/5 divide-y divide-white/5">
+                <div className="bg-surface-container-lowest rounded-xl overflow-hidden border border-outline-variant/30 divide-y divide-outline-variant/20">
                   {items.map(d => {
                     const addr = d.delivery_address
                     return (
-                      <Link key={d.id} href={`/orders/${d.id}`} className="flex items-center gap-3 px-4 py-3.5 active:bg-white/5 transition-colors">
-                        <div className="w-9 h-9 rounded-xl bg-[#FF7A50]/10 flex items-center justify-center flex-shrink-0">
-                          <Package size={16} className="text-[#FF7A50]" />
+                      <Link key={d.id} href={`/orders/${d.id}`} className="flex items-center gap-3 px-4 py-3.5 active:bg-surface-container-low transition-colors">
+                        <div className="w-10 h-10 rounded-lg bg-surface-variant flex items-center justify-center flex-shrink-0">
+                          <Package size={18} className="text-primary" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-white truncate">
+                          <p className="text-[15px] font-semibold text-on-surface truncate">
                             {d.food_maker?.display_name ?? 'Kitchen'}
                           </p>
                           <div className="flex items-center gap-1.5 mt-0.5">
                             {addr?.city ? (
-                              <span className="flex items-center gap-1 text-[11px] text-zinc-500">
-                                <MapPin size={9} /> {addr.city}
+                              <span className="flex items-center gap-1 text-[11px] text-on-surface-variant">
+                                <MapPin size={10} /> {addr.city}
                               </span>
                             ) : null}
-                            <span className="text-zinc-700 text-[11px]">·</span>
-                            <span className="flex items-center gap-1 text-[11px] text-zinc-500">
-                              <Clock size={9} />
+                            <span className="text-outline text-[11px]">·</span>
+                            <span className="flex items-center gap-1 text-[11px] text-on-surface-variant">
+                              <Clock size={10} />
                               {new Date(d.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
                             </span>
                           </div>
                         </div>
                         <div className="text-right flex-shrink-0">
-                          <p className="font-black text-[#FF7A50] text-sm">+${(d.driver_payout ?? 0).toFixed(2)}</p>
-                          <p className="text-[11px] text-zinc-600 mt-0.5">#{d.id.slice(-6).toUpperCase()}</p>
+                          <p className="font-mono text-neighborhood-green text-sm">+${(d.driver_payout ?? 0).toFixed(2)}</p>
+                          <p className="font-mono text-[11px] text-outline mt-0.5">#{d.id.slice(-6).toUpperCase()}</p>
                         </div>
-                        <ChevronRight size={14} className="text-zinc-500 flex-shrink-0" />
+                        <ChevronRight size={16} className="text-on-surface-variant flex-shrink-0" />
                       </Link>
                     )
                   })}
@@ -165,6 +165,6 @@ export default function HistoryPage() {
           )}
         </div>
       )}
-    </div>
+    </Screen>
   )
 }

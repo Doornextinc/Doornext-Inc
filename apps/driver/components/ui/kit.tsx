@@ -52,6 +52,24 @@ export function StatTile({ label, value }: { label: string; value: string }) {
   )
 }
 
+/** Centered summary tile — prominent mono figure over a caption. */
+export function StatCard({
+  value,
+  label,
+  accent = false,
+}: {
+  value: string
+  label: string
+  accent?: boolean
+}) {
+  return (
+    <div className="bg-surface-container rounded-xl p-4 text-center">
+      <p className={`font-mono text-2xl ${accent ? 'text-primary' : 'text-on-surface'}`}>{value}</p>
+      <p className="text-xs text-on-surface-variant mt-1">{label}</p>
+    </div>
+  )
+}
+
 /** Monospace pill chip, e.g. a status or category label. */
 export function Chip({
   children,

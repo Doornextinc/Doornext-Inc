@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useDriverStore } from '@/store/driver-store'
 import { AppHeader } from '@/components/layout/app-header'
-import { ListGroup, ListRow, RadioRow, Toggle } from '@/components/ui/list'
+import { Screen, SectionTitle, ListCard, ListRow, RadioRow, Toggle } from '@/components/ui/kit'
 
 /**
  * App Settings — device and notification preferences only.
@@ -70,42 +70,53 @@ export default function SettingsPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-[#080808] pb-10">
+    <Screen>
       <AppHeader title="App Settings" showBack backHref="/account" />
 
-      <ListGroup title="Mapping service">
-        {NAV_OPTIONS.map((opt) => (
-          <RadioRow
-            key={opt.value}
-            label={opt.label}
-            sublabel={opt.sublabel}
-            selected={navProvider === opt.value}
-            onSelect={() => setNavPersist(opt.value)}
-          />
-        ))}
-      </ListGroup>
+      <main className="px-5 space-y-6 pt-2">
+        <section>
+          <SectionTitle>Mapping service</SectionTitle>
+          <ListCard>
+            {NAV_OPTIONS.map((opt) => (
+              <RadioRow
+                key={opt.value}
+                label={opt.label}
+                sublabel={opt.sublabel}
+                selected={navProvider === opt.value}
+                onSelect={() => setNavPersist(opt.value)}
+              />
+            ))}
+          </ListCard>
+        </section>
 
-      <ListGroup title="Notifications">
-        <ListRow
-          label="Push notifications"
-          sublabel="Order alerts and updates"
-          right={<Toggle value={pushNotifs} onChange={setPushPersist} label="Push notifications" />}
-        />
-        <ListRow
-          label="Delivery request sounds"
-          sublabel="Audio alert for new orders"
-          right={<Toggle value={requestSounds} onChange={setSoundsPersist} label="Delivery request sounds" />}
-        />
-        <ListRow
-          label="Earnings summary alerts"
-          sublabel="Daily earnings notifications"
-          right={<Toggle value={earningsAlerts} onChange={setEarningsPersist} label="Earnings summary alerts" />}
-        />
-      </ListGroup>
+        <section>
+          <SectionTitle>Notifications</SectionTitle>
+          <ListCard>
+            <ListRow
+              label="Push notifications"
+              sublabel="Order alerts and updates"
+              right={<Toggle value={pushNotifs} onChange={setPushPersist} label="Push notifications" />}
+            />
+            <ListRow
+              label="Delivery request sounds"
+              sublabel="Audio alert for new orders"
+              right={<Toggle value={requestSounds} onChange={setSoundsPersist} label="Delivery request sounds" />}
+            />
+            <ListRow
+              label="Earnings summary alerts"
+              sublabel="Daily earnings notifications"
+              right={<Toggle value={earningsAlerts} onChange={setEarningsPersist} label="Earnings summary alerts" />}
+            />
+          </ListCard>
+        </section>
 
-      <ListGroup title="Application information">
-        <ListRow label="Version" right={<span className="text-[15px] text-zinc-500">1.0.0</span>} />
-      </ListGroup>
-    </div>
+        <section>
+          <SectionTitle>Application information</SectionTitle>
+          <ListCard>
+            <ListRow label="Version" right={<span className="font-mono text-[15px] text-on-surface-variant">1.0.0</span>} />
+          </ListCard>
+        </section>
+      </main>
+    </Screen>
   )
 }

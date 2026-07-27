@@ -188,7 +188,7 @@ function SlideToConfirm({
   return (
     <div
       ref={trackRef}
-      className={`relative w-full h-14 bg-[#1A1A1A] rounded-full overflow-hidden select-none ${disabled ? 'opacity-50' : ''}`}
+      className={`relative w-full h-14 bg-surface-container-high rounded-full overflow-hidden select-none ${disabled ? 'opacity-50' : ''}`}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
@@ -197,7 +197,7 @@ function SlideToConfirm({
     >
       {/* Filled track behind thumb */}
       <div
-        className="absolute inset-y-0 left-0 bg-green-500/20 rounded-full"
+        className="absolute inset-y-0 left-0 bg-neighborhood-green/20 rounded-full"
         style={{ width: thumbLeft + THUMB_W }}
       />
 
@@ -206,13 +206,13 @@ function SlideToConfirm({
         className="absolute inset-0 flex items-center justify-center pointer-events-none"
         style={{ opacity: Math.max(0, labelOpacity) }}
       >
-        <span className="text-sm font-black text-zinc-400 tracking-wide">{confirmed ? 'Confirmed!' : label}</span>
+        <span className="text-sm font-black text-on-surface-variant tracking-wide">{confirmed ? 'Confirmed!' : label}</span>
       </div>
 
       {/* Thumb */}
       <div
         className={`absolute top-1 bottom-1 w-12 rounded-full flex items-center justify-center gap-0.5 shadow-lg ${
-          confirmed ? 'bg-green-400' : 'bg-green-500'
+          confirmed ? 'bg-green-400' : 'bg-neighborhood-green'
         }`}
         style={{
           left: thumbLeft + 4,
@@ -220,11 +220,11 @@ function SlideToConfirm({
         }}
       >
         {confirmed ? (
-          <CheckCircle size={22} className="text-white" />
+          <CheckCircle size={22} className="text-on-surface" />
         ) : (
           <>
-            <ChevronRight size={16} className="text-white opacity-80 -mr-1" />
-            <ChevronRight size={16} className="text-white" />
+            <ChevronRight size={16} className="text-on-surface opacity-80 -mr-1" />
+            <ChevronRight size={16} className="text-on-surface" />
           </>
         )}
       </div>
@@ -265,28 +265,28 @@ function DeliveryCompletionCelebration({
     <div
       className="fixed inset-0 z-50 flex flex-col items-center justify-center px-6 text-center"
       style={{
-        background: 'radial-gradient(ellipse at 50% 45%, rgba(34,197,94,0.08) 0%, rgba(255,122,80,0.05) 40%, #080808 70%)',
-        backgroundColor: '#080808',
+        background: 'radial-gradient(ellipse at 50% 45%, rgba(34,197,94,0.08) 0%, rgba(242,101,34,0.05) 40%, #fff8f6 70%)',
+        backgroundColor: '#fff8f6',
       }}
     >
       {/* Animated checkmark */}
       <div
-        className="w-28 h-28 rounded-full border-2 border-green-500/40 bg-green-500/10 flex items-center justify-center mb-6"
+        className="w-28 h-28 rounded-full border-2 border-green-500/40 bg-neighborhood-green/10 flex items-center justify-center mb-6"
         style={{
           transform: checkVisible ? 'scale(1)' : 'scale(0)',
           transition: 'transform 0.45s cubic-bezier(0.34,1.56,0.64,1)',
         }}
       >
-        <CheckCircle size={56} className="text-green-400" />
+        <CheckCircle size={56} className="text-neighborhood-green" />
       </div>
 
       {/* Heading */}
-      <h1 className="text-4xl font-black text-white mb-1">Delivered! 🎉</h1>
-      <p className="text-zinc-500 text-sm mb-8">Great work — you nailed it.</p>
+      <h1 className="text-4xl font-black text-on-surface mb-1">Delivered! 🎉</h1>
+      <p className="text-on-surface-variant text-sm mb-8">Great work — you nailed it.</p>
 
       {/* Earnings card */}
-      <div className="w-full max-w-xs bg-[#141414] rounded-3xl border border-white/5 px-8 py-6 mb-6 shadow-xl">
-        <p className="text-xs text-zinc-500 uppercase tracking-widest font-bold mb-2">You earned</p>
+      <div className="w-full max-w-xs bg-surface-container-lowest rounded-3xl border border-outline-variant/30 px-8 py-6 mb-6 shadow-xl">
+        <p className="text-xs text-on-surface-variant uppercase tracking-widest font-bold mb-2">You earned</p>
         <p
           className="text-5xl font-black mb-1"
           style={{ color: '#FF7A50' }}
@@ -294,20 +294,20 @@ function DeliveryCompletionCelebration({
           ${earn.toFixed(2)}
         </p>
         {tip > 0 && (
-          <p className="text-sm font-bold text-green-400 mt-1">+ ${tip.toFixed(2)} tip included</p>
+          <p className="text-sm font-bold text-neighborhood-green mt-1">+ ${tip.toFixed(2)} tip included</p>
         )}
       </div>
 
       {/* Continue button */}
       <button
         onClick={onContinue}
-        className="w-full max-w-xs bg-[#FF7A50] text-white rounded-2xl py-4 font-black text-base shadow-lg shadow-[#FF7A50]/25 active:scale-[0.98] transition-all mb-4"
+        className="w-full max-w-xs bg-primary-container text-on-surface rounded-2xl py-4 font-black text-base shadow-lg shadow-[#FF7A50]/25 active:scale-[0.98] transition-all mb-4"
       >
         Continue Earning
       </button>
 
       {/* Countdown */}
-      <p className="text-xs text-zinc-700">
+      <p className="text-xs text-outline">
         Returning to dashboard in {countdown}s…
       </p>
     </div>
@@ -321,11 +321,11 @@ function RoutePlanPanel({ stops }: { stops: RouteStop[] }) {
   const next    = pending[0] ?? null
 
   return (
-    <div className="bg-[#111]/95 border border-white/8 rounded-2xl overflow-hidden mx-4 mb-3">
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-white/6">
-        <Route size={14} className="text-[#FF7A50]" />
-        <span className="text-xs font-black text-[#FF7A50] uppercase tracking-wider">Multi-Order Route</span>
-        <span className="ml-auto text-xs text-zinc-500 font-semibold">{done.length}/{stops.length} done</span>
+    <div className="bg-surface-container/95 border border-outline-variant/30 rounded-2xl overflow-hidden mx-4 mb-3">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-outline-variant/30">
+        <Route size={14} className="text-primary" />
+        <span className="text-xs font-black text-primary uppercase tracking-wider">Multi-Order Route</span>
+        <span className="ml-auto text-xs text-on-surface-variant font-semibold">{done.length}/{stops.length} done</span>
       </div>
       <div className="px-4 py-2 space-y-2">
         {stops.map((stop, idx) => {
@@ -334,15 +334,15 @@ function RoutePlanPanel({ stops }: { stops: RouteStop[] }) {
             <div key={`${stop.order_id}-${stop.type}`} className="flex items-center gap-3">
               {/* Sequence indicator */}
               <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-black ${
-                stop.done  ? 'bg-green-500/20 text-green-400' :
-                isNext     ? 'bg-[#FF7A50] text-white' :
-                             'bg-white/8 text-zinc-500'
+                stop.done  ? 'bg-neighborhood-green/20 text-neighborhood-green' :
+                isNext     ? 'bg-primary-container text-on-surface' :
+                             'bg-white/8 text-on-surface-variant'
               }`}>
                 {stop.done ? '✓' : stop.seq}
               </div>
               {/* Stop info */}
               <div className="flex-1 min-w-0">
-                <p className={`text-sm font-bold truncate ${stop.done ? 'text-zinc-600 line-through' : isNext ? 'text-white' : 'text-zinc-400'}`}>
+                <p className={`text-sm font-bold truncate ${stop.done ? 'text-outline line-through' : isNext ? 'text-on-surface' : 'text-on-surface-variant'}`}>
                   {stop.label}
                 </p>
                 <p className={`text-[10px] uppercase tracking-wide font-black ${
@@ -352,7 +352,7 @@ function RoutePlanPanel({ stops }: { stops: RouteStop[] }) {
                 </p>
               </div>
               {isNext && (
-                <span className="text-[10px] font-black text-[#FF7A50] bg-[#FF7A50]/10 px-2 py-0.5 rounded-full flex-shrink-0">
+                <span className="text-[10px] font-black text-primary bg-primary-fixed px-2 py-0.5 rounded-full flex-shrink-0">
                   NEXT
                 </span>
               )}
@@ -398,7 +398,7 @@ function TripsHistoryPanel({
   if (loading || !loaded) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <div className="w-8 h-8 border-[3px] border-[#FF7A50] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-[3px] border-primary-container border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -411,12 +411,12 @@ function TripsHistoryPanel({
             className="absolute inset-0 -m-4 rounded-3xl pointer-events-none"
             style={{ background: 'radial-gradient(circle at center, rgba(255,122,80,0.12), transparent 70%)' }}
           />
-          <div className="relative w-20 h-20 rounded-3xl bg-[#141414] border border-white/8 flex items-center justify-center">
-            <Package size={32} className="text-zinc-700" />
+          <div className="relative w-20 h-20 rounded-3xl bg-surface-container-lowest border border-outline-variant/30 flex items-center justify-center">
+            <Package size={32} className="text-outline" />
           </div>
         </div>
-        <p className="text-xl font-black text-white mb-2 tracking-tight">No completed trips yet</p>
-        <p className="text-zinc-500 text-sm max-w-[260px]">
+        <p className="text-xl font-black text-on-surface mb-2 tracking-tight">No completed trips yet</p>
+        <p className="text-on-surface-variant text-sm max-w-[260px]">
           Once you finish a delivery, it'll show up here with your earnings and rating.
         </p>
       </div>
@@ -436,38 +436,38 @@ function TripsHistoryPanel({
   return (
     <div className="flex-1 overflow-y-auto">
       {/* Hero summary — corporate-grade focal point */}
-      <div className="relative px-4 pt-4 pb-3 bg-gradient-to-b from-[#101010] to-[#0A0A0A] border-b border-white/5 overflow-hidden">
+      <div className="relative px-4 pt-4 pb-3 bg-gradient-to-b from-surface-container to-surface-container-lowest border-b border-outline-variant/30 overflow-hidden">
         <span
           className="absolute -top-16 -right-16 w-48 h-48 rounded-full pointer-events-none"
           style={{ background: 'radial-gradient(circle, rgba(255,122,80,0.08), transparent 70%)' }}
         />
         <div className="relative">
-          <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Lifetime Earnings</p>
+          <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Lifetime Earnings</p>
           <div className="flex items-baseline gap-2 mt-1">
-            <p className="text-3xl font-black text-white tracking-tight">${totalEarned.toFixed(2)}</p>
+            <p className="text-3xl font-black text-on-surface tracking-tight">${totalEarned.toFixed(2)}</p>
             {totalTips > 0 && (
-              <p className="text-sm font-bold text-green-400">+${totalTips.toFixed(2)} tips</p>
+              <p className="text-sm font-bold text-neighborhood-green">+${totalTips.toFixed(2)} tips</p>
             )}
           </div>
           <div className="flex items-center gap-3 mt-3 text-xs">
             <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#FF7A50]" />
-              <span className="text-zinc-400 font-semibold">{trips.length} trip{trips.length === 1 ? '' : 's'}</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-primary-container" />
+              <span className="text-on-surface-variant font-semibold">{trips.length} trip{trips.length === 1 ? '' : 's'}</span>
             </div>
-            <span className="text-zinc-700">·</span>
-            <span className="text-zinc-400 font-semibold">
+            <span className="text-outline">·</span>
+            <span className="text-on-surface-variant font-semibold">
               ${(totalEarned / trips.length).toFixed(2)} avg
             </span>
-            <span className="text-zinc-700">·</span>
-            <span className="text-zinc-400 font-semibold">
-              ${last7Earned.toFixed(0)} <span className="text-zinc-600 font-normal">past 7d</span>
+            <span className="text-outline">·</span>
+            <span className="text-on-surface-variant font-semibold">
+              ${last7Earned.toFixed(0)} <span className="text-outline font-normal">past 7d</span>
             </span>
           </div>
         </div>
       </div>
 
       {/* Trip list */}
-      <div className="divide-y divide-white/5">
+      <div className="divide-y divide-outline-variant/20">
         {trips.map((trip) => {
           const maker = Array.isArray(trip.food_maker) ? trip.food_maker[0] : trip.food_maker
           const addr = trip.delivery_address
@@ -482,27 +482,27 @@ function TripsHistoryPanel({
 
           return (
             <div key={trip.id} className="flex items-start gap-3 px-4 py-3.5 active:bg-white/[0.02] transition-colors">
-              <div className="w-10 h-10 rounded-xl bg-[#FF7A50]/10 border border-[#FF7A50]/15 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <Package size={16} className="text-[#FF7A50]" />
+              <div className="w-10 h-10 rounded-xl bg-primary-fixed border border-primary-container/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Package size={16} className="text-primary" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-white leading-tight truncate">
+                <p className="text-sm font-bold text-on-surface leading-tight truncate">
                   {maker?.display_name ?? 'Unknown restaurant'}
                 </p>
                 {addr && (
                   <div className="flex items-center gap-1 mt-0.5">
-                    <span className="text-zinc-700 text-[11px]">→</span>
-                    <p className="text-[11px] text-zinc-500 truncate">
+                    <span className="text-outline text-[11px]">→</span>
+                    <p className="text-[11px] text-on-surface-variant truncate">
                       {[addr.street, addr.city].filter(Boolean).join(', ')}
                     </p>
                   </div>
                 )}
-                <p className="text-[11px] text-zinc-700 mt-0.5">{dateStr}</p>
+                <p className="text-[11px] text-outline mt-0.5">{dateStr}</p>
               </div>
               <div className="text-right flex-shrink-0">
-                <p className="text-sm font-black text-[#FF7A50]">+${subtotalEarn.toFixed(2)}</p>
+                <p className="text-sm font-black text-primary">+${subtotalEarn.toFixed(2)}</p>
                 {(trip.tip_amount ?? 0) > 0 && (
-                  <p className="text-[10px] text-green-500 font-semibold mt-0.5">
+                  <p className="text-[10px] text-neighborhood-green font-semibold mt-0.5">
                     inc ${trip.tip_amount.toFixed(2)} tip
                   </p>
                 )}
@@ -860,7 +860,7 @@ export default function ActiveDeliveryPage() {
       <div className="flex flex-col min-h-full">
         <AppHeader title="Trips" />
         <div className="flex-1 flex items-center justify-center">
-          <div className="w-10 h-10 border-[3px] border-[#FF7A50] border-t-transparent rounded-full animate-spin" />
+          <div className="w-10 h-10 border-[3px] border-primary-container border-t-transparent rounded-full animate-spin" />
         </div>
       </div>
     )
@@ -882,12 +882,12 @@ export default function ActiveDeliveryPage() {
   /* ── Loading: we have a store-known active order but server hasn't returned yet ── */
   if (!order && storeActiveOrderId && retryCount < MAX_RETRIES) {
     return (
-      <div className="flex flex-col min-h-full bg-[#080808]">
+      <div className="flex flex-col min-h-full bg-background">
         <AppHeader title="Trips" />
         <div className="flex-1 flex flex-col items-center justify-center px-6">
-          <div className="w-12 h-12 border-[3px] border-[#FF7A50]/30 border-t-[#FF7A50] rounded-full animate-spin mb-4" />
-          <p className="text-sm font-bold text-white">Loading your delivery…</p>
-          <p className="text-xs text-zinc-500 mt-1">Hang tight — fetching the latest details</p>
+          <div className="w-12 h-12 border-[3px] border-primary-container/30 border-t-[#FF7A50] rounded-full animate-spin mb-4" />
+          <p className="text-sm font-bold text-on-surface">Loading your delivery…</p>
+          <p className="text-xs text-on-surface-variant mt-1">Hang tight — fetching the latest details</p>
         </div>
       </div>
     )
@@ -896,7 +896,7 @@ export default function ActiveDeliveryPage() {
   if (!order) {
     // No active delivery — show the Trips page with History tab selected
     return (
-      <div className="flex flex-col min-h-full bg-[#080808]">
+      <div className="flex flex-col min-h-full bg-background">
         <AppHeader title="Trips" />
         <TripsHistoryPanel
           userId={userId}
@@ -963,29 +963,29 @@ export default function ActiveDeliveryPage() {
       <AppHeader title="Trips" />
 
       {/* ── Active / History tab strip — corporate underline style ── */}
-      <div className="flex gap-1 px-4 pt-2 bg-[#080808] border-b border-white/5">
+      <div className="flex gap-1 px-4 pt-2 bg-background border-b border-outline-variant/30">
         <button
           onClick={() => setActiveTab('active')}
           className={`flex-1 relative flex items-center justify-center gap-1.5 py-3 text-xs font-black transition-colors ${
-            activeTab === 'active' ? 'text-white' : 'text-zinc-500 active:text-zinc-300'
+            activeTab === 'active' ? 'text-on-surface' : 'text-on-surface-variant active:text-on-surface'
           }`}
         >
-          <Package size={13} className={activeTab === 'active' ? 'text-[#FF7A50]' : 'text-zinc-600'} />
+          <Package size={13} className={activeTab === 'active' ? 'text-primary' : 'text-outline'} />
           <span className="uppercase tracking-wider">Active</span>
           {activeTab === 'active' && (
-            <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-[#FF7A50] rounded-full" />
+            <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-primary-container rounded-full" />
           )}
         </button>
         <button
           onClick={() => setActiveTab('history')}
           className={`flex-1 relative flex items-center justify-center gap-1.5 py-3 text-xs font-black transition-colors ${
-            activeTab === 'history' ? 'text-white' : 'text-zinc-500 active:text-zinc-300'
+            activeTab === 'history' ? 'text-on-surface' : 'text-on-surface-variant active:text-on-surface'
           }`}
         >
-          <History size={13} className={activeTab === 'history' ? 'text-[#FF7A50]' : 'text-zinc-600'} />
+          <History size={13} className={activeTab === 'history' ? 'text-primary' : 'text-outline'} />
           <span className="uppercase tracking-wider">History</span>
           {activeTab === 'history' && (
-            <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-[#FF7A50] rounded-full" />
+            <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-primary-container rounded-full" />
           )}
         </button>
       </div>
@@ -1006,15 +1006,15 @@ export default function ActiveDeliveryPage() {
 
       {/* ── Order switcher tabs — stacked mode only ── */}
       {isStacked && allOrders.length > 1 && (
-        <div className="flex gap-2 px-4 py-2 bg-[#0D0D0D] border-b border-white/5 overflow-x-auto">
+        <div className="flex gap-2 px-4 py-2 bg-surface-container-low border-b border-outline-variant/30 overflow-x-auto">
           {allOrders.map((o, idx) => (
             <button
               key={o.id}
               onClick={() => setSelectedOrderId(o.id)}
               className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black transition-all ${
                 selectedOrderId === o.id
-                  ? 'bg-[#FF7A50] text-white'
-                  : 'bg-white/6 text-zinc-400'
+                  ? 'bg-primary-container text-on-surface'
+                  : 'bg-white/6 text-on-surface-variant'
               }`}
             >
               <span>Order {idx + 1}</span>
@@ -1039,23 +1039,23 @@ export default function ActiveDeliveryPage() {
 
       {/* Cash banner */}
       {order.payment_method === 'cash' && (
-        <div className="flex items-center gap-2 px-4 py-2.5 bg-green-500/12 border-b border-green-500/20">
-          <Banknote size={15} className="text-green-400 flex-shrink-0" />
-          <p className="text-sm font-bold text-green-400">Cash order — collect payment at drop-off</p>
+        <div className="flex items-center gap-2 px-4 py-2.5 bg-neighborhood-green/12 border-b border-green-500/20">
+          <Banknote size={15} className="text-neighborhood-green flex-shrink-0" />
+          <p className="text-sm font-bold text-neighborhood-green">Cash order — collect payment at drop-off</p>
         </div>
       )}
 
       {/* Top bar: timer + earnings */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/5 bg-[#0A0A0A]">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-outline-variant/30 bg-surface">
         <div className="flex items-center gap-2">
-          <Clock size={13} className="text-zinc-600" />
-          <span className="font-mono text-sm font-bold text-white">{formatElapsed(elapsed)}</span>
+          <Clock size={13} className="text-outline" />
+          <span className="font-mono text-sm font-bold text-on-surface">{formatElapsed(elapsed)}</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-zinc-500">{isStacked ? 'Total earn' : 'You earn'}</span>
-          <span className="font-black text-[#FF7A50] text-sm">${(isStacked ? totalEarn : earn).toFixed(2)}</span>
+          <span className="text-xs text-on-surface-variant">{isStacked ? 'Total earn' : 'You earn'}</span>
+          <span className="font-black text-primary text-sm">${(isStacked ? totalEarn : earn).toFixed(2)}</span>
           {(isStacked ? totalTip : order.tip_amount) > 0 && (
-            <span className="text-xs text-green-400 font-semibold ml-1">+${(isStacked ? totalTip : order.tip_amount).toFixed(2)} tip</span>
+            <span className="text-xs text-neighborhood-green font-semibold ml-1">+${(isStacked ? totalTip : order.tip_amount).toFixed(2)} tip</span>
           )}
         </div>
       </div>
@@ -1071,23 +1071,23 @@ export default function ActiveDeliveryPage() {
               <div key={step.status} className="flex-1 flex flex-col items-center">
                 <div className="flex items-center w-full">
                   {i > 0 && (
-                    <div className={`flex-1 h-0.5 rounded-full transition-colors ${done || active ? 'bg-[#FF7A50]' : 'bg-[#1A1A1A]'}`} />
+                    <div className={`flex-1 h-0.5 rounded-full transition-colors ${done || active ? 'bg-primary-container' : 'bg-surface-container-high'}`} />
                   )}
                   <div className={`relative w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-all ${
-                    done ? 'bg-[#FF7A50]' : active ? 'bg-[#FF7A50] ring-4 ring-[#FF7A50]/25' : 'bg-[#1A1A1A]'
+                    done ? 'bg-primary-container' : active ? 'bg-primary-container ring-4 ring-[#FF7A50]/25' : 'bg-surface-container-high'
                   }`}>
                     {done
-                      ? <CheckCircle size={13} className="text-white" />
-                      : <span className={`text-[10px] font-black ${upcoming ? 'text-zinc-600' : 'text-white'}`}>{i + 1}</span>
+                      ? <CheckCircle size={13} className="text-on-surface" />
+                      : <span className={`text-[10px] font-black ${upcoming ? 'text-outline' : 'text-on-surface'}`}>{i + 1}</span>
                     }
-                    {active && <span className="absolute inset-0 rounded-full animate-ping bg-[#FF7A50]/25" />}
+                    {active && <span className="absolute inset-0 rounded-full animate-ping bg-primary-container/25" />}
                   </div>
                   {i < STEPS.length - 1 && (
-                    <div className={`flex-1 h-0.5 rounded-full transition-colors ${done ? 'bg-[#FF7A50]' : 'bg-[#1A1A1A]'}`} />
+                    <div className={`flex-1 h-0.5 rounded-full transition-colors ${done ? 'bg-primary-container' : 'bg-surface-container-high'}`} />
                   )}
                 </div>
                 <div className="mt-2 text-center px-0.5">
-                  <p className={`text-[9px] font-bold leading-tight ${active ? 'text-[#FF7A50]' : done ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                  <p className={`text-[9px] font-bold leading-tight ${active ? 'text-primary' : done ? 'text-on-surface-variant' : 'text-outline'}`}>
                     {step.label}
                   </p>
                 </div>
@@ -1100,17 +1100,17 @@ export default function ActiveDeliveryPage() {
       {/* ── Stage: Heading to Restaurant ── */}
       {isHeadingToMaker && (
         <>
-          <div className="mx-4 mb-3 bg-[#141414] rounded-2xl border border-white/5 overflow-hidden">
+          <div className="mx-4 mb-3 bg-surface-container-lowest rounded-2xl border border-outline-variant/30 overflow-hidden">
             <div className="px-4 pt-4 pb-3">
-              <p className="text-[11px] font-black text-[#FF7A50] uppercase tracking-wider mb-1">Pickup at</p>
-              <p className="text-xl font-black text-white">{order.food_maker?.display_name}</p>
-              <p className="text-sm text-zinc-500 mt-0.5">Order #{order.id.slice(-6).toUpperCase()}</p>
+              <p className="text-[11px] font-black text-primary uppercase tracking-wider mb-1">Pickup at</p>
+              <p className="text-xl font-black text-on-surface">{order.food_maker?.display_name}</p>
+              <p className="text-sm text-on-surface-variant mt-0.5">Order #{order.id.slice(-6).toUpperCase()}</p>
             </div>
             <a
               href={makerMapsUrl(order.food_maker)}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 bg-[#FF7A50] py-3.5 text-sm font-black text-white"
+              className="flex items-center justify-center gap-2 bg-primary-container py-3.5 text-sm font-black text-on-surface"
             >
               <Navigation size={16} />
               Navigate to Restaurant
@@ -1121,31 +1121,31 @@ export default function ActiveDeliveryPage() {
           {/* ETA strip */}
           {pickupEtaMins != null && (
             <div className="mx-4 mb-3 grid grid-cols-3 gap-2">
-              <div className="bg-[#141414] border border-white/5 rounded-2xl py-3 text-center">
-                <p className="font-black text-[#FF7A50] text-lg leading-none">{formatEta(pickupEtaMins)}</p>
-                <p className="text-[10px] text-zinc-500 mt-1 font-semibold">To Pickup</p>
+              <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl py-3 text-center">
+                <p className="font-black text-primary text-lg leading-none">{formatEta(pickupEtaMins)}</p>
+                <p className="text-[10px] text-on-surface-variant mt-1 font-semibold">To Pickup</p>
               </div>
-              <div className="bg-[#141414] border border-white/5 rounded-2xl py-3 text-center">
-                <p className="font-black text-white text-lg leading-none">
+              <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl py-3 text-center">
+                <p className="font-black text-on-surface text-lg leading-none">
                   {toMakerKm != null ? formatDistance(toMakerKm) : '—'}
                 </p>
-                <p className="text-[10px] text-zinc-500 mt-1 font-semibold">Distance</p>
+                <p className="text-[10px] text-on-surface-variant mt-1 font-semibold">Distance</p>
               </div>
-              <div className="bg-[#141414] border border-white/5 rounded-2xl py-3 text-center">
-                <p className="font-black text-zinc-300 text-lg leading-none">{arrivalTimeStr(pickupEtaMins)}</p>
-                <p className="text-[10px] text-zinc-500 mt-1 font-semibold">Arrives by</p>
+              <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl py-3 text-center">
+                <p className="font-black text-on-surface text-lg leading-none">{arrivalTimeStr(pickupEtaMins)}</p>
+                <p className="text-[10px] text-on-surface-variant mt-1 font-semibold">Arrives by</p>
               </div>
             </div>
           )}
 
           {addr && (
-            <div className="mx-4 mb-3 bg-[#141414] rounded-2xl border border-white/5 px-4 py-3.5">
-              <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wide mb-1.5">Delivering to</p>
+            <div className="mx-4 mb-3 bg-surface-container-lowest rounded-2xl border border-outline-variant/30 px-4 py-3.5">
+              <p className="text-[10px] text-outline font-bold uppercase tracking-wide mb-1.5">Delivering to</p>
               <div className="flex items-start gap-2">
-                <MapPin size={14} className="text-zinc-500 mt-0.5 flex-shrink-0" />
+                <MapPin size={14} className="text-on-surface-variant mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-bold text-zinc-300">{addr.street}</p>
-                  <p className="text-xs text-zinc-500">{addr.city}, {addr.state} {addr.zip}</p>
+                  <p className="text-sm font-bold text-on-surface">{addr.street}</p>
+                  <p className="text-xs text-on-surface-variant">{addr.city}, {addr.state} {addr.zip}</p>
                 </div>
               </div>
             </div>
@@ -1162,26 +1162,26 @@ export default function ActiveDeliveryPage() {
           <>
             {/* ── Step 1: Item verification — MANDATORY before PIN reveal ── */}
             {totalItems > 0 && (
-              <div className="mx-4 mb-3 bg-[#141414] rounded-2xl border border-white/5 overflow-hidden">
+              <div className="mx-4 mb-3 bg-surface-container-lowest rounded-2xl border border-outline-variant/30 overflow-hidden">
                 <div className="px-4 pt-4 pb-2 flex items-center gap-2">
                   <div className={`flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-black flex-shrink-0 ${
-                    allItemsChecked ? 'bg-green-500 text-white' : 'bg-[#FF7A50] text-white'
+                    allItemsChecked ? 'bg-neighborhood-green text-on-surface' : 'bg-primary-container text-on-surface'
                   }`}>
                     {allItemsChecked ? <CheckCircle size={12} /> : '1'}
                   </div>
-                  <p className="text-[11px] font-black uppercase tracking-wider text-white">Verify Every Item</p>
+                  <p className="text-[11px] font-black uppercase tracking-wider text-on-surface">Verify Every Item</p>
                   <span className={`ml-auto text-xs px-2 py-0.5 rounded-full font-bold ${
                     allItemsChecked
-                      ? 'bg-green-500/20 text-green-400'
-                      : 'bg-[#1A1A1A] text-zinc-400'
+                      ? 'bg-neighborhood-green/20 text-neighborhood-green'
+                      : 'bg-surface-container-high text-on-surface-variant'
                   }`}>
                     {checkedCount}/{totalItems}
                   </span>
                 </div>
-                <p className="px-4 pb-3 text-xs text-zinc-500 leading-relaxed">
+                <p className="px-4 pb-3 text-xs text-on-surface-variant leading-relaxed">
                   Tap each item as the maker hands it to you. The PIN unlocks once everything is verified.
                 </p>
-                <div className="border-t border-white/5 divide-y divide-white/5">
+                <div className="border-t border-outline-variant/30 divide-y divide-outline-variant/20">
                   {order.order_items.map((item, i) => {
                     const isChecked = checkedItems.has(i)
                     return (
@@ -1192,25 +1192,25 @@ export default function ActiveDeliveryPage() {
                           next.has(i) ? next.delete(i) : next.add(i)
                           return next
                         })}
-                        className="w-full flex items-center gap-3 px-4 py-3.5 text-left active:bg-white/5 transition-colors"
+                        className="w-full flex items-center gap-3 px-4 py-3.5 text-left active:bg-surface-container-low transition-colors"
                       >
                         <div className={`w-6 h-6 rounded-md border-2 flex-shrink-0 flex items-center justify-center transition-all ${
-                          isChecked ? 'bg-green-500 border-green-500' : 'border-zinc-600'
+                          isChecked ? 'bg-neighborhood-green border-green-500' : 'border-zinc-600'
                         }`}>
-                          {isChecked && <CheckCircle size={14} className="text-white" />}
+                          {isChecked && <CheckCircle size={14} className="text-on-surface" />}
                         </div>
-                        <span className={`text-sm flex-1 leading-tight ${isChecked ? 'text-zinc-600 line-through' : 'text-white font-medium'}`}>
+                        <span className={`text-sm flex-1 leading-tight ${isChecked ? 'text-outline line-through' : 'text-on-surface font-medium'}`}>
                           {item.quantity}× {item.menu_items?.name ?? 'Item'}
                         </span>
-                        <span className="text-xs text-zinc-600">${(item.quantity * item.unit_price).toFixed(2)}</span>
+                        <span className="text-xs text-outline">${(item.quantity * item.unit_price).toFixed(2)}</span>
                       </button>
                     )
                   })}
                 </div>
                 {allItemsChecked && (
-                  <div className="flex items-center gap-2 px-4 py-3 bg-green-500/10 border-t border-green-500/20">
-                    <CheckCircle size={14} className="text-green-400" />
-                    <span className="text-xs font-bold text-green-400">All items verified — PIN unlocked below</span>
+                  <div className="flex items-center gap-2 px-4 py-3 bg-neighborhood-green/10 border-t border-green-500/20">
+                    <CheckCircle size={14} className="text-neighborhood-green" />
+                    <span className="text-xs font-bold text-neighborhood-green">All items verified — PIN unlocked below</span>
                   </div>
                 )}
               </div>
@@ -1218,22 +1218,22 @@ export default function ActiveDeliveryPage() {
             {/* ── Step 2: PIN — gated behind item verification ── */}
             <div className={`mx-4 mb-3 rounded-2xl overflow-hidden transition-all ${
               allItemsChecked
-                ? 'bg-[#141414] border border-[#FF7A50]/30'
-                : 'bg-[#0F0F0F] border border-white/5'
+                ? 'bg-surface-container-lowest border border-primary-container/30'
+                : 'bg-surface-container-lowest border border-outline-variant/30'
             }`}>
               <div className="px-4 pt-4 pb-2 flex items-center gap-2">
                 <div className={`flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-black flex-shrink-0 ${
-                  allItemsChecked ? 'bg-[#FF7A50] text-white' : 'bg-[#1A1A1A] text-zinc-600'
+                  allItemsChecked ? 'bg-primary-container text-on-surface' : 'bg-surface-container-high text-outline'
                 }`}>
                   2
                 </div>
                 <p className={`text-[11px] font-black uppercase tracking-wider ${
-                  allItemsChecked ? 'text-[#FF7A50]' : 'text-zinc-600'
+                  allItemsChecked ? 'text-primary' : 'text-outline'
                 }`}>
                   Pickup PIN
                 </p>
                 {allItemsChecked && (
-                  <div className="ml-auto w-2 h-2 rounded-full bg-[#FF7A50] animate-pulse" />
+                  <div className="ml-auto w-2 h-2 rounded-full bg-primary-container animate-pulse" />
                 )}
               </div>
               <div className="px-4 pb-4">
@@ -1243,13 +1243,13 @@ export default function ActiveDeliveryPage() {
                       {(order.pickup_pin ?? '----').split('').map((digit, i) => (
                         <div
                           key={i}
-                          className="w-14 h-16 rounded-xl bg-[#0A0A0A] border-2 border-[#FF7A50]/40 flex items-center justify-center"
+                          className="w-14 h-16 rounded-xl bg-surface border-2 border-primary-container/40 flex items-center justify-center"
                         >
-                          <span className="text-3xl font-black text-white tracking-widest">{digit}</span>
+                          <span className="text-3xl font-black text-on-surface tracking-widest">{digit}</span>
                         </div>
                       ))}
                     </div>
-                    <p className="text-xs text-zinc-500 mt-3 leading-relaxed">
+                    <p className="text-xs text-on-surface-variant mt-3 leading-relaxed">
                       Read this code to the maker — they must enter it on their screen to confirm the pickup handoff.
                     </p>
                   </>
@@ -1260,13 +1260,13 @@ export default function ActiveDeliveryPage() {
                       {[0, 1, 2, 3].map((i) => (
                         <div
                           key={i}
-                          className="w-14 h-16 rounded-xl bg-[#0A0A0A] border-2 border-white/5 flex items-center justify-center"
+                          className="w-14 h-16 rounded-xl bg-surface border-2 border-outline-variant/30 flex items-center justify-center"
                         >
-                          <span className="text-3xl font-black text-zinc-700 tracking-widest">•</span>
+                          <span className="text-3xl font-black text-outline tracking-widest">•</span>
                         </div>
                       ))}
                     </div>
-                    <p className="text-xs text-zinc-500 mt-3 leading-relaxed">
+                    <p className="text-xs text-on-surface-variant mt-3 leading-relaxed">
                       Verify all {totalItems} item{totalItems !== 1 ? 's' : ''} above to reveal the pickup PIN.
                     </p>
                   </>
@@ -1280,10 +1280,10 @@ export default function ActiveDeliveryPage() {
                 <div className="w-4 h-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-black text-amber-300">Waiting for maker to confirm</p>
-                  <p className="text-xs text-amber-400/70 mt-0.5">Your screen will update automatically once they enter the PIN</p>
+                  <p className="text-xs text-primary/70 mt-0.5">Your screen will update automatically once they enter the PIN</p>
                 </div>
                 <div className="flex items-center gap-1 flex-shrink-0">
-                  <Timer size={11} className="text-amber-400" />
+                  <Timer size={11} className="text-primary" />
                   <span className="text-amber-300 font-black text-sm tabular-nums">{formatElapsed(elapsed)}</span>
                 </div>
               </div>
@@ -1295,12 +1295,12 @@ export default function ActiveDeliveryPage() {
       {/* ── Stage: Picked Up — Start Delivery ── */}
       {isPickedUp && (
         <>
-          <div className="mx-4 mb-3 bg-green-500/10 border border-green-500/20 rounded-2xl px-4 py-3.5">
+          <div className="mx-4 mb-3 bg-neighborhood-green/10 border border-green-500/20 rounded-2xl px-4 py-3.5">
             <div className="flex items-center gap-2">
-              <CheckCircle size={16} className="text-green-400 flex-shrink-0" />
+              <CheckCircle size={16} className="text-neighborhood-green flex-shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-black text-green-300">Order picked up from {order.food_maker?.display_name}</p>
-                <p className="text-xs text-green-400/70 mt-0.5">Now head to the customer</p>
+                <p className="text-sm font-black text-neighborhood-green">Order picked up from {order.food_maker?.display_name}</p>
+                <p className="text-xs text-neighborhood-green/70 mt-0.5">Now head to the customer</p>
               </div>
             </div>
           </div>
@@ -1308,29 +1308,29 @@ export default function ActiveDeliveryPage() {
           {/* ETA to customer */}
           {dropoffEtaMins != null && (
             <div className="mx-4 mb-3 grid grid-cols-3 gap-2">
-              <div className="bg-[#141414] border border-white/5 rounded-2xl py-3 text-center">
-                <p className="font-black text-[#FF7A50] text-lg leading-none">{formatEta(dropoffEtaMins)}</p>
-                <p className="text-[10px] text-zinc-500 mt-1 font-semibold">To Customer</p>
+              <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl py-3 text-center">
+                <p className="font-black text-primary text-lg leading-none">{formatEta(dropoffEtaMins)}</p>
+                <p className="text-[10px] text-on-surface-variant mt-1 font-semibold">To Customer</p>
               </div>
-              <div className="bg-[#141414] border border-white/5 rounded-2xl py-3 text-center">
-                <p className="font-black text-white text-lg leading-none">
+              <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl py-3 text-center">
+                <p className="font-black text-on-surface text-lg leading-none">
                   {toCustomerKm != null ? formatDistance(toCustomerKm) : makerToCustomerKm != null ? formatDistance(makerToCustomerKm) : '—'}
                 </p>
-                <p className="text-[10px] text-zinc-500 mt-1 font-semibold">Distance</p>
+                <p className="text-[10px] text-on-surface-variant mt-1 font-semibold">Distance</p>
               </div>
-              <div className="bg-[#141414] border border-white/5 rounded-2xl py-3 text-center">
-                <p className="font-black text-zinc-300 text-lg leading-none">{arrivalTimeStr(dropoffEtaMins)}</p>
-                <p className="text-[10px] text-zinc-500 mt-1 font-semibold">Arrives by</p>
+              <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl py-3 text-center">
+                <p className="font-black text-on-surface text-lg leading-none">{arrivalTimeStr(dropoffEtaMins)}</p>
+                <p className="text-[10px] text-on-surface-variant mt-1 font-semibold">Arrives by</p>
               </div>
             </div>
           )}
 
           {order.dropoff_note && (
-            <div className="mx-4 mb-3 bg-[#FF7A50]/10 border border-[#FF7A50]/30 rounded-2xl px-4 py-3.5">
+            <div className="mx-4 mb-3 bg-primary-fixed border border-primary-container/30 rounded-2xl px-4 py-3.5">
               <div className="flex items-start gap-2.5">
-                <MessageSquare size={15} className="text-[#FF7A50] mt-0.5 flex-shrink-0" />
+                <MessageSquare size={15} className="text-primary mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-[10px] font-black text-[#FF7A50] uppercase tracking-wider mb-1">Drop-off Instructions</p>
+                  <p className="text-[10px] font-black text-primary uppercase tracking-wider mb-1">Drop-off Instructions</p>
                   <p className="text-sm text-zinc-200 leading-relaxed">{order.dropoff_note}</p>
                 </div>
               </div>
@@ -1338,17 +1338,17 @@ export default function ActiveDeliveryPage() {
           )}
 
           {addr && (
-            <div className="mx-4 mb-3 bg-[#141414] rounded-2xl border border-white/5 overflow-hidden">
+            <div className="mx-4 mb-3 bg-surface-container-lowest rounded-2xl border border-outline-variant/30 overflow-hidden">
               <div className="px-4 pt-4 pb-3">
-                <p className="text-[11px] font-black text-[#FF7A50] uppercase tracking-wider mb-1">Delivering to</p>
-                <p className="text-xl font-black text-white leading-tight">{addr.street}</p>
-                <p className="text-sm text-zinc-400 mt-0.5">{addr.city}, {addr.state} {addr.zip}</p>
+                <p className="text-[11px] font-black text-primary uppercase tracking-wider mb-1">Delivering to</p>
+                <p className="text-xl font-black text-on-surface leading-tight">{addr.street}</p>
+                <p className="text-sm text-on-surface-variant mt-0.5">{addr.city}, {addr.state} {addr.zip}</p>
               </div>
               <a
                 href={mapsUrl(addr)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 bg-[#FF7A50] py-3.5 text-sm font-black text-white"
+                className="flex items-center justify-center gap-2 bg-primary-container py-3.5 text-sm font-black text-on-surface"
               >
                 <Navigation size={16} />
                 Navigate to Customer
@@ -1367,24 +1367,24 @@ export default function ActiveDeliveryPage() {
             <div className={`mx-4 mb-3 rounded-2xl border px-4 py-3.5 flex items-center gap-3 ${
               isCountdownUrgent
                 ? 'bg-red-500/10 border-red-500/30'
-                : 'bg-[#FF7A50]/8 border-[#FF7A50]/20'
+                : 'bg-primary-container/8 border-primary-container/20'
             }`}>
-              <Timer size={20} className={`flex-shrink-0 ${isCountdownUrgent ? 'text-red-400' : 'text-[#FF7A50]'}`} />
+              <Timer size={20} className={`flex-shrink-0 ${isCountdownUrgent ? 'text-error' : 'text-primary'}`} />
               <div className="flex-1 min-w-0">
                 <p className={`text-[10px] font-black uppercase tracking-wider mb-0.5 ${
-                  isCountdownUrgent ? 'text-red-400' : 'text-zinc-500'
+                  isCountdownUrgent ? 'text-error' : 'text-on-surface-variant'
                 }`}>
                   {isCountdownUrgent ? '⚠ Almost out of time' : 'Time to deliver'}
                 </p>
                 <p className={`font-black text-3xl tabular-nums leading-none ${
-                  isCountdownUrgent ? 'text-red-300' : 'text-white'
+                  isCountdownUrgent ? 'text-red-300' : 'text-on-surface'
                 }`}>
                   {remainingSecs > 0 ? formatCountdown(remainingSecs) : (
-                    <span className="text-red-400">Overdue</span>
+                    <span className="text-error">Overdue</span>
                   )}
                 </p>
                 {isCountdownUrgent && (
-                  <p className="text-xs text-red-400/80 mt-1 font-semibold">
+                  <p className="text-xs text-error/80 mt-1 font-semibold">
                     Drive fast — customer is waiting
                   </p>
                 )}
@@ -1398,34 +1398,34 @@ export default function ActiveDeliveryPage() {
           {/* Live ETA strip — updates every 10 s via driver GPS */}
           {dropoffEtaMins != null && (
             <div className="mx-4 mb-3 grid grid-cols-3 gap-2">
-              <div className="bg-[#141414] border border-[#FF7A50]/20 rounded-2xl py-3 text-center">
-                <p className="font-black text-[#FF7A50] text-lg leading-none">{formatEta(dropoffEtaMins)}</p>
-                <p className="text-[10px] text-zinc-500 mt-1 font-semibold">ETA</p>
+              <div className="bg-surface-container-lowest border border-primary-container/20 rounded-2xl py-3 text-center">
+                <p className="font-black text-primary text-lg leading-none">{formatEta(dropoffEtaMins)}</p>
+                <p className="text-[10px] text-on-surface-variant mt-1 font-semibold">ETA</p>
               </div>
-              <div className="bg-[#141414] border border-white/5 rounded-2xl py-3 text-center">
-                <p className="font-black text-white text-lg leading-none">
+              <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl py-3 text-center">
+                <p className="font-black text-on-surface text-lg leading-none">
                   {toCustomerKm != null ? formatDistance(toCustomerKm) : '—'}
                 </p>
-                <p className="text-[10px] text-zinc-500 mt-1 font-semibold">Remaining</p>
+                <p className="text-[10px] text-on-surface-variant mt-1 font-semibold">Remaining</p>
               </div>
-              <div className="bg-[#141414] border border-white/5 rounded-2xl py-3 text-center">
-                <p className="font-black text-zinc-300 text-lg leading-none">{arrivalTimeStr(dropoffEtaMins)}</p>
-                <p className="text-[10px] text-zinc-500 mt-1 font-semibold">Arrives by</p>
+              <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl py-3 text-center">
+                <p className="font-black text-on-surface text-lg leading-none">{arrivalTimeStr(dropoffEtaMins)}</p>
+                <p className="text-[10px] text-on-surface-variant mt-1 font-semibold">Arrives by</p>
               </div>
             </div>
           )}
 
-          <div className="mx-4 mb-3 bg-[#141414] rounded-2xl border border-white/5 overflow-hidden">
+          <div className="mx-4 mb-3 bg-surface-container-lowest rounded-2xl border border-outline-variant/30 overflow-hidden">
             <div className="px-4 pt-4 pb-3">
-              <p className="text-[11px] font-black text-[#FF7A50] uppercase tracking-wider mb-1">Delivering to</p>
+              <p className="text-[11px] font-black text-primary uppercase tracking-wider mb-1">Delivering to</p>
               {addr ? (
                 <>
-                  <p className="text-xl font-black text-white leading-tight">{addr.street}</p>
-                  <p className="text-sm text-zinc-400 mt-0.5">{addr.city}, {addr.state} {addr.zip}</p>
-                  {addr.label && <p className="text-xs text-zinc-500 mt-1 italic">{addr.label}</p>}
+                  <p className="text-xl font-black text-on-surface leading-tight">{addr.street}</p>
+                  <p className="text-sm text-on-surface-variant mt-0.5">{addr.city}, {addr.state} {addr.zip}</p>
+                  {addr.label && <p className="text-xs text-on-surface-variant mt-1 italic">{addr.label}</p>}
                 </>
               ) : (
-                <p className="text-zinc-500">Address not available</p>
+                <p className="text-on-surface-variant">Address not available</p>
               )}
             </div>
             {addr && (
@@ -1433,7 +1433,7 @@ export default function ActiveDeliveryPage() {
                 href={mapsUrl(addr)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 bg-[#FF7A50] py-3.5 text-sm font-black text-white"
+                className="flex items-center justify-center gap-2 bg-primary-container py-3.5 text-sm font-black text-on-surface"
               >
                 <Navigation size={16} />
                 Navigate to Customer
@@ -1444,39 +1444,39 @@ export default function ActiveDeliveryPage() {
 
           {order.customer && (
             <div className="mx-4 grid grid-cols-2 gap-3 mb-3">
-              <div className="bg-[#141414] rounded-2xl p-3.5 border border-white/5">
-                <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wide mb-1.5">Customer</p>
-                <p className="font-bold text-white text-sm truncate leading-tight">{order.customer.full_name}</p>
+              <div className="bg-surface-container-lowest rounded-2xl p-3.5 border border-outline-variant/30">
+                <p className="text-[10px] text-outline font-bold uppercase tracking-wide mb-1.5">Customer</p>
+                <p className="font-bold text-on-surface text-sm truncate leading-tight">{order.customer.full_name}</p>
                 <div className="flex items-center gap-3 mt-2">
                   {order.customer.phone && (
-                    <a href={`tel:${order.customer.phone}`} className="flex items-center gap-1.5 text-green-400 text-xs font-semibold">
+                    <a href={`tel:${order.customer.phone}`} className="flex items-center gap-1.5 text-neighborhood-green text-xs font-semibold">
                       <Phone size={12} /> Call
                     </a>
                   )}
                   <button
                     onClick={() => router.push(`/messages/order-${order.id}`)}
-                    className="flex items-center gap-1.5 text-[#FF7A50] text-xs font-semibold"
+                    className="flex items-center gap-1.5 text-primary text-xs font-semibold"
                   >
                     <MessageCircle size={12} /> Message
                   </button>
                 </div>
               </div>
-              <div className="bg-[#141414] rounded-2xl p-3.5 border border-white/5">
-                <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wide mb-1.5">You earn</p>
-                <p className="font-black text-[#FF7A50] text-3xl leading-none">${earn.toFixed(2)}</p>
+              <div className="bg-surface-container-lowest rounded-2xl p-3.5 border border-outline-variant/30">
+                <p className="text-[10px] text-outline font-bold uppercase tracking-wide mb-1.5">You earn</p>
+                <p className="font-black text-primary text-3xl leading-none">${earn.toFixed(2)}</p>
                 {order.tip_amount > 0 && (
-                  <p className="text-xs text-green-400 mt-1.5 font-semibold">incl. ${order.tip_amount.toFixed(2)} tip</p>
+                  <p className="text-xs text-neighborhood-green mt-1.5 font-semibold">incl. ${order.tip_amount.toFixed(2)} tip</p>
                 )}
               </div>
             </div>
           )}
 
           {order.dropoff_note && (
-            <div className="mx-4 mb-3 bg-[#FF7A50]/10 border border-[#FF7A50]/30 rounded-2xl px-4 py-3.5">
+            <div className="mx-4 mb-3 bg-primary-fixed border border-primary-container/30 rounded-2xl px-4 py-3.5">
               <div className="flex items-start gap-2.5">
-                <MessageSquare size={15} className="text-[#FF7A50] mt-0.5 flex-shrink-0" />
+                <MessageSquare size={15} className="text-primary mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-[10px] font-black text-[#FF7A50] uppercase tracking-wider mb-1">Drop-off Instructions</p>
+                  <p className="text-[10px] font-black text-primary uppercase tracking-wider mb-1">Drop-off Instructions</p>
                   <p className="text-sm text-zinc-200 leading-relaxed">{order.dropoff_note}</p>
                 </div>
               </div>
@@ -1485,23 +1485,23 @@ export default function ActiveDeliveryPage() {
 
           {order.payment_method === 'cash' && (
             <div className="mx-4 mb-3 flex items-start gap-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl px-4 py-3.5">
-              <Banknote size={18} className="text-amber-400 mt-0.5 flex-shrink-0" />
+              <Banknote size={18} className="text-primary mt-0.5 flex-shrink-0" />
               <div>
                 <p className="text-sm font-bold text-amber-300">Collect cash at drop-off</p>
-                <p className="text-xs text-amber-400/70 mt-0.5">Confirm the total with the customer before leaving</p>
+                <p className="text-xs text-primary/70 mt-0.5">Confirm the total with the customer before leaving</p>
               </div>
             </div>
           )}
 
-          <div className="mx-4 mb-3 bg-[#141414] rounded-2xl border border-white/5 px-4 py-3 flex items-center gap-3">
-            <div className="w-7 h-7 rounded-full bg-[#FF7A50]/15 flex items-center justify-center flex-shrink-0">
-              <CheckCircle size={14} className="text-[#FF7A50]" />
+          <div className="mx-4 mb-3 bg-surface-container-lowest rounded-2xl border border-outline-variant/30 px-4 py-3 flex items-center gap-3">
+            <div className="w-7 h-7 rounded-full bg-primary-fixed flex items-center justify-center flex-shrink-0">
+              <CheckCircle size={14} className="text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs text-zinc-600">Picked up from</p>
-              <p className="text-sm font-bold text-zinc-300 truncate">{order.food_maker?.display_name}</p>
+              <p className="text-xs text-outline">Picked up from</p>
+              <p className="text-sm font-bold text-on-surface truncate">{order.food_maker?.display_name}</p>
             </div>
-            <Star size={13} className="text-zinc-700 flex-shrink-0" />
+            <Star size={13} className="text-outline flex-shrink-0" />
           </div>
         </>
       )}
@@ -1512,20 +1512,20 @@ export default function ActiveDeliveryPage() {
           <div className="mx-4 mb-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl px-4 py-3.5 flex items-center gap-3">
             <div className="flex-1 min-w-0">
               <p className="text-sm font-black text-amber-300">You've arrived at the customer</p>
-              <p className="text-xs text-amber-400/70 mt-0.5">Hand over the order and confirm delivery</p>
+              <p className="text-xs text-primary/70 mt-0.5">Hand over the order and confirm delivery</p>
             </div>
             <div className="flex items-center gap-1 flex-shrink-0">
-              <Timer size={11} className="text-amber-400" />
+              <Timer size={11} className="text-primary" />
               <span className="text-amber-300 font-black text-sm tabular-nums">{formatElapsed(elapsed)}</span>
             </div>
           </div>
 
           {order.dropoff_note && (
-            <div className="mx-4 mb-3 bg-[#FF7A50]/10 border-2 border-[#FF7A50]/40 rounded-2xl px-4 py-3.5">
+            <div className="mx-4 mb-3 bg-primary-fixed border-2 border-primary-container/40 rounded-2xl px-4 py-3.5">
               <div className="flex items-start gap-2.5">
-                <MessageSquare size={16} className="text-[#FF7A50] mt-0.5 flex-shrink-0" />
+                <MessageSquare size={16} className="text-primary mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-[10px] font-black text-[#FF7A50] uppercase tracking-wider mb-1">Drop-off Instructions</p>
+                  <p className="text-[10px] font-black text-primary uppercase tracking-wider mb-1">Drop-off Instructions</p>
                   <p className="text-sm font-semibold text-zinc-100 leading-relaxed">{order.dropoff_note}</p>
                 </div>
               </div>
@@ -1533,44 +1533,44 @@ export default function ActiveDeliveryPage() {
           )}
 
           {order.customer && (
-            <div className="mx-4 mb-3 bg-[#141414] rounded-2xl p-3.5 border border-white/5">
-              <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wide mb-1.5">Customer</p>
-              <p className="font-bold text-white text-sm">{order.customer.full_name}</p>
+            <div className="mx-4 mb-3 bg-surface-container-lowest rounded-2xl p-3.5 border border-outline-variant/30">
+              <p className="text-[10px] text-outline font-bold uppercase tracking-wide mb-1.5">Customer</p>
+              <p className="font-bold text-on-surface text-sm">{order.customer.full_name}</p>
               {order.customer.phone ? (
-                <a href={`tel:${order.customer.phone}`} className="mt-2 flex items-center gap-1.5 text-green-400 text-xs font-semibold">
+                <a href={`tel:${order.customer.phone}`} className="mt-2 flex items-center gap-1.5 text-neighborhood-green text-xs font-semibold">
                   <Phone size={12} /> Call customer
                 </a>
               ) : (
-                <p className="text-xs text-zinc-700 mt-2">No phone on file</p>
+                <p className="text-xs text-outline mt-2">No phone on file</p>
               )}
             </div>
           )}
 
           {addr && (
-            <div className="mx-4 mb-3 bg-[#141414] rounded-2xl border border-white/5 px-4 py-3.5">
-              <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wide mb-1.5">Delivery address</p>
+            <div className="mx-4 mb-3 bg-surface-container-lowest rounded-2xl border border-outline-variant/30 px-4 py-3.5">
+              <p className="text-[10px] text-outline font-bold uppercase tracking-wide mb-1.5">Delivery address</p>
               <div className="flex items-start gap-2">
-                <MapPin size={14} className="text-zinc-500 mt-0.5 flex-shrink-0" />
+                <MapPin size={14} className="text-on-surface-variant mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-bold text-zinc-300">{addr.street}</p>
-                  <p className="text-xs text-zinc-500">{addr.city}, {addr.state} {addr.zip}</p>
-                  {addr.label && <p className="text-xs text-zinc-600 mt-0.5 italic">{addr.label}</p>}
+                  <p className="text-sm font-bold text-on-surface">{addr.street}</p>
+                  <p className="text-xs text-on-surface-variant">{addr.city}, {addr.state} {addr.zip}</p>
+                  {addr.label && <p className="text-xs text-outline mt-0.5 italic">{addr.label}</p>}
                 </div>
               </div>
             </div>
           )}
 
           {/* ── Proof photo capture ── */}
-          <div className="mx-4 mb-3 bg-[#141414] rounded-2xl border border-white/5 overflow-hidden">
+          <div className="mx-4 mb-3 bg-surface-container-lowest rounded-2xl border border-outline-variant/30 overflow-hidden">
             <div className="px-4 pt-3.5 pb-3">
               <div className="flex items-center justify-between mb-1.5">
-                <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wide">Photo of Delivery</p>
+                <p className="text-[10px] text-outline font-bold uppercase tracking-wide">Photo of Delivery</p>
                 <span className="text-[10px] font-medium">
                   {proofUploadError
-                    ? <span className="text-amber-400">Upload failed — order still completed</span>
+                    ? <span className="text-primary">Upload failed — order still completed</span>
                     : requiresProof
-                      ? <span className="text-[#FF7A50]">Required</span>
-                      : <span className="text-zinc-700">Optional</span>
+                      ? <span className="text-primary">Required</span>
+                      : <span className="text-outline">Optional</span>
                   }
                 </span>
               </div>
@@ -1590,7 +1590,7 @@ export default function ActiveDeliveryPage() {
                       setProofPhotoUrl(null)
                       if (fileInputRef.current) fileInputRef.current.value = ''
                     }}
-                    className="absolute top-2 right-2 flex items-center gap-1.5 bg-black/70 backdrop-blur-sm text-white text-xs font-bold px-2.5 py-1.5 rounded-full"
+                    className="absolute top-2 right-2 flex items-center gap-1.5 bg-black/70 backdrop-blur-sm text-on-surface text-xs font-bold px-2.5 py-1.5 rounded-full"
                   >
                     <RotateCcw size={11} />
                     Retake
@@ -1599,13 +1599,13 @@ export default function ActiveDeliveryPage() {
               ) : (
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full flex flex-col items-center justify-center gap-2 border-2 border-dashed border-zinc-800 rounded-xl py-6 active:bg-white/5 transition-colors"
+                  className="w-full flex flex-col items-center justify-center gap-2 border-2 border-dashed border-zinc-800 rounded-xl py-6 active:bg-surface-container-low transition-colors"
                 >
-                  <div className="w-10 h-10 rounded-full bg-[#1A1A1A] flex items-center justify-center">
-                    <Camera size={20} className="text-zinc-500" />
+                  <div className="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center">
+                    <Camera size={20} className="text-on-surface-variant" />
                   </div>
-                  <p className="text-sm font-bold text-zinc-500">Tap to take photo</p>
-                  <p className="text-xs text-zinc-700">Helps verify contactless drop-offs</p>
+                  <p className="text-sm font-bold text-on-surface-variant">Tap to take photo</p>
+                  <p className="text-xs text-outline">Helps verify contactless drop-offs</p>
                 </button>
               )}
 
@@ -1622,20 +1622,20 @@ export default function ActiveDeliveryPage() {
 
           {order.payment_method === 'cash' && (
             <div className="mx-4 mb-3 flex items-start gap-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl px-4 py-3.5">
-              <Banknote size={18} className="text-amber-400 mt-0.5 flex-shrink-0" />
+              <Banknote size={18} className="text-primary mt-0.5 flex-shrink-0" />
               <div>
                 <p className="text-sm font-bold text-amber-300">Collect cash before confirming</p>
-                <p className="text-xs text-amber-400/70 mt-0.5">Confirm the total with the customer before completing delivery</p>
+                <p className="text-xs text-primary/70 mt-0.5">Confirm the total with the customer before completing delivery</p>
               </div>
             </div>
           )}
 
-          <div className="mx-4 mb-3 bg-[#141414] rounded-2xl border border-white/5 px-4 py-3 flex items-center justify-between">
-            <p className="text-xs text-zinc-600">Your earnings</p>
+          <div className="mx-4 mb-3 bg-surface-container-lowest rounded-2xl border border-outline-variant/30 px-4 py-3 flex items-center justify-between">
+            <p className="text-xs text-outline">Your earnings</p>
             <div className="text-right">
-              <p className="font-black text-[#FF7A50]">${earn.toFixed(2)}</p>
+              <p className="font-black text-primary">${earn.toFixed(2)}</p>
               {order.tip_amount > 0 && (
-                <p className="text-[10px] text-green-400">incl. ${order.tip_amount.toFixed(2)} tip</p>
+                <p className="text-[10px] text-neighborhood-green">incl. ${order.tip_amount.toFixed(2)} tip</p>
               )}
             </div>
           </div>
@@ -1646,14 +1646,14 @@ export default function ActiveDeliveryPage() {
       {showCantDeliver && (
         <div className="fixed inset-0 z-50 flex items-end">
           <div className="absolute inset-0 bg-black/60" onClick={() => !submittingFailed && setShowCantDeliver(false)} />
-          <div className="relative w-full max-w-[430px] mx-auto bg-[#111] rounded-t-3xl p-5 pb-10 border-t border-white/10">
+          <div className="relative w-full max-w-[430px] mx-auto bg-surface-container rounded-t-3xl p-5 pb-10 border-t border-outline-variant/40">
             <div className="flex items-center justify-between mb-5">
               <div>
-                <h2 className="text-lg font-black text-white">Can't Complete Delivery</h2>
-                <p className="text-xs text-zinc-500 mt-0.5">Select a reason to notify support</p>
+                <h2 className="text-lg font-black text-on-surface">Can't Complete Delivery</h2>
+                <p className="text-xs text-on-surface-variant mt-0.5">Select a reason to notify support</p>
               </div>
-              <button onClick={() => setShowCantDeliver(false)} className="w-8 h-8 rounded-full bg-[#1A1A1A] flex items-center justify-center">
-                <X size={14} className="text-zinc-400" />
+              <button onClick={() => setShowCantDeliver(false)} className="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center">
+                <X size={14} className="text-on-surface-variant" />
               </button>
             </div>
 
@@ -1665,7 +1665,7 @@ export default function ActiveDeliveryPage() {
                   className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-left transition-all border ${
                     cantDeliverReason === reason
                       ? 'border-red-500/60 bg-red-500/10'
-                      : 'border-white/8 bg-[#1A1A1A]'
+                      : 'border-outline-variant/30 bg-surface-container-high'
                   }`}
                 >
                   <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${
@@ -1673,7 +1673,7 @@ export default function ActiveDeliveryPage() {
                   }`}>
                     {cantDeliverReason === reason && <div className="w-2 h-2 rounded-full bg-red-400" />}
                   </div>
-                  <span className={`text-sm ${cantDeliverReason === reason ? 'text-white font-semibold' : 'text-zinc-400'}`}>
+                  <span className={`text-sm ${cantDeliverReason === reason ? 'text-on-surface font-semibold' : 'text-on-surface-variant'}`}>
                     {reason}
                   </span>
                 </button>
@@ -1681,12 +1681,12 @@ export default function ActiveDeliveryPage() {
             </div>
 
             {failedError && (
-              <p className="text-xs text-red-400 text-center mb-3 bg-red-500/10 rounded-xl px-4 py-2">{failedError}</p>
+              <p className="text-xs text-error text-center mb-3 bg-red-500/10 rounded-xl px-4 py-2">{failedError}</p>
             )}
 
             <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl px-4 py-3 mb-4">
               <div className="flex items-start gap-2.5">
-                <AlertTriangle size={14} className="text-amber-400 mt-0.5 flex-shrink-0" />
+                <AlertTriangle size={14} className="text-primary mt-0.5 flex-shrink-0" />
                 <p className="text-xs text-amber-300 leading-relaxed">
                   A support ticket will be created automatically. The customer will be notified and our team will follow up to resolve this.
                 </p>
@@ -1696,7 +1696,7 @@ export default function ActiveDeliveryPage() {
             <button
               onClick={handleCantDeliver}
               disabled={!cantDeliverReason || submittingFailed}
-              className="w-full bg-red-500 disabled:bg-[#1A1A1A] disabled:text-zinc-700 text-white font-black py-4 rounded-2xl text-base active:scale-[0.98] transition-all"
+              className="w-full bg-red-500 disabled:bg-surface-container-high disabled:text-outline text-on-surface font-black py-4 rounded-2xl text-base active:scale-[0.98] transition-all"
             >
               {submittingFailed ? 'Submitting…' : 'Report & Contact Support'}
             </button>
@@ -1707,9 +1707,9 @@ export default function ActiveDeliveryPage() {
       {/* ── Fixed CTA ── */}
       {/* isAtMaker has no CTA — the maker triggers the transition via PIN */}
       {nextAction && !isAtMaker && (
-        <div className="fixed bottom-[68px] left-0 right-0 max-w-[430px] mx-auto px-4 pb-4 pt-3 bg-gradient-to-t from-[#080808] via-[#080808]/95 to-transparent">
+        <div className="fixed bottom-[68px] left-0 right-0 max-w-[430px] mx-auto px-4 pb-4 pt-3 bg-gradient-to-t from-surface via-surface/80/95 to-transparent">
           {updateError && (
-            <div className="mb-2 px-4 py-2.5 bg-red-500/15 border border-red-500/30 rounded-2xl text-xs font-semibold text-red-400 text-center">
+            <div className="mb-2 px-4 py-2.5 bg-red-500/15 border border-red-500/30 rounded-2xl text-xs font-semibold text-error text-center">
               {updateError}
             </div>
           )}
@@ -1717,7 +1717,7 @@ export default function ActiveDeliveryPage() {
           {isAtCustomer ? (
             <>
               {requiresProof && !proofPhoto && (
-                <p className="text-center text-xs font-bold text-[#FF7A50] mb-2">
+                <p className="text-center text-xs font-bold text-primary mb-2">
                   Take a photo of the drop-off before completing delivery
                 </p>
               )}
@@ -1731,7 +1731,7 @@ export default function ActiveDeliveryPage() {
             <button
               onClick={() => handleStatusUpdate(nextAction.next)}
               disabled={updating}
-              className="w-full text-white rounded-2xl py-4 font-black text-base flex items-center justify-center gap-2.5 disabled:opacity-50 transition-all shadow-lg active:scale-[0.98] bg-[#FF7A50] shadow-[#FF7A50]/25"
+              className="w-full text-on-surface rounded-2xl py-4 font-black text-base flex items-center justify-center gap-2.5 disabled:opacity-50 transition-all shadow-lg active:scale-[0.98] bg-primary-container shadow-[#FF7A50]/25"
             >
               {updating ? (
                 <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
@@ -1745,7 +1745,7 @@ export default function ActiveDeliveryPage() {
           {(isAtCustomer || isHeadingToCustomer) && (
             <button
               onClick={() => { setShowCantDeliver(true); setCantDeliverReason(null); setFailedError(null) }}
-              className="w-full mt-2 flex items-center justify-center gap-2 py-2.5 text-red-400 text-sm font-bold"
+              className="w-full mt-2 flex items-center justify-center gap-2 py-2.5 text-error text-sm font-bold"
             >
               <AlertTriangle size={14} />
               Can't Deliver

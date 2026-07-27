@@ -115,15 +115,15 @@ export default function ChatChannelPage() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-[#080808]">
+    <div className="flex flex-col h-screen bg-background">
       {/* Header */}
-      <div className="bg-[#0A0A0A] px-4 py-3 flex items-center gap-3 border-b border-white/5">
+      <div className="bg-surface px-4 py-3 flex items-center gap-3 border-b border-outline-variant/30">
         <button onClick={() => router.back()} className="w-8 h-8 rounded-full flex items-center justify-center">
-          <ArrowLeft size={20} className="text-zinc-300" />
+          <ArrowLeft size={20} className="text-on-surface" />
         </button>
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-white text-sm truncate">{channelName}</p>
-          <p className="text-xs text-green-400 font-medium">Active now</p>
+          <p className="font-bold text-on-surface text-sm truncate">{channelName}</p>
+          <p className="text-xs text-neighborhood-green font-medium">Active now</p>
         </div>
       </div>
 
@@ -131,7 +131,7 @@ export default function ChatChannelPage() {
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="w-6 h-6 border-2 border-[#FF7A50] border-t-transparent rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 border-primary-container border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
           <>
@@ -139,14 +139,14 @@ export default function ChatChannelPage() {
               <div key={msg.id} className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm ${
                   msg.sender === 'me'
-                    ? 'bg-[#FF7A50] text-white rounded-br-sm'
-                    : 'bg-[#1A1A1A] text-zinc-100 rounded-bl-sm border border-white/5'
+                    ? 'bg-primary-container text-on-surface rounded-br-sm'
+                    : 'bg-surface-container-high text-on-surface rounded-bl-sm border border-outline-variant/30'
                 }`}>
                   {msg.sender === 'them' && msg.senderName && (
-                    <p className="text-[10px] font-semibold text-zinc-500 mb-1">{msg.senderName}</p>
+                    <p className="text-[10px] font-semibold text-on-surface-variant mb-1">{msg.senderName}</p>
                   )}
                   <p className="leading-relaxed">{msg.text}</p>
-                  <p className={`text-[10px] mt-1 text-right ${msg.sender === 'me' ? 'text-white/60' : 'text-zinc-600'}`}>
+                  <p className={`text-[10px] mt-1 text-right ${msg.sender === 'me' ? 'text-on-surface/60' : 'text-outline'}`}>
                     {msg.time}
                   </p>
                 </div>
@@ -155,7 +155,7 @@ export default function ChatChannelPage() {
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <span className="text-4xl mb-3">💬</span>
-                <p className="text-zinc-500 text-sm">No messages yet. Say hi!</p>
+                <p className="text-on-surface-variant text-sm">No messages yet. Say hi!</p>
               </div>
             )}
           </>
@@ -164,8 +164,8 @@ export default function ChatChannelPage() {
       </div>
 
       {/* Input */}
-      <div className="bg-[#0A0A0A] border-t border-white/5 px-4 py-3 pb-nav flex items-end gap-2">
-        <div className="flex-1 bg-[#1A1A1A] rounded-2xl px-4 py-2.5 min-h-[44px] flex items-center border border-white/5">
+      <div className="bg-surface border-t border-outline-variant/30 px-4 py-3 pb-nav flex items-end gap-2">
+        <div className="flex-1 bg-surface-container-high rounded-2xl px-4 py-2.5 min-h-[44px] flex items-center border border-outline-variant/30">
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -173,16 +173,16 @@ export default function ChatChannelPage() {
               if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage() }
             }}
             placeholder="Message..."
-            className="w-full bg-transparent text-sm text-zinc-100 placeholder:text-zinc-600 resize-none max-h-24"
+            className="w-full bg-transparent text-sm text-on-surface placeholder:text-outline resize-none max-h-24"
             rows={1}
           />
         </div>
         <button
           onClick={sendMessage}
           disabled={!input.trim()}
-          className="w-10 h-10 bg-[#FF7A50] rounded-full flex items-center justify-center disabled:opacity-40 active:bg-[#E86B40] transition-colors flex-shrink-0"
+          className="w-10 h-10 bg-primary-container rounded-full flex items-center justify-center disabled:opacity-40 active:bg-primary transition-colors flex-shrink-0"
         >
-          <Send size={16} className="text-white" />
+          <Send size={16} className="text-on-surface" />
         </button>
       </div>
     </div>

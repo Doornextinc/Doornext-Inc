@@ -48,51 +48,51 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen bg-[#080808] flex flex-col items-center justify-center px-6">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
       <div className="w-full max-w-sm">
-        <Link href="/welcome" className="inline-flex items-center gap-1.5 text-zinc-400 hover:text-white text-sm mb-8 transition-colors">
+        <Link href="/welcome" className="inline-flex items-center gap-1.5 text-on-surface-variant hover:text-on-surface text-sm mb-8 transition-colors">
           <ChevronLeft size={16} />
           Back
         </Link>
         <div className="mb-8">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#FF7A50] to-[#FF9C78] flex items-center justify-center mb-4">
-            <span className="text-white text-xl">🛵</span>
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary-container to-primary-fixed-dim flex items-center justify-center mb-4">
+            <span className="text-on-surface text-xl">🛵</span>
           </div>
-          <h1 className="text-2xl font-black text-white">Welcome back</h1>
-          <p className="text-zinc-400 text-sm mt-1">Sign in to your driver account</p>
+          <h1 className="text-2xl font-black text-on-surface">Welcome back</h1>
+          <p className="text-on-surface-variant text-sm mt-1">Sign in to your driver account</p>
         </div>
 
         {justCreated && (
-          <div className="mb-4 p-3.5 bg-green-900/25 border border-green-700/40 rounded-xl flex items-start gap-2.5">
-            <CheckCircle size={16} className="text-green-400 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-green-300 font-medium leading-snug">
+          <div className="mb-4 p-3.5 bg-neighborhood-green/10 border border-neighborhood-green/30 rounded-xl flex items-start gap-2.5">
+            <CheckCircle size={16} className="text-neighborhood-green flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-neighborhood-green font-medium leading-snug">
               Account created! Enter your password below to continue.
             </p>
           </div>
         )}
 
         {error && (
-          <div className="mb-4 p-3 bg-red-900/30 border border-red-700/40 rounded-xl text-sm text-red-400 text-center">
+          <div className="mb-4 p-3 bg-error-container border border-error/30 rounded-xl text-sm text-error text-center">
             {error}
           </div>
         )}
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="text-sm font-medium text-zinc-300 block mb-1.5">Email</label>
+            <label className="text-sm font-medium text-on-surface block mb-1.5">Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full bg-[#141414] border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-zinc-500 focus:border-[#FF7A50] focus:ring-2 focus:ring-[#FF7A50]/20 transition-all"
+              className="w-full bg-surface-container-lowest border border-outline-variant/40 rounded-xl px-4 py-3 text-on-surface placeholder:text-outline focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-all"
               placeholder="driver@example.com"
             />
           </div>
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-sm font-medium text-zinc-300">Password</label>
-              <Link href="/forgot-password" className="text-xs text-[#FF7A50] font-semibold hover:underline">
+              <label className="text-sm font-medium text-on-surface">Password</label>
+              <Link href="/forgot-password" className="text-xs text-primary font-semibold hover:underline">
                 Forgot password?
               </Link>
             </div>
@@ -101,22 +101,22 @@ function LoginForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full bg-[#141414] border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-zinc-500 focus:border-[#FF7A50] focus:ring-2 focus:ring-[#FF7A50]/20 transition-all"
+              className="w-full bg-surface-container-lowest border border-outline-variant/40 rounded-xl px-4 py-3 text-on-surface placeholder:text-outline focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-all"
               placeholder="••••••••"
             />
           </div>
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#FF7A50] text-white rounded-xl py-4 font-bold text-base disabled:opacity-60 active:bg-[#E86B40] transition-colors mt-2"
+            className="w-full bg-primary-container text-on-primary rounded-xl py-4 font-bold text-base disabled:opacity-60 active:bg-primary transition-colors mt-2"
           >
             {loading ? 'Signing in…' : 'Sign In'}
           </button>
         </form>
 
-        <p className="text-center text-zinc-500 text-sm mt-6">
+        <p className="text-center text-on-surface-variant text-sm mt-6">
           New driver?{' '}
-          <Link href="/signup" className="text-[#FF7A50] font-semibold hover:underline">
+          <Link href="/signup" className="text-primary font-semibold hover:underline">
             Create an account
           </Link>
         </p>

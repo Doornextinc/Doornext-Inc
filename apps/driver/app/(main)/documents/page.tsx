@@ -61,10 +61,10 @@ const VEHICLE_EMOJI: Record<string, string> = {
 }
 
 const KYC_BADGE: Record<KycStatus, { label: string; classes: string }> = {
-  not_submitted: { label: 'Not Submitted', classes: 'bg-zinc-800 text-zinc-400 border-zinc-700' },
+  not_submitted: { label: 'Not Submitted', classes: 'bg-surface-container-high text-on-surface-variant border-zinc-700' },
   pending_review: { label: 'Pending Review', classes: 'bg-amber-500/15 text-amber-400 border-amber-500/30' },
-  approved: { label: 'Approved', classes: 'bg-green-500/15 text-green-400 border-green-500/30' },
-  rejected: { label: 'Rejected', classes: 'bg-red-500/15 text-red-400 border-red-500/30' },
+  approved: { label: 'Approved', classes: 'bg-neighborhood-green/15 text-neighborhood-green border-green-500/30' },
+  rejected: { label: 'Rejected', classes: 'bg-red-500/15 text-error border-red-500/30' },
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -109,10 +109,10 @@ function DocCard({
   }
 
   return (
-    <div className="bg-[#111] rounded-2xl border border-white/5 overflow-hidden flex flex-col">
+    <div className="bg-surface-container rounded-2xl border border-outline-variant/30 overflow-hidden flex flex-col">
       {/* Image area */}
       <div
-        className="relative bg-[#161616] flex items-center justify-center cursor-pointer"
+        className="relative bg-surface-container flex items-center justify-center cursor-pointer"
         style={{ height: 110 }}
         onClick={() => signedUrl && onPreview(signedUrl)}
       >
@@ -124,7 +124,7 @@ function DocCard({
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="flex flex-col items-center gap-1.5 text-zinc-700">
+          <div className="flex flex-col items-center gap-1.5 text-outline">
             <Upload size={22} />
             <span className="text-[10px] font-medium">No file</span>
           </div>
@@ -134,13 +134,13 @@ function DocCard({
       {/* Info + upload */}
       <div className="p-3 flex flex-col gap-2 flex-1">
         <div className="flex items-center justify-between gap-1">
-          <p className="text-[12px] font-bold text-white leading-tight">{title}</p>
+          <p className="text-[12px] font-bold text-on-surface leading-tight">{title}</p>
           {uploaded ? (
-            <span className="flex items-center gap-1 text-[10px] font-bold text-green-400 bg-green-500/10 border border-green-500/20 rounded-full px-2 py-0.5 flex-shrink-0">
+            <span className="flex items-center gap-1 text-[10px] font-bold text-neighborhood-green bg-neighborhood-green/10 border border-green-500/20 rounded-full px-2 py-0.5 flex-shrink-0">
               <CheckCircle2 size={9} /> Uploaded
             </span>
           ) : (
-            <span className="flex items-center gap-1 text-[10px] font-bold text-red-400 bg-red-500/10 border border-red-500/20 rounded-full px-2 py-0.5 flex-shrink-0">
+            <span className="flex items-center gap-1 text-[10px] font-bold text-error bg-red-500/10 border border-red-500/20 rounded-full px-2 py-0.5 flex-shrink-0">
               <XCircle size={9} /> Required
             </span>
           )}
@@ -159,7 +159,7 @@ function DocCard({
             <button
               disabled={locked}
               onClick={() => inputRefs.current[i]?.click()}
-              className="w-full py-1.5 rounded-xl border border-white/8 text-[11px] font-bold text-zinc-400 hover:text-white hover:border-white/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+              className="w-full py-1.5 rounded-xl border border-outline-variant/30 text-[11px] font-bold text-on-surface-variant hover:text-on-surface hover:border-white/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
             >
               <Upload size={11} />
               {slot.label}
@@ -360,14 +360,14 @@ export default function DocumentsPage() {
   // ── Loading skeleton ────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="flex flex-col min-h-full bg-[#080808]">
-        <div className="h-[60px] bg-[#111] border-b border-white/5 animate-pulse" />
+      <div className="flex flex-col min-h-full bg-background">
+        <div className="h-[60px] bg-surface-container border-b border-outline-variant/30 animate-pulse" />
         <div className="p-4 space-y-3">
-          <div className="h-24 bg-[#111] rounded-2xl animate-pulse" />
-          <div className="h-36 bg-[#111] rounded-2xl animate-pulse" />
+          <div className="h-24 bg-surface-container rounded-2xl animate-pulse" />
+          <div className="h-36 bg-surface-container rounded-2xl animate-pulse" />
           <div className="grid grid-cols-2 gap-3">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-48 bg-[#111] rounded-2xl animate-pulse" />
+              <div key={i} className="h-48 bg-surface-container rounded-2xl animate-pulse" />
             ))}
           </div>
         </div>
@@ -376,20 +376,20 @@ export default function DocumentsPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-full bg-[#080808]">
+    <div className="flex flex-col min-h-full bg-background">
       <AppHeader title="Documents" showBack />
 
       <div className="p-4 space-y-4 pb-10">
 
         {/* ── Compliance status banner ──────────────────────────────────────── */}
-        <div className="bg-[#111] rounded-2xl border border-white/5 p-4">
+        <div className="bg-surface-container rounded-2xl border border-outline-variant/30 p-4">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-9 h-9 rounded-xl bg-[#FF7A50]/10 flex items-center justify-center flex-shrink-0">
-              <ShieldCheck size={18} className="text-[#FF7A50]" />
+            <div className="w-9 h-9 rounded-xl bg-primary-fixed flex items-center justify-center flex-shrink-0">
+              <ShieldCheck size={18} className="text-primary" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <p className="text-sm font-bold text-white">
+                <p className="text-sm font-bold text-on-surface">
                   {uploadedCount} of 5 documents uploaded
                 </p>
                 <span className={`text-[10px] font-bold border rounded-full px-2 py-0.5 ${badge.classes}`}>
@@ -400,7 +400,7 @@ export default function DocumentsPage() {
           </div>
 
           {/* Progress bar */}
-          <div className="h-2 bg-zinc-800 rounded-full overflow-hidden mb-4">
+          <div className="h-2 bg-surface-container-high rounded-full overflow-hidden mb-4">
             <div
               className="h-full rounded-full transition-all duration-500"
               style={{
@@ -413,7 +413,7 @@ export default function DocumentsPage() {
           {!isApproved && (
             <button
               onClick={() => router.push('/onboarding')}
-              className="w-full bg-[#FF7A50] text-white font-black text-sm py-3 rounded-xl active:scale-[0.98] transition-all"
+              className="w-full bg-primary-container text-on-primary font-black text-sm py-3 rounded-xl active:scale-[0.98] transition-all"
             >
               Complete Verification
             </button>
@@ -440,16 +440,16 @@ export default function DocumentsPage() {
         )}
 
         {/* ── Vehicle information card ──────────────────────────────────────── */}
-        <div className="bg-[#111] rounded-2xl border border-white/5 overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3.5 border-b border-white/5">
+        <div className="bg-surface-container rounded-2xl border border-outline-variant/30 overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3.5 border-b border-outline-variant/30">
             <div className="flex items-center gap-2.5">
-              <Car size={16} className="text-zinc-500" />
-              <p className="text-sm font-bold text-white">Vehicle Information</p>
+              <Car size={16} className="text-on-surface-variant" />
+              <p className="text-sm font-bold text-on-surface">Vehicle Information</p>
             </div>
             {!isPending && (
               <button
                 onClick={() => setEditingVehicle((v) => !v)}
-                className="flex items-center gap-1.5 text-[11px] font-bold text-zinc-400 hover:text-white transition-colors"
+                className="flex items-center gap-1.5 text-[11px] font-bold text-on-surface-variant hover:text-on-surface transition-colors"
               >
                 <Pencil size={12} />
                 {editingVehicle ? 'Cancel' : 'Edit'}
@@ -467,7 +467,7 @@ export default function DocumentsPage() {
                 { key: 'vehicle_plate', label: 'Plate', placeholder: 'e.g. ABC-1234' },
               ].map(({ key, label, placeholder }) => (
                 <div key={key}>
-                  <label className="block text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">
+                  <label className="block text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">
                     {label}
                   </label>
                   <input
@@ -477,17 +477,17 @@ export default function DocumentsPage() {
                       setVehicleForm((prev) => ({ ...prev, [key]: e.target.value }))
                     }
                     placeholder={placeholder}
-                    className="w-full bg-[#1A1A1A] border border-white/8 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-zinc-700 focus:outline-none focus:border-[#FF7A50]/50"
+                    className="w-full bg-surface-container-high border border-outline-variant/30 rounded-xl px-3 py-2.5 text-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary-container/50"
                   />
                 </div>
               ))}
               {vehicleError && (
-                <p className="text-xs text-red-400">{vehicleError}</p>
+                <p className="text-xs text-error">{vehicleError}</p>
               )}
               <button
                 disabled={savingVehicle}
                 onClick={handleSaveVehicle}
-                className="w-full bg-[#FF7A50] text-white font-black text-sm py-3 rounded-xl disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full bg-primary-container text-on-primary font-black text-sm py-3 rounded-xl disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {savingVehicle ? (
                   <><Loader2 size={14} className="animate-spin" /> Saving…</>
@@ -499,26 +499,26 @@ export default function DocumentsPage() {
           ) : (
             <div className="p-4 grid grid-cols-2 gap-3">
               <div>
-                <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-wider mb-0.5">Type</p>
-                <p className="text-sm text-white font-semibold">
+                <p className="text-[10px] font-bold text-outline uppercase tracking-wider mb-0.5">Type</p>
+                <p className="text-sm text-on-surface font-semibold">
                   {vehicleEmoji} {doc?.vehicle_type ?? '—'}
                 </p>
               </div>
               <div>
-                <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-wider mb-0.5">Make / Model</p>
-                <p className="text-sm text-white font-semibold">{doc?.vehicle_make ?? '—'}</p>
+                <p className="text-[10px] font-bold text-outline uppercase tracking-wider mb-0.5">Make / Model</p>
+                <p className="text-sm text-on-surface font-semibold">{doc?.vehicle_make ?? '—'}</p>
               </div>
               <div>
-                <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-wider mb-0.5">Year</p>
-                <p className="text-sm text-white font-semibold">{doc?.vehicle_year ?? '—'}</p>
+                <p className="text-[10px] font-bold text-outline uppercase tracking-wider mb-0.5">Year</p>
+                <p className="text-sm text-on-surface font-semibold">{doc?.vehicle_year ?? '—'}</p>
               </div>
               <div>
-                <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-wider mb-0.5">Color</p>
-                <p className="text-sm text-white font-semibold">{doc?.vehicle_color ?? '—'}</p>
+                <p className="text-[10px] font-bold text-outline uppercase tracking-wider mb-0.5">Color</p>
+                <p className="text-sm text-on-surface font-semibold">{doc?.vehicle_color ?? '—'}</p>
               </div>
               <div className="col-span-2">
-                <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-wider mb-0.5">Plate</p>
-                <p className="text-sm text-white font-semibold font-mono tracking-widest">
+                <p className="text-[10px] font-bold text-outline uppercase tracking-wider mb-0.5">Plate</p>
+                <p className="text-sm text-on-surface font-semibold font-mono tracking-widest">
                   {doc?.vehicle_plate ?? '—'}
                 </p>
               </div>
@@ -528,7 +528,7 @@ export default function DocumentsPage() {
 
         {/* ── Required Documents grid ───────────────────────────────────────── */}
         <div>
-          <p className="text-xs font-bold text-zinc-600 uppercase tracking-widest mb-3 px-1">
+          <p className="text-xs font-bold text-outline uppercase tracking-widest mb-3 px-1">
             Required Documents
           </p>
           <div className="grid grid-cols-2 gap-3">
@@ -615,7 +615,7 @@ export default function DocumentsPage() {
             className="absolute top-5 right-5 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center"
             onClick={() => setPreviewUrl(null)}
           >
-            <X size={18} className="text-white" />
+            <X size={18} className="text-on-surface" />
           </button>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img

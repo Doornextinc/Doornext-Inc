@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useDriverStore } from '@/store/driver-store'
 import { Zap, Star, Package, TrendingUp, ChevronDown, ChevronRight, Clock, DollarSign } from 'lucide-react'
 import { AppHeader } from '@/components/layout/app-header'
-import { SegmentedControl } from '@/components/ui/list'
+import { SegmentedControl } from '@/components/ui/kit'
 
 /* ─── types ─── */
 type Delivery = { id: string; driver_payout: number; tip_amount: number; created_at: string }
@@ -129,17 +129,17 @@ export default function EarningsPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col min-h-full bg-[#080808]">
-        <div className="h-14 bg-[#111] border-b border-white/5 animate-pulse" />
+      <div className="flex flex-col min-h-full bg-background">
+        <div className="h-14 bg-surface-container border-b border-outline-variant/30 animate-pulse" />
         <div className="p-4 space-y-3">
-          {[1, 2, 3, 4].map(i => <div key={i} className="h-20 bg-[#111] rounded-2xl animate-pulse" />)}
+          {[1, 2, 3, 4].map(i => <div key={i} className="h-20 bg-surface-container rounded-2xl animate-pulse" />)}
         </div>
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col min-h-full bg-[#080808]">
+    <div className="flex flex-col min-h-full bg-background">
       <AppHeader title="Earnings" />
 
       <div className="p-4 space-y-4">
@@ -151,41 +151,41 @@ export default function EarningsPage() {
         />
 
         {/* ── Hero earnings + cash out ── */}
-        <div className="bg-[#111] rounded-2xl border border-white/5 overflow-hidden">
+        <div className="bg-surface-container rounded-2xl border border-outline-variant/30 overflow-hidden">
           {/* Period label + total */}
           <div className="px-5 pt-5 pb-4">
-            <p className="text-xs text-zinc-500 font-bold uppercase tracking-widest mb-2">
+            <p className="text-xs text-on-surface-variant font-bold uppercase tracking-widest mb-2">
               {PERIOD_LABELS[period]}
             </p>
-            <p className="text-5xl font-black text-white tracking-tight leading-none">
+            <p className="text-5xl font-black text-on-surface tracking-tight leading-none">
               ${totalEarnings.toFixed(2)}
             </p>
-            <p className="text-xs text-zinc-600 mt-2">
+            <p className="text-xs text-outline mt-2">
               {filtered.length} {filtered.length === 1 ? 'delivery' : 'deliveries'}
-              {totalTips > 0 && <span className="text-green-500/80"> · ${totalTips.toFixed(2)} in tips</span>}
+              {totalTips > 0 && <span className="text-neighborhood-green/80"> · ${totalTips.toFixed(2)} in tips</span>}
             </p>
           </div>
 
           {/* Divider */}
-          <div className="h-px bg-white/5 mx-5" />
+          <div className="h-px bg-surface-container-low mx-5" />
 
           {/* Available to cash out */}
           <div className="px-5 py-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-zinc-500 font-semibold uppercase tracking-wider mb-1">
+                <p className="text-xs text-on-surface-variant font-semibold uppercase tracking-wider mb-1">
                   Available to Cash Out
                 </p>
                 <div className="flex items-baseline gap-2">
-                  <p className="text-3xl font-black text-[#FF7A50]">${availableCashOut.toFixed(2)}</p>
+                  <p className="text-3xl font-black text-primary">${availableCashOut.toFixed(2)}</p>
                   {allTimeEarnings > 0 && (
-                    <p className="text-xs text-zinc-600">of ${allTimeEarnings.toFixed(2)} all-time</p>
+                    <p className="text-xs text-outline">of ${allTimeEarnings.toFixed(2)} all-time</p>
                   )}
                 </div>
-                <p className="text-[10px] text-zinc-700 mt-1">All-time earnings minus prior withdrawals</p>
+                <p className="text-[10px] text-outline mt-1">All-time earnings minus prior withdrawals</p>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-[#FF7A50]/10 flex items-center justify-center">
-                <DollarSign size={22} className="text-[#FF7A50]" />
+              <div className="w-12 h-12 rounded-xl bg-primary-fixed flex items-center justify-center">
+                <DollarSign size={22} className="text-primary" />
               </div>
             </div>
           </div>
@@ -193,17 +193,17 @@ export default function EarningsPage() {
           {/* Cash Out button / modal */}
           <div className="px-4 pb-5">
             {cashOutSuccess ? (
-              <div className="w-full bg-green-500/15 border border-green-500/30 rounded-2xl py-4 text-center">
-                <p className="text-green-400 font-bold text-sm">✓ Withdrawal request submitted!</p>
-                <p className="text-zinc-600 text-xs mt-1">Admin will process within 1–2 business days</p>
+              <div className="w-full bg-neighborhood-green/15 border border-green-500/30 rounded-2xl py-4 text-center">
+                <p className="text-neighborhood-green font-bold text-sm">✓ Withdrawal request submitted!</p>
+                <p className="text-outline text-xs mt-1">Admin will process within 1–2 business days</p>
               </div>
             ) : pendingWithdrawal ? (
-              <div className="w-full bg-[#1A1A1A] border border-yellow-500/20 rounded-2xl px-4 py-3.5 flex items-center gap-3">
+              <div className="w-full bg-surface-container-high border border-yellow-500/20 rounded-2xl px-4 py-3.5 flex items-center gap-3">
                 <span className="text-xl flex-shrink-0">⏳</span>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-bold text-yellow-400">Pending Withdrawal</p>
-                  <p className="text-sm font-black text-white mt-0.5">${Number(pendingWithdrawal.amount).toFixed(2)}</p>
-                  <p className="text-[10px] text-zinc-600 mt-0.5">
+                  <p className="text-sm font-black text-on-surface mt-0.5">${Number(pendingWithdrawal.amount).toFixed(2)}</p>
+                  <p className="text-[10px] text-outline mt-0.5">
                     {pendingWithdrawal.method.replace('_', ' ')} · Submitted {new Date(pendingWithdrawal.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </p>
                 </div>
@@ -211,9 +211,9 @@ export default function EarningsPage() {
             ) : showCashOut ? (
               <div className="space-y-3">
                 <div>
-                  <p className="text-xs text-zinc-500 font-semibold uppercase tracking-wider mb-1.5">Amount</p>
-                  <div className="flex items-center bg-[#1A1A1A] border border-white/10 rounded-xl px-4 h-11 gap-1">
-                    <span className="text-zinc-400 font-bold text-sm">$</span>
+                  <p className="text-xs text-on-surface-variant font-semibold uppercase tracking-wider mb-1.5">Amount</p>
+                  <div className="flex items-center bg-surface-container-high border border-outline-variant/40 rounded-xl px-4 h-11 gap-1">
+                    <span className="text-on-surface-variant font-bold text-sm">$</span>
                     <input
                       type="number"
                       min="1"
@@ -221,32 +221,32 @@ export default function EarningsPage() {
                       step="0.01"
                       value={cashOutAmount}
                       onChange={e => setCashOutAmount(e.target.value)}
-                      className="flex-1 bg-transparent text-white font-bold text-sm focus:outline-none"
+                      className="flex-1 bg-transparent text-on-surface font-bold text-sm focus:outline-none"
                     />
                     <button
                       onClick={() => setCashOutAmount(availableCashOut.toFixed(2))}
-                      className="text-[10px] font-black text-[#FF7A50] uppercase tracking-wide"
+                      className="text-[10px] font-black text-primary uppercase tracking-wide"
                     >
                       Max
                     </button>
                   </div>
                 </div>
                 <div>
-                  <p className="text-xs text-zinc-500 font-semibold uppercase tracking-wider mb-1.5">Payout method</p>
+                  <p className="text-xs text-on-surface-variant font-semibold uppercase tracking-wider mb-1.5">Payout method</p>
                   <div className="grid grid-cols-2 gap-2">
                     {([['bank_transfer', 'Bank Transfer'], ['stripe', 'Stripe']] as const).map(([val, label]) => (
                       <button key={val} onClick={() => setCashOutMethod(val)}
                         className={`py-2.5 rounded-xl text-xs font-bold border transition-colors ${
-                          cashOutMethod === val ? 'border-[#FF7A50] bg-[#FF7A50]/10 text-[#FF7A50]' : 'border-white/10 text-zinc-500'
+                          cashOutMethod === val ? 'border-primary-container bg-primary-fixed text-primary' : 'border-outline-variant/40 text-on-surface-variant'
                         }`}
                       >{label}</button>
                     ))}
                   </div>
                 </div>
-                {cashOutError && <p className="text-xs text-red-400">{cashOutError}</p>}
+                {cashOutError && <p className="text-xs text-error">{cashOutError}</p>}
                 <div className="flex gap-2">
                   <button onClick={() => { setShowCashOut(false); setCashOutError(null) }}
-                    className="flex-1 py-3 rounded-2xl border border-white/10 text-zinc-500 text-sm font-bold">
+                    className="flex-1 py-3 rounded-2xl border border-outline-variant/40 text-on-surface-variant text-sm font-bold">
                     Cancel
                   </button>
                   <button
@@ -264,7 +264,7 @@ export default function EarningsPage() {
                       if (!res.ok) { setCashOutError(data.error ?? 'Failed to submit request'); setCashOutLoading(false); return }
                       setCashOutSuccess(true); setShowCashOut(false); setCashOutLoading(false)
                     }}
-                    className="flex-1 py-3 rounded-2xl bg-[#FF7A50] text-white text-sm font-black disabled:opacity-50"
+                    className="flex-1 py-3 rounded-2xl bg-primary-container text-on-primary text-sm font-black disabled:opacity-50"
                   >
                     {cashOutLoading ? 'Submitting…' : `Request $${parseFloat(cashOutAmount || '0').toFixed(2)}`}
                   </button>
@@ -274,7 +274,7 @@ export default function EarningsPage() {
               <button
                 disabled={availableCashOut < 1}
                 onClick={() => { setShowCashOut(true); setCashOutAmount(availableCashOut.toFixed(2)) }}
-                className="w-full bg-[#1A1A1A] disabled:bg-[#111] disabled:text-zinc-700 border border-white/8 text-[#FF7A50] font-black text-sm py-2.5 rounded-xl active:scale-[0.98] transition-all"
+                className="w-full bg-surface-container-high disabled:bg-surface-container disabled:text-outline border border-outline-variant/30 text-primary font-black text-sm py-2.5 rounded-xl active:scale-[0.98] transition-all"
               >
                 {availableCashOut >= 1 ? `Cash Out $${availableCashOut.toFixed(2)}` : 'Nothing to Cash Out'}
               </button>
@@ -283,8 +283,8 @@ export default function EarningsPage() {
         </div>
 
         {/* ── 7-Day Bar Chart ── */}
-        <div className="bg-[#111] rounded-2xl border border-white/5 px-4 pt-4 pb-5">
-          <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-4">Last 7 Days</p>
+        <div className="bg-surface-container rounded-2xl border border-outline-variant/30 px-4 pt-4 pb-5">
+          <p className="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-4">Last 7 Days</p>
           <div className="flex items-end gap-2 h-20">
             {weekChart.map((day, i) => {
               const pct = day.total > 0 ? Math.max((day.total / maxBar) * 100, 10) : 4
@@ -295,12 +295,12 @@ export default function EarningsPage() {
                     <div
                       style={{ height: `${pct}%` }}
                       className={`w-full rounded-t-md transition-all ${
-                        day.isToday ? 'bg-[#FF7A50]' : day.total > 0 ? 'bg-zinc-700' : 'bg-zinc-800/60'
+                        day.isToday ? 'bg-primary-container' : day.total > 0 ? 'bg-outline-variant' : 'bg-surface-container-high'
                       }`}
                       title={day.total > 0 ? `$${day.total.toFixed(2)}` : ''}
                     />
                   </div>
-                  <span className={`text-[10px] font-bold ${day.isToday ? 'text-[#FF7A50]' : 'text-zinc-700'}`}>
+                  <span className={`text-[10px] font-bold ${day.isToday ? 'text-primary' : 'text-outline'}`}>
                     {day.shortLabel}
                   </span>
                 </div>
@@ -308,18 +308,18 @@ export default function EarningsPage() {
             })}
           </div>
           {/* Summary row */}
-          <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-white/5">
+          <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-outline-variant/30">
             <div className="text-center">
-              <p className="font-black text-white">{profile?.total_deliveries ?? deliveries.length}</p>
-              <p className="text-[10px] text-zinc-600 mt-0.5">Total</p>
+              <p className="font-black text-on-surface">{profile?.total_deliveries ?? deliveries.length}</p>
+              <p className="text-[10px] text-outline mt-0.5">Total</p>
             </div>
-            <div className="text-center border-x border-white/5">
-              <p className="font-black text-white">{profile?.avg_rating?.toFixed(1) ?? '—'}</p>
-              <p className="text-[10px] text-zinc-600 mt-0.5">Rating</p>
+            <div className="text-center border-x border-outline-variant/30">
+              <p className="font-black text-on-surface">{profile?.avg_rating?.toFixed(1) ?? '—'}</p>
+              <p className="text-[10px] text-outline mt-0.5">Rating</p>
             </div>
             <div className="text-center">
-              <p className="font-black text-white">${filtered.length > 0 ? (totalEarnings / filtered.length).toFixed(2) : '0.00'}</p>
-              <p className="text-[10px] text-zinc-600 mt-0.5">Per trip</p>
+              <p className="font-black text-on-surface">${filtered.length > 0 ? (totalEarnings / filtered.length).toFixed(2) : '0.00'}</p>
+              <p className="text-[10px] text-outline mt-0.5">Per trip</p>
             </div>
           </div>
         </div>
@@ -327,62 +327,62 @@ export default function EarningsPage() {
         {/* ── Daily Breakdown (accordion) ── */}
         {dailyRows.length > 0 && (
           <div className="space-y-2">
-            <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1">Daily Breakdown</p>
-            <div className="bg-[#111] rounded-2xl border border-white/5 overflow-hidden divide-y divide-white/5">
+            <p className="text-xs font-bold text-on-surface-variant uppercase tracking-widest px-1">Daily Breakdown</p>
+            <div className="bg-surface-container rounded-2xl border border-outline-variant/30 overflow-hidden divide-y divide-outline-variant/20">
               {dailyRows.map((day, i) => {
                 const isOpen = expandedDay === i
                 return (
                   <div key={i}>
                     <button
                       onClick={() => setExpandedDay(isOpen ? null : i)}
-                      className="w-full flex items-center justify-between px-4 py-3.5 active:bg-white/5"
+                      className="w-full flex items-center justify-between px-4 py-3.5 active:bg-surface-container-low"
                     >
                       <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${day.isToday ? 'bg-[#FF7A50]/15' : 'bg-[#1A1A1A]'}`}>
-                          <Clock size={13} className={day.isToday ? 'text-[#FF7A50]' : 'text-zinc-500'} />
+                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${day.isToday ? 'bg-primary-fixed' : 'bg-surface-container-high'}`}>
+                          <Clock size={13} className={day.isToday ? 'text-primary' : 'text-on-surface-variant'} />
                         </div>
                         <div className="text-left">
-                          <p className={`text-sm font-bold ${day.isToday ? 'text-[#FF7A50]' : 'text-white'}`}>
+                          <p className={`text-sm font-bold ${day.isToday ? 'text-primary' : 'text-on-surface'}`}>
                             {day.isToday ? 'Today' : day.label}
                           </p>
-                          <p className="text-[11px] text-zinc-500 mt-0.5">{day.count} {day.count === 1 ? 'delivery' : 'deliveries'}</p>
+                          <p className="text-[11px] text-on-surface-variant mt-0.5">{day.count} {day.count === 1 ? 'delivery' : 'deliveries'}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className={`text-sm font-black ${day.isToday ? 'text-[#FF7A50]' : 'text-white'}`}>
+                        <span className={`text-sm font-black ${day.isToday ? 'text-primary' : 'text-on-surface'}`}>
                           ${day.total.toFixed(2)}
                         </span>
                         {isOpen
-                          ? <ChevronDown size={14} className="text-zinc-500" />
-                          : <ChevronRight size={14} className="text-zinc-600" />
+                          ? <ChevronDown size={14} className="text-on-surface-variant" />
+                          : <ChevronRight size={14} className="text-outline" />
                         }
                       </div>
                     </button>
 
                     {isOpen && (
-                      <div className="bg-[#0D0D0D] divide-y divide-white/5">
+                      <div className="bg-surface-container-low divide-y divide-outline-variant/20">
                         {day.deliveries.map(d => (
                           <div key={d.id} className="flex items-center justify-between px-4 py-3">
                             <div className="flex items-center gap-3">
-                              <div className="w-1.5 h-1.5 rounded-full bg-zinc-700 ml-2.5" />
+                              <div className="w-1.5 h-1.5 rounded-full bg-outline-variant ml-2.5" />
                               <div>
-                                <p className="text-sm text-zinc-300 font-medium">#{d.id.slice(-6).toUpperCase()}</p>
-                                <p className="text-[11px] text-zinc-600">
+                                <p className="text-sm text-on-surface font-medium">#{d.id.slice(-6).toUpperCase()}</p>
+                                <p className="text-[11px] text-outline">
                                   {new Date(d.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
                                 </p>
                               </div>
                             </div>
                             <div className="text-right">
-                              <p className="text-sm font-black text-[#FF7A50]">+${d.driver_payout.toFixed(2)}</p>
+                              <p className="text-sm font-black text-primary">+${d.driver_payout.toFixed(2)}</p>
                               {d.tip_amount > 0 && (
-                                <p className="text-[11px] text-green-500">+${d.tip_amount.toFixed(2)} tip</p>
+                                <p className="text-[11px] text-neighborhood-green">+${d.tip_amount.toFixed(2)} tip</p>
                               )}
                             </div>
                           </div>
                         ))}
-                        <div className="flex items-center justify-between px-4 py-2.5 border-t border-white/5">
-                          <span className="text-xs font-semibold text-zinc-600 pl-7">Subtotal</span>
-                          <span className="text-xs font-black text-white">${day.total.toFixed(2)}</span>
+                        <div className="flex items-center justify-between px-4 py-2.5 border-t border-outline-variant/30">
+                          <span className="text-xs font-semibold text-outline pl-7">Subtotal</span>
+                          <span className="text-xs font-black text-on-surface">${day.total.toFixed(2)}</span>
                         </div>
                       </div>
                     )}
@@ -396,30 +396,30 @@ export default function EarningsPage() {
         {/* Empty state for breakdown */}
         {dailyRows.length === 0 && !loading && (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-16 h-16 rounded-full bg-[#111] border border-white/5 flex items-center justify-center mb-4">
-              <TrendingUp size={28} className="text-zinc-700" />
+            <div className="w-16 h-16 rounded-full bg-surface-container border border-outline-variant/30 flex items-center justify-center mb-4">
+              <TrendingUp size={28} className="text-outline" />
             </div>
-            <p className="text-zinc-500 font-semibold">No deliveries yet</p>
-            <p className="text-zinc-700 text-sm mt-1">Your completed deliveries will appear here</p>
+            <p className="text-on-surface-variant font-semibold">No deliveries yet</p>
+            <p className="text-outline text-sm mt-1">Your completed deliveries will appear here</p>
           </div>
         )}
 
         {/* ── Available Missions ── */}
         <div className="space-y-2">
           <div className="flex items-center justify-between px-1">
-            <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Available Missions</p>
-            <span className="text-[10px] font-bold text-[#FF7A50] bg-[#FF7A50]/10 px-2 py-0.5 rounded-full">
+            <p className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Available Missions</p>
+            <span className="text-[10px] font-bold text-primary bg-primary-fixed px-2 py-0.5 rounded-full">
               Resets daily
             </span>
           </div>
 
           {missions.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-10 text-center bg-[#111] rounded-2xl border border-white/5">
-              <p className="text-zinc-500 font-semibold text-sm">No active missions right now</p>
-              <p className="text-zinc-700 text-xs mt-1">Check back soon for new challenges</p>
+            <div className="flex flex-col items-center justify-center py-10 text-center bg-surface-container rounded-2xl border border-outline-variant/30">
+              <p className="text-on-surface-variant font-semibold text-sm">No active missions right now</p>
+              <p className="text-outline text-xs mt-1">Check back soon for new challenges</p>
             </div>
           ) : (
-          <div className="bg-[#111] rounded-2xl border border-white/5 overflow-hidden divide-y divide-white/5">
+          <div className="bg-surface-container rounded-2xl border border-outline-variant/30 overflow-hidden divide-y divide-outline-variant/20">
             {missions.map((m) => {
               // Use today's delivery count as proxy for deliveries-type missions
               const progress = Math.min(m.mission_type === 'deliveries' ? todayCount : 0, m.target_value)
@@ -429,26 +429,26 @@ export default function EarningsPage() {
               return (
                 <div key={m.id} className={`px-4 py-4 ${complete ? 'opacity-60' : ''}`}>
                   <div className="flex items-start gap-3">
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-xl flex-shrink-0 ${complete ? 'bg-green-500/10' : 'bg-[#FF7A50]/10'}`}>
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-xl flex-shrink-0 ${complete ? 'bg-neighborhood-green/10' : 'bg-primary-fixed'}`}>
                       {complete ? '✅' : m.icon}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2 mb-2">
-                        <p className={`text-sm font-bold leading-tight ${complete ? 'line-through text-zinc-600' : 'text-white'}`}>
+                        <p className={`text-sm font-bold leading-tight ${complete ? 'line-through text-outline' : 'text-on-surface'}`}>
                           {m.title}
                         </p>
-                        <span className={`text-xs font-black flex-shrink-0 ${complete ? 'text-green-400' : 'text-[#FF7A50]'}`}>
+                        <span className={`text-xs font-black flex-shrink-0 ${complete ? 'text-neighborhood-green' : 'text-primary'}`}>
                           +${m.reward_amount.toFixed(2)}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <div className="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                        <div className="flex-1 h-1.5 bg-surface-container-high rounded-full overflow-hidden">
                           <div
-                            className={`h-full rounded-full transition-all ${complete ? 'bg-green-500' : 'bg-gradient-to-r from-[#FF7A50] to-[#FF8C5A]'}`}
+                            className={`h-full rounded-full transition-all ${complete ? 'bg-neighborhood-green' : 'bg-gradient-to-r from-primary-container to-primary'}`}
                             style={{ width: `${pct}%` }}
                           />
                         </div>
-                        <span className="text-[10px] font-bold text-zinc-600 flex-shrink-0">
+                        <span className="text-[10px] font-bold text-outline flex-shrink-0">
                           {progress}/{m.target_value}
                         </span>
                       </div>
@@ -462,15 +462,15 @@ export default function EarningsPage() {
 
           {/* Missions total potential */}
           {missions.length > 0 && (
-          <div className="flex items-center gap-3 px-4 py-3 bg-[#111] rounded-2xl border border-white/5">
-            <div className="w-8 h-8 rounded-xl bg-[#FF7A50]/10 flex items-center justify-center flex-shrink-0">
-              <Zap size={15} className="text-[#FF7A50]" />
+          <div className="flex items-center gap-3 px-4 py-3 bg-surface-container rounded-2xl border border-outline-variant/30">
+            <div className="w-8 h-8 rounded-xl bg-primary-fixed flex items-center justify-center flex-shrink-0">
+              <Zap size={15} className="text-primary" />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-bold text-white">Complete all missions</p>
-              <p className="text-xs text-zinc-600">Earn up to ${missions.reduce((s, m) => s + m.reward_amount, 0).toFixed(2)} in bonuses today</p>
+              <p className="text-sm font-bold text-on-surface">Complete all missions</p>
+              <p className="text-xs text-outline">Earn up to ${missions.reduce((s, m) => s + m.reward_amount, 0).toFixed(2)} in bonuses today</p>
             </div>
-            <span className="font-black text-[#FF7A50] text-sm">${missions.reduce((s, m) => s + m.reward_amount, 0).toFixed(2)}</span>
+            <span className="font-black text-primary text-sm">${missions.reduce((s, m) => s + m.reward_amount, 0).toFixed(2)}</span>
           </div>
           )}
         </div>
