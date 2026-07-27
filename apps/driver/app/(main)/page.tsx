@@ -6,7 +6,7 @@ import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { createClient } from '@/lib/supabase/client'
 import { useDriverStore } from '@/store/driver-store'
-import { ChevronRight, AlertTriangle, MapPin, Clock, Plus, CheckCircle, Star, Menu, X, Truck } from 'lucide-react'
+import { ChevronRight, AlertTriangle, MapPin, Clock, Plus, CheckCircle, Star, Menu, X, Truck, Bell } from 'lucide-react'
 import { haversineDistance, formatDistance, formatPriceDollars, estimateMinutes, formatEta } from '@doornext/shared/utils'
 import { playWithHaptic, initAudio } from '@/lib/notification-sounds'
 import type { StackCandidate } from '@/app/api/driver/stack-candidates/route'
@@ -375,9 +375,8 @@ export default function HomePage() {
         <LiveMap lat={lat} lng={lng} isOnline={isOnline} />
       </div>
 
-      {/* Subtle top + bottom gradients for legibility of floating controls */}
-      <div className="absolute top-0 left-0 right-0 h-44 pointer-events-none bg-gradient-to-b from-[#080808]/75 via-[#080808]/30 to-transparent" />
-      <div className="absolute bottom-0 left-0 right-0 h-1/3 pointer-events-none bg-gradient-to-t from-[#080808]/60 via-[#080808]/20 to-transparent" />
+      {/* Soft light wash at top so the status bar + floating controls stay legible on the light map */}
+      <div className="absolute top-0 left-0 right-0 h-44 pointer-events-none bg-gradient-to-b from-surface/85 via-surface/40 to-transparent" />
 
       {/* ── Online/Offline transition splash ── */}
       {transitioning && (
@@ -390,10 +389,10 @@ export default function HomePage() {
           `}</style>
           <div className="relative flex items-center justify-center" style={{ width: 160, height: 160 }}>
             <svg className="absolute inset-0 -rotate-90" width="160" height="160" viewBox="0 0 160 160">
-              <circle cx="80" cy="80" r="68" fill="none" stroke="#1a1a1a" strokeWidth="4" />
+              <circle cx="80" cy="80" r="68" fill="none" stroke="#f7ddd4" strokeWidth="4" />
               <circle
                 cx="80" cy="80" r="68" fill="none"
-                stroke={transitionTarget ? '#4ade80' : '#FF7A50'}
+                stroke={transitionTarget ? '#2D6A4F' : '#a63b00'}
                 strokeWidth="4"
                 strokeLinecap="round"
                 strokeDasharray="427.3"
@@ -401,18 +400,17 @@ export default function HomePage() {
               />
             </svg>
             <div
-              className="w-28 h-28 rounded-full flex flex-col items-center justify-center"
+              className="w-28 h-28 rounded-full flex flex-col items-center justify-center bg-primary"
               style={{
-                background: 'linear-gradient(145deg, #1e1e1e, #141414)',
-                boxShadow: '0 0 0 5px #1c1c1c, 0 0 0 9px #222',
+                boxShadow: '0 0 0 5px #fde3da, 0 0 0 9px #f7ddd4',
               }}
             >
               {transitionTarget ? (
-                <span className="text-on-surface font-black text-2xl tracking-wide">Go</span>
+                <span className="text-on-primary font-black text-2xl tracking-wide">Go</span>
               ) : (
                 <span className="flex flex-col items-center leading-none">
-                  <span className="text-on-surface font-black text-xl tracking-widest">Go</span>
-                  <span className="text-on-surface font-black text-xl tracking-widest">Off</span>
+                  <span className="text-on-primary font-black text-xl tracking-widest">Go</span>
+                  <span className="text-on-primary font-black text-xl tracking-widest">Off</span>
                 </span>
               )}
             </div>
@@ -433,19 +431,19 @@ export default function HomePage() {
           <button
             onClick={() => setSideMenuOpen(true)}
             aria-label="Open menu"
-            className="w-11 h-11 rounded-2xl bg-[#0f0f0f]/95 backdrop-blur border border-outline-variant/40 flex items-center justify-center shadow-xl active:scale-95 transition-transform flex-shrink-0"
+            className="w-11 h-11 rounded-full bg-surface/90 backdrop-blur border border-outline-variant/30 flex items-center justify-center shadow-lg shadow-primary/10 active:scale-95 transition-transform flex-shrink-0"
           >
-            <Menu size={20} className="text-on-surface" />
+            <Menu size={20} className="text-primary" />
           </button>
 
           {/* Status pill — Online/Offline toggle (the primary action) */}
           <button
             onClick={toggleOnline}
             disabled={toggling || transitioning}
-            className={`flex-1 h-11 rounded-2xl backdrop-blur border flex items-center justify-center gap-2 shadow-xl active:scale-[0.98] transition-all duration-200 disabled:opacity-60 ${
+            className={`flex-1 h-11 rounded-full backdrop-blur border flex items-center justify-center gap-2 shadow-lg shadow-primary/10 active:scale-[0.98] transition-all duration-200 disabled:opacity-60 ${
               isOnline
-                ? 'bg-neighborhood-green/15 border-green-500/40'
-                : 'bg-[#0f0f0f]/95 border-outline-variant/40'
+                ? 'bg-neighborhood-green/15 border-neighborhood-green/40'
+                : 'bg-surface/90 border-outline-variant/30'
             }`}
           >
             {isOnline ? (
@@ -470,11 +468,11 @@ export default function HomePage() {
           <Link
             href="/notifications"
             aria-label="Notifications and messages"
-            className="relative w-11 h-11 rounded-2xl bg-[#0f0f0f]/95 backdrop-blur border border-outline-variant/40 flex items-center justify-center shadow-xl active:scale-95 transition-transform flex-shrink-0"
+            className="relative w-11 h-11 rounded-full bg-surface/90 backdrop-blur border border-outline-variant/30 flex items-center justify-center shadow-lg shadow-primary/10 active:scale-95 transition-transform flex-shrink-0"
           >
-            <span className="text-base" aria-hidden>🔔</span>
+            <Bell size={18} className="text-primary" aria-hidden />
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-primary rounded-full border-2 border-[#080808] text-on-primary text-[10px] font-black flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-primary rounded-full border-2 border-surface text-on-primary text-[10px] font-black flex items-center justify-center">
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
@@ -531,7 +529,7 @@ export default function HomePage() {
           {data?.activeOrder ? (
             <Link
               href="/active"
-              className="relative block bg-gradient-to-r from-primary-container/20 via-[#FF7A50]/10 to-[#FF7A50]/5 border border-primary-container/30 rounded-2xl px-4 py-4 backdrop-blur-xl overflow-hidden active:scale-[0.99] transition-transform shadow-2xl"
+              className="relative block bg-gradient-to-r from-primary-fixed via-primary-fixed/60 to-surface-container-lowest/90 border border-primary-container/30 rounded-2xl px-4 py-4 backdrop-blur-xl overflow-hidden active:scale-[0.99] transition-transform shadow-lg shadow-primary/10"
             >
               <span
                 className="absolute -top-8 -right-8 w-24 h-24 rounded-full pointer-events-none"
@@ -782,12 +780,12 @@ export default function HomePage() {
                         />
                         {/* Delivery run distance badge — bottom-right overlay (only when we have coords) */}
                         {deliveryM != null && (
-                          <div className="absolute bottom-2 right-2 flex items-center gap-1 bg-black/70 backdrop-blur-sm rounded-lg px-2.5 py-1 pointer-events-none">
-                            <MapPin size={10} className="text-tertiary flex-shrink-0" />
-                            <span className="text-on-surface text-xs font-black">
+                          <div className="absolute bottom-2 right-2 flex items-center gap-1 bg-inverse-surface/85 backdrop-blur-sm rounded-lg px-2.5 py-1 pointer-events-none">
+                            <MapPin size={10} className="text-tertiary-fixed-dim flex-shrink-0" />
+                            <span className="text-inverse-on-surface text-xs font-black">
                               {formatDistance(deliveryM)}
                             </span>
-                            <span className="text-on-surface-variant text-[10px] font-semibold">delivery run</span>
+                            <span className="text-inverse-on-surface/70 text-[10px] font-semibold">delivery run</span>
                           </div>
                         )}
                       </div>
@@ -825,7 +823,7 @@ export default function HomePage() {
                       {/* Dashed connector line */}
                       <div className="flex items-center gap-2.5">
                         <div className="w-2.5 flex justify-center flex-shrink-0">
-                          <div className="w-px h-4 border-l-2 border-dashed border-zinc-600" />
+                          <div className="w-px h-4 border-l-2 border-dashed border-outline-variant" />
                         </div>
                         {/* Delivery run distance between the two stops (if no map is shown) */}
                         {!hasMap && deliveryM != null && (
@@ -1041,7 +1039,7 @@ export default function HomePage() {
             className="flex items-center gap-3 px-4 py-4 border-b border-outline-variant/30 active:bg-surface-container-low"
           >
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-primary-container flex items-center justify-center flex-shrink-0">
-              <span className="text-on-surface font-black text-base">
+              <span className="text-on-primary font-black text-base">
                 {(data?.profile?.full_name ?? firstName)[0]?.toUpperCase() ?? 'N'}
               </span>
             </div>

@@ -10,7 +10,7 @@
  * When lat/lng are missing or zero (null-island), the component attempts to
  * geocode the supplied address strings via Nominatim before rendering the map.
  *
- * The same dark CSS filter as LiveMap is applied for visual consistency.
+ * Natural light OSM tiles, matching LiveMap in the Neighborly Modern theme.
  */
 import { useMemo, useState, useEffect, useRef } from 'react'
 
@@ -131,11 +131,11 @@ export function RoutePreviewMap({
   // Loading skeleton while geocoding, or blank if no coords and no address to geocode
   if (!src || !pickupPct || !dropoffPct) {
     return (
-      <div className="w-full h-full bg-[#111] flex items-center justify-center">
+      <div className="w-full h-full bg-surface-container flex items-center justify-center">
         {geocoding && (
           <div className="flex flex-col items-center gap-2">
-            <div className="w-4 h-4 border-2 border-[#FF7A50]/30 border-t-[#FF7A50] rounded-full animate-spin" />
-            <p className="text-zinc-600 text-[10px]">Loading map…</p>
+            <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+            <p className="text-on-surface-variant text-[10px]">Loading map…</p>
           </div>
         )}
       </div>
@@ -148,13 +148,13 @@ export function RoutePreviewMap({
       style={{ pointerEvents: 'none' }}
       aria-label={`Route from ${pickupLabel} to ${dropoffLabel}`}
     >
-      {/* OSM tile iframe — same dark CSS filter as LiveMap */}
+      {/* OSM tile iframe — natural light tiles, matching LiveMap */}
       <iframe
         src={src}
         title="Route preview"
         className="absolute inset-0 w-full h-full border-0"
         style={{
-          filter: 'invert(93%) hue-rotate(180deg) saturate(0.65) brightness(0.82)',
+          filter: 'saturate(0.9) brightness(1.02)',
           transform: 'scale(1.06)',
         }}
       />
@@ -195,7 +195,7 @@ export function RoutePreviewMap({
         />
       </div>
 
-      {/* Dropoff pin — cyan */}
+      {/* Dropoff pin — neighborhood green */}
       <div
         className="absolute"
         style={{
@@ -206,7 +206,7 @@ export function RoutePreviewMap({
       >
         <div
           className="w-4 h-4 rounded-full border-2 border-white shadow-lg"
-          style={{ backgroundColor: '#22d3ee', boxShadow: '0 2px 8px rgba(34,211,238,0.5)' }}
+          style={{ backgroundColor: '#2D6A4F', boxShadow: '0 2px 8px rgba(45,106,79,0.5)' }}
         />
       </div>
     </div>
