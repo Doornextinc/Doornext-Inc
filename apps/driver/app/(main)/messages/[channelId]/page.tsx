@@ -139,7 +139,7 @@ export default function ChatChannelPage() {
               <div key={msg.id} className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm ${
                   msg.sender === 'me'
-                    ? 'bg-primary-container text-on-surface rounded-br-sm'
+                    ? 'bg-primary text-on-primary rounded-br-sm'
                     : 'bg-surface-container-high text-on-surface rounded-bl-sm border border-outline-variant/30'
                 }`}>
                   {msg.sender === 'them' && msg.senderName && (

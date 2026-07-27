@@ -474,7 +474,7 @@ export default function HomePage() {
           >
             <span className="text-base" aria-hidden>🔔</span>
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-primary-container rounded-full border-2 border-[#080808] text-on-surface text-[10px] font-black flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-primary rounded-full border-2 border-[#080808] text-on-primary text-[10px] font-black flex items-center justify-center">
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
@@ -599,7 +599,7 @@ export default function HomePage() {
                       <button
                         onClick={() => handleAddToRoute(candidate.order_id)}
                         disabled={isAdding || accepting !== null || addingToRoute !== null}
-                        className="w-full flex items-center justify-center gap-2 rounded-xl py-3 font-black text-sm tracking-wide text-on-surface bg-primary-container active:scale-[0.98] transition-all duration-100 disabled:opacity-50"
+                        className="w-full flex items-center justify-center gap-2 rounded-xl py-3 font-black text-sm tracking-wide text-on-primary bg-primary active:scale-[0.98] transition-all duration-100 disabled:opacity-50"
                       >
                         {isAdding ? 'Adding…' : (
                           <><Plus size={15} /> Add to Route</>
@@ -628,7 +628,7 @@ export default function HomePage() {
                 </div>
                 <button
                   onClick={() => { setStartRouteCountdown(null); router.push('/active') }}
-                  className="flex-shrink-0 flex items-center gap-1.5 bg-primary-container text-on-surface text-xs font-black px-3 py-2 rounded-xl active:scale-95 transition-all"
+                  className="flex-shrink-0 flex items-center gap-1.5 bg-primary text-on-primary text-xs font-black px-3 py-2 rounded-xl active:scale-95 transition-all"
                 >
                   Start Route <ChevronRight size={13} />
                 </button>
@@ -675,7 +675,7 @@ export default function HomePage() {
                           <button
                             onClick={() => handleAddToRoute(candidate.order_id)}
                             disabled={isAdding || addingToRoute !== null}
-                            className="w-full flex items-center justify-center gap-2 rounded-xl py-3 font-black text-sm tracking-wide text-on-surface bg-primary-container active:scale-[0.98] transition-all duration-100 disabled:opacity-50"
+                            className="w-full flex items-center justify-center gap-2 rounded-xl py-3 font-black text-sm tracking-wide text-on-primary bg-primary active:scale-[0.98] transition-all duration-100 disabled:opacity-50"
                           >
                             {isAdding ? 'Adding…' : <><Plus size={15} /> Add to Route</>}
                           </button>
@@ -1144,7 +1144,7 @@ export default function HomePage() {
                 <span className="text-xl flex-shrink-0" aria-hidden>{item.emoji}</span>
                 <span className="flex-1 text-on-surface text-sm font-semibold">{item.label}</span>
                 {item.badge > 0 && (
-                  <span className="min-w-[20px] h-5 px-1.5 bg-primary-container rounded-full text-on-surface text-[10px] font-black flex items-center justify-center">
+                  <span className="min-w-[20px] h-5 px-1.5 bg-primary rounded-full text-on-primary text-[10px] font-black flex items-center justify-center">
                     {item.badge > 9 ? '9+' : item.badge}
                   </span>
                 )}

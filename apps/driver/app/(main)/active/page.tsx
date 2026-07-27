@@ -301,7 +301,7 @@ function DeliveryCompletionCelebration({
       {/* Continue button */}
       <button
         onClick={onContinue}
-        className="w-full max-w-xs bg-primary-container text-on-surface rounded-2xl py-4 font-black text-base shadow-lg shadow-[#FF7A50]/25 active:scale-[0.98] transition-all mb-4"
+        className="w-full max-w-xs bg-primary text-on-primary rounded-2xl py-4 font-black text-base shadow-lg shadow-[#FF7A50]/25 active:scale-[0.98] transition-all mb-4"
       >
         Continue Earning
       </button>
@@ -335,7 +335,7 @@ function RoutePlanPanel({ stops }: { stops: RouteStop[] }) {
               {/* Sequence indicator */}
               <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-black ${
                 stop.done  ? 'bg-neighborhood-green/20 text-neighborhood-green' :
-                isNext     ? 'bg-primary-container text-on-surface' :
+                isNext     ? 'bg-primary text-on-primary' :
                              'bg-white/8 text-on-surface-variant'
               }`}>
                 {stop.done ? '✓' : stop.seq}
@@ -1013,7 +1013,7 @@ export default function ActiveDeliveryPage() {
               onClick={() => setSelectedOrderId(o.id)}
               className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black transition-all ${
                 selectedOrderId === o.id
-                  ? 'bg-primary-container text-on-surface'
+                  ? 'bg-primary text-on-primary'
                   : 'bg-white/6 text-on-surface-variant'
               }`}
             >
@@ -1110,7 +1110,7 @@ export default function ActiveDeliveryPage() {
               href={makerMapsUrl(order.food_maker)}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 bg-primary-container py-3.5 text-sm font-black text-on-surface"
+              className="flex items-center justify-center gap-2 bg-primary py-3.5 text-sm font-black text-on-primary"
             >
               <Navigation size={16} />
               Navigate to Restaurant
@@ -1165,7 +1165,7 @@ export default function ActiveDeliveryPage() {
               <div className="mx-4 mb-3 bg-surface-container-lowest rounded-2xl border border-outline-variant/30 overflow-hidden">
                 <div className="px-4 pt-4 pb-2 flex items-center gap-2">
                   <div className={`flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-black flex-shrink-0 ${
-                    allItemsChecked ? 'bg-neighborhood-green text-on-surface' : 'bg-primary-container text-on-surface'
+                    allItemsChecked ? 'bg-neighborhood-green text-on-primary' : 'bg-primary text-on-primary'
                   }`}>
                     {allItemsChecked ? <CheckCircle size={12} /> : '1'}
                   </div>
@@ -1223,7 +1223,7 @@ export default function ActiveDeliveryPage() {
             }`}>
               <div className="px-4 pt-4 pb-2 flex items-center gap-2">
                 <div className={`flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-black flex-shrink-0 ${
-                  allItemsChecked ? 'bg-primary-container text-on-surface' : 'bg-surface-container-high text-outline'
+                  allItemsChecked ? 'bg-primary text-on-primary' : 'bg-surface-container-high text-outline'
                 }`}>
                   2
                 </div>
@@ -1348,7 +1348,7 @@ export default function ActiveDeliveryPage() {
                 href={mapsUrl(addr)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 bg-primary-container py-3.5 text-sm font-black text-on-surface"
+                className="flex items-center justify-center gap-2 bg-primary py-3.5 text-sm font-black text-on-primary"
               >
                 <Navigation size={16} />
                 Navigate to Customer
@@ -1433,7 +1433,7 @@ export default function ActiveDeliveryPage() {
                 href={mapsUrl(addr)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 bg-primary-container py-3.5 text-sm font-black text-on-surface"
+                className="flex items-center justify-center gap-2 bg-primary py-3.5 text-sm font-black text-on-primary"
               >
                 <Navigation size={16} />
                 Navigate to Customer
@@ -1731,7 +1731,7 @@ export default function ActiveDeliveryPage() {
             <button
               onClick={() => handleStatusUpdate(nextAction.next)}
               disabled={updating}
-              className="w-full text-on-surface rounded-2xl py-4 font-black text-base flex items-center justify-center gap-2.5 disabled:opacity-50 transition-all shadow-lg active:scale-[0.98] bg-primary-container shadow-[#FF7A50]/25"
+              className="w-full text-on-primary rounded-2xl py-4 font-black text-base flex items-center justify-center gap-2.5 disabled:opacity-50 transition-all shadow-lg active:scale-[0.98] bg-primary shadow-[#FF7A50]/25"
             >
               {updating ? (
                 <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
